@@ -1,10 +1,3 @@
-import {
-  Award, BookOpen, CalendarDays, ChartColumn, Circle, CircleCheck, CircleDollarSign,
-  Flag, Goal, History, House, LogOut, Medal, Pencil, Plus, RefreshCw, Search,
-  Shirt, Star, Table2, Trash2, UserMinus, UserPen, UserPlus, UserRound,
-  UserRoundCog, UsersRound, X, type LucideIcon,
-} from "lucide-react";
-
 export type ClassicIconName =
   | "accept_button" | "add" | "arrow_refresh" | "award_star_gold_blue"
   | "book" | "bullet_green" | "bullet_yellow" | "calendar" | "cancel"
@@ -13,17 +6,17 @@ export type ClassicIconName =
   | "money" | "pencil" | "sport" | "sport_soccer" | "star" | "t_shirt_print"
   | "user_add" | "user_delete" | "user_edit" | "user_green" | "user_suit";
 
-const iconByName: Record<ClassicIconName, LucideIcon> = {
-  accept_button: CircleCheck, add: Plus, arrow_refresh: RefreshCw, award_star_gold_blue: Award,
-  book: BookOpen, bullet_green: Circle, bullet_yellow: Circle, calendar: CalendarDays, cancel: X,
-  chart_bar: ChartColumn, clock_history_frame: History, data_table: Table2, delete: Trash2,
-  door_out: LogOut, find: Search, flag_red_dull: Flag, group: UsersRound, house: House,
-  magnifier: Search, medal_award_gold: Medal, money: CircleDollarSign, pencil: Pencil,
-  sport: Goal, sport_soccer: Goal, star: Star, t_shirt_print: Shirt, user_add: UserPlus,
-  user_delete: UserMinus, user_edit: UserPen, user_green: UserRound, user_suit: UserRoundCog,
+const iconByName: Record<ClassicIconName, string> = {
+  accept_button: "football.svg", add: "football-free-kick.svg", arrow_refresh: "stopwatch.svg", award_star_gold_blue: "medal.svg",
+  book: "strategy.svg", bullet_green: "football.svg", bullet_yellow: "penalty-card.svg", calendar: "game-schedule.svg", cancel: "whistle.svg",
+  chart_bar: "strategy.svg", clock_history_frame: "digital-stopwatch.svg", data_table: "game-schedule.svg", delete: "penalty-card.svg",
+  door_out: "corner-flag.svg", find: "goalkeeper-gloves.svg", flag_red_dull: "offside-flag.svg", group: "team.svg", house: "football-club-flag.svg",
+  magnifier: "goalkeeper-gloves.svg", medal_award_gold: "medal.svg", money: "football-club-flag.svg", pencil: "strategy.svg",
+  sport: "stadium.svg", sport_soccer: "football.svg", star: "medal.svg", t_shirt_print: "football-studs.svg", user_add: "team.svg",
+  user_delete: "penalty-card.svg", user_edit: "player-field-position.svg", user_green: "player-field-position.svg", user_suit: "referee.svg",
 };
 
 export function ClassicIcon({ name, size = 16, className = "" }: { name: ClassicIconName; size?: 16 | 32; className?: string }) {
-  const Icon = iconByName[name];
-  return <Icon size={size} strokeWidth={1.9} aria-hidden="true" className={`inline-block shrink-0 ${className}`} />;
+  return <Image src={`/football-icons/${encodeURIComponent(iconByName[name])}`} width={size} height={size} unoptimized alt="" aria-hidden="true" className={`inline-block shrink-0 object-contain ${className}`} />;
 }
+import Image from "next/image";
