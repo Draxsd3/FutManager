@@ -32,12 +32,12 @@ export function LineupScreen({
   const available = bench.slice(6);
 
   return (
-    <div className="grid bg-[#071a0d] lg:grid-cols-[310px_1fr]">
+    <div className="grid bg-transparent lg:grid-cols-[310px_1fr]">
       <ClubSidebar club={club} coach={coach} budget={budget} directorTrust={95} fanTrust={85}
         opponent={opponent} isHome round={round} competition={competition} selectedPlayer={selectedPlayer}
         ctaLabel="Jogar >>" onCta={onPlay} onQuickAction={onQuickAction} />
 
-      <section className="min-h-[calc(100vh-78px)] overflow-auto bg-[#0a2110] font-[Arial] text-[11px] text-[#edf6ed]">
+      <section className="min-h-[calc(100vh-78px)] overflow-auto bg-[linear-gradient(rgba(237,243,236,.88),rgba(237,243,236,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center font-[Arial] text-[11px] text-[#26382a]">
         <h2 className="h-9 border-b border-[var(--team-accent)] bg-[var(--team-accent)] px-3 leading-9 font-bold text-[var(--team-accent-text)]">ESCALAR TIME · {formation}</h2>
         <div className="grid min-h-[calc(100vh-100px)] grid-cols-[430px_minmax(480px,1fr)] gap-2 p-2">
           <div className="flex min-w-0 flex-col">
