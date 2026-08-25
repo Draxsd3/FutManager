@@ -1,106 +1,58 @@
 "use client";
 
-import type { Player } from "@/lib/game/mock-data";
+import { useRef } from "react";
 import Image from "next/image";
+import type { Player } from "@/lib/game/mock-data";
 import type { ManualPosition } from "@/lib/game/career";
-import { ClubSidebar, Crest } from "@/components/ui/club-sidebar";
 import { Pitch } from "@/components/ui/pitch";
-import { Shirt } from "@/components/ui/shirt";
 import { formations } from "@/lib/game/formations";
 import { ClassicIcon, type ClassicIconName } from "@/components/ui/classic-icon";
-import { clubKitAsset } from "@/lib/game/assets";
 
 export function LineupScreen({
-  club, coach, budget, opponent, round, competition, formation, setFormation,
-  style, setStyle, marking, setMarking, focus, setFocus, startersData, bench,
-  selectedPlayer, onSwap, onPlay, onBack, manualPositions, onMovePlayer, onResetPositions,
-  onQuickAction,
+  club, opponent, round, competition, formation, setFormation, style, setStyle, marking, setMarking, focus, setFocus,
+  startersData, bench, selectedPlayer, onSwap, onPlay, onBack, manualPositions, onMovePlayer, onResetPositions, onPhotoChange,
 }: {
   club: string; coach: string; budget: number; opponent: string; round: number; competition: string;
-  formation: string; setFormation: (value: string) => void;
-  style: string; setStyle: (value: string) => void;
-  marking: string; setMarking: (value: string) => void;
-  focus: string; setFocus: (value: string) => void;
-  startersData: Player[]; bench: Player[]; selectedPlayer: Player | null;
-  onSwap: (id: number) => void; onPlay: () => void; onBack: () => void;
-  manualPositions: Record<number, ManualPosition>;
-  onMovePlayer: (positions: Record<number, ManualPosition>) => void;
-  onResetPositions: () => void;
-  onQuickAction: (action: "roster" | "finances" | "trophies" | "training") => void;
+  formation: string; setFormation: (value: string) => void; style: string; setStyle: (value: string) => void; marking: string; setMarking: (value: string) => void; focus: string; setFocus: (value: string) => void;
+  startersData: Player[]; bench: Player[]; selectedPlayer: Player | null; onSwap: (id: number) => void; onPlay: () => void; onBack: () => void;
+  manualPositions: Record<number, ManualPosition>; onMovePlayer: (positions: Record<number, ManualPosition>) => void; onResetPositions: () => void;
+  onQuickAction: (action: "roster" | "finances" | "trophies" | "training") => void; onPhotoChange: (id: number, photoDataUrl: string | null) => void;
 }) {
-  const reserves = bench.slice(0, 6);
-  const available = bench.slice(6);
-  const averageOverall = startersData.length ? Math.round(startersData.reduce((total, player) => total + player.overall, 0) / startersData.length) : 0;
-  const averageEnergy = startersData.length ? Math.round(startersData.reduce((total, player) => total + player.energy, 0) / startersData.length) : 0;
+  const photoInput = useRef<HTMLInputElement>(null);
+  const attack = sectorStrength(startersData, ["A"]);
+  const midfield = sectorStrength(startersData, ["M"]);
+  const defense = sectorStrength(startersData, ["G", "L", "Z"]);
 
-  return (
-    <div className="grid bg-transparent lg:grid-cols-[310px_1fr]">
-      <ClubSidebar club={club} coach={coach} budget={budget} directorTrust={95} fanTrust={85}
-        opponent={opponent} isHome round={round} competition={competition} selectedPlayer={selectedPlayer}
-        ctaLabel="Jogar >>" onCta={onPlay} onQuickAction={onQuickAction} />
+  function uploadPhoto(file: File | undefined) {
+    if (!file || !selectedPlayer) return;
+    if (!file.type.startsWith("image/") || file.size > 700_000) return;
+    const reader = new FileReader();
+    reader.onload = () => onPhotoChange(selectedPlayer.id, typeof reader.result === "string" ? reader.result : null);
+    reader.readAsDataURL(file);
+  }
 
-      <section className="min-h-[calc(100vh-90px)] overflow-auto bg-[linear-gradient(rgba(237,243,236,.88),rgba(237,243,236,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center font-[Arial] text-[11px] text-[#26382a]">
-        <div className="flex min-h-10 items-center justify-between gap-3 border-b border-[var(--team-accent)] bg-[var(--team-accent)] px-3 font-bold text-[var(--team-accent-text)]">
-          <h2>ESCALAR TIME · {formation}</h2>
-          <div className="flex items-center gap-4 text-[10px]"><span>11 TITULARES</span><span>{bench.length} NO BANCO</span><span>FORÇA MÉDIA {averageOverall}</span></div>
-        </div>
-        <div className="grid min-h-[calc(100vh-100px)] grid-cols-[430px_minmax(480px,1fr)] gap-2 p-2">
-          <div className="flex min-w-0 flex-col">
-            <Pitch club={club} formation={formation} starters={startersData} selectedPlayer={selectedPlayer?.id ?? null}
-              onSelect={onSwap} manualPositions={manualPositions} onMovePlayers={onMovePlayer}
-              onResetPositions={onResetPositions} />
-            <div className="mt-2 grid min-h-[74px] grid-cols-[48px_1fr_155px] items-center border border-white/40 bg-[#d1d3cf] px-3 py-2">
-              <Crest club={opponent} size="sm" />
-              <div className="leading-5"><b>Adversário:</b><p className="font-bold">{opponent}</p></div>
-              <div className="grid grid-cols-[1fr_auto] items-center gap-2">
-                <div><b>Condição do gramado:</b><p className="mt-1">Excelente</p></div>
-                <div className="flex gap-1"><Kit club={club} kit={1} /><Kit club={club} kit={2} /><Kit club={club} kit={3} /></div>
-              </div>
-            </div>
-            <SelectedPlayerCard player={selectedPlayer} averageEnergy={averageEnergy} />
-          </div>
-
-          <div className="flex min-w-0 flex-col border border-white/20 bg-[#919d92]">
-            <SectionTitle color="#2c6908">Banco de reservas · clique para substituir</SectionTitle>
-            <div className="grid min-h-[180px] grid-cols-[repeat(auto-fill,minmax(76px,1fr))] content-start gap-x-1 gap-y-2 p-3">
-              {reserves.map((player) => <Shirt key={player.id} club={club} player={player} compact selected={selectedPlayer?.id === player.id} onClick={() => onSwap(player.id)} />)}
-              {!reserves.length && <p className="col-span-full text-[#273329]">Banco vazio.</p>}
-            </div>
-            <SectionTitle color="#3d403e">Jogadores disponíveis · elenco principal</SectionTitle>
-            <div className="grid min-h-[135px] flex-1 grid-cols-[repeat(auto-fill,minmax(76px,1fr))] content-start gap-x-1 gap-y-2 p-3">
-              {available.map((player) => <Shirt key={player.id} club={club} player={player} compact selected={selectedPlayer?.id === player.id} onClick={() => onSwap(player.id)} />)}
-              {!available.length && <p className="col-span-full text-[10px] text-[#263129]">Todos os jogadores aptos estão no banco.</p>}
-            </div>
-            <div className="mt-auto border-t border-white/50 bg-[#ced1cd] p-2">
-              <div className="grid grid-cols-[1.05fr_1fr_.85fr_1fr] gap-3">
-                <Select label="Seleção Automática:" value={formation} onChange={setFormation} options={formations} />
-                <Select label="Estilo de jogo:" value={style} onChange={setStyle} options={["Equilibrado", "Ofensivo", "Defensivo"]} />
-                <Select label="Marcação:" value={marking} onChange={setMarking} options={["Leve", "Normal", "Pesada"]} />
-                <Select label="Concentrar ataques:" value={focus} onChange={setFocus} options={["Pelo meio", "Pelas laterais"]} />
-              </div>
-              <div className="mt-2 grid grid-cols-3 gap-5">
-                <ClassicButton icon="arrow_refresh" onClick={onResetPositions}>Táticas salvas</ClassicButton>
-                <ClassicButton icon="house" onClick={onBack}>&lt;&lt; Voltar ao time</ClassicButton>
-                <ClassicButton icon="sport_soccer" onClick={onPlay}>Jogar &gt;&gt;</ClassicButton>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+  return <section className="min-h-[calc(100vh-90px)] overflow-auto bg-[#021b0d] bg-[linear-gradient(rgba(0,24,11,.82),rgba(0,18,8,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center p-3 font-[Arial] text-[11px] text-[#e9f7ec]">
+    <header className="mb-3 flex items-start justify-between gap-4"><div><h2 className="text-xl font-black">Escalação &amp; Tática</h2><p className="mt-0.5 text-[10px] text-[#a7c5ad]">Escalação para: {opponent} (casa) · {competition} · {round}ª rodada</p></div><div className="flex gap-2"><button onClick={onBack} className="rounded border border-white/15 bg-white/10 px-4 py-2 font-bold hover:bg-white/20">Voltar</button><button onClick={onPlay} className="rounded bg-[#16cf6d] px-5 py-2 font-black text-[#062417] hover:bg-[#2be47e]">Ir para a partida ›</button></div></header>
+    <div className="grid min-w-[1120px] grid-cols-[300px_minmax(540px,1fr)_270px] gap-3">
+      <aside className="space-y-3"><Panel title="Esquema tático"><Select label="Esquema tático" value={formation} onChange={setFormation} options={formations} /><Select label="Estilo de jogo" value={style} onChange={setStyle} options={["Equilibrado", "Ofensivo", "Defensivo"]} /><Select label="Marcação / pressão" value={marking} onChange={setMarking} options={["Leve", "Normal", "Pesada"]} /></Panel>
+        <Panel title={`Banco de reservas · ${bench.length}`}><div className="max-h-[460px] space-y-1 overflow-auto">{bench.map((player) => <ReserveRow key={player.id} player={player} active={selectedPlayer?.id === player.id} onClick={() => onSwap(player.id)} />)}{!bench.length && <p className="p-2 text-[#9db7a3]">Banco vazio.</p>}</div></Panel>
+        <Panel title="Foto do atleta"><input ref={photoInput} type="file" accept="image/*" className="hidden" onChange={(event) => uploadPhoto(event.target.files?.[0])} />{selectedPlayer ? <div className="flex items-center gap-3"><Portrait player={selectedPlayer} size={44} /><div className="min-w-0 flex-1"><b className="block truncate">{selectedPlayer.name}</b><p className="text-[9px] text-[#a7c5ad]">JPG ou PNG · até 700 KB</p><div className="mt-2 flex gap-1"><button onClick={() => photoInput.current?.click()} className="rounded bg-[#1b8f4d] px-2 py-1 font-bold">Adicionar foto</button>{selectedPlayer.photoDataUrl && <button onClick={() => onPhotoChange(selectedPlayer.id, null)} className="rounded border border-white/25 px-2 py-1">Remover</button>}</div></div></div> : <p className="p-1 text-[#a7c5ad]">Selecione um atleta no campo ou no banco.</p>}</Panel>
+      </aside>
+      <main className="flex min-w-0 flex-col"><Pitch club={club} formation={formation} starters={startersData} selectedPlayer={selectedPlayer?.id ?? null} onSelect={onSwap} manualPositions={manualPositions} onMovePlayers={onMovePlayer} onResetPositions={onResetPositions} tactical />
+        <Panel title="Ajustes de equipe" className="mt-3"><div className="grid grid-cols-4 gap-2"><Select label="Batedor de falta" value={startersData[0]?.name ?? ""} onChange={() => undefined} options={startersData.map((player) => player.name)} /><Select label="Batedor de escanteio" value={startersData[1]?.name ?? ""} onChange={() => undefined} options={startersData.map((player) => player.name)} /><Select label="Batedor de pênalti" value={startersData[2]?.name ?? ""} onChange={() => undefined} options={startersData.map((player) => player.name)} /><Select label="Capitão" value={startersData[3]?.name ?? ""} onChange={() => undefined} options={startersData.map((player) => player.name)} /></div><div className="mt-3 flex justify-end gap-2"><Button icon="arrow_refresh" onClick={onResetPositions}>Restaurar posições</Button><Button icon="sport_soccer" onClick={onPlay}>Salvar e ir para partida</Button></div></Panel>
+      </main>
+      <aside className="space-y-3"><Panel title="Foco tático"><Select label="Concentração de ataque" value={focus} onChange={setFocus} options={["Pelo meio", "Pelas laterais"]} /><div className="mt-3 grid h-28 grid-cols-5 grid-rows-3 overflow-hidden rounded border border-[#38724d] bg-[#0c4a28]">{Array.from({ length: 15 }, (_, index) => <i key={index} className={`border border-[#2e6942] ${index === 7 ? "bg-[#1c9a52]" : ""}`} />)}</div></Panel>
+        <Panel title="Força do time"><div className="grid grid-cols-3 gap-2 text-center"><Sector value={attack} label="Ataque" tone="#16cf6d" /><Sector value={midfield} label="Meio" tone="#f1c53c" /><Sector value={defense} label="Defesa" tone="#4d9eed" /></div><div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3"><span>GERAL <b className="ml-1 text-lg">{Math.round((attack + midfield + defense) / 3)}</b></span><span className="text-[#f1ca3e]">★★★★★</span></div></Panel>
+        <Panel title="Próxima partida"><p className="font-bold">{club} x {opponent}</p><p className="mt-1 text-[#a7c5ad]">{competition} · {round}ª rodada</p><button onClick={onPlay} className="mt-3 w-full rounded bg-[#16cf6d] py-2 font-black text-[#062417]">Confirmar escalação</button></Panel>
+      </aside>
     </div>
-  );
+  </section>;
 }
 
-function SectionTitle({ color, children }: { color: string; children: React.ReactNode }) { return <h3 style={{ backgroundColor: color }} className="h-5 px-1.5 leading-5 font-bold text-white">{children}</h3>; }
-function SelectedPlayerCard({ player, averageEnergy }: { player: Player | null; averageEnergy: number }) {
-  if (!player) return <div className="mt-2 border border-[#c5d5c6] bg-white/85 px-3 py-2 text-[#5b6b60]">Selecione um jogador no campo ou no banco para conferir sua condição antes da partida.</div>;
-  return <div className="mt-2 grid grid-cols-[1fr_82px_82px] items-center gap-3 border border-[#c5d5c6] bg-white/90 px-3 py-2 shadow-sm">
-    <div><p className="text-[9px] font-bold uppercase tracking-wide text-[var(--team-accent)]">Jogador selecionado</p><b className="text-sm">{player.name}</b><p className="mt-0.5 text-[#5b6b60]">{player.position} · condição para a partida</p></div>
-    <Metric label="FORÇA" value={player.overall} tone="bg-[#237b47]" />
-    <Metric label="ENERGIA" value={player.energy} tone={player.energy >= averageEnergy ? "bg-[#29a35b]" : "bg-[#d39b24]"} />
-  </div>;
-}
-function Metric({ label, value, tone }: { label: string; value: number; tone: string }) { return <div className="text-center"><b className="text-[9px] text-[#5b6b60]">{label}</b><span className="mt-1 block h-2 overflow-hidden rounded-full bg-[#e2e8e2]"><i style={{ width: `${Math.min(value, 100)}%` }} className={`block h-full ${tone}`} /></span><strong className="mt-1 block">{value}</strong></div>; }
-function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[] }) { return <label className="font-bold">{label}<select value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 block h-7 w-full border border-[#6f8492] bg-gradient-to-b from-white to-[#dbe4ea] px-1 font-normal">{options.map((option) => <option key={option}>{option}</option>)}</select></label>; }
-function ClassicButton({ icon, onClick, children }: { icon: ClassicIconName; onClick: () => void; children: React.ReactNode }) { return <button onClick={onClick} className="flex h-8 items-center justify-center gap-1.5 border border-[#8aa0af] bg-gradient-to-b from-white to-[#c6d7e3] font-bold hover:brightness-95"><ClassicIcon name={icon} />{children}</button>; }
-function Kit({ club, kit }: { club: string; kit: 1 | 2 | 3 }) { const asset = clubKitAsset(club, kit); return asset ? <Image src={asset} alt={`Uniforme ${kit} do ${club}`} width={55} height={55} unoptimized className="block h-10 w-8 object-contain" /> : <i style={{ background: kit === 1 ? "linear-gradient(90deg,#eee 0 42%,var(--team-primary) 42% 58%,#eee 58%)" : "#202020", clipPath: "polygon(25% 0,38% 8%,62% 8%,75% 0,100% 20%,84% 38%,76% 31%,76% 100%,24% 100%,24% 31%,16% 38%,0 20%)" }} className="block h-9 w-7" />; }
+function Panel({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) { return <section className={`rounded-lg border border-[#3d6749] bg-[#061d0e]/90 p-2 shadow-lg ${className}`}><h3 className="mb-2 font-black uppercase text-[#18dc72]">{title}</h3>{children}</section>; }
+function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[] }) { return <label className="mb-2 block last:mb-0"><b className="block text-[9px] uppercase tracking-wide text-[#19ce6d]">{label}</b><select value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 h-8 w-full rounded border border-[#426c4e] bg-[#173c24] px-2 font-bold text-white outline-none">{options.map((option) => <option key={option}>{option}</option>)}</select></label>; }
+function ReserveRow({ player, active, onClick }: { player: Player; active: boolean; onClick: () => void }) { return <button onClick={onClick} className={`grid w-full grid-cols-[22px_1fr_26px_30px] items-center gap-1 border-b border-white/10 px-1 py-1.5 text-left hover:bg-white/10 ${active ? "bg-[#145b31]" : ""}`}><Portrait player={player} size={20} /><span className="truncate font-bold">{player.name}</span><b className="text-[#16db70]">{player.overall}</b><span className="h-1.5 overflow-hidden rounded bg-[#193a25]"><i style={{ width: `${player.energy}%` }} className="block h-full bg-[#17d66d]" /></span></button>; }
+function Portrait({ player, size }: { player: Player; size: number }) { return player.photoDataUrl ? <Image src={player.photoDataUrl} alt={`Foto de ${player.name}`} width={size} height={size} unoptimized className="rounded-full object-cover" style={{ width: size, height: size }} /> : <span style={{ width: size, height: size }} className="inline-grid place-items-center rounded-full bg-[#17261b] text-[#84ad8d]"><ClassicIcon name="user_green" size={Math.max(16, size - 10)} /></span>; }
+function Sector({ value, label, tone }: { value: number; label: string; tone: string }) { return <div><span style={{ borderColor: tone }} className="mx-auto grid h-14 w-14 place-items-center rounded-full border-4 text-lg font-black">{value}</span><b className="mt-1 block text-[9px] uppercase text-[#a9c3ae]">{label}</b></div>; }
+function Button({ icon, onClick, children }: { icon: ClassicIconName; onClick: () => void; children: React.ReactNode }) { return <button onClick={onClick} className="flex items-center gap-1.5 rounded border border-[#3d6749] bg-[#173c24] px-3 py-2 font-bold hover:bg-[#245430]"><ClassicIcon name={icon} />{children}</button>; }
+function sectorStrength(players: Player[], positions: Player["position"][]) { const picked = players.filter((player) => positions.includes(player.position)); return picked.length ? Math.round(picked.reduce((total, player) => total + player.overall, 0) / picked.length) : 0; }

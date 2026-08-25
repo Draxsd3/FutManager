@@ -2,6 +2,7 @@ import type { Player } from "@/lib/game/mock-data";
 import { formationSlotRoles, formationSlots, nearestFormationSlot, playerFitAtPosition } from "@/lib/game/formations";
 import type { ManualPosition } from "@/lib/game/career";
 import { Shirt } from "./shirt";
+import Image from "next/image";
 
 export function Pitch({
   club,
@@ -12,6 +13,7 @@ export function Pitch({
   manualPositions = {},
   onMovePlayers = () => undefined,
   onResetPositions,
+  tactical = false,
 }: {
   club?: string;
   formation: string;
@@ -21,13 +23,14 @@ export function Pitch({
   manualPositions?: Record<number, ManualPosition>;
   onMovePlayers?: (positions: Record<number, ManualPosition>) => void;
   onResetPositions?: () => void;
+  tactical?: boolean;
 }) {
   const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
   const roles = formationSlotRoles[formation] ?? formationSlotRoles["4-3-3"];
   const effectivePositions = Object.fromEntries(starters.slice(0, 11).map((player, index) => [player.id, manualPositions[player.id] ?? slots[index] ?? { left: 50, top: 50 }]));
   return (
     <div
-      className="relative min-h-[650px] w-full overflow-hidden rounded-lg border-2 border-[#cbd8c4] bg-[#102519] bg-[linear-gradient(rgba(5,19,9,.35),rgba(5,19,9,.5)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center shadow-xl"
+      className={`relative ${tactical ? "min-h-[720px]" : "min-h-[650px]"} w-full overflow-hidden rounded-lg border-2 border-[#cbd8c4] bg-[#102519] bg-[linear-gradient(rgba(5,19,9,.35),rgba(5,19,9,.5)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center shadow-xl`}
       onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => {
         event.preventDefault();
@@ -70,19 +73,7 @@ export function Pitch({
             className="absolute -translate-x-1/2 -translate-y-1/2"
             style={{ left: `${slot.left}%`, top: `${slot.top}%` }}
           >
-            <Shirt
-              club={club}
-              player={player}
-              selected={selectedPlayer === player.id}
-              onClick={() => onSelect(player.id)}
-              effectiveOverall={Math.max(1, player.overall - fit.penalty)}
-              fitLabel={fit.label}
-              draggable
-              onDragStart={(event) => {
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData("text/player-id", String(player.id));
-              }}
-            />
+            {tactical ? <TacticPlayer player={player} selected={selectedPlayer === player.id} fitLabel={fit.label} effectiveOverall={Math.max(1, player.overall - fit.penalty)} onClick={() => onSelect(player.id)} onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/player-id", String(player.id)); }} /> : <Shirt club={club} player={player} selected={selectedPlayer === player.id} onClick={() => onSelect(player.id)} effectiveOverall={Math.max(1, player.overall - fit.penalty)} fitLabel={fit.label} draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/player-id", String(player.id)); }} />}
           </div>
         );
       })}
@@ -91,4 +82,13 @@ export function Pitch({
       </label>
     </div>
   );
+}
+
+function TacticPlayer({ player, selected, effectiveOverall, fitLabel, onClick, onDragStart }: { player: Player; selected: boolean; effectiveOverall: number; fitLabel: "Natural" | "Secundária" | "Improvisado"; onClick: () => void; onDragStart: (event: React.DragEvent<HTMLButtonElement>) => void }) {
+  return <button type="button" draggable onDragStart={onDragStart} onClick={onClick} className={`relative flex w-[94px] -translate-x-1/2 flex-col items-center cursor-grab active:cursor-grabbing ${selected ? "scale-110" : ""}`}>
+    <span className="relative grid h-14 w-14 place-items-center overflow-hidden rounded-full border-2 border-[#19d36f] bg-[#08130a] shadow-lg">{player.photoDataUrl ? <Image src={player.photoDataUrl} alt={`Foto de ${player.name}`} width={56} height={56} unoptimized className="h-full w-full object-cover" /> : <span className="h-9 w-7 rounded-t-[50%] bg-black" />}<b className="absolute -right-3 -top-1 grid h-7 w-7 place-items-center rounded-full border-2 border-[#dcefdc] bg-[#07160b] text-[11px] text-white">{effectiveOverall}</b></span>
+    <span className="mt-1 w-full truncate rounded bg-black/90 px-1 py-0.5 text-center text-[9px] font-black text-white">{player.name}</span>
+    <span className="h-1 w-[74px] overflow-hidden rounded bg-black/70"><i style={{ width: `${player.energy}%` }} className="block h-full bg-[#18d870]" /></span>
+    {fitLabel !== "Natural" && <em className="mt-0.5 rounded bg-[#e9aa35] px-1 text-[7px] not-italic font-bold text-black">{fitLabel}</em>}
+  </button>;
 }

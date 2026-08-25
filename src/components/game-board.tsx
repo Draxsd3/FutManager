@@ -404,6 +404,11 @@ export function GameBoard() {
       .catch(() => setSyncLabel("Treino aplicado localmente — sincronização pendente"));
   }
 
+  function changePlayerPhoto(id: number, photoDataUrl: string | null) {
+    setCareerSquad((current) => (current ?? squad).map((player) => player.id === id ? { ...player, photoDataUrl } : player));
+    setSyncLabel(photoDataUrl ? "Foto do jogador adicionada neste dispositivo" : "Foto do jogador removida");
+  }
+
   function renderStandings() {
     if (!standingsOpen) return null;
     return <StandingsModal club={club} competition={division} table={table} topScorers={topScorers} topRatings={topRatings} onClose={() => setStandingsOpen(false)} />;
@@ -819,6 +824,7 @@ export function GameBoard() {
           onMovePlayer={movePlayers}
           onResetPositions={resetManualPositions}
           onQuickAction={openQuickAction}
+          onPhotoChange={changePlayerPhoto}
           />
         </AppShell>
         {renderStandings()}
