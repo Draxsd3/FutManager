@@ -69,9 +69,9 @@ export function ClubSectionScreen({
   return (
     <div className="min-h-[calc(100vh-78px)] bg-[#071a0d] p-4 text-[#eff7ef]">
       <section className="mx-auto max-w-[1180px] border border-[#3e7448] bg-[#0c2512] shadow-2xl">
-        <header className="flex items-center justify-between border-b border-[#e7c84d] bg-[#174c27] px-4 py-3 text-white">
+        <header className="flex items-center justify-between border-b border-[var(--team-accent)] bg-[var(--team-accent)] px-4 py-3 text-[var(--team-accent-text)]">
           <b className="text-[13px]">{title}</b>
-          <button onClick={onBack} className="rounded border border-[#e7c84d] bg-[#e7c84d] px-3 py-1 text-[11px] font-bold text-[#14391d] hover:bg-[#f1d457]">VOLTAR AO CLUBE</button>
+          <button onClick={onBack} className="rounded border border-white/60 bg-white/90 px-3 py-1 text-[11px] font-bold text-[#17351d] hover:bg-white">VOLTAR AO CLUBE</button>
         </header>
 
         {section === "agenda" && (
@@ -135,7 +135,7 @@ export function ClubSectionScreen({
   );
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) { return <section className="border border-[#3e7448] bg-[#102f18]"><h2 className="border-b border-[#3e7448] bg-[#174c27] px-3 py-2 text-[11px] font-bold text-[#f1d457]">{title}</h2><div className="p-4">{children}</div></section>; }
+function Panel({ title, children }: { title: string; children: React.ReactNode }) { return <section className="border border-[#3e7448] bg-[#102f18]"><h2 className="border-b border-[#3e7448] bg-[var(--team-accent)] px-3 py-2 text-[11px] font-bold text-[var(--team-accent-text)]">{title}</h2><div className="p-4">{children}</div></section>; }
 function Info({ label, value }: { label: string; value: string }) { return <div className="flex justify-between border-b border-[#315d3a] py-2"><b>{label}</b><span>{value}</span></div>; }
-function DataTable({ headers, children }: { headers: string[]; children: React.ReactNode }) { return <div className="overflow-auto border border-[#3e7448]"><table className="w-full border-collapse text-left"><thead className="bg-[#174c27] text-[#f1d457]"><tr>{headers.map((header) => <th key={header} className="border-r border-[#3e7448] px-3 py-2 text-[11px]">{header}</th>)}</tr></thead><tbody>{children}</tbody></table></div>; }
+function DataTable({ headers, children }: { headers: string[]; children: React.ReactNode }) { return <div className="overflow-auto border border-[#3e7448]"><table className="w-full border-collapse text-left"><thead className="bg-[var(--team-accent)] text-[var(--team-accent-text)]"><tr>{headers.map((header) => <th key={header} className="border-r border-white/20 px-3 py-2 text-[11px]">{header}</th>)}</tr></thead><tbody>{children}</tbody></table></div>; }
 function Cell({ children }: { children: React.ReactNode }) { return <td className="px-3 py-2">{children}</td>; }

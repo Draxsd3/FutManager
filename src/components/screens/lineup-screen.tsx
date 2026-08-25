@@ -38,7 +38,7 @@ export function LineupScreen({
         ctaLabel="Jogar >>" onCta={onPlay} onQuickAction={onQuickAction} />
 
       <section className="min-h-[calc(100vh-78px)] overflow-auto bg-[#0a2110] font-[Arial] text-[11px] text-[#edf6ed]">
-        <h2 className="h-9 border-b border-[#e7c84d] bg-[#174c27] px-3 leading-9 font-bold text-[#f1d457]">ESCALAR TIME · {formation}</h2>
+        <h2 className="h-9 border-b border-[var(--team-accent)] bg-[var(--team-accent)] px-3 leading-9 font-bold text-[var(--team-accent-text)]">ESCALAR TIME · {formation}</h2>
         <div className="grid min-h-[calc(100vh-100px)] grid-cols-[430px_minmax(480px,1fr)] gap-2 p-2">
           <div className="flex min-w-0 flex-col">
             <Pitch club={club} formation={formation} starters={startersData} selectedPlayer={selectedPlayer?.id ?? null}
