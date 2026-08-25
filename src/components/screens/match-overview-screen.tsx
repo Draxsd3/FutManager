@@ -52,8 +52,8 @@ export function MatchOverviewScreen({
 }) {
   const progress = Math.min(100, Math.round((minute / 90) * 100));
   return (
-    <div className="min-h-screen bg-[#06170a] bg-cover bg-center p-3 font-[Arial] text-white" style={{ backgroundImage: "linear-gradient(rgba(3,23,9,.72),rgba(3,23,9,.78)),url('/game-assets/backgrounds/stadium.jpg')" }}>
-      <section className="mx-auto max-w-[1000px] border border-[#477d51] bg-[#0b2411] shadow-2xl">
+    <div className="h-dvh overflow-hidden bg-[#06170a] bg-cover bg-center p-3 font-[Arial] text-white" style={{ backgroundImage: "linear-gradient(rgba(3,23,9,.72),rgba(3,23,9,.78)),url('/game-assets/backgrounds/stadium.jpg')" }}>
+      <section className="mx-auto h-full max-w-[1000px] overflow-auto border border-[#477d51] bg-[#0b2411] shadow-2xl">
         <header className="flex items-center justify-between border-b border-[#e7c84d] bg-[#174c27] px-4 py-3">
           <b className="text-[#f1d457]">{competition}</b>
           <div className="h-1.5 w-40 overflow-hidden rounded bg-white/20">

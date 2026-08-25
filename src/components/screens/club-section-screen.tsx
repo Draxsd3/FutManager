@@ -67,8 +67,8 @@ export function ClubSectionScreen({
   }[section];
 
   return (
-    <div className="min-h-[calc(100vh-90px)] bg-[linear-gradient(rgba(247,247,242,.72),rgba(247,247,242,.8)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center p-4 text-[#26382a]">
-      <section className="mx-auto max-w-[1180px] border border-[#c6d7c7] bg-white/95 shadow-xl">
+    <div className="h-full min-h-0 overflow-hidden bg-[linear-gradient(rgba(247,247,242,.72),rgba(247,247,242,.8)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center p-4 text-[#26382a]">
+      <section className="mx-auto h-full max-w-[1180px] overflow-auto border border-[#c6d7c7] bg-white/95 shadow-xl">
         <header className="flex items-center justify-between border-b border-[var(--team-accent)] bg-[var(--team-accent)] px-4 py-3 text-[var(--team-accent-text)]">
           <b className="text-[13px]">{title}</b>
           <button onClick={onBack} className="rounded border border-white/60 bg-white/90 px-3 py-1 text-[11px] font-bold text-[#17351d] hover:bg-white">VOLTAR AO CLUBE</button>

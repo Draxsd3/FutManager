@@ -31,7 +31,7 @@ export function Pitch({
   const effectivePositions = Object.fromEntries(starters.slice(0, 11).map((player, index) => [player.id, manualPositions[player.id] ?? slots[index] ?? { left: 50, top: 50 }]));
   return (
     <div
-      className={`relative ${tactical ? "min-h-[720px]" : "min-h-[650px]"} w-full overflow-hidden rounded-lg border-2 border-[#cbd8c4] bg-[#102519] bg-[linear-gradient(rgba(5,19,9,.35),rgba(5,19,9,.5)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center shadow-xl`}
+      className={`relative ${tactical ? "h-[calc(100dvh-300px)] min-h-0" : "h-full min-h-[520px]"} w-full overflow-hidden rounded-lg border-2 border-[#cbd8c4] bg-[#102519] bg-[linear-gradient(rgba(5,19,9,.35),rgba(5,19,9,.5)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center shadow-xl`}
       onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => {
         event.preventDefault();

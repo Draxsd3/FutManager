@@ -685,7 +685,7 @@ export function GameBoard() {
 
   if (!database || !sessionResolved) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#f7f7f2] bg-[linear-gradient(rgba(247,247,242,.88),rgba(247,247,242,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center font-[Arial] text-sm text-[#29402f]">
+      <div className="grid h-dvh overflow-hidden place-items-center bg-[#f7f7f2] bg-[linear-gradient(rgba(247,247,242,.88),rgba(247,247,242,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center font-[Arial] text-sm text-[#29402f]">
         <div className="flex items-center gap-3 rounded-lg border border-[#c8d8ca] bg-white/90 px-5 py-4 shadow-lg">
           <span className="h-3 w-3 animate-pulse rounded-full bg-[#16c864]" aria-hidden="true" />
           Restaurando sua carreira...

@@ -39,9 +39,9 @@ export function ResultScreen({
   const cards = events.filter((event) => event.card);
 
   return (
-    <div className="min-h-screen bg-[#06170a] bg-[linear-gradient(rgba(3,23,9,.86),rgba(3,23,9,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover p-3 font-[Arial] text-white">
-      <section className="mx-auto grid max-w-[1200px] grid-cols-1 gap-3 lg:grid-cols-[240px_1fr]">
-        <aside className="max-h-[720px] overflow-auto border border-black/40 bg-[#111]">
+    <div className="h-dvh overflow-hidden bg-[#06170a] bg-[linear-gradient(rgba(3,23,9,.86),rgba(3,23,9,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover p-3 font-[Arial] text-white">
+      <section className="mx-auto grid h-full max-w-[1200px] grid-cols-1 gap-3 overflow-hidden lg:grid-cols-[240px_1fr]">
+        <aside className="min-h-0 overflow-auto border border-black/40 bg-[#111]">
           <h2 className="bg-[#1a1a1a] px-3 py-2 text-xs font-bold uppercase tracking-wide text-white/70">
             {round}ª rodada
           </h2>
@@ -67,7 +67,7 @@ export function ResultScreen({
           </div>
         </aside>
 
-        <div className="border border-[#477d51] bg-[#0b2411]">
+        <div className="min-h-0 overflow-auto border border-[#477d51] bg-[#0b2411]">
           <h1 className="px-4 pt-4 text-center text-lg font-black">
             RESULTADO DA RODADA
           </h1>

@@ -27,8 +27,8 @@ export function NewCareerScreen({
   const divisionClubs = availableClubs.filter((item) => item.division === division);
   const selectedClub = availableClubs.find((item) => item.name === club);
   return (
-    <div className="min-h-screen bg-[#14361b] bg-[linear-gradient(rgba(4,22,9,.65),rgba(4,22,9,.8)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center p-4 font-[Arial] text-white">
-      <section className="mx-auto mt-6 min-h-[680px] w-full max-w-[620px] border border-[#4d8657] bg-[#0b2812]/95 px-8 py-8 shadow-2xl sm:px-16">
+    <div className="h-dvh overflow-hidden bg-[#14361b] bg-[linear-gradient(rgba(4,22,9,.65),rgba(4,22,9,.8)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center p-4 font-[Arial] text-white">
+      <section className="mx-auto h-full w-full max-w-[620px] overflow-auto border border-[#4d8657] bg-[#0b2812]/95 px-8 py-8 shadow-2xl sm:px-16">
         <button onClick={onBack} className="mb-4 rounded border border-[#e7c84d] bg-[#174c27] px-3 py-1 text-xs font-bold text-[#f1d457]">
           &lt; Voltar ao menu
         </button>

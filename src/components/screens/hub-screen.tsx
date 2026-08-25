@@ -27,9 +27,9 @@ export function HubScreen({ club, coach, budget, opponent, round, competition, s
   const monthlyPayroll = squad.reduce((total, player) => total + player.salary, 0);
   const averageOverall = squad.length ? Math.round(squad.reduce((total, player) => total + player.overall, 0) / squad.length) : 0;
 
-  return <div className="grid bg-transparent lg:grid-cols-[310px_1fr]">
+  return <div className="grid h-full min-h-0 grid-cols-[minmax(180px,260px)_minmax(0,1fr)] bg-transparent">
     <ClubSidebar club={club} coach={coach} budget={budget} directorTrust={95} fanTrust={85} opponent={opponent} isHome round={round} competition={competition} selectedPlayer={selectedPlayer} ctaLabel="Escalar Time" onCta={onEscalar} onQuickAction={onQuickAction} />
-    <section className="min-h-[calc(100vh-90px)] overflow-auto bg-[linear-gradient(rgba(255,255,255,.9),rgba(250,252,249,.94)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center text-[#22352a]">
+    <section className="flex min-h-0 flex-col overflow-hidden bg-[linear-gradient(rgba(255,255,255,.9),rgba(250,252,249,.94)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center text-[#22352a]">
       <header className="border-b-2 border-[var(--team-accent)] bg-white/95 shadow-sm">
         <div className="flex flex-wrap items-stretch gap-x-6 gap-y-2 px-4 py-2.5">
           <div className="min-w-[130px]"><h2 className="text-lg font-black tracking-tight text-[var(--team-accent)]">ELENCO</h2><p className="text-[10px] text-[#64746a]">Gerencie atletas e opções táticas</p></div>
@@ -46,7 +46,7 @@ export function HubScreen({ club, coach, budget, opponent, round, competition, s
           <span className="ml-auto text-[10px] font-bold text-[#5c6d61]">{visibleSquad.length} de {squad.length} jogadores</span>
         </div>
       </header>
-      <div className="min-w-[1120px] overflow-x-auto px-3 pb-5 pt-2">
+      <div className="min-w-0 flex-1 overflow-auto px-3 pb-3 pt-2">
         <table className="w-full border-separate border-spacing-y-1 text-left text-[11px]">
           <thead className="sticky top-0 z-10 bg-[#f8fbf8] text-[9px] font-black uppercase tracking-wide text-[#607267]"><tr><Th>Pos.</Th><Th align="left">Nome</Th><Th>Pé</Th><Th>Idade</Th><Th>Força</Th><Th align="left">Características</Th><Th>Forma</Th><Th>Satisf.</Th><Th align="left">Energia</Th><Th align="right">Valor</Th><Th align="right">Salário</Th><Th>Final</Th><Th>J</Th><Th>G</Th><Th>A</Th><Th>Nota</Th></tr></thead>
           <tbody>{visibleSquad.map((player) => {
