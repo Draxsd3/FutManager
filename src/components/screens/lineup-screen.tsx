@@ -30,6 +30,8 @@ export function LineupScreen({
 }) {
   const reserves = bench.slice(0, 6);
   const available = bench.slice(6);
+  const averageOverall = startersData.length ? Math.round(startersData.reduce((total, player) => total + player.overall, 0) / startersData.length) : 0;
+  const averageEnergy = startersData.length ? Math.round(startersData.reduce((total, player) => total + player.energy, 0) / startersData.length) : 0;
 
   return (
     <div className="grid bg-transparent lg:grid-cols-[310px_1fr]">
@@ -37,8 +39,11 @@ export function LineupScreen({
         opponent={opponent} isHome round={round} competition={competition} selectedPlayer={selectedPlayer}
         ctaLabel="Jogar >>" onCta={onPlay} onQuickAction={onQuickAction} />
 
-      <section className="min-h-[calc(100vh-78px)] overflow-auto bg-[linear-gradient(rgba(237,243,236,.88),rgba(237,243,236,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center font-[Arial] text-[11px] text-[#26382a]">
-        <h2 className="h-9 border-b border-[var(--team-accent)] bg-[var(--team-accent)] px-3 leading-9 font-bold text-[var(--team-accent-text)]">ESCALAR TIME · {formation}</h2>
+      <section className="min-h-[calc(100vh-90px)] overflow-auto bg-[linear-gradient(rgba(237,243,236,.88),rgba(237,243,236,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center font-[Arial] text-[11px] text-[#26382a]">
+        <div className="flex min-h-10 items-center justify-between gap-3 border-b border-[var(--team-accent)] bg-[var(--team-accent)] px-3 font-bold text-[var(--team-accent-text)]">
+          <h2>ESCALAR TIME · {formation}</h2>
+          <div className="flex items-center gap-4 text-[10px]"><span>11 TITULARES</span><span>{bench.length} NO BANCO</span><span>FORÇA MÉDIA {averageOverall}</span></div>
+        </div>
         <div className="grid min-h-[calc(100vh-100px)] grid-cols-[430px_minmax(480px,1fr)] gap-2 p-2">
           <div className="flex min-w-0 flex-col">
             <Pitch club={club} formation={formation} starters={startersData} selectedPlayer={selectedPlayer?.id ?? null}
@@ -52,15 +57,16 @@ export function LineupScreen({
                 <div className="flex gap-1"><Kit club={club} kit={1} /><Kit club={club} kit={2} /><Kit club={club} kit={3} /></div>
               </div>
             </div>
+            <SelectedPlayerCard player={selectedPlayer} averageEnergy={averageEnergy} />
           </div>
 
           <div className="flex min-w-0 flex-col border border-white/20 bg-[#919d92]">
-            <SectionTitle color="#2c6908">Banco de reservas</SectionTitle>
+            <SectionTitle color="#2c6908">Banco de reservas · clique para substituir</SectionTitle>
             <div className="grid min-h-[180px] grid-cols-[repeat(auto-fill,minmax(76px,1fr))] content-start gap-x-1 gap-y-2 p-3">
               {reserves.map((player) => <Shirt key={player.id} club={club} player={player} compact selected={selectedPlayer?.id === player.id} onClick={() => onSwap(player.id)} />)}
               {!reserves.length && <p className="col-span-full text-[#273329]">Banco vazio.</p>}
             </div>
-            <SectionTitle color="#3d403e">Jogadores disponíveis</SectionTitle>
+            <SectionTitle color="#3d403e">Jogadores disponíveis · elenco principal</SectionTitle>
             <div className="grid min-h-[135px] flex-1 grid-cols-[repeat(auto-fill,minmax(76px,1fr))] content-start gap-x-1 gap-y-2 p-3">
               {available.map((player) => <Shirt key={player.id} club={club} player={player} compact selected={selectedPlayer?.id === player.id} onClick={() => onSwap(player.id)} />)}
               {!available.length && <p className="col-span-full text-[10px] text-[#263129]">Todos os jogadores aptos estão no banco.</p>}
@@ -86,6 +92,15 @@ export function LineupScreen({
 }
 
 function SectionTitle({ color, children }: { color: string; children: React.ReactNode }) { return <h3 style={{ backgroundColor: color }} className="h-5 px-1.5 leading-5 font-bold text-white">{children}</h3>; }
+function SelectedPlayerCard({ player, averageEnergy }: { player: Player | null; averageEnergy: number }) {
+  if (!player) return <div className="mt-2 border border-[#c5d5c6] bg-white/85 px-3 py-2 text-[#5b6b60]">Selecione um jogador no campo ou no banco para conferir sua condição antes da partida.</div>;
+  return <div className="mt-2 grid grid-cols-[1fr_82px_82px] items-center gap-3 border border-[#c5d5c6] bg-white/90 px-3 py-2 shadow-sm">
+    <div><p className="text-[9px] font-bold uppercase tracking-wide text-[var(--team-accent)]">Jogador selecionado</p><b className="text-sm">{player.name}</b><p className="mt-0.5 text-[#5b6b60]">{player.position} · condição para a partida</p></div>
+    <Metric label="FORÇA" value={player.overall} tone="bg-[#237b47]" />
+    <Metric label="ENERGIA" value={player.energy} tone={player.energy >= averageEnergy ? "bg-[#29a35b]" : "bg-[#d39b24]"} />
+  </div>;
+}
+function Metric({ label, value, tone }: { label: string; value: number; tone: string }) { return <div className="text-center"><b className="text-[9px] text-[#5b6b60]">{label}</b><span className="mt-1 block h-2 overflow-hidden rounded-full bg-[#e2e8e2]"><i style={{ width: `${Math.min(value, 100)}%` }} className={`block h-full ${tone}`} /></span><strong className="mt-1 block">{value}</strong></div>; }
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[] }) { return <label className="font-bold">{label}<select value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 block h-7 w-full border border-[#6f8492] bg-gradient-to-b from-white to-[#dbe4ea] px-1 font-normal">{options.map((option) => <option key={option}>{option}</option>)}</select></label>; }
 function ClassicButton({ icon, onClick, children }: { icon: ClassicIconName; onClick: () => void; children: React.ReactNode }) { return <button onClick={onClick} className="flex h-8 items-center justify-center gap-1.5 border border-[#8aa0af] bg-gradient-to-b from-white to-[#c6d7e3] font-bold hover:brightness-95"><ClassicIcon name={icon} />{children}</button>; }
 function Kit({ club, kit }: { club: string; kit: 1 | 2 | 3 }) { const asset = clubKitAsset(club, kit); return asset ? <Image src={asset} alt={`Uniforme ${kit} do ${club}`} width={55} height={55} unoptimized className="block h-10 w-8 object-contain" /> : <i style={{ background: kit === 1 ? "linear-gradient(90deg,#eee 0 42%,var(--team-primary) 42% 58%,#eee 58%)" : "#202020", clipPath: "polygon(25% 0,38% 8%,62% 8%,75% 0,100% 20%,84% 38%,76% 31%,76% 100%,24% 100%,24% 31%,16% 38%,0 20%)" }} className="block h-9 w-7" />; }

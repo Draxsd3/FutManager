@@ -70,7 +70,7 @@ export function ClubSidebar({
   onQuickAction: (action: "roster" | "finances" | "trophies" | "training") => void;
 }) {
   return (
-    <aside className="relative flex min-h-[calc(100vh-78px)] flex-col border-r border-[#c8d6ca] bg-[#fbfcf9] text-[#25362a] shadow-[2px_0_12px_rgba(26,49,34,.08)]">
+    <aside className="relative flex min-h-[calc(100vh-90px)] flex-col border-r border-[#c8d6ca] bg-[#fbfcf9] text-[#25362a] shadow-[2px_0_12px_rgba(26,49,34,.08)]">
       <div className="h-1.5 shrink-0 bg-[var(--team-accent)]" />
       <div className="flex items-center gap-3 border-b border-[#d5e0d6] bg-white px-4 py-4">
         <Crest club={club} />

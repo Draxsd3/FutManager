@@ -50,7 +50,7 @@ export function HubScreen({
         onCta={onEscalar}
         onQuickAction={onQuickAction}
       />
-      <section className="min-h-[calc(100vh-78px)] overflow-auto bg-[linear-gradient(rgba(255,255,255,.88),rgba(255,255,255,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center text-[#28382d]">
+      <section className="min-h-[calc(100vh-90px)] overflow-auto bg-[linear-gradient(rgba(255,255,255,.88),rgba(255,255,255,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center text-[#28382d]">
         <div className="border-b border-[#d6e2d7] bg-[#f1f6f1] px-3 py-2 text-[11px] text-[#526258]">ELENCO PRINCIPAL · dê dois cliques no jogador para abrir a ficha completa</div>
         <table className="w-full whitespace-nowrap border-collapse text-left text-[12px]">
           <thead className="sticky top-0 bg-[var(--team-accent)] text-[11px] font-bold text-[var(--team-accent-text)]">

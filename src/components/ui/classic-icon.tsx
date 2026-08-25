@@ -18,6 +18,6 @@ const iconByName: Record<ClassicIconName, string> = {
   user_delete: "penalty-card.svg", user_edit: "player-field-position.svg", user_green: "team.svg", user_suit: "referee.svg",
 };
 
-export function ClassicIcon({ name, size = 16, className = "" }: { name: ClassicIconName; size?: 16 | 32; className?: string }) {
+export function ClassicIcon({ name, size = 16, className = "" }: { name: ClassicIconName; size?: number; className?: string }) {
   return <Image src={`/football-icons/${encodeURIComponent(iconByName[name])}`} width={size} height={size} unoptimized alt="" aria-hidden="true" className={`inline-block shrink-0 object-contain ${className}`} />;
 }
