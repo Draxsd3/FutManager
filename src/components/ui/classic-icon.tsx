@@ -11,7 +11,7 @@ export type ClassicIconName =
 const iconByName: Record<ClassicIconName, string> = {
   accept_button: "football.svg", add: "football-free-kick.svg", arrow_refresh: "stopwatch.svg", award_star_gold_blue: "medal.svg",
   book: "strategy.svg", bullet_green: "football.svg", bullet_yellow: "penalty-card.svg", calendar: "game-schedule.svg", cancel: "whistle.svg",
-  chart_bar: "strategy.svg", clock_history_frame: "digital-stopwatch.svg", data_table: "game-schedule.svg", delete: "penalty-card.svg",
+  chart_bar: "strategy.svg", clock_history_frame: "digital-stopwatch.svg", data_table: "ground.svg", delete: "penalty-card.svg",
   door_out: "corner-flag.svg", find: "goalkeeper-gloves.svg", flag_red_dull: "offside-flag.svg", group: "team.svg", house: "football-club-flag.svg",
   magnifier: "goalkeeper-gloves.svg", medal_award_gold: "medal.svg", money: "football-club-flag.svg", pencil: "strategy.svg",
   sport: "stadium.svg", sport_soccer: "football.svg", star: "medal.svg", t_shirt_print: "football-studs.svg", user_add: "team.svg",
