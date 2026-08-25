@@ -582,10 +582,11 @@ export function GameBoard() {
   }
 
   function openLineup() {
-    const arranged = buildStartingXI(formation, startersData);
+    const arranged = buildStartingXI(formation, squad);
     setStarters(arranged);
+    setManualPositions({});
     setSelectedPlayer(null);
-    void persistCareerExtras(playerCareers, manualPositions, arranged);
+    void persistCareerExtras(playerCareers, {}, arranged);
     setPage("lineup");
   }
 

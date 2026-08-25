@@ -27,6 +27,7 @@ export function Pitch({
 }) {
   const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
   const roles = formationSlotRoles[formation] ?? formationSlotRoles["4-3-3"];
+  const roleLabels = tacticalRoleLabels[formation] ?? tacticalRoleLabels["4-3-3"];
   const effectivePositions = Object.fromEntries(starters.slice(0, 11).map((player, index) => [player.id, manualPositions[player.id] ?? slots[index] ?? { left: 50, top: 50 }]));
   return (
     <div
@@ -62,18 +63,19 @@ export function Pitch({
       <div className="pointer-events-none absolute bottom-[30px] left-1/2 h-[43px] w-[92px] -translate-x-1/2 border-x-2 border-t-2 border-[#edf1ce]" />
       {slots.map((slot, index) => <div key={`${slot.left}-${slot.top}`} className="pointer-events-none absolute h-14 w-14 -translate-x-1/2 -translate-y-1/2 bg-black/10" style={{ left: `${slot.left}%`, top: `${slot.top}%` }}>
         <i className="absolute left-1/2 top-1/2 h-8 w-7 -translate-x-1/2 -translate-y-1/2 bg-black/20" style={{ clipPath: "polygon(25% 0,38% 8%,62% 8%,75% 0,100% 20%,84% 38%,76% 31%,76% 100%,24% 100%,24% 31%,16% 38%,0 20%)" }} />
-        <b className="absolute bottom-0 right-0 text-[8px] text-white/35">{roles[index]}</b>
+        <b className="absolute bottom-0 right-0 text-[8px] text-white/35">{tactical ? roleLabels[index] : roles[index]}</b>
       </div>)}
       {starters.slice(0, 11).map((player, index) => {
         const slot = effectivePositions[player.id] ?? { left: 50, top: 50 };
         const fit = playerFitAtPosition(player, formation, slot, index);
+        const tacticalRole = roleLabels[closestSlot(slots, slot)] ?? player.position;
         return (
           <div
             key={player.id}
             className="absolute -translate-x-1/2 -translate-y-1/2"
             style={{ left: `${slot.left}%`, top: `${slot.top}%` }}
           >
-            {tactical ? <TacticPlayer player={player} selected={selectedPlayer === player.id} fitLabel={fit.label} effectiveOverall={Math.max(1, player.overall - fit.penalty)} onClick={() => onSelect(player.id)} onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/player-id", String(player.id)); }} /> : <Shirt club={club} player={player} selected={selectedPlayer === player.id} onClick={() => onSelect(player.id)} effectiveOverall={Math.max(1, player.overall - fit.penalty)} fitLabel={fit.label} draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/player-id", String(player.id)); }} />}
+            {tactical ? <TacticPlayer player={player} role={tacticalRole} selected={selectedPlayer === player.id} fitLabel={fit.label} effectiveOverall={Math.max(1, player.overall - fit.penalty)} onClick={() => onSelect(player.id)} onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/player-id", String(player.id)); }} /> : <Shirt club={club} player={player} selected={selectedPlayer === player.id} onClick={() => onSelect(player.id)} effectiveOverall={Math.max(1, player.overall - fit.penalty)} fitLabel={fit.label} draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/player-id", String(player.id)); }} />}
           </div>
         );
       })}
@@ -84,11 +86,20 @@ export function Pitch({
   );
 }
 
-function TacticPlayer({ player, selected, effectiveOverall, fitLabel, onClick, onDragStart }: { player: Player; selected: boolean; effectiveOverall: number; fitLabel: "Natural" | "Secundária" | "Improvisado"; onClick: () => void; onDragStart: (event: React.DragEvent<HTMLButtonElement>) => void }) {
-  return <button type="button" draggable onDragStart={onDragStart} onClick={onClick} className={`relative flex w-[94px] -translate-x-1/2 flex-col items-center cursor-grab active:cursor-grabbing ${selected ? "scale-110" : ""}`}>
-    <span className="relative grid h-14 w-14 place-items-center overflow-hidden rounded-full border-2 border-[#19d36f] bg-[#08130a] shadow-lg">{player.photoDataUrl ? <Image src={player.photoDataUrl} alt={`Foto de ${player.name}`} width={56} height={56} unoptimized className="h-full w-full object-cover" /> : <span className="h-9 w-7 rounded-t-[50%] bg-black" />}<b className="absolute -right-3 -top-1 grid h-7 w-7 place-items-center rounded-full border-2 border-[#dcefdc] bg-[#07160b] text-[11px] text-white">{effectiveOverall}</b></span>
-    <span className="mt-1 w-full truncate rounded bg-black/90 px-1 py-0.5 text-center text-[9px] font-black text-white">{player.name}</span>
-    <span className="h-1 w-[74px] overflow-hidden rounded bg-black/70"><i style={{ width: `${player.energy}%` }} className="block h-full bg-[#18d870]" /></span>
-    {fitLabel !== "Natural" && <em className="mt-0.5 rounded bg-[#e9aa35] px-1 text-[7px] not-italic font-bold text-black">{fitLabel}</em>}
+function TacticPlayer({ player, role, selected, effectiveOverall, fitLabel, onClick, onDragStart }: { player: Player; role: string; selected: boolean; effectiveOverall: number; fitLabel: "Natural" | "Secundária" | "Improvisado"; onClick: () => void; onDragStart: (event: React.DragEvent<HTMLButtonElement>) => void }) {
+  return <button type="button" draggable onDragStart={onDragStart} onClick={onClick} className={`relative flex h-[116px] w-[82px] -translate-x-1/2 flex-col overflow-hidden rounded-[4px] border-2 border-[#d6b34c] bg-[linear-gradient(145deg,#fff4b6,#d2a62d_46%,#694a09)] p-1 text-[#241c07] shadow-[0_5px_10px_rgba(0,0,0,.45)] transition cursor-grab active:cursor-grabbing ${selected ? "z-10 scale-110 ring-2 ring-[#27e47c]" : "hover:scale-105"}`}>
+    <span className="flex items-start justify-between text-[9px] font-black"><b>{effectiveOverall}</b><b>{role}</b></span>
+    <span className="mx-auto mt-1 grid h-12 w-12 place-items-center overflow-hidden rounded-full border border-[#5d4709] bg-[#182316]">{player.photoDataUrl ? <Image src={player.photoDataUrl} alt={`Foto de ${player.name}`} width={48} height={48} unoptimized className="h-full w-full object-cover" /> : <span className="h-8 w-6 rounded-t-[50%] bg-[#0a0d09]" />}</span>
+    <span className="mt-1 w-full truncate text-center text-[8px] font-black uppercase">{player.name}</span>
+    <span className="mt-auto flex justify-between text-[7px] font-bold"><i className="not-italic">ENE</i><b>{player.energy}</b></span>
+    {fitLabel !== "Natural" && <em className="absolute bottom-[-1px] right-[-1px] rounded-tl bg-[#b23f31] px-1 text-[6px] not-italic font-black text-white">{fitLabel === "Secundária" ? "SEC" : "IMP"}</em>}
   </button>;
 }
+
+const tacticalRoleLabels: Record<string, string[]> = {
+  "4-3-3": ["LW", "ST", "RW", "LCM", "CM", "RCM", "LB", "LCB", "RCB", "RB", "GK"],
+  "4-4-2": ["LST", "RST", "LM", "LCM", "RCM", "RM", "LB", "LCB", "RCB", "RB", "GK"],
+  "3-5-2": ["LST", "RST", "LWB", "LCM", "CM", "RCM", "RWB", "LCB", "CB", "RCB", "GK"],
+};
+
+function closestSlot(slots: Array<{ left: number; top: number }>, point: { left: number; top: number }) { return slots.reduce((best, slot, index) => Math.hypot(slot.left - point.left, slot.top - point.top) < Math.hypot(slots[best].left - point.left, slots[best].top - point.top) ? index : best, 0); }
