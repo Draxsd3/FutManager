@@ -799,7 +799,7 @@ export function GameBoard() {
   if (page === "lineup")
     return (
       <>
-        <AppShell nav={nav} teamName={club} date="22/01/2026">
+        <AppShell nav={nav} teamName={club} date="22/01/2026" hideNav>
           <LineupScreen
           club={club}
           coach={coach}

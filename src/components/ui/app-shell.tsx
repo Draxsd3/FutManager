@@ -6,11 +6,13 @@ export function AppShell({
   nav,
   teamName,
   date,
+  hideNav = false,
   children,
 }: {
   nav: NavItem[];
   teamName: string;
   date: string;
+  hideNav?: boolean;
   children: React.ReactNode;
 }) {
   const theme = clubThemes[teamName] ?? clubThemes.Palmeiras;
@@ -34,7 +36,7 @@ export function AppShell({
   } as CSSProperties;
   return (
     <div style={style} className="min-h-screen bg-[#f7f7f2] bg-[linear-gradient(rgba(247,247,242,.91),rgba(247,247,242,.95)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-fixed font-[Arial] text-[12px] text-[#243229]">
-      <TopNav items={nav} date={date} />
+      {!hideNav && <TopNav items={nav} date={date} />}
       <main>{children}</main>
     </div>
   );

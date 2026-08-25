@@ -87,19 +87,21 @@ export function Pitch({
 }
 
 function TacticPlayer({ player, role, selected, effectiveOverall, fitLabel, onClick, onDragStart }: { player: Player; role: string; selected: boolean; effectiveOverall: number; fitLabel: "Natural" | "Secundária" | "Improvisado"; onClick: () => void; onDragStart: (event: React.DragEvent<HTMLButtonElement>) => void }) {
-  return <button type="button" draggable onDragStart={onDragStart} onClick={onClick} className={`relative flex h-[116px] w-[82px] -translate-x-1/2 flex-col overflow-hidden rounded-[4px] border-2 border-[#d6b34c] bg-[linear-gradient(145deg,#fff4b6,#d2a62d_46%,#694a09)] p-1 text-[#241c07] shadow-[0_5px_10px_rgba(0,0,0,.45)] transition cursor-grab active:cursor-grabbing ${selected ? "z-10 scale-110 ring-2 ring-[#27e47c]" : "hover:scale-105"}`}>
-    <span className="flex items-start justify-between text-[9px] font-black"><b>{effectiveOverall}</b><b>{role}</b></span>
-    <span className="mx-auto mt-1 grid h-12 w-12 place-items-center overflow-hidden rounded-full border border-[#5d4709] bg-[#182316]">{player.photoDataUrl ? <Image src={player.photoDataUrl} alt={`Foto de ${player.name}`} width={48} height={48} unoptimized className="h-full w-full object-cover" /> : <span className="h-8 w-6 rounded-t-[50%] bg-[#0a0d09]" />}</span>
-    <span className="mt-1 w-full truncate text-center text-[8px] font-black uppercase">{player.name}</span>
-    <span className="mt-auto flex justify-between text-[7px] font-bold"><i className="not-italic">ENE</i><b>{player.energy}</b></span>
-    {fitLabel !== "Natural" && <em className="absolute bottom-[-1px] right-[-1px] rounded-tl bg-[#b23f31] px-1 text-[6px] not-italic font-black text-white">{fitLabel === "Secundária" ? "SEC" : "IMP"}</em>}
+  const scoreTone = effectiveOverall >= 70 ? "border-[#19d66d]" : "border-[#f1bf31]";
+  const energyTone = player.energy >= 80 ? "bg-[#17d66d]" : player.energy >= 55 ? "bg-[#f1bd31]" : "bg-[#e65e50]";
+  return <button type="button" draggable onDragStart={onDragStart} onClick={onClick} className={`relative flex w-[112px] -translate-x-1/2 flex-col items-center cursor-grab active:cursor-grabbing ${selected ? "z-10 scale-110 rounded ring-2 ring-[#e6c137]" : "hover:scale-105"}`}>
+    <span className="relative grid h-16 w-16 place-items-end overflow-visible">{player.photoDataUrl ? <Image src={player.photoDataUrl} alt={`Foto de ${player.name}`} width={64} height={64} unoptimized className="h-full w-full object-contain object-bottom" /> : <span className="relative h-14 w-11 rounded-t-[50%] bg-[#050806] before:absolute before:-top-3 before:left-1/2 before:h-6 before:w-6 before:-translate-x-1/2 before:rounded-full before:bg-[#050806]" />}<b className={`absolute -right-4 -top-1 grid h-8 w-8 place-items-center rounded-full border-2 ${scoreTone} bg-[#071009] text-[12px] text-white`}>{effectiveOverall}</b></span>
+    <span className="mt-0.5 rounded bg-[#101610] px-1 text-[7px] font-black text-[#ffc73d]">{role}</span>
+    <span className="-mt-px w-full truncate border-y border-[#0a0d0a] bg-black/95 px-1 py-0.5 text-center text-[10px] font-black uppercase text-white">{player.name}</span>
+    <span className="h-1 w-[88px] overflow-hidden rounded-b bg-black/80"><i style={{ width: `${player.energy}%` }} className={`block h-full ${energyTone}`} /></span>
+    {fitLabel !== "Natural" && <em className="mt-0.5 rounded bg-[#e5a332] px-1 text-[7px] not-italic font-black text-black">{fitLabel === "Secundária" ? "SEC" : "IMP"}</em>}
   </button>;
 }
 
 const tacticalRoleLabels: Record<string, string[]> = {
-  "4-3-3": ["LW", "ST", "RW", "LCM", "CM", "RCM", "LB", "LCB", "RCB", "RB", "GK"],
-  "4-4-2": ["LST", "RST", "LM", "LCM", "RCM", "RM", "LB", "LCB", "RCB", "RB", "GK"],
-  "3-5-2": ["LST", "RST", "LWB", "LCM", "CM", "RCM", "RWB", "LCB", "CB", "RCB", "GK"],
+  "4-3-3": ["ATA", "ATA", "ATA", "MC", "MC", "MC", "LAT", "ZAG", "ZAG", "LAT", "GOL"],
+  "4-4-2": ["ATA", "ATA", "ME", "MC", "MC", "ME", "LAT", "ZAG", "ZAG", "LAT", "GOL"],
+  "3-5-2": ["ATA", "ATA", "ALA", "MC", "MC", "MC", "ALA", "ZAG", "ZAG", "ZAG", "GOL"],
 };
 
 function closestSlot(slots: Array<{ left: number; top: number }>, point: { left: number; top: number }) { return slots.reduce((best, slot, index) => Math.hypot(slot.left - point.left, slot.top - point.top) < Math.hypot(slots[best].left - point.left, slots[best].top - point.top) ? index : best, 0); }
