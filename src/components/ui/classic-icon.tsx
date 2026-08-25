@@ -15,7 +15,7 @@ const iconByName: Record<ClassicIconName, string> = {
   door_out: "corner-flag.svg", find: "goalkeeper-gloves.svg", flag_red_dull: "offside-flag.svg", group: "team.svg", house: "football-club-flag.svg",
   magnifier: "goalkeeper-gloves.svg", medal_award_gold: "medal.svg", money: "football-club-flag.svg", pencil: "strategy.svg",
   sport: "stadium.svg", sport_soccer: "football.svg", star: "medal.svg", t_shirt_print: "football-studs.svg", user_add: "team.svg",
-  user_delete: "penalty-card.svg", user_edit: "player-field-position.svg", user_green: "player-field-position.svg", user_suit: "referee.svg",
+  user_delete: "penalty-card.svg", user_edit: "player-field-position.svg", user_green: "team.svg", user_suit: "referee.svg",
 };
 
 export function ClassicIcon({ name, size = 16, className = "" }: { name: ClassicIconName; size?: 16 | 32; className?: string }) {
