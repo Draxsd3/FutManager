@@ -72,20 +72,18 @@ export function ClubSidebar({
   return (
     <aside className="relative flex min-h-[calc(100vh-78px)] flex-col border-r border-[#c8d6ca] bg-[#fbfcf9] text-[#25362a] shadow-[2px_0_12px_rgba(26,49,34,.08)]">
       <div className="h-1.5 shrink-0 bg-[var(--team-accent)]" />
-      <div className="flex items-center gap-3 border-b border-[#d5e0d6] bg-white px-4 py-3">
+      <div className="flex items-center gap-3 border-b border-[#d5e0d6] bg-white px-4 py-4">
         <Crest club={club} />
         <div className="min-w-0">
-          <h1 className="truncate text-[15px] font-bold leading-tight">{club}</h1>
-          <p className="mt-2 truncate text-[12px] font-bold">{coach}</p>
+          <p className="text-[9px] font-bold uppercase tracking-[.13em] text-[var(--team-accent)]">Seu clube</p>
+          <h1 className="mt-1 truncate text-[17px] font-black leading-tight">{club}</h1>
+          <p className="mt-1 truncate text-[11px] text-[#607267]">Técnico: <b className="text-[#25362a]">{coach}</b></p>
         </div>
       </div>
 
-      <div className="grid grid-cols-[1fr_42px] border-b border-[#d5e0d6] bg-[#f2f6f1]">
-        <p className="flex items-center gap-2 px-4 py-2.5 text-[12px] font-bold">
-          <span className="grid h-5 w-7 place-items-center rounded border border-[#acc4b0] bg-white text-[9px] text-[var(--team-accent)]">R$</span>
-          {(budget / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} milhões
-        </p>
-        <div className="grid place-items-center border-l border-[#d5e0d6] text-[10px]"><b>1</b><span className="sr-only">mensagem</span>▣</div>
+      <div className="grid grid-cols-2 gap-px border-b border-[#d5e0d6] bg-[#d5e0d6]">
+        <div className="bg-[#f2f6f1] px-4 py-3"><p className="text-[9px] font-bold uppercase tracking-wide text-[#718278]">Caixa disponível</p><p className="mt-1 text-[14px] font-black text-[#25362a]">R$ {(budget / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}M</p></div>
+        <div className="bg-[#f2f6f1] px-4 py-3"><p className="text-[9px] font-bold uppercase tracking-wide text-[#718278]">Temporada</p><p className="mt-1 text-[14px] font-black text-[#25362a]">{round}ª rodada</p></div>
       </div>
 
       <div className="grid grid-cols-1 gap-3 border-b border-[#d5e0d6] bg-white px-4 py-3">
@@ -93,14 +91,12 @@ export function ClubSidebar({
         <Meter title="Confiança torcida" value={fanTrust} />
       </div>
 
-      <div className="mx-3 mt-3 rounded border border-[#b8ceb9] bg-[#f2f7f0] p-3 text-[#25362a]">
-        <b className="text-xs uppercase tracking-wide text-[var(--team-accent)]">
-          Próximo jogo · {isHome ? "Casa" : "Fora"}
-        </b>
+      <div className="mx-3 mt-4 rounded-lg border border-[#b8ceb9] bg-[#f2f7f0] p-3 text-[#25362a]">
+        <div className="flex items-center justify-between"><b className="text-[10px] uppercase tracking-wide text-[var(--team-accent)]">Próximo jogo</b><span className="rounded bg-white px-2 py-0.5 text-[9px] font-bold text-[#607267]">{isHome ? "CASA" : "FORA"}</span></div>
         <div className="mt-3 flex items-center gap-3">
           <Crest club={opponent} size="sm" />
           <div><p className="text-[14px] font-bold">{opponent}</p>
-          <p className="text-xs opacity-90">
+          <p className="mt-0.5 text-[10px] text-[#607267]">
           {competition} · {round}ª rodada
           </p></div>
         </div>
@@ -108,33 +104,16 @@ export function ClubSidebar({
 
       <button
         onClick={onCta}
-        className="mx-3 mt-3 w-[calc(100%-1.5rem)] rounded border border-[var(--team-accent)] bg-[var(--team-accent)] py-2.5 text-[12px] font-bold text-[var(--team-accent-text)] hover:brightness-110"
+        className="mx-3 mt-3 flex w-[calc(100%-1.5rem)] items-center justify-center gap-2 rounded-lg border border-[var(--team-accent)] bg-[var(--team-accent)] py-3 text-[13px] font-bold text-[var(--team-accent-text)] hover:brightness-110"
       >
-        <ClassicIcon name="sport_soccer" className="mr-1.5 align-middle" />{ctaLabel}
+        <ClassicIcon name="sport_soccer" size={32} />{ctaLabel}
       </button>
 
-      <div className="mx-3 mt-3 min-h-[145px] rounded border border-[#c9d9ca] bg-white p-3 text-[11px]">
-        <b className="block border-b border-[#d9e5d9] pb-2 text-[10px] uppercase tracking-wide text-[var(--team-accent)]">
-          Jogador selecionado
-        </b>
-        {selectedPlayer ? (
-          <div className="mt-2 space-y-1">
-            <p className="border-b border-[#c9d9ca] bg-[#eef5ee] px-1 py-1 text-[12px] font-bold text-[#25362a]">{selectedPlayer.name} <span className="float-right">F:{selectedPlayer.overall}</span></p>
-            <p className="opacity-90">
-              {positionLabel[selectedPlayer.position]} · {selectedPlayer.age} anos
-            </p>
-            <p className="opacity-90">Força: {selectedPlayer.overall}</p>
-            <p className="opacity-90">Valor: R$ {selectedPlayer.marketValue}M</p>
-            <div className="mt-3 grid grid-cols-3 border-t border-[#d9e5d9] pt-2 text-center"><b>Energia<br />{selectedPlayer.energy}%</b><b>Gols<br />{selectedPlayer.goals}</b><b>Assist.<br />{selectedPlayer.assists}</b></div>
-          </div>
-        ) : (
-          <p className="mt-2 opacity-70">Clique em um jogador para ver detalhes.</p>
-        )}
-      </div>
+      {selectedPlayer && <div className="mx-3 mt-3 rounded-lg border border-[#c9d9ca] bg-white p-3 text-[11px]"><div className="flex items-center justify-between border-b border-[#d9e5d9] pb-2"><b className="uppercase tracking-wide text-[var(--team-accent)]">Jogador selecionado</b><b>F:{selectedPlayer.overall}</b></div><p className="mt-2 text-[13px] font-bold">{selectedPlayer.name}</p><p className="mt-1 text-[#607267]">{positionLabel[selectedPlayer.position]} · {selectedPlayer.age} anos · R$ {selectedPlayer.marketValue}M</p><div className="mt-3 grid grid-cols-3 border-t border-[#d9e5d9] pt-2 text-center"><b>Energia<br />{selectedPlayer.energy}%</b><b>Gols<br />{selectedPlayer.goals}</b><b>Assist.<br />{selectedPlayer.assists}</b></div></div>}
 
       <div className="mt-auto border-t border-[#d5e0d6] bg-[#f0f5f0] p-3">
-        <div className="mb-2 flex items-center justify-between text-[10px]"><b className="text-[var(--team-accent)]">GESTÃO DO CLUBE</b><span>Elenco principal</span></div>
-        <div className="grid grid-cols-4 gap-1">
+        <div className="mb-3 flex items-center justify-between text-[10px]"><b className="text-[var(--team-accent)]">GESTÃO DO CLUBE</b><span className="text-[#718278]">Acesso rápido</span></div>
+        <div className="grid grid-cols-2 gap-2">
           <Quick icon="group" label="Elenco" onClick={() => onQuickAction("roster")} />
           <Quick icon="money" label="Finanças" onClick={() => onQuickAction("finances")} />
           <Quick icon="medal_award_gold" label="Troféus" onClick={() => onQuickAction("trophies")} />
@@ -147,5 +126,5 @@ export function ClubSidebar({
 }
 
 function Quick({ icon, label, onClick }: { icon: ClassicIconName; label: string; onClick: () => void }) {
-  return <button type="button" onClick={onClick} className="rounded border border-[#bfd0c0] bg-white px-1 py-2 text-center hover:bg-[#e9f1e9]"><ClassicIcon name={icon} className="mx-auto" /><span className="mt-1 block text-[9px] font-bold">{label}</span></button>;
+  return <button type="button" onClick={onClick} className="flex min-h-16 items-center gap-2 rounded-lg border border-[#bfd0c0] bg-white px-3 py-2 text-left hover:bg-[#e9f1e9]"><ClassicIcon name={icon} size={32} className="text-[var(--team-accent)]" /><span className="text-[10px] font-bold">{label}</span></button>;
 }
