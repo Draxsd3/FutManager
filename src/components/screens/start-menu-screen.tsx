@@ -17,41 +17,35 @@ export function StartMenuScreen({
 }) {
   return (
     <main className={styles.screen}>
-      <div className={styles.ambient} aria-hidden="true" />
-      <div className={styles.grid} aria-hidden="true" />
+      <div className={styles.pitch} aria-hidden="true" />
+      <div className={styles.stripes} aria-hidden="true" />
       <div className={styles.shade} aria-hidden="true" />
+      <header className={styles.topbar}>
+        <span className={styles.topMark} aria-hidden="true">FM</span><strong>FutManager</strong><span className={styles.version}>v0.2</span><span className={styles.settings} aria-label="Opções em desenvolvimento">☼</span>
+      </header>
       <section className={styles.panel} aria-label="Menu principal">
         <header className={styles.header}>
-          <div className={styles.eyebrow}><span className={styles.liveDot} aria-hidden="true" /><p>SIMULADOR DE FUTEBOL</p><span>CARREIRA</span></div>
-          <h1><span>FUT</span>MANAGER</h1>
-          <div className={styles.editionRow}><span>EDIÇÃO 2026</span><i aria-hidden="true" /><small>COMANDO. ESTRATÉGIA. GLÓRIA.</small></div>
+          <div className={styles.crest} aria-hidden="true"><span>FM</span></div><h1>FUT<span>MANAGER</span></h1><p>GERENCIADOR DE FUTEBOL BRASILEIRO</p><i aria-hidden="true" />
         </header>
 
         <nav className={styles.menu}>
-          <MenuButton index="01" icon="▶" title="INICIAR NOVO JOGO" detail="Escolha um clube e construa seu legado" onClick={onNewGame} accent />
-          <MenuButton index="02" icon="▣" title="CONTINUAR CARREIRA" detail={`${saveCount} carreira${saveCount === 1 ? "" : "s"} disponível${saveCount === 1 ? "" : "is"}`} onClick={onSaves} badge={saveCount > 0 ? String(saveCount) : undefined} />
-          <MenuButton index="03" icon="✦" title="EDITOR DE MUNDO" detail="Clubes, jogadores, uniformes e estádios" onClick={onEdit} />
+          <MenuButton icon="◉" title="NOVO JOGO" onClick={onNewGame} accent />
+          <MenuButton icon="▱" title="CARREGAR JOGO" detail={saveCount ? `${saveCount} carreira${saveCount === 1 ? "" : "s"} disponível${saveCount === 1 ? "" : "is"}` : "Nenhuma carreira salva"} onClick={onSaves} />
+          <MenuButton icon="♧" title="EDITOR DE TIMES" onClick={onEdit} />
+          <MenuButton icon="⚙" title="OPÇÕES" disabled />
+          <MenuButton icon="ⓘ" title="CRÉDITOS" disabled />
+          <MenuButton icon="⇥" title="SAIR DO JOGO" disabled />
         </nav>
-
-        <footer className={styles.footer}>
-          <span>FUTMANAGER <b>v0.2</b></span>
-          <span className={styles.sync}><i aria-hidden="true" />{syncLabel}</span>
-        </footer>
       </section>
+      <footer className={styles.bottomBar}><div className={styles.nextMatch}><span className={styles.calendar} aria-hidden="true">▣</span><span><small>CARREIRA</small><strong>{saveCount ? "Continue sua trajetória" : "Crie a sua primeira carreira"}</strong><em>{syncLabel}</em></span></div><span className={styles.support}><i aria-hidden="true">♡</i><span><small>FUTMANAGER</small><strong>Comando, estratégia e glória</strong></span></span></footer>
     </main>
   );
 }
 
-function MenuButton({ index, icon, title, detail, onClick, accent = false, badge }: { index: string; icon: string; title: string; detail: string; onClick: () => void; accent?: boolean; badge?: string }) {
+function MenuButton({ icon, title, detail, onClick, accent = false, disabled = false }: { icon: string; title: string; detail?: string; onClick?: () => void; accent?: boolean; disabled?: boolean }) {
   return (
-    <button type="button" className={`${styles.menuButton} ${accent ? styles.accent : ""}`} onClick={onClick}>
-      <span className={styles.index}>{index}<i>{icon}</i></span>
-      <span className={styles.copy}>
-        <strong>{title}</strong>
-        <small>{detail}</small>
-      </span>
-      {badge && <span className={styles.badge}>{badge}</span>}
-      <span className={styles.arrow} aria-hidden="true">↗</span>
+    <button type="button" className={`${styles.menuButton} ${accent ? styles.accent : ""}`} onClick={onClick} disabled={disabled} title={disabled ? "Disponível em breve" : undefined}>
+      <span className={styles.icon} aria-hidden="true">{icon}</span><span className={styles.copy}><strong>{title}</strong>{detail && <small>{detail}</small>}</span>{accent && <span className={styles.arrow} aria-hidden="true">›</span>}
     </button>
   );
 }
