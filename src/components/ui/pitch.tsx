@@ -99,9 +99,9 @@ function TacticPlayer({ player, role, selected, effectiveOverall, fitLabel, onCl
 }
 
 const tacticalRoleLabels: Record<string, string[]> = {
-  "4-3-3": ["ATA", "ATA", "ATA", "MC", "MC", "MC", "LAT", "ZAG", "ZAG", "LAT", "GOL"],
-  "4-4-2": ["ATA", "ATA", "ME", "MC", "MC", "ME", "LAT", "ZAG", "ZAG", "LAT", "GOL"],
-  "3-5-2": ["ATA", "ATA", "ALA", "MC", "MC", "MC", "ALA", "ZAG", "ZAG", "ZAG", "GOL"],
+  "4-3-3": ["LW", "ST", "RW", "CM", "CM", "CDM", "LB", "CB", "CB", "RB", "GK"],
+  "4-4-2": ["ST", "ST", "LM", "CM", "CM", "RM", "LB", "CB", "CB", "RB", "GK"],
+  "3-5-2": ["ST", "ST", "LM", "CM", "CDM", "CM", "RM", "CB", "CB", "CB", "GK"],
 };
 
 function closestSlot(slots: Array<{ left: number; top: number }>, point: { left: number; top: number }) { return slots.reduce((best, slot, index) => Math.hypot(slot.left - point.left, slot.top - point.top) < Math.hypot(slots[best].left - point.left, slots[best].top - point.top) ? index : best, 0); }
