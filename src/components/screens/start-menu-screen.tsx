@@ -20,6 +20,7 @@ export function StartMenuScreen({
       <div className={styles.pitch} aria-hidden="true" />
       <div className={styles.stripes} aria-hidden="true" />
       <div className={styles.shade} aria-hidden="true" />
+      <div className={styles.fieldLines} aria-hidden="true" />
       <header className={styles.topbar}>
         <span className={styles.topMark} aria-hidden="true">FM</span><strong>FutManager</strong><span className={styles.version}>v0.2</span><span className={styles.settings} aria-label="Opções em desenvolvimento">☼</span>
       </header>
@@ -29,15 +30,15 @@ export function StartMenuScreen({
         </header>
 
         <nav className={styles.menu}>
-          <MenuButton icon="◉" title="NOVO JOGO" onClick={onNewGame} accent />
-          <MenuButton icon="▱" title="CARREGAR JOGO" detail={saveCount ? `${saveCount} carreira${saveCount === 1 ? "" : "s"} disponível${saveCount === 1 ? "" : "is"}` : "Nenhuma carreira salva"} onClick={onSaves} />
-          <MenuButton icon="♧" title="EDITOR DE TIMES" onClick={onEdit} />
+          <MenuButton icon="⚽" title="NOVO JOGO" onClick={onNewGame} accent />
+          <MenuButton icon="▣" title="CARREGAR JOGO" detail={saveCount ? `${saveCount} carreira${saveCount === 1 ? "" : "s"} disponível${saveCount === 1 ? "" : "is"}` : "Nenhuma carreira salva"} onClick={onSaves} />
+          <MenuButton icon="♟" title="EDITOR DE TIMES" onClick={onEdit} />
           <MenuButton icon="⚙" title="OPÇÕES" disabled />
           <MenuButton icon="ⓘ" title="CRÉDITOS" disabled />
           <MenuButton icon="⇥" title="SAIR DO JOGO" disabled />
         </nav>
       </section>
-      <footer className={styles.bottomBar}><div className={styles.nextMatch}><span className={styles.calendar} aria-hidden="true">▣</span><span><small>CARREIRA</small><strong>{saveCount ? "Continue sua trajetória" : "Crie a sua primeira carreira"}</strong><em>{syncLabel}</em></span></div><span className={styles.support}><i aria-hidden="true">♡</i><span><small>FUTMANAGER</small><strong>Comando, estratégia e glória</strong></span></span></footer>
+      <footer className={styles.bottomBar}><div className={styles.nextMatch}><span className={styles.calendar} aria-hidden="true">⚽</span><span><small>CARREIRA</small><strong>{saveCount ? "Continue sua trajetória" : "Crie a sua primeira carreira"}</strong><em>{syncLabel}</em></span></div><span className={styles.support}><i aria-hidden="true">♟</i><span><small>TORCIDA FUTMANAGER</small><strong>Comando, estratégia e glória</strong></span></span></footer>
     </main>
   );
 }
