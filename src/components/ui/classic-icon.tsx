@@ -1,7 +1,7 @@
 import {
   Award, BookOpen, CalendarDays, ChartColumn, Circle, CircleCheck, CircleDollarSign,
   Flag, Goal, History, House, LogOut, Medal, Pencil, Plus, RefreshCw, Search,
-  Shirt, Star, Table2, Trash2, Trophy, UserMinus, UserPen, UserPlus, UserRound,
+  Shirt, Star, Table2, Trash2, UserMinus, UserPen, UserPlus, UserRound,
   UserRoundCog, UsersRound, X, type LucideIcon,
 } from "lucide-react";
 
@@ -19,7 +19,7 @@ const iconByName: Record<ClassicIconName, LucideIcon> = {
   chart_bar: ChartColumn, clock_history_frame: History, data_table: Table2, delete: Trash2,
   door_out: LogOut, find: Search, flag_red_dull: Flag, group: UsersRound, house: House,
   magnifier: Search, medal_award_gold: Medal, money: CircleDollarSign, pencil: Pencil,
-  sport: Trophy, sport_soccer: Goal, star: Star, t_shirt_print: Shirt, user_add: UserPlus,
+  sport: Goal, sport_soccer: Goal, star: Star, t_shirt_print: Shirt, user_add: UserPlus,
   user_delete: UserMinus, user_edit: UserPen, user_green: UserRound, user_suit: UserRoundCog,
 };
 
