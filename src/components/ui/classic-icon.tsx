@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export type ClassicIconName =
   | "accept_button" | "add" | "arrow_refresh" | "award_star_gold_blue"
   | "book" | "bullet_green" | "bullet_yellow" | "calendar" | "cancel"
@@ -19,4 +21,3 @@ const iconByName: Record<ClassicIconName, string> = {
 export function ClassicIcon({ name, size = 16, className = "" }: { name: ClassicIconName; size?: 16 | 32; className?: string }) {
   return <Image src={`/football-icons/${encodeURIComponent(iconByName[name])}`} width={size} height={size} unoptimized alt="" aria-hidden="true" className={`inline-block shrink-0 object-contain ${className}`} />;
 }
-import Image from "next/image";
