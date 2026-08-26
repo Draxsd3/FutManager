@@ -598,6 +598,12 @@ export function GameBoard() {
     setProfilePlayer(id);
   }
 
+  function updatePlayerCareer(id: number, record: PlayerCareerRecord) {
+    const next = { ...playerCareers, [id]: record };
+    setPlayerCareers(next);
+    void persistCareerExtras(next, manualPositions);
+  }
+
   function movePlayers(positions: Record<number, ManualPosition>) {
     const next = { ...manualPositions, ...positions };
     setManualPositions(next);
@@ -756,7 +762,7 @@ export function GameBoard() {
           const player = squad.find((item) => item.id === profilePlayer);
           if (!player) return null;
           const record = playerCareers[profilePlayer] ?? createPlayerCareer(player, club);
-          return <CareerPlayerProfile player={player} club={club} record={record} onClose={() => setProfilePlayer(null)} />;
+          return <CareerPlayerProfile player={player} club={club} record={record} onChange={(next) => updatePlayerCareer(profilePlayer, next)} onClose={() => setProfilePlayer(null)} />;
         })()}
       </>
     );
@@ -785,7 +791,7 @@ export function GameBoard() {
           const player = squad.find((item) => item.id === profilePlayer);
           if (!player) return null;
           const record = playerCareers[profilePlayer] ?? createPlayerCareer(player, club);
-          return <CareerPlayerProfile player={player} club={club} record={record} onClose={() => setProfilePlayer(null)} />;
+          return <CareerPlayerProfile player={player} club={club} record={record} onChange={(next) => updatePlayerCareer(profilePlayer, next)} onClose={() => setProfilePlayer(null)} />;
         })()}
       </>
     );
