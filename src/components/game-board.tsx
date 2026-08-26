@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/ui/app-shell";
-import { StandingsModal } from "@/components/ui/standings-modal";
+import { CompetitionCenter } from "@/components/ui/competition-center";
 import { CareerPlayerProfile } from "@/components/ui/career-player-profile";
 import type { NavItem } from "@/components/ui/top-nav";
 import { NewCareerScreen } from "@/components/screens/new-career-screen";
@@ -411,7 +411,7 @@ export function GameBoard() {
 
   function renderStandings() {
     if (!standingsOpen) return null;
-    return <StandingsModal club={club} competition={division} table={table} topScorers={topScorers} topRatings={topRatings} onClose={() => setStandingsOpen(false)} />;
+    return <CompetitionCenter club={club} competition={division} table={table} topScorers={topScorers} topRatings={topRatings} round={round} onClose={() => setStandingsOpen(false)} />;
   }
 
   function changeDatabase(next: EditorDatabase) {

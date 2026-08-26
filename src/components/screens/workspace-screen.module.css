@@ -1,0 +1,29 @@
+.screen { min-height: 100vh; padding: 24px; background: #0a2733 url('/game-assets/backgrounds/stadium.jpg') center/cover fixed; font: 12px Tahoma, Arial, sans-serif; color: #101010; }
+.window { width: min(1120px, 100%); min-height: calc(100vh - 48px); margin: 0 auto; border: 1px solid #061218; background: #d7d9d4; box-shadow: 0 12px 45px rgba(0,0,0,.72); display: flex; flex-direction: column; }
+.titleBar { height: 39px; padding: 0 10px 0 14px; background: #062c3b; border-bottom: 3px solid #d9dc27; color: #fff; display: flex; align-items: center; justify-content: space-between; }
+.titleBar strong { font-size: 12px; letter-spacing: .4px; }
+.titleBar button { width: 25px; height: 23px; border: 1px solid #8ca0a7; background: #e6e8e4; color: #111; font-weight: 900; cursor: pointer; }
+.body { flex: 1; padding: 18px; background: #eceeea; }
+.empty { margin: 80px auto; max-width: 420px; padding: 35px; border: 1px solid #9da6a1; background: #fff; text-align: center; }
+.empty strong { font-size: 16px; }
+.empty p { color: #5a625f; }
+.saveList { border: 1px solid #8d9994; background: #fff; }
+.saveRow { min-height: 92px; padding: 12px; border-bottom: 1px solid #b7bfbb; display: grid; grid-template-columns: 58px 1fr auto; align-items: center; gap: 14px; }
+.saveRow:last-child { border-bottom: 0; }
+.saveRow:hover { background: #f4f5d4; }
+.saveRow h2 { margin: 0 0 5px; font-size: 14px; }
+.saveRow p { margin: 0 0 5px; }
+.saveRow small { color: #66706b; }
+.badge { width: 54px; height: 54px; border: 2px solid #082a37; border-radius: 50%; background: #0d6a43; color: #fff; font-weight: 900; display: grid; place-items: center; }
+.rowActions { display: flex; gap: 7px; }
+.primaryButton, .dangerButton, .plainButton { min-width: 100px; height: 30px; padding: 0 12px; border: 1px solid #5e6c66; background: linear-gradient(#fff, #cdd3cf); font: 700 11px Tahoma, sans-serif; cursor: pointer; }
+.primaryButton { border-color: #134b36; background: linear-gradient(#3fc46f, #168a47); color: #fff; }
+.dangerButton { color: #8f1010; }
+.statusBar { min-height: 25px; padding: 6px 10px; border-top: 1px solid #9ea7a3; background: #ccd1cd; color: #44504b; }
+
+@media (max-width: 680px) {
+  .screen { padding: 0; }
+  .window { min-height: 100vh; }
+  .saveRow { grid-template-columns: 48px 1fr; }
+  .rowActions { grid-column: 1 / -1; }
+}
