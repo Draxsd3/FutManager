@@ -30,7 +30,7 @@ import {
 } from "@/lib/game/mock-data";
 import { buildSquadFromDatabase, createDefaultDatabase, upgradeEditorDatabase, type CareerSave, type EditorDatabase } from "@/lib/game/editor-data";
 import { createPlayerCareer, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
-import { formationSlots, playerFitAtPosition } from "@/lib/game/formations";
+import { formationSlotRoles, formationSlots, playerFitAtPosition } from "@/lib/game/formations";
 import { canResumeSavedCareer, isMenuPage } from "@/lib/game/session";
 import {
   deleteCloudSave,
@@ -581,6 +581,26 @@ export function GameBoard() {
     setSelectedPlayer(null);
   }
 
+  function placeLineupPlayer(id: number, slotIndex: number) {
+    const player = squad.find((item) => item.id === id);
+    const roles = formationSlotRoles[formation] ?? formationSlotRoles["4-3-3"];
+    const requiredRole = roles[slotIndex];
+    if (!player || !requiredRole || (player.position === "G") !== (requiredRole === "G")) return;
+    const originIndex = starters.indexOf(id);
+    const displaced = starters[slotIndex];
+    const next = [...starters];
+    if (originIndex >= 0) {
+      next[originIndex] = displaced;
+      next[slotIndex] = id;
+    } else {
+      next[slotIndex] = id;
+    }
+    setStarters(next);
+    setManualPositions({});
+    setSelectedPlayer(id);
+    void persistCareerExtras(playerCareers, {}, next);
+  }
+
   function openLineup() {
     const arranged = buildStartingXI(formation, squad);
     setStarters(arranged);
@@ -867,6 +887,7 @@ export function GameBoard() {
           bench={bench}
           selectedPlayer={selectedPlayerData}
           onSwap={swap}
+          onPlacePlayer={placeLineupPlayer}
           onPlay={startMatch}
           onBack={() => setPage("hub")}
           manualPositions={manualPositions}
