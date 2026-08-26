@@ -64,10 +64,15 @@ export function Pitch({
       <div className="pointer-events-none absolute bottom-[30px] left-1/2 h-[112px] w-[210px] -translate-x-1/2 border-x-2 border-t-2 border-[#edf1ce]" />
       <div className="pointer-events-none absolute left-1/2 top-[30px] h-[43px] w-[92px] -translate-x-1/2 border-x-2 border-b-2 border-[#edf1ce]" />
       <div className="pointer-events-none absolute bottom-[30px] left-1/2 h-[43px] w-[92px] -translate-x-1/2 border-x-2 border-t-2 border-[#edf1ce]" />
-      {slots.map((slot, index) => <div key={`${slot.left}-${slot.top}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { if (!onPlacePlayer) return; event.preventDefault(); const id = Number(event.dataTransfer.getData("text/player-id")); if (id) onPlacePlayer(id, index); }} className={`absolute h-16 w-20 -translate-x-1/2 -translate-y-1/2 rounded ${onPlacePlayer ? "z-0 border border-dashed border-white/20 bg-black/15 transition hover:border-[#22e47b] hover:bg-[#22e47b]/20" : "pointer-events-none bg-black/10"}`} style={{ left: `${slot.left}%`, top: `${slot.top}%` }}>
-        <i className="absolute left-1/2 top-1/2 h-8 w-7 -translate-x-1/2 -translate-y-1/2 bg-black/20" style={{ clipPath: "polygon(25% 0,38% 8%,62% 8%,75% 0,100% 20%,84% 38%,76% 31%,76% 100%,24% 100%,24% 31%,16% 38%,0 20%)" }} />
-        <b className="absolute bottom-0 right-0 text-[8px] text-white/35">{tactical ? roleLabels[index] : roles[index]}</b>
-      </div>)}
+      {slots.map((slot, index) => {
+        const occupied = starters.some((player) => {
+          const position = effectivePositions[player.id];
+          return position?.left === slot.left && position?.top === slot.top;
+        });
+        return <div key={`${slot.left}-${slot.top}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { if (!onPlacePlayer) return; event.preventDefault(); const id = Number(event.dataTransfer.getData("text/player-id")); if (id) onPlacePlayer(id, index); }} className={`absolute h-14 w-[86px] -translate-x-1/2 -translate-y-1/2 rounded ${onPlacePlayer ? "z-0 transition" : "pointer-events-none"} ${occupied ? "border border-transparent" : "border border-dashed border-white/30 bg-black/20 hover:border-[#22e47b] hover:bg-[#22e47b]/20"}`} style={{ left: `${slot.left}%`, top: `${slot.top}%` }}>
+          {!occupied && <><i className="absolute left-1/2 top-1/2 h-7 w-6 -translate-x-1/2 -translate-y-1/2 bg-white/20" style={{ clipPath: "polygon(25% 0,38% 8%,62% 8%,75% 0,100% 20%,84% 38%,76% 31%,76% 100%,24% 100%,24% 31%,16% 38%,0 20%)" }} /><b className="absolute bottom-0 right-1 text-[8px] text-white/60">{tactical ? roleLabels[index] : roles[index]}</b></>}
+        </div>;
+      })}
       {starters.slice(0, 11).map((player, index) => {
         const slot = effectivePositions[player.id] ?? { left: 50, top: 50 };
         const fit = playerFitAtPosition(player, formation, slot, index);
