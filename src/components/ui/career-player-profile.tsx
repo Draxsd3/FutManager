@@ -8,14 +8,13 @@ import { fifaPosition } from "@/lib/game/fifa-position";
 
 type ProfileTab = "resumo" | "temporada" | "historico" | "mercado";
 
-export function CareerPlayerProfile({ player, club, record, onChange, onClose }: { player: Player; club: string; record: PlayerCareerRecord; onChange: (record: PlayerCareerRecord) => void; onClose: () => void }) {
+export function CareerPlayerProfile({ player, club, record, onMarketAction, onClose }: { player: Player; club: string; record: PlayerCareerRecord; onMarketAction: (action: string) => void; onClose: () => void }) {
   const [tab, setTab] = useState<ProfileTab>("resumo");
   const [marketAction, setMarketAction] = useState("sale");
   const season = record.seasons.at(-1);
   const morale = player.energy >= 90 ? "Excelente" : player.energy >= 75 ? "Boa" : player.energy >= 55 ? "Neutra" : "Baixa";
   const stats = { games: season?.games ?? 0, goals: season?.goals ?? player.goals, assists: season?.assists ?? player.assists };
   const attributes = [["Ritmo", player.overall + 5], ["Finalização", player.position === "A" ? player.overall + 4 : player.overall - 6], ["Passe", player.position === "M" ? player.overall + 4 : player.overall - 4], ["Drible", player.overall + (player.position === "A" ? 2 : -2)], ["Defesa", player.position === "G" || player.position === "Z" ? player.overall + 5 : player.overall - 14], ["Físico", player.overall - 1]].map(([label, value]) => [label as string, Math.max(25, Math.min(99, value as number))] as const);
-  const applyMarketAction = () => onChange({ ...record, marketStatus: marketAction === "loan" ? "loan" : marketAction === "retiring" ? "retiring" : marketAction === "contract" ? "normal" : "sale", retirementYear: marketAction === "retiring" ? 2026 : null });
   return <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
     <section className="flex max-h-[calc(100dvh-32px)] w-full max-w-[1120px] flex-col overflow-hidden rounded-2xl border border-[#d8e0e6] bg-[#f8fafc] font-[Arial] text-[#20262d] shadow-[0_28px_80px_rgba(15,23,42,.32)]">
       <header className="flex shrink-0 items-center bg-[linear-gradient(118deg,var(--team-accent),color-mix(in_srgb,var(--team-accent)_72%,#273340))] px-6 py-4 text-[var(--team-accent-text)]"><div><p className="text-[10px] font-black uppercase tracking-[.2em] opacity-80">Central do atleta · modo carreira</p><h2 className="mt-0.5 text-2xl font-black">{player.name}</h2><p className="text-xs opacity-80">{club} · {fifaPosition(player)}</p></div><button onClick={onClose} className="ml-auto rounded-lg border border-current/40 bg-white/10 px-4 py-2 text-xs font-bold transition hover:bg-white/20">Fechar</button></header>
@@ -25,7 +24,7 @@ export function CareerPlayerProfile({ player, club, record, onChange, onClose }:
         {tab === "resumo" && <Summary player={player} record={record} stats={stats} morale={morale} attributes={attributes} />}
         {tab === "temporada" && <Performance player={player} attributes={attributes} stats={stats} />}
         {tab === "historico" && <History record={record} />}
-        {tab === "mercado" && <Market player={player} record={record} action={marketAction} setAction={setMarketAction} onApply={applyMarketAction} />}
+        {tab === "mercado" && <Market player={player} record={record} action={marketAction} setAction={setMarketAction} onApply={() => onMarketAction(marketAction)} />}
       </div></div>
     </section>
   </div>;
