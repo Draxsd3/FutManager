@@ -69,7 +69,7 @@ export function Pitch({
           const position = effectivePositions[player.id];
           return position?.left === slot.left && position?.top === slot.top;
         });
-        return <div key={`${slot.left}-${slot.top}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { if (!onPlacePlayer) return; event.preventDefault(); const id = Number(event.dataTransfer.getData("text/player-id")); if (id) onPlacePlayer(id, index); }} className={`absolute h-14 w-[86px] -translate-x-1/2 -translate-y-1/2 rounded ${onPlacePlayer ? "z-0 transition" : "pointer-events-none"} ${occupied ? "border border-transparent" : "border border-dashed border-white/30 bg-black/20 hover:border-[#22e47b] hover:bg-[#22e47b]/20"}`} style={{ left: `${slot.left}%`, top: `${slot.top}%` }}>
+        return <div key={`${slot.left}-${slot.top}`} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { if (!onPlacePlayer) return; event.preventDefault(); const id = Number(event.dataTransfer.getData("text/player-id")); if (id) onPlacePlayer(id, index); }} className={`absolute h-14 w-[86px] -translate-x-1/2 -translate-y-1/2 rounded ${onPlacePlayer ? "z-0 transition" : "pointer-events-none"} ${occupied ? "border border-transparent" : "border border-dashed border-white/30 bg-black/20 hover:border-[#22e47b] hover:bg-[#22e47b]/20"}`} style={{ left: fieldCoordinate(slot.left), top: fieldCoordinate(slot.top) }}>
           {!occupied && <><i className="absolute left-1/2 top-1/2 h-7 w-6 -translate-x-1/2 -translate-y-1/2 bg-white/20" style={{ clipPath: "polygon(25% 0,38% 8%,62% 8%,75% 0,100% 20%,84% 38%,76% 31%,76% 100%,24% 100%,24% 31%,16% 38%,0 20%)" }} /><b className="absolute bottom-0 right-1 text-[8px] text-white/60">{tactical ? roleLabels[index] : roles[index]}</b></>}
         </div>;
       })}
@@ -81,7 +81,7 @@ export function Pitch({
           <div
             key={player.id}
             className="absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ left: `${slot.left}%`, top: `${slot.top}%` }}
+            style={{ left: fieldCoordinate(slot.left), top: fieldCoordinate(slot.top) }}
           >
             {tactical ? <TacticPlayer player={player} role={tacticalRole} selected={selectedPlayer === player.id} fitLabel={fit.label} effectiveOverall={Math.max(1, player.overall - fit.penalty)} onClick={() => onSelect(player.id)} onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/player-id", String(player.id)); }} /> : <Shirt club={club} player={player} selected={selectedPlayer === player.id} onClick={() => onSelect(player.id)} effectiveOverall={Math.max(1, player.overall - fit.penalty)} fitLabel={fit.label} draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/player-id", String(player.id)); }} />}
           </div>
@@ -114,3 +114,4 @@ const tacticalRoleLabels: Record<string, string[]> = {
 };
 
 function closestSlot(slots: Array<{ left: number; top: number }>, point: { left: number; top: number }) { return slots.reduce((best, slot, index) => Math.hypot(slot.left - point.left, slot.top - point.top) < Math.hypot(slots[best].left - point.left, slots[best].top - point.top) ? index : best, 0); }
+function fieldCoordinate(value: number) { return `calc(${value}% + ${30 - value * .6}px)`; }
