@@ -19,6 +19,8 @@ export function ClubSectionScreen({
   budget,
   squad,
   fixtures,
+  competition = "Campeonato Estadual",
+  inGameDate = "2026-01-22",
   onBack,
   onOpenPlayer,
   onTrainPlayer,
@@ -31,6 +33,8 @@ export function ClubSectionScreen({
   budget: number;
   squad: Player[];
   fixtures: RoundFixture[];
+  competition?: string;
+  inGameDate?: string;
   onBack: () => void;
   onOpenPlayer: (id: number) => void;
   onTrainPlayer: (id: number, focus: string) => void;
@@ -74,14 +78,7 @@ export function ClubSectionScreen({
           <button onClick={onBack} className="rounded border border-white/60 bg-white/90 px-3 py-1 text-[11px] font-bold text-[#17351d] hover:bg-white">VOLTAR AO CLUBE</button>
         </header>
 
-        {section === "agenda" && (
-          <div className="grid gap-4 p-4 lg:grid-cols-[260px_1fr]">
-            <Panel title="CALENDÁRIO"><p className="text-5xl font-black text-[#073e59]">22</p><p className="font-bold">Janeiro de 2026</p><p className="mt-3 text-[#68757b]">Rodada atual: {round}ª</p></Panel>
-            <Panel title="PRÓXIMOS JOGOS">
-              <div className="divide-y divide-[#c8ced1]">{fixtures.map((fixture, index) => <div key={`${fixture.home}-${fixture.away}`} className="grid grid-cols-[70px_1fr_auto_1fr] items-center gap-3 py-3"><b>{index === 0 ? "HOJE" : `+${index * 3 + 2} DIAS`}</b><span className="text-right font-bold">{fixture.home}</span><span className="bg-[#17242a] px-3 py-1 font-black text-white">x</span><span className="font-bold">{fixture.away}</span></div>)}</div>
-            </Panel>
-          </div>
-        )}
+        {section === "agenda" && <AgendaCenter club={club} division={currentClub?.division ?? "Série A"} competition={competition} inGameDate={inGameDate} round={round} fixtures={fixtures} squad={squad} clubs={database.clubs.filter((item) => item.division === (currentClub?.division ?? "Série A")).map((item) => item.name)} />}
 
         {section === "stadium" && (
           <div className="grid gap-4 p-4 lg:grid-cols-[1.4fr_1fr]">
@@ -134,6 +131,25 @@ export function ClubSectionScreen({
     </div>
   );
 }
+
+function AgendaCenter({ club, division, competition, inGameDate, round, fixtures, squad, clubs }: { club: string; division: string; competition: string; inGameDate: string; round: number; fixtures: RoundFixture[]; squad: Player[]; clubs: string[] }) {
+  const [filter, setFilter] = useState<"all" | "matches" | "selection" | "market">("all");
+  const date = new Date(`${inGameDate}T12:00:00`);
+  const opponents = clubs.filter((name) => name !== club).slice(0, 10);
+  const games = opponents.map((opponent, index) => ({ date: new Date(date.getFullYear(), date.getMonth(), date.getDate() + index * 7), opponent, home: index % 2 === 0, round: round + index, competition }));
+  const selected = squad.filter((player) => player.overall >= 82 && player.age <= 27).slice(0, 2);
+  const selectionDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 12);
+  const window = transferWindowFor(competition, date);
+  const currentFixture = fixtures.find((fixture) => fixture.home === club || fixture.away === club);
+  const visibleGames = filter === "all" || filter === "matches";
+  return <div className="p-4"><div className="grid gap-4 xl:grid-cols-[250px_1fr_280px]"><Panel title="CALENDÁRIO DA CARREIRA"><p className="text-4xl font-black text-[var(--team-accent)]">{String(date.getDate()).padStart(2, "0")}</p><p className="font-bold capitalize">{date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</p><p className="mt-3 text-[11px] text-[#68757b]">{competition} · {division}</p><p className="mt-1 text-[11px] text-[#68757b]">Rodada atual: {round}ª</p><div className="mt-5 grid gap-1">{(["all", "matches", "selection", "market"] as const).map((item) => <button key={item} onClick={() => setFilter(item)} className={`rounded px-3 py-2 text-left text-xs font-bold ${filter === item ? "bg-[var(--team-accent)] text-[var(--team-accent-text)]" : "bg-[#edf3ee] hover:bg-[#dfece1]"}`}>{({ all: "Visão geral", matches: "Jogos do clube", selection: "Seleção", market: "Transferências" } as const)[item]}</button>)}</div></Panel>
+    <Panel title={filter === "market" ? "JANELA DE TRANSFERÊNCIAS" : filter === "selection" ? "COMPROMISSOS DE SELEÇÃO" : "AGENDA DE JOGOS"}>{visibleGames && <div className="divide-y divide-[#dce7dc]">{games.map((game, index) => <div key={`${game.opponent}-${index}`} className="grid grid-cols-[72px_1fr_auto_1fr] items-center gap-3 py-3 text-xs"><div><b className="block text-[var(--team-accent)]">{game.date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</b><small>{game.round}ª rodada</small></div><b className="text-right">{game.home ? club : game.opponent}</b><span className="rounded bg-[#253229] px-2 py-1 font-black text-white">×</span><b>{game.home ? game.opponent : club}</b><p className="col-span-4 text-[10px] text-[#6b7970]">{game.competition} · {game.home ? "Casa" : "Fora"}</p></div>)}</div>}{filter === "selection" && <SelectionAgenda selected={selected} date={selectionDate} />}{filter === "market" && <TransferDetails window={window} competition={competition} />}{filter === "all" && <><div className="mt-4 border-t border-[#dce7dc] pt-4"><SelectionAgenda selected={selected} date={selectionDate} /></div><div className="mt-4 border-t border-[#dce7dc] pt-4"><TransferDetails window={window} competition={competition} /></div></>}</Panel>
+    <aside className="space-y-4"><Panel title="PRÓXIMO COMPROMISSO">{currentFixture ? <><b className="block text-lg">{currentFixture.home} × {currentFixture.away}</b><p className="mt-1 text-[11px] text-[#68757b]">{currentFixture.stadium}</p><p className="mt-3 text-xs font-bold text-[var(--team-accent)]">Hoje · {competition}</p></> : <p className="text-xs text-[#68757b]">Nenhuma partida cadastrada.</p>}</Panel><Panel title="MERCADO ATUAL"><b className={window.open ? "text-[#157b40]" : "text-[#a85a28]"}>{window.open ? "JANELA ABERTA" : "JANELA FECHADA"}</b><p className="mt-2 text-[11px] text-[#68757b]">{window.name}</p><p className="mt-1 text-[11px] text-[#68757b]">{window.period}</p><p className="mt-3 text-[10px]">As decisões de venda, empréstimo e contrato podem ser feitas na ficha do jogador.</p></Panel></aside></div></div>;
+}
+
+function SelectionAgenda({ selected, date }: { selected: Player[]; date: Date }) { return selected.length ? <div><b className="text-xs text-[#29402f]">Brasil · amistoso internacional</b><p className="mt-1 text-[11px] text-[#68757b]">{date.toLocaleDateString("pt-BR")} · Convocados: {selected.map((player) => player.name).join(", ")}</p><p className="mt-1 text-[10px] text-[#68757b]">Os atletas ficam indisponíveis durante a data FIFA.</p></div> : <p className="text-xs text-[#68757b]">Nenhum atleta do elenco foi convocado para a próxima data FIFA.</p>; }
+function TransferDetails({ window, competition }: { window: ReturnType<typeof transferWindowFor>; competition: string }) { return <div><b className={window.open ? "text-[#157b40]" : "text-[#a85a28]"}>{window.open ? "Janela de transferências aberta" : "Janela de transferências fechada"}</b><p className="mt-1 text-xs">{window.name} · {window.period}</p><p className="mt-2 text-[11px] text-[#68757b]">Regras aplicadas para {competition}: negociações só podem ser concluídas dentro da janela correspondente.</p></div>; }
+function transferWindowFor(competition: string, date: Date) { const month = date.getMonth() + 1; const day = date.getDate(); const domesticOpen = (month === 1 && day >= 7) || month === 2 || (month === 3 && day <= 3) || (month === 7 && day >= 10) || month === 8 || (month === 9 && day <= 2); if (competition.includes("Libertadores")) return { name: "Inscrição CONMEBOL", period: "25/01–10/02 e 10/07–02/08", open: (month === 1 && day >= 25) || (month === 2 && day <= 10) || (month === 7 && day >= 10) || (month === 8 && day <= 2) }; if (competition.includes("Copa do Brasil")) return { name: "Registro nacional da CBF", period: "07/01–03/03 e 10/07–02/09", open: domesticOpen }; if (competition.includes("Estadual")) return { name: "Inscrição estadual", period: "02/01–27/03", open: month <= 3 && (month !== 1 || day >= 2) }; return { name: "Janela nacional", period: "07/01–03/03 e 10/07–02/09", open: domesticOpen }; }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) { return <section className="border border-[#c9d9ca] bg-[#fbfdfb]"><h2 className="border-b border-[#d9e5d9] bg-[var(--team-accent)] px-3 py-2 text-[11px] font-bold text-[var(--team-accent-text)]">{title}</h2><div className="p-4">{children}</div></section>; }
 function Info({ label, value }: { label: string; value: string }) { return <div className="flex justify-between border-b border-[#dce7dc] py-2"><b>{label}</b><span>{value}</span></div>; }

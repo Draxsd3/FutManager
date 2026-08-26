@@ -827,6 +827,8 @@ export function GameBoard() {
             budget={budget}
             squad={squad}
             fixtures={fixtures}
+            competition="Campeonato Estadual"
+            inGameDate={saves.find((save) => save.id === activeSaveId)?.inGameDate ?? "2026-01-22"}
             onBack={() => navigate("hub")}
             onOpenPlayer={openPlayerProfile}
             onTrainPlayer={trainPlayer}
