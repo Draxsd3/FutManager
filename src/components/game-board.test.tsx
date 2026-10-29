@@ -76,3 +76,42 @@ it("can save and return home during a match, then resume that match paused", asy
   expect(await screen.findByText("PARTIDA PAUSADA")).toBeTruthy();
   expect(readLocalSaves("alice")[0].progress?.minute).toBe(saved.progress?.minute);
 });
+
+
+it("returns to the redesigned menu from new career, saves and both editor exit buttons", async () => {
+  render(game());
+  const assertCurrentMenu = async () => {
+    const title = await screen.findByRole("heading", { level: 1 });
+    expect(title.textContent).toBe("SEU CLUBE.SUAS REGRAS.SUA HISTÓRIA.");
+    expect(document.querySelector('[data-menu-version="minimal-v1"]')).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "OPÇÕES" })).toBeNull();
+    expect(screen.getByRole("link", { name: /menu principal/ }).getAttribute("href")).toBe("#menu-principal");
+  };
+  await assertCurrentMenu();
+  fireEvent.click(screen.getByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /Voltar ao menu/ }));
+  await assertCurrentMenu();
+  fireEvent.click(screen.getByRole("button", { name: /CARREGAR CARREIRA/ }));
+  fireEvent.click(await screen.findByRole("button", { name: "Voltar ao menu" }));
+  await assertCurrentMenu();
+  for (const exit of ["início", "sair editor"]) {
+    fireEvent.click(screen.getByRole("button", { name: /EDITOR DE CLUBES/ }));
+    fireEvent.click(await screen.findByRole("button", { name: exit }));
+    await assertCurrentMenu();
+  }
+});
+
+it("keeps club navigation internal and the top Menu inicial button returns to the new menu", async () => {
+  render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Teste Navegação" } });
+  fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+  for (const destination of ["Agenda", "Estádio", "Juniores", "Times", "Procura", "Técnicos", "História"]) {
+    fireEvent.click(await screen.findByRole("button", { name: destination }));
+    expect(screen.getByRole("button", { name: /Salvar e voltar ao início/ })).toBeTruthy();
+  }
+  fireEvent.click(screen.getByRole("button", { name: "Menu inicial" }));
+  expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
+  expect(document.querySelector('[data-menu-version="minimal-v1"]')).toBeTruthy();
+  expect(readLocalSaves("alice")[0].managerName).toBe("Teste Navegação");
+});

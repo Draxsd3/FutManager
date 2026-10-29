@@ -89,3 +89,24 @@ Os testes incluem cadastro/login com serviços simulados, separação de contas,
 carreiras independentes, retorno ao menu, retomada de partidas e ordenação dos
 checkpoints. A validação real de Auth, email e RLS exige um projeto Supabase
 configurado e acessível; mocks não substituem essa verificação em produção.
+
+## Diagnóstico de navegação e versão publicada
+
+O aplicativo usa uma única rota (`/`). A navegação entre menu, login, editor,
+carreiras e clube acontece dentro dessa rota, sem trocar de domínio. Tanto o
+botão **Menu inicial** da barra superior quanto **Salvar e voltar ao início**
+retornam ao mesmo componente minimalista `StartMenuScreen`.
+
+O menu atual contém “SEU CLUBE. SUAS REGRAS. SUA HISTÓRIA.” e não contém os botões
+indisponíveis “OPÇÕES”, “CRÉDITOS” e “SAIR DO JOGO”. Se esses botões aparecerem,
+a página exibida não corresponde à interface atual do código.
+
+No rodapé em desktop, `Build <hash>` identifica os primeiros oito caracteres do
+commit informado pela Vercel (`VERCEL_GIT_COMMIT_SHA`). Em execução local ou sem
+essa variável, aparece `Build local`; isso não comprova publicação em produção.
+
+Para investigar uma tela antiga, confira o endereço exato aberto no navegador,
+a branch de produção configurada na Vercel (`main`), o commit do deploy e o domínio
+associado. Um link de preview/deploy antigo não é atualizado quando a produção
+muda. Não crie redirecionamentos para domínios presumidos: valide primeiro o
+endereço e o projeto corretos.
