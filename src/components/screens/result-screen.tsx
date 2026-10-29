@@ -35,8 +35,7 @@ export function ResultScreen({
   passErrors: number;
   onContinue: () => void;
 }) {
-  const goals = events.filter((event) => !event.card);
-  const cards = events.filter((event) => event.card);
+
 
   return (
     <div className="h-dvh overflow-hidden bg-[#06170a] bg-[linear-gradient(rgba(3,23,9,.86),rgba(3,23,9,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover p-3 font-[Arial] text-white">
@@ -93,21 +92,11 @@ export function ResultScreen({
               ))}
             </Panel>
 
-            <Panel title="Gols e cartões">
-              {goals.length === 0 && cards.length === 0 && (
-                <p className="text-white/60">Sem eventos na partida.</p>
-              )}
-              {goals.map((event, index) => (
-                <p key={`g-${index}`} className="flex items-center gap-1.5">
-                  <ClassicIcon name="sport_soccer" />{event.text} · {event.minute}&apos; - {event.half}º
-                </p>
-              ))}
-              {cards.map((event, index) => (
-                <p key={`c-${index}`} className="flex items-center gap-1.5">
-                  <ClassicIcon name={event.card === "yellow" ? "bullet_yellow" : "flag_red_dull"} />{event.text} ·{" "}
-                  {event.minute}&apos; - {event.half}º
-                </p>
-              ))}
+            <Panel title="Resumo do jogo">
+              {events.length === 0 && <p className="text-white/60">Sem eventos na partida.</p>}
+              <div className="max-h-96 space-y-1.5 overflow-auto">
+                {events.map((event, index) => <p key={index} className="flex items-start gap-1.5"><span>{event.card ? "🟨" : event.scene?.action === "goal" ? "⚽" : event.scene?.action === "shot" ? "◎" : event.scene?.action === "foul" ? "✋" : event.scene?.action === "discussion" ? "!" : "↗"}</span>{event.minute}&apos; · {event.text}</p>)}
+              </div>
             </Panel>
 
             <Panel title="Estatísticas">

@@ -228,7 +228,7 @@ comparam a silhueta e exercitam a normalização da resposta simulada do provedo
 
 ## Visualização da partida
 
-A central de partida inclui um minicampo ilustrativo com os titulares, formação e posições personalizadas do clube. Os pontos se movem conforme o relógio da partida e param na pausa; o adversário usa uma formação genérica. O motor ainda não calcula trajetórias de jogadores ou bola, portanto a animação não reproduz os lances reais nem altera a simulação.
+A central de partida simula passes, finalizações, gols, desarmes, faltas e discussões como lances compartilhados entre placar, minicampo e resumo. O campo usa titulares, formação e posições personalizadas; o adversário usa uma formação genérica. Os demais jogos exibem apenas resultados simulados, reproduzíveis por rodada e minuto entre clubes cadastrados na divisão. Não constituem calendário real ou histórico de classificação. O modelo é simplificado, sem física contínua ou elenco real do adversário; saves antigos permanecem compatíveis.
 ### Demarcações completas e contíguas
 
 “Mostrar setores” oferece 20 áreas cobrindo o campo inteiro, sem espaçamento
