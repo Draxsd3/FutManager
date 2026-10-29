@@ -70,7 +70,7 @@ it("uses numbered shirts, not photos, and exposes every sector", () => {
   ).toBe(false);
   fireEvent.click(screen.getByLabelText("Mostrar setores"));
   expect(screen.getAllByRole("button", { name: /Posicionar em/ })).toHaveLength(
-    16,
+    20,
   );
   fireEvent.click(screen.getByLabelText("Mostrar setores"));
   expect(screen.queryByRole("button", { name: /Posicionar em/ })).toBeNull();
@@ -85,7 +85,7 @@ it("supports click/keyboard-compatible selection, sector movement and unrestrict
   expect(place).toHaveBeenLastCalledWith(
     starters[0].id,
     0,
-    expect.objectContaining({ left: 16, top: 30 }),
+    expect.objectContaining({ left: 10, top: 43 }),
   );
   fireEvent.click(starterButton(1));
   expect(place).toHaveBeenLastCalledWith(starters[0].id, 1, undefined);
@@ -96,7 +96,7 @@ it("supports click/keyboard-compatible selection, sector movement and unrestrict
   expect(place).toHaveBeenCalledWith(
     starters[0].id,
     0,
-    expect.objectContaining({ left: 50, top: 90 }),
+    expect.objectContaining({ left: 50, top: 95 }),
   );
   place.mockClear();
   fireEvent.keyDown(
@@ -105,12 +105,12 @@ it("supports click/keyboard-compatible selection, sector movement and unrestrict
   );
   fireEvent.click(starterButton(10));
   fireEvent.click(
-    screen.getByRole("button", { name: "Posicionar em Centroavante" }),
+    screen.getByRole("button", { name: "Posicionar em Centroavante esquerdo" }),
   );
   expect(place).toHaveBeenCalledWith(
     starters[10].id,
     10,
-    expect.objectContaining({ left: 50, top: 14 }),
+    expect.objectContaining({ left: 38, top: 9 }),
   );
 });
 it("filters reserves and restores positions without changing tactical controls", () => {
@@ -305,11 +305,37 @@ it("places reserve keepers at the nearest actual outfield location without snapp
   );
   fireEvent.click(screen.getByLabelText("Mostrar setores"));
   fireEvent.click(
-    screen.getByRole("button", { name: "Posicionar em Centroavante" }),
+    screen.getByRole("button", { name: "Posicionar em Centroavante esquerdo" }),
   );
   expect(place).toHaveBeenCalledWith(
     reserve.id,
     1,
-    expect.objectContaining({ left: 50, top: 14 }),
+    expect.objectContaining({ left: 38, top: 9 }),
   );
+});
+it("offers contiguous polygon targets for second striker, wingbacks and every center-back side without role restrictions", () => {
+  const { place } = setup();
+  fireEvent.click(screen.getByLabelText("Mostrar setores"));
+  fireEvent.click(starterButton(0));
+  const targets = [
+    ["Segundo atacante", 50, 23],
+    ["Ala esquerdo", 10, 64],
+    ["Ala direito", 90, 64],
+    ["Zagueiro esquerdo", 31, 80],
+    ["Zaga central", 50, 80],
+    ["Zagueiro direito", 69, 80],
+  ] as const;
+  for (const [name, left, top] of targets) {
+    const target = screen.getByRole("button", {
+      name: `Posicionar em ${name}`,
+    });
+    expect((target as HTMLElement).style.clipPath).toMatch(/^polygon\(/);
+    expect(target.getAttribute("aria-disabled")).toBe("false");
+    fireEvent.click(target);
+    expect(place).toHaveBeenLastCalledWith(
+      starters[0].id,
+      0,
+      expect.objectContaining({ left, top }),
+    );
+  }
 });

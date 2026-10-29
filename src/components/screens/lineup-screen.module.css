@@ -261,41 +261,73 @@
   font-size: 8px;
   letter-spacing: 2px;
   color: #c2d3bc;
+  z-index: 2;
   pointer-events: none;
 }
 .sector {
   position: absolute;
-  width: 27%;
-  height: 12%;
-  transform: translate(-50%, -50%);
-  background: transparent;
-  border: 1px dashed #ffffff20;
-  border-radius: 8px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #c7ddc70a;
   cursor: pointer;
-  color: #e9f7cf65;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
+  color: #edf6e3bb;
+  z-index: 1;
+  transition: background 0.15s;
+}
+.sector.attack {
+  background: #e6c58d16;
+}
+.sector.midfield {
+  background: #b5cee416;
+}
+.sector.defense {
+  background: #a8d8c316;
+}
+.sector.keeper {
+  background: #b5e7eb22;
 }
 .sector span {
   position: absolute;
-  right: 5px;
-  bottom: 3px;
+  transform: translate(-50%, -50%);
   font-size: 8px;
-  font-weight: 700;
+  font-weight: 650;
+  letter-spacing: 0.3px;
+  background: #10271f80;
+  padding: 2px 4px;
+  border-radius: 3px;
+  pointer-events: none;
 }
 .sector.valid {
-  border-color: #c9ee7370;
-  background: #b6e06a0a;
-  color: #e4f6b6;
+  color: #f1f8de;
 }
-.sector.valid:hover,
-.sector.valid:focus-visible {
-  border-color: #d6f790;
+.sector:hover,
+.sector:focus-visible {
   background: #c7f46a40;
+  outline: none;
+}
+.sector:focus-visible span {
+  outline: 2px solid #e5f5b4;
 }
 .sector[aria-disabled="true"] {
   cursor: default;
+}
+.regionBorders {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+.regionBorders polygon {
+  fill: none;
+  stroke: #e4efdd65;
+  stroke-width: 1;
 }
 .player {
   position: absolute;
@@ -953,7 +985,6 @@
   }
   .sector span {
     font-size: 6px;
-    right: 2px;
   }
 }
 @media (max-height: 550px) {
@@ -999,25 +1030,6 @@
   .sector {
     transition: none;
   }
-}
-
-.guideLines {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-rows: repeat(3, 1fr);
-  pointer-events: none;
-}
-.guideLines > span {
-  border-bottom: 1px dashed #ddf59090;
-  color: #ddf590a0;
-  font-size: 8px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 5px;
-}
-.guideLines > span:last-child {
-  border: 0;
 }
 
 /* The dragged shirt is already at its destination on release: never fly back and reanimate. */

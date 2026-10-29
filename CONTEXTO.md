@@ -111,3 +111,9 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Sem camisa cadastrada, gerar a principal na primeira cor do clube e a reserva na segunda, sempre no mesmo molde. Exemplo expresso: vermelho/preto → principal vermelha e reserva preta. Não usar um formato diferente para cada cor nem atribuir cores de outro clube a times personalizados.
 - Implementação: molde fotográfico transparente derivado da imagem fornecida em `src/lib/kits/fabric-template.json`; script reproduzível `scripts/build-kit-template.mjs`. Criador, uniformes automáticos e camisas numeradas compartilham o molde. Importações são projetadas nele e a IA recebe a imagem de referência, com recorte/mascaramento posterior no servidor. Acervo anterior é preservado sem regravação destrutiva.
 - IA continua indisponível até configurar a chave e aplicar a migração; não confundir colorização/recorte determinístico ou testes com imagens simuladas com geração paga real.
+
+### 13. Demarcações completas do campo
+
+- Referência enviada em 29/10/2026 inclui ST/CF, pontas, meia ofensivo, meias dos lados, meios centrais, volante, alas, laterais, zagueiros dos três lados e goleiro. Oferecer todas essas posições visualmente, incluindo segundo atacante, alas esquerdo/direito e zaga esquerda/central/direita.
+- As demarcações podem se encostar: não deixar faixas vazias entre regiões. Implementação usa 20 áreas contíguas que cobrem todo o campo, com limites compartilhados e siglas da referência; nomes acessíveis em português.
+- Preservar guias desligadas por padrão, liberdade total de arraste (sem snap ou bloqueio por posição), coordenadas salvas e campo/banco juntos sem rolagem. Demarcações são orientação visual e destinos opcionais por clique/teclado, não novas restrições do motor.
