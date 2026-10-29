@@ -723,7 +723,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setPage("matchOverview");
   }
 
+  const matchTacticsTrigger = useRef<HTMLElement | null>(null);
+
   function openMatchTactics() {
+    matchTacticsTrigger.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setMatchRunning(false);
     setDetailOpen(true);
     setSelectedPlayer(null);
@@ -945,6 +948,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   if (page === "matchOverview")
     return (
       <>
+        <div inert={detailOpen}>
         <MatchOverviewScreen
           formation={formation}
           starters={startersData}
@@ -975,6 +979,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           onOpenDetail={openMatchTactics}
           onRequestExit={() => leaveActiveCareer("menu")}
         />
+        </div>
         {detailOpen && (
           <MatchDetailScreen
             club={club}
@@ -987,32 +992,14 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             setFormation={changeMatchFormation}
             startersData={startersData}
             bench={bench}
-            events={events}
-            possession={possession}
-            shots={shots}
-            onGoal={onGoalStat}
-            tackles={tackles}
-            passErrors={passErrors}
-            style={style}
-            setStyle={setStyle}
-            marking={marking}
-            setMarking={setMarking}
-            focus={focus}
-            setFocus={setFocus}
-            onReorderBench={reorderBench}
             substitutionsLeft={substitutionsLeft}
             selectedPlayer={selectedPlayer}
             substitutionOut={substitutionOut}
             onSelectPlayer={selectMatchPlayer}
             onSubstitute={substitute}
             onClose={closeMatchTactics}
+            returnFocusTo={matchTacticsTrigger.current}
             isHalftime={halftimeWaiting}
-            manualPositions={manualPositions}
-            onPlacePlayer={(id, slot, point) => {
-              // Reserves must go through substitute(), never the pre-match placement shortcut.
-              if (starters.includes(id)) placeLineupPlayer(id, slot, point);
-            }}
-            onResetPositions={resetManualPositions}
           />
         )}
       </>
