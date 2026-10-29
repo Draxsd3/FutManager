@@ -32,6 +32,7 @@ import { createPlayerCareer, type ManualPosition, type PlayerCareerRecord } from
 import { formationSlotRoles, formationSlots, playerFitAtPosition } from "@/lib/game/formations";
 import { mergeCareerSaves } from "@/lib/game/save-utils";
 import { isMenuPage } from "@/lib/game/session";
+import { agendaOptions, type AgendaView } from "@/components/screens/agenda-screen";
 import type { CareerProgress } from "@/lib/game/progress";
 import {
   deleteCloudSave,
@@ -62,6 +63,7 @@ const sectionByPage: Partial<Record<Page, ClubSection>> = {
 };
 
 export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { userId: string; email: string; onSignOut: () => Promise<void>; initialPage?: "menu" | "new" | "saves" | "editor" }) {
+  const [agendaView, setAgendaView] = useState<AgendaView>("matches");
   const [page, setPage] = useState<Page>(initialPage);
   const [database, setDatabase] = useState<EditorDatabase | null>(null);
   const [saves, setSaves] = useState<CareerSave[]>([]);
@@ -301,7 +303,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     .map((player) => ({ name: player.name, club: clubNamesById[player.clubId] ?? "-", rating: player.averageRating ?? 0, played: round - 1, role: player.primaryPosition }));
 
   const nav: NavItem[] = [
-    { icon: "calendar", label: "Agenda", active: page === "agenda", onClick: () => navigate("agenda") },
+    { icon: "calendar", label: "Agenda", active: page === "agenda", onClick: () => navigate("agenda"), children: agendaOptions.map((option) => ({ label: option.label, description: option.description, onClick: () => { setAgendaView(option.id); navigate("agenda"); } })) },
     { icon: "data_table", label: "Tabelas", active: standingsOpen, onClick: () => setStandingsOpen(true) },
     { icon: "sport", label: "Estádio", active: page === "stadium", onClick: () => navigate("stadium") },
     { icon: "user_green", label: "Juniores", active: page === "juniors", onClick: () => navigate("juniors") },
@@ -852,6 +854,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         <AppShell nav={nav} teamName={club} date="22/01/2026">
           <ClubSectionScreen
             section={managementSection}
+            agendaView={agendaView}
+            onAgendaViewChange={setAgendaView}
+            onPrepare={openLineup}
             database={database}
             club={club}
             coach={coach}

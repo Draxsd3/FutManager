@@ -110,3 +110,9 @@ a branch de produção configurada na Vercel (`main`), o commit do deploy e o do
 associado. Um link de preview/deploy antigo não é atualizado quando a produção
 muda. Não crie redirecionamentos para domínios presumidos: valide primeiro o
 endereço e o projeto corretos.
+
+## Agenda do clube
+
+O botão Agenda abre um submenu com Jogos do seu time, Jogos amistosos e Central de empregos. Cada escolha abre a seção correspondente; as abas da agenda também permitem alternar entre elas. O submenu aceita teclado (setas, Home, End e Escape) e fecha ao clicar fora.
+
+A agenda apresenta o compromisso disponível na rodada, filtro de mando e acesso à escalação. Não gera datas futuras nem convocações fictícias. Amistosos e empregos mostram estados vazios informando que agendamento e ofertas ainda não estão implementados.

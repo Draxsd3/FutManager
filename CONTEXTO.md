@@ -61,3 +61,7 @@ O responsável autorizou fazer o merge de cada entrega para a `main` sem nova co
 - Usar os controles de navegação existentes, como Menu inicial na barra superior. Não exibir o botão flutuante “Salvar e voltar ao início”, removido a pedido do responsável. Manter o salvamento automático.
 - Armazenamento local separado por usuário; nuvem protegida por políticas RLS de proprietário.
 - Nunca incluir chaves secretas do Supabase no cliente ou no repositório.
+
+### 7. Navegação da agenda
+
+Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amistosos e Central de empregos. Só navegar após escolher uma opção. A agenda deve priorizar clareza, próximo compromisso e calendário legível, sem inventar partidas, propostas ou funcionalidades ainda indisponíveis.

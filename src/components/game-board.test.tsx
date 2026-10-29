@@ -111,6 +111,7 @@ it("keeps club navigation internal and the top Menu inicial button returns to th
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
   for (const destination of ["Agenda", "Estádio", "Juniores", "Times", "Procura", "Técnicos", "História"]) {
     fireEvent.click(await screen.findByRole("button", { name: destination }));
+    if (destination === "Agenda") fireEvent.click(screen.getByRole("menuitem", { name: /Jogos do seu time/ }));
     expect(screen.queryByRole("button", { name: /Salvar e voltar ao início/ })).toBeNull();
     expect(screen.getByRole("button", { name: "Menu inicial" })).toBeTruthy();
   }
@@ -118,4 +119,26 @@ it("keeps club navigation internal and the top Menu inicial button returns to th
   expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
   expect(document.querySelector('[data-menu-version="minimal-v1"]')).toBeTruthy();
   expect(readLocalSaves("alice")[0].managerName).toBe("Teste Navegação");
+});
+
+
+it("opens Agenda choices before navigating and routes each choice to its own section", async () => {
+  render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Teste Agenda" } });
+  fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+  fireEvent.click(await screen.findByRole("button", { name: "Agenda" }));
+  expect(screen.queryByRole("heading", { name: "Cada jogo, um novo capítulo." })).toBeNull();
+  expect(screen.getAllByRole("menuitem")).toHaveLength(3);
+  fireEvent.click(screen.getByRole("menuitem", { name: /Jogos amistosos/ }));
+  expect(await screen.findByRole("heading", { name: "Nenhum amistoso agendado" })).toBeTruthy();
+  expect(screen.queryByRole("menu")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Agenda" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: /Central de empregos/ }));
+  expect(await screen.findByRole("heading", { name: "Nenhuma proposta de trabalho" })).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Agenda" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: /Jogos do seu time/ }));
+  expect(await screen.findByRole("heading", { name: "Jogos do seu time" })).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: /Preparar equipe/ }));
+  expect(await screen.findByRole("heading", { name: "Escalação & Tática" })).toBeTruthy();
 });
