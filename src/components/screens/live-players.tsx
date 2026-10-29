@@ -55,6 +55,6 @@ export function LivePlayers({ starters, formation, manualPositions, scene, minut
   return <>{players.map((player, index) => {
     const home = index < Math.min(starters.length, 11);
     const athlete = home ? starters[index] : undefined;
-    return <span key={player.key} ref={(node) => { if (node) nodes.current.set(player.key, node); else nodes.current.delete(player.key); }} data-player-key={player.key} className={`${styles.player} ${home ? styles.homePlayer : styles.awayPlayer} ${player.active ? styles.activePlayer : ""}`} title={athlete ? `${athlete.name} · ${athlete.position}` : undefined}>{athlete && <span>{athlete.shirtNumber ?? athlete.id}</span>}</span>;
+    return <span key={player.key} ref={(node) => { if (node) nodes.current.set(player.key, node); else nodes.current.delete(player.key); }} data-player-key={player.key} className={`${styles.player} ${home ? styles.homePlayer : styles.awayPlayer} ${player.active ? styles.activePlayer : ""} ${player.goalkeeper ? styles.goalkeeper : ""}`} title={athlete ? `${athlete.name} · ${athlete.position}` : player.goalkeeper ? "Goleiro adversário" : undefined}>{athlete && <span>{athlete.shirtNumber ?? athlete.id}</span>}</span>;
   })}</>;
 }

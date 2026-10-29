@@ -46,6 +46,20 @@ it("continues a completed pass from the receiving player without moving the ball
   expect(next.scene?.targetIndex).not.toBe(next.scene?.actorIndex);
 });
 
+it("uses the same live player locations as the preview when creating the next pass", () => {
+  const snapshot = {
+    home: players.map((_, index) => ({ x: 30 + index * 4, y: 20 + index * 5 })),
+    away: players.map((_, index) => ({ x: 70 - index * 4, y: 80 - index * 5 })),
+  };
+  let n = 0;
+  const rolls = [0, .1, .1, .1];
+  const event = simulateAction({ minute: 30, starters: players, formation: "4-3-3", positions: {}, opponent: "Rival", snapshot, random: () => rolls[n++] ?? 0 });
+  expect(event.scene?.team).toBe("home");
+  expect(event.scene?.actorIndex).toBe(1);
+  expect(Math.hypot(event.scene!.from.x - snapshot.home[1].x, event.scene!.from.y - snapshot.home[1].y)).toBeLessThan(3);
+  expect(Math.hypot(event.scene!.to.x - snapshot.home[event.scene!.targetIndex].x, event.scene!.to.y - snapshot.home[event.scene!.targetIndex].y)).toBeLessThan(3);
+});
+
 it("filters ordinary circulation but keeps key moments and legacy events", async () => {
   const { isHighlight } = await import("./live-match");
   expect(isHighlight(generate([0, .1, 0, 0]))).toBe(false);
@@ -54,13 +68,6 @@ it("filters ordinary circulation but keeps key moments and legacy events", async
   expect(isHighlight(generate([0, .9, 0, 0]))).toBe(true);
   expect(isHighlight({ minute: 5, half: 1, text: "Substituição" })).toBe(true);
   expect(isHighlight({ ...generate([0, .1, 0, 0]), card: "yellow" })).toBe(true);
-});
-
-it("bounds both goalkeeper and outfield motion around the chosen tactical position", async () => {
-  const { boundedPlayerPoint } = await import("./live-match");
-  const selected = { x: 80, y: 35 };
-  expect(boundedPlayerPoint(selected, { x: 5, y: 95 }, true)).toEqual({ x: 76, y: 42 });
-  expect(boundedPlayerPoint(selected, { x: 5, y: 95 }, false)).toEqual({ x: 68, y: 50 });
 });
 
 it("restarts in midfield after a goal and stores named scorers when available", () => {

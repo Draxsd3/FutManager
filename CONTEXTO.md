@@ -17,6 +17,8 @@ O projeto inclui telas de gestão financeira, contratos, mercado, treinamento, c
 - Supabase para persistência em nuvem, com armazenamento local no navegador.
 - Vitest para testes automatizados.
 - `docs/brasfoot-reference.md`: referência de mecânicas, sem copiar interface, textos ou ativos de terceiros.
+- `MECANICA-JOGO.md`: referência de regras de futebol (IFAB), princípios táticos FIFA, limites do motor atual e critérios para implementar mecânicas sem apresentar simplificações como regras oficiais.
+- `docs/top-eleven-reference.md`: pesquisa das informações públicas do Top Eleven e princípios de simulação/visualização que inspiram o FutManager, sem presumir acesso ao motor proprietário.
 - `src/components/game-board.tsx`: coordenação atual dos principais fluxos do jogo.
 - `src/lib/game/`: regras e persistência.
 - `supabase/migrations/`: evolução do banco de dados.
@@ -115,7 +117,7 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 ### 13. Tela de partida e minicampo
 
 - A tela de acompanhamento deve apresentar uma visualização moderna com minicampo, preservando placar, estatísticas, lances, resultados da rodada e controles de velocidade, pausa e táticas.
-- As bolinhas do clube controlado acompanham os titulares, a formação e as posições personalizadas, com movimentação limitada ao redor dessas posições. O adversário usa formação genérica, pois sua escalação não é fornecida pelo motor atual.
+- As bolinhas partem da formação e das posições personalizadas, que representam a organização inicial do time — não limites de movimentação. Durante o jogo, os atletas se deslocam conforme bola, posse, apoio, cobertura e função; o adversário usa formação genérica quando sua escalação real não está disponível.
 - A visualização de partida utiliza lances simulados estruturados, compartilhados pelo placar, resumo e minicampo; respeita as posições configuradas e para ao pausar. O adversário ainda tem formação genérica e o modelo é simplificado, não uma simulação física completa.
 ### 14. Demarcações completas do campo
 
@@ -149,7 +151,7 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 
 ### 19. Goleiros e comemoração de gol ao vivo
 
-- Na visualização da partida, impedir que jogadores sejam levados para o outro lado do campo por lances distantes; goleiros têm deslocamento mais limitado ao redor da posição definida pelo usuário, sem bloquear posicionamentos táticos personalizados.
+- Na visualização da partida, transicionar os jogadores suavemente entre as ações, sem teleportá-los para lances distantes. As coordenadas escolhidas pelo usuário definem a organização de partida, não um raio de movimento; goleiros têm comportamento mais ligado à proteção da meta, com resposta à bola e sem bloqueio de posicionamento.
 - Cada gol novo deve mostrar uma comemoração temporária “GOOOL!” com autor, clube e minuto, inclusive no intervalo ou no fim do jogo. Não repetir a comemoração ao carregar uma partida já salva. Preservar placar, lances e acessibilidade com movimento reduzido.
 - O adversário usa uma escalação simulada com atletas cadastrados no editor quando disponíveis; se o elenco não estiver disponível, identificar o autor genericamente em vez de inventar um nome. As escalações adversárias e o modelo de movimento continuam simplificados.
 ### 20. Táticas durante a partida no padrão da escalação inicial
@@ -163,9 +165,9 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 
 ### 21. Movimentação coletiva durante a partida
 
-- Na ilustração, movimentar os atletas das duas equipes também sem bola, mantendo a formação e as posições manuais como âncoras. O posicionamento reage à bola e à posse; um jogador de linha próximo pode pressionar, e os demais ajustam cobertura e apoio. Goleiros acompanham a bola perto da posição escolhida, sem atravessar o campo.
-- Interpolar todos os jogadores suavemente em um único ciclo visual; pausa e intervalo congelam a posição atual, velocidade acelera o movimento e a preferência de movimento reduzido é respeitada. A movimentação não altera resultados, estatísticas ou saves.
-- A referência de pesquisa inspirou princípios, não uma implementação literal de IA ou física: UT Austin Villa (formação relacionada à bola e goleiro com função própria, https://www.cs.utexas.edu/~pstone/Papers/bib2html-links/LNAI12-MacAlpine.pdf) e PhysicsFC (movimentação sem bola ancorada à formação, https://arxiv.org/html/2504.21216v1). O modelo do FutManager continua heurístico e ilustrativo.
+- A formação e as posições manuais definem a organização inicial, não pontos que prendem os atletas. Com bola, sem bola e em transição, o desenho coletivo se desloca; o jogador mais próximo pode pressionar, enquanto companheiros dão apoio e cobertura. A resposta do goleiro privilegia a proteção da meta, mas não o congela na coordenada inicial.
+- Interpolar todos os jogadores suavemente em um único ciclo; pausa e intervalo congelam a posição atual, velocidade acelera o movimento e a preferência de movimento reduzido é respeitada. As posições escolhidas não são regravadas durante a visualização. As coordenadas dinâmicas também informam seleção de ator/alvo e impedimento simplificado; o modelo continua heurístico, não é física completa.
+- Referências de formação relacionada à bola e movimento sem bola incluem UT Austin Villa (https://www.cs.utexas.edu/~pstone/Papers/bib2html-links/LNAI12-MacAlpine.pdf) e PhysicsFC (https://arxiv.org/html/2504.21216v1). Top Eleven inspira a apresentação de uma forma coletiva fluida; suas fórmulas proprietárias não são públicas e não são copiadas.
 
 ### 22. Táticas rápidas em modal durante a partida
 
