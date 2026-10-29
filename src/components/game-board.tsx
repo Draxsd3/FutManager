@@ -235,7 +235,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     if (page !== "matchOverview" || !matchRunning || detailOpen || minute >= 90) return;
     const timer = window.setTimeout(() => {
       const nextMinute = Math.min(90, minute + 1);
-      const event = simulateAction({ minute: nextMinute, starters: startersData, formation, positions: manualPositions, opponent, strength });
+      const event = simulateAction({ minute: nextMinute, starters: startersData, formation, positions: manualPositions, opponent, strength, previous: [...events].reverse().find((item) => item.scene)?.scene });
       setMinute(nextMinute);
       setEvents((current) => [...current, event]);
       if (event.scene?.action === "goal") {
@@ -252,7 +252,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       }
     }, 700 / matchSpeed);
     return () => window.clearTimeout(timer);
-  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, page, startersData, formation, manualPositions, strength]);
+  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, page, startersData, formation, manualPositions, strength, events]);
 
   useEffect(() => {
     if (page !== "matchOverview" || minute !== 90 || detailOpen) return;

@@ -140,3 +140,9 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Na escalação, manter campo, banco completo e indicadores principais visíveis, inclusive em telas pequenas. Cards de reservas exibem apenas identificação, posição e força; detalhes ficam na ficha aberta por duplo clique, tecla I ou botão acessível após selecionar o atleta.
 - Segurar ou arrastar um reserva levanta uma prévia; soltá-lo em um titular ou no campo faz a substituição, e soltá-lo em outro reserva reordena o banco. Cancelar não modifica escalação. Disponibilizar reordenação também por botões na ficha e persistir a ordem no elenco da carreira.
 - Usar imagem ilustrativa de banco de reservas como fundo, preservando contraste e legibilidade. A imagem foi gerada para o projeto e não representa um estádio específico.
+
+### 18. Fluidez e melhores momentos na partida
+
+- A circulação da bola deve ser contínua: após um passe, o recebedor inicia o próximo lance, priorizando companheiros próximos. A bola interpola a partir da posição atual, sem reiniciar a cada minuto; pausa, intervalo e velocidade controlam a animação.
+- O painel ao vivo, a janela de táticas e o resultado mostram somente melhores momentos (finalizações, gols, faltas, discussões, cartões e alterações), sem listar passes e desarmes rotineiros. Os eventos internos continuam disponíveis para estatísticas e retomada de saves anteriores.
+- O movimento continua sendo uma simulação simplificada, sem física completa nem elenco real do adversário; não apresentá-lo como reprodução de jogo real.

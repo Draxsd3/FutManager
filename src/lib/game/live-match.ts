@@ -20,29 +20,45 @@ export function fieldPoint(position: ManualPosition, away: boolean): Point {
 }
 
 /** A single source for the commentary, score and visual action. */
-export function simulateAction({ minute, starters, formation, positions, opponent, strength = 74, random = Math.random }: {
+export function simulateAction({ minute, starters, formation, positions, opponent, previous, strength = 74, random = Math.random }: {
   minute: number; starters: Player[]; formation: string; positions: Record<number, ManualPosition>;
-  opponent: string; strength?: number; random?: () => number;
+  opponent: string; previous?: MatchScene; strength?: number; random?: () => number;
 }): MatchEvent {
   const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
-  const team = random() < clamp(.5 + (strength - 74) * .005, .35, .65) ? "home" : "away";
+  const randomTeam = random() < clamp(.5 + (strength - 74) * .005, .35, .65) ? "home" : "away";
+  const team = previous?.action === "pass" ? previous.team : randomTeam;
   const pick = (length: number) => Math.min(length - 1, Math.floor(random() * length));
   // Include all roles in circulation, but shots favour attackers and midfielders.
   const roll = random();
   const action: LiveAction = roll < .60 ? "pass" : roll < .79 ? "shot" : roll < .86 ? "tackle" : roll < .95 ? "foul" : "discussion";
   const available = Math.max(1, Math.min(starters.length, 11));
-  const actorIndex = pick(action === "shot" ? Math.min(6, available) : available);
-  const targetIndex = available > 1 ? (actorIndex + 1 + pick(available - 1)) % available : 0;
+  let actorIndex = pick(action === "shot" ? Math.min(6, available) : available);
+  let targetIndex = available > 1 ? (actorIndex + 1 + pick(available - 1)) % available : 0;
+  const point = (index: number) => fieldPoint((team === "home" && starters[index] && positions[starters[index].id]) || slots[index] || { left: 50, top: 50 }, team === "away");
+  if (previous && available > 1) {
+    // A completed pass is controlled by its receiver. On a turnover use the closest player.
+    actorIndex = previous.action === "pass" && previous.team === team && previous.targetIndex < available
+      ? previous.targetIndex
+      : Array.from({ length: available }, (_, index) => index).reduce((best, index) => {
+        const distance = (i: number) => Math.hypot(point(i).x - previous.to.x, point(i).y - previous.to.y);
+        return distance(index) < distance(best) ? index : best;
+      }, 0);
+    // Pick from nearby teammates instead of sending the ball across the whole pitch.
+    const candidates = Array.from({ length: available }, (_, index) => index)
+      .filter((index) => index !== actorIndex)
+      .sort((a, b) => Math.hypot(point(a).x - point(actorIndex).x, point(a).y - point(actorIndex).y) - Math.hypot(point(b).x - point(actorIndex).x, point(b).y - point(actorIndex).y))
+      .slice(0, 3);
+    targetIndex = candidates[pick(candidates.length)] ?? actorIndex;
+  }
   const actor = starters[actorIndex];
   const actorName = team === "home" ? actor?.name ?? "Jogador" : `Jogador do ${opponent}`;
   const target = team === "home" ? starters[targetIndex]?.name ?? "companheiro" : `companheiro do ${opponent}`;
-  const point = (index: number) => fieldPoint((team === "home" && starters[index] && positions[starters[index].id]) || slots[index] || { left: 50, top: 50 }, team === "away");
   const movedPoint = (index: number) => {
     const base = point(index);
     const distance = index === 10 ? .5 : 2;
     return { x: clamp(base.x + Math.sin(minute * .6 + index) * distance, 5, 95), y: clamp(base.y + Math.cos(minute * .5 + index) * distance, 5, 95) };
   };
-  const from = movedPoint(actorIndex);
+  const from = previous?.to ?? movedPoint(actorIndex);
   let to = movedPoint(targetIndex);
   let finalAction: LiveAction = action;
   let text: string;
@@ -64,6 +80,11 @@ export function simulateAction({ minute, starters, formation, positions, opponen
     text = `${actorName} toca para ${target}.`;
   }
   return { minute, half: minute <= 45 ? 1 : 2, text, scene: { action: finalAction, team, actorIndex, targetIndex, from, to } };
+}
+
+/** Keep routine circulation out of commentary while retaining it for simulation and statistics. */
+export function isHighlight(event: MatchEvent): boolean {
+  return !!event.card || !event.scene || !["pass", "tackle"].includes(event.scene.action);
 }
 
 /** Results are stable across reloads and never include goals from future minutes. */
