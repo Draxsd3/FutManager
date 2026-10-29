@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import type { RoundFixture, Player } from "@/lib/game/mock-data";
 import type { ManualPosition } from "@/lib/game/career";
 import { formationSlots } from "@/lib/game/formations";
@@ -9,15 +10,32 @@ import type { MatchEvent } from "@/components/screens/match-detail-screen";
 import { Crest } from "@/components/ui/club-sidebar";
 import styles from "./match-overview-screen.module.css";
 
-export function MatchOverviewScreen({ competition, round, minute, half, club, opponent, homeScore, awayScore, possession, shots, onGoal, tackles, passErrors, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, formation, starters, manualPositions }: {
+export function MatchOverviewScreen({ competition, round, minute, half, club, opponent, homeScore, awayScore, possession, shots, onGoal, tackles, passErrors, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, onRequestExit, formation, starters, manualPositions }: {
   competition: string; round: number; minute: number; half: "1º tempo" | "2º tempo" | "fim";
   club: string; opponent: string; homeScore: number; awayScore: number; possession: number; shots: number;
   onGoal: string; tackles: number; passErrors: number; fixtures: RoundFixture[]; events: MatchEvent[];
   running: boolean; speed: 1 | 2 | 4; halftimeWaiting: boolean; onToggleRunning: () => void;
-  onSpeedChange: (speed: 1 | 2 | 4) => void; onOpenDetail: () => void;
+  onSpeedChange: (speed: 1 | 2 | 4) => void; onOpenDetail: () => void; onRequestExit: () => void;
   formation: string; starters: Player[]; manualPositions: Record<number, ManualPosition>;
 }) {
+  const [exitConfirmationOpen, setExitConfirmationOpen] = useState(false);
+  const exitTriggerRef = useRef<HTMLButtonElement>(null);
+  const continueButtonRef = useRef<HTMLButtonElement>(null);
   const status = running ? "AO VIVO" : halftimeWaiting ? "INTERVALO" : minute >= 90 ? "ENCERRADA" : "PARTIDA PAUSADA";
+
+  useEffect(() => {
+    if (!exitConfirmationOpen) return;
+    const exitTrigger = exitTriggerRef.current;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setExitConfirmationOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    continueButtonRef.current?.focus();
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      exitTrigger?.focus();
+    };
+  }, [exitConfirmationOpen]);
   const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
   const currentEvent = [...events].reverse().find((event) => event.minute === minute && event.scene);
   const scene = currentEvent?.scene;
@@ -39,8 +57,9 @@ export function MatchOverviewScreen({ competition, round, minute, half, club, op
       </div>
       <div className={styles.controls}>
         <div className={styles.speeds}><span>VELOCIDADE</span>{([1, 2, 4] as const).map(value => <button key={value} aria-pressed={speed === value} onClick={() => onSpeedChange(value)}>{value}x</button>)}</div>
-        <div className={styles.actions}>{minute < 90 && <button className={styles.primary} onClick={onToggleRunning}>{running ? "❚❚  Pausar" : halftimeWaiting ? "▶  Iniciar 2º tempo" : "▶  Continuar"}</button>}<button className={styles.secondary} onClick={onOpenDetail}>Escalação e táticas ↗</button></div>
+        <div className={styles.actions}>{minute < 90 && <button className={styles.primary} onClick={onToggleRunning}>{running ? "❚❚  Pausar" : halftimeWaiting ? "▶  Iniciar 2º tempo" : "▶  Continuar"}</button>}<button className={styles.secondary} onClick={onOpenDetail}>Escalação e táticas ↗</button><button ref={exitTriggerRef} className={styles.exitButton} onClick={() => setExitConfirmationOpen(true)}>Menu inicial</button></div>
       </div>
+      {exitConfirmationOpen && <div className={styles.dialogBackdrop}><section className={styles.exitDialog} role="alertdialog" aria-modal="true" aria-labelledby="exit-match-title" aria-describedby="exit-match-description"><span className={styles.eyebrow}>{minute < 90 ? "PARTIDA EM ANDAMENTO" : "PARTIDA FINALIZADA"}</span><h2 id="exit-match-title">{minute < 90 ? "Sair da partida?" : "Voltar ao menu inicial?"}</h2><p id="exit-match-description">{minute < 90 ? "Seu progresso será salvo neste minuto. Ao continuar esta carreira, a partida será retomada pausada." : "O resultado foi preservado. Você poderá continuar esta carreira quando quiser."}</p><div className={styles.dialogActions}><button ref={continueButtonRef} onClick={() => setExitConfirmationOpen(false)}>Continuar partida</button><button className={styles.confirmExit} onClick={onRequestExit}>Sair e salvar</button></div></section></div>}
       <div className={styles.content}>
         <section className={styles.pitchCard} aria-label="Visualização da partida simulada">
           <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>VISÃO DE JOGO</span><h2>Dentro de campo</h2></div><span className={styles.badge}>{formation}</span></div>
