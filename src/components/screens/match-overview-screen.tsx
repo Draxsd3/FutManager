@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { RoundFixture, Player } from "@/lib/game/mock-data";
 import type { ManualPosition } from "@/lib/game/career";
-import { formationSlots } from "@/lib/game/formations";
-import { boundedPlayerPoint, fieldPoint, isHighlight } from "@/lib/game/live-match";
+import { isHighlight } from "@/lib/game/live-match";
 import { LiveBall } from "./live-ball";
+import { LivePlayers } from "./live-players";
 import { GoalCelebration } from "./goal-celebration";
 import type { MatchEvent } from "@/components/screens/match-detail-screen";
 import { Crest } from "@/components/ui/club-sidebar";
@@ -37,7 +37,6 @@ export function MatchOverviewScreen({ competition, round, minute, half, club, op
       exitTrigger?.focus();
     };
   }, [exitConfirmationOpen]);
-  const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
   const currentEvent = [...events].reverse().find((event) => event.minute === minute && event.scene);
   const scene = currentEvent?.scene;
   const highlights = events.filter(isHighlight);
@@ -66,16 +65,7 @@ export function MatchOverviewScreen({ competition, round, minute, half, club, op
           <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>VISÃO DE JOGO</span><h2>Dentro de campo</h2></div><span className={styles.badge}>{formation}</span></div>
           <div className={styles.pitch} role="group" aria-label={`Campo simulado: ${club} em ${formation}, contra ${opponent}`}>
             <div className={styles.fieldLine} /><div className={styles.midline} /><div className={styles.circle} /><div className={styles.boxLeft} /><div className={styles.boxRight} /><div className={styles.goalLeft} /><div className={styles.goalRight} />
-            {starters.slice(0, 11).map((player, index) => {
-              const point = fieldPoint(manualPositions[player.id] ?? slots[index] ?? { left: 50, top: 50 }, false);
-              const active = scene?.team === "home" && scene.actorIndex === index;
-              const confronted = scene?.team === "away" && (scene.action === "foul" || scene.action === "discussion" || scene.action === "tackle") && index === scene.targetIndex;
-              const receiving = scene?.team === "home" && scene.action === "pass" && index === scene.targetIndex;
-              const desired = confronted || receiving ? scene.to : active ? scene.from : point;
-              const location = boundedPlayerPoint(point, desired, index === 10 || player.position === "G");
-              return <span key={player.id} className={`${styles.player} ${styles.homePlayer} ${active || confronted ? styles.activePlayer : ""}`} style={{ left: `${location.x}%`, top: `${location.y}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} title={`${player.name} · ${player.position}`}><span>{player.shirtNumber ?? player.id}</span></span>;
-            })}
-            {slots.map((pos, index) => { const point = fieldPoint(pos, true); const active = scene?.team === "away" && scene.actorIndex === index; const confronted = scene?.team === "home" && (scene.action === "foul" || scene.action === "discussion" || scene.action === "tackle") && index === scene.targetIndex; const receiving = scene?.team === "away" && scene.action === "pass" && index === scene.targetIndex; const desired = confronted || receiving ? scene.to : active ? scene.from : point; const location = boundedPlayerPoint(point, desired, index === 10); return <span key={index} className={`${styles.player} ${styles.awayPlayer} ${active || confronted ? styles.activePlayer : ""}`} style={{ left: `${location.x}%`, top: `${location.y}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} />; })}
+            <LivePlayers starters={starters} formation={formation} manualPositions={manualPositions} scene={scene} minute={minute} running={running} speed={speed} />
             <LiveBall target={scene?.to} running={running} speed={speed} />
             <GoalCelebration events={events} club={club} opponent={opponent} />
             {currentEvent && isHighlight(currentEvent) && <div className={styles.actionCaption} aria-live="polite"><strong>{scene?.action === "goal" ? "GOL" : scene?.action === "shot" ? "FINALIZAÇÃO" : scene?.action === "foul" ? "FALTA" : "DISCUSSÃO"}</strong> {currentEvent.text}</div>}
