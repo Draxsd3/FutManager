@@ -128,7 +128,7 @@ Validação: `npm test`, `npm run lint`, `npm run build`. Testes cobrem navegaç
 
 ### Escalação moderna
 
-O centro tático usa camisas vetoriais com o número cadastrado (IDs como fallback de saves antigos), sem upload ou exibição de fotos na escalação. Arraste uma camisa com mouse/toque para área livre do campo para personalizar a posição, ou sobre um titular para trocar; reservas podem ser arrastados pela camisa, com rolagem da lista pelo texto. Também é possível selecionar uma camisa e ativar um dos 16 destinos de setor por clique/Tab+Enter. Soltar fora do campo, cancelar o gesto ou pressionar Esc preserva o time.
+O centro tático usa camisas texturizadas no molde padrão com o número cadastrado (IDs como fallback de saves antigos), sem upload ou exibição de fotos na escalação. Arraste uma camisa com mouse/toque para área livre do campo para personalizar a posição, ou sobre um titular para trocar; reservas podem ser arrastados pela camisa, com rolagem da lista pelo texto. Também é possível selecionar uma camisa e ativar um dos 16 destinos de setor por clique/Tab+Enter. Soltar fora do campo, cancelar o gesto ou pressionar Esc preserva o time.
 
 Plano tático mantém formação, estilo, marcação e concentração de ataque reais. Reservas têm busca/filtro; indicadores mostram força estimada com adaptação/energia e alertas. Qualquer jogador pode ocupar qualquer área, inclusive goleiros no ataque ou jogadores de linha no gol; a adaptação é informativa, não um bloqueio. Reabrir a tela preserva o XI e as coordenadas; mudar a formação reorganiza a equipe, enquanto restaurar posições mantém os titulares. Posicionamento personalizado continua sendo interpretado pela função mais próxima do esquema no motor atual.
 
@@ -142,7 +142,7 @@ Em **Editor de clubes → Estúdio de uniformes**, cada clube mantém seus três
 uniformes existentes e uma coleção de até oito conceitos adicionais. O editor
 continua oferecendo cadastro/edição de clubes, jogadores e categorias de base.
 
-- **Manual:** cores, padrão liso/listrado/faixa e prévia vetorial com silhueta fixa.
+- **Manual:** cores, padrão liso/listrado/faixa e prévia fotográfica com silhueta fixa, baseada na referência do responsável pelo projeto.
   É um criador determinístico, não IA. Mostra até cinco inscrições abreviadas;
   não reproduz logotipos nem posições oficiais de patrocínio.
 - **Patrocínios:** preencher um por linha, indicando posições se desejado, ou
@@ -151,7 +151,7 @@ continua oferecendo cadastro/edição de clubes, jogadores e categorias de base.
   de 100 caracteres; o prompt inclui todas sem truncá-las.
 - **IA:** integração real no servidor com OpenAI. Todo pedido é reconstruído com
   nome/sigla do clube, cores, padrão, patrocínios e enquadramento frontal fixo
-  1024×1536, além da direção criativa. O cliente não pode substituir o prompt
+  1024×1536 com referência visual anexada, além da direção criativa. O cliente não pode substituir o prompt
   integral da API. Modelos podem falhar na reprodução de escudos, textos e
   marcas: o resultado é um conceito para revisão, não uniforme oficial.
 - **Biblioteca:** IndexedDB, separada por conta e clube, **somente neste navegador**.
@@ -160,7 +160,7 @@ continua oferecendo cadastro/edição de clubes, jogadores e categorias de base.
   mudar de dispositivo não preserva essa biblioteca. Baixe as imagens para backup.
 - **Importar/exportar:** PNG/JPG/WebP de até 5 MB, reduzidos para até 900 pixels
   no maior lado e recodificados no navegador. Manuais são exportados como SVG;
-  importações e resultados da IA, como WebP. Excluir exige confirmação.
+  importações projetadas no molde são exportadas como SVG autocontido; resultados da IA, como WebP. Excluir exige confirmação.
 
 ### Ativar geração real em produção (administração)
 
@@ -192,3 +192,36 @@ IA permanece indisponível até concluir a configuração. Testes de API usam
 serviços simulados, não comprovam geração paga real. A migração foi exercitada
 em PostgreSQL local (PGlite), incluindo permissões e renovação de janela;
 isso não substitui a aplicação/validação do Auth e RLS no Supabase real.
+
+### Molde profissional de camisa (referência de 29/10/2026)
+
+A referência branca enviada pelo responsável define gola em V, mangas, ombros,
+barra e proporção da peça (largura incluindo mangas / altura ≈ **0,86**).
+O molde canônico é 870×1000 com fundo realmente transparente — o quadriculado
+da imagem enviada não faz parte do uniforme. Tecido, costuras e dobras são
+preservados ao aplicar cores, sem contorno de desenho infantil.
+
+- **Sem imagem cadastrada:** principal lisa na primeira cor do clube; reserva
+  lisa na segunda; terceiro modelo neutro. Vermelho/preto resulta em principal
+  vermelha e reserva preta. Editor e estúdio compartilham a mesma função.
+- **Criador e campo:** modelos manuais e camisas numeradas usam o mesmo tecido
+  e proporção. O número continua sendo texto legível; não são fotos de jogadores.
+  As cores do editor também chegam ao tema da carreira para clubes personalizados.
+- **Importação:** a imagem é recortada como estampa no molde fixo, sem substituir
+  sua silhueta. A prévia deve ser revisada antes de salvar; áreas da imagem fora
+  do molde são descartadas. A exportação SVG inclui o tecido e a estampa, sem
+  depender de URLs externas.
+- **IA:** usa `images/edits`, enviando o molde como imagem de referência PNG, além
+  do prompt obrigatório com clube e patrocínios. A resposta é enquadrada e
+  mascarada deterministicamente no servidor pelo mesmo molde, antes da revisão
+  do jogador. Respostas com dimensões/formato inesperados são rejeitadas.
+  Isso fixa a silhueta, não garante correção de marcas/textos. A ativação da IA
+  continua dependendo da chave e da migração descritas acima.
+- Os arquivos e modelos já cadastrados permanecem preservados como acervo;
+  não há regravação destrutiva das imagens anteriores.
+
+`src/lib/kits/fabric-template.json` contém a referência derivada e transparente.
+Para reconstruí-la a partir do PNG original fornecido (1536×1024):
+`node scripts/build-kit-template.mjs /caminho/referencia.png`. O recorte é
+explícito e reproduzível, sem geração por IA. Testes rasterizam as cores,
+comparam a silhueta e exercitam a normalização da resposta simulada do provedor.

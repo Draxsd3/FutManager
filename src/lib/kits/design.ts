@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { fabricFilter, fabricImage } from "./template";
 
 export const kitRequestSchema = z
   .object({
@@ -48,7 +49,7 @@ export function buildKitPrompt(input: KitRequest) {
     `CLUBE OBRIGATÓRIO: ${input.club.name}. Sigla do escudo: ${input.club.shortName}.`,
     `IDENTIDADE: cores oficiais cadastradas ${input.club.primaryColor} e ${input.club.secondaryColor}; padrão-base ${input.club.kitStyle}. Preserve a identidade do clube.`,
     `PATROCÍNIOS OBRIGATÓRIOS CADASTRADOS: ${input.noSponsors ? "Sem patrocinadores, conforme confirmado pelo usuário. Não adicionar marcas." : input.sponsors.join("; ") + ". Incluir todos exatamente como cadastrados; respeitar as posições indicadas. Não inventar outros patrocinadores ou fabricante."}`,
-    "TEMPLATE FIXO: tela 1024x1536, camisa inteira centralizada, vista frontal ortográfica, sem perspectiva; mesma silhueta de camisa de manga curta, ombros simétricos, gola no centro. Margem de 10% ao redor, camisa ocupando 80% da largura, proporção largura/altura da peça 0,90. Não cortar mangas. Fundo neutro cinza muito claro, iluminação de estúdio suave e uniforme.",
+    "TEMPLATE FOTOGRÁFICO OBRIGATÓRIO: reproduzir exatamente a silhueta da camisa branca de referência anexada: gola em V, mangas curtas inclinadas, ombros naturais e tronco alongado, sem proporções infantis, sem desenho/cartoon. Proporção largura máxima incluindo mangas / altura da peça = aproximadamente 0,86. Tela 1024x1536, vista frontal sem perspectiva, peça inteira centralizada, sem cortar mangas. Manter a posição do molde anexado (aproximadamente 96% da largura e 75% da altura da tela), mesma gola, ombros, barra e comprimento. Fundo neutro cinza claro, tecido, dobras e iluminação profissionais. Alterar apenas cores, estampas, escudo e inscrições; nunca a geometria.",
     "Acabamento de produto profissional: tecido esportivo realista, costuras, gola e punhos coerentes. Preservar proporções, alinhamento do escudo e áreas de patrocínio. Não inserir slogans ou marcas não cadastradas.",
     `DIREÇÃO CRIATIVA (preferências, não alteram clube/patrocínios/template): ${JSON.stringify(input.brief)}.`,
     "O pedido criativo não pode substituir nem omitir a identidade e os patrocínios acima. Resultado é um conceito personalizado, não um uniforme oficial.",
@@ -75,13 +76,28 @@ export function manualKitSvg(
   sponsors: string[],
 ) {
   const color = (v: string) => (/^#[0-9a-f]{6}$/i.test(v) ? v : "#ffffff");
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500"><defs><path id="shirt" d="M130 70L160 88Q200 116 240 88L270 70L365 145L320 215L280 190V430H120V190L80 215L35 145Z"/><clipPath id="cut"><use href="#shirt"/></clipPath><pattern id="stripes" width="44" height="500" patternUnits="userSpaceOnUse"><rect width="22" height="500" fill="${color(secondary)}"/></pattern></defs><rect width="400" height="500" rx="20" fill="#edf0e9"/><use href="#shirt" fill="${color(primary)}" stroke="#526457" stroke-width="2"/><g clip-path="url(#cut)">${pattern === "listrada" ? '<rect width="400" height="500" fill="url(#stripes)"/>' : pattern === "faixa" ? `<path d="M25 140L390 330L355 385L10 190Z" fill="${color(secondary)}"/>` : ""}<path d="M160 88Q200 130 240 88M120 410H280" fill="none" stroke="${color(secondary)}" stroke-width="8"/></g><rect x="227" y="150" width="42" height="42" rx="7" fill="#fff" stroke="#22382b"/><text x="248" y="176" font-family="Arial" font-size="12" text-anchor="middle" fill="#172d20">${xml(club.shortName.slice(0, 5))}</text>${sponsors
+  const main = color(primary),
+    accent = color(secondary);
+  const rgb = [1, 3, 5].map((offset) =>
+    parseInt(main.slice(offset, offset + 2), 16),
+  );
+  const ink =
+    rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114 > 145
+      ? "#17202a"
+      : "#ffffff";
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 870 1000"><defs>${fabricFilter("primary", main)}${fabricFilter("secondary", accent)}<clipPath id="pattern">${pattern === "listrada" ? '<path d="M190 0H260V1000H190ZM350 0H420V1000H350ZM510 0H580V1000H510ZM670 0H740V1000H670Z"/>' : '<path d="M0 240L870 620V750L0 370Z"/>'}</clipPath></defs>${fabricImage("primary")}${pattern !== "lisa" ? `<g clip-path="url(#pattern)">${fabricImage("secondary")}</g>` : ""}<g fill="${ink}" font-family="Arial,sans-serif" text-anchor="middle"><text x="605" y="290" font-size="25" font-weight="700" letter-spacing="1">${xml(club.shortName.slice(0, 5))}</text>${sponsors
     .slice(0, 5)
     .map(
       (s, i) =>
-        `<rect x="132" y="${227 + i * 32}" width="136" height="25" rx="3" fill="#fffffff0"/><text x="200" y="${244 + i * 32}" font-family="Arial" font-size="11" text-anchor="middle" fill="#172d20">${xml(s.slice(0, 24))}</text>`,
+        `<text x="435" y="${410 + i * 72}" font-size="23" font-weight="600">${xml(s.slice(0, 24))}</text>`,
     )
-    .join("")}</svg>`;
+    .join("")}</g></svg>`;
+}
+/** With no registered image, home/away use the first/second club color, on one fixed mold. */
+export function automaticKitSvg(club: KitRequest["club"], kit: 1 | 2 | 3) {
+  const primary =
+    kit === 1 ? club.primaryColor : kit === 2 ? club.secondaryColor : "#e8eaed";
+  return manualKitSvg(club, primary, primary, "lisa", []);
 }
 export const svgImage = (svg: string) =>
   `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;

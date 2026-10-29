@@ -796,7 +796,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   if (page === "hub")
     return (
       <>
-        <AppShell nav={nav} teamName={club} date="22/01/2026">
+        <AppShell nav={nav} teamName={club} clubColors={database.clubs.find((item) => item.name === club)} date="22/01/2026">
           <HubScreen
             club={club}
             coach={coach}
@@ -827,7 +827,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   if (managementSection)
     return (
       <>
-        <AppShell nav={nav} teamName={club} date="22/01/2026">
+        <AppShell nav={nav} teamName={club} clubColors={database.clubs.find((item) => item.name === club)} date="22/01/2026">
           <ClubSectionScreen
             section={managementSection}
             agendaView={agendaView}
@@ -861,7 +861,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   if (page === "lineup")
     return (
       <>
-        <AppShell nav={nav} teamName={club} date="22/01/2026" hideNav>
+        <AppShell nav={nav} teamName={club} clubColors={database.clubs.find((item) => item.name === club)} date="22/01/2026" hideNav>
           <LineupScreen
           club={club}
           coach={coach}
