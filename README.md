@@ -44,7 +44,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 O link sempre abre o menu inicial. Para criar ou continuar uma carreira, o jogador
 entra ou cria uma conta com email e senha pelo Supabase Auth. Cada conta pode ter
 várias carreiras, cada uma com seu elenco, escalação, táticas e partida próprios.
-O botão **Salvar e voltar ao início** fica disponível em todas as telas da carreira.
+A opção **Menu inicial** da barra superior salva a carreira ao retornar. Não há botão flutuante sobre o conteúdo.
 Uma partida retomada começa pausada.
 
 ### Configuração do Supabase
@@ -93,9 +93,9 @@ configurado e acessível; mocks não substituem essa verificação em produção
 ## Diagnóstico de navegação e versão publicada
 
 O aplicativo usa uma única rota (`/`). A navegação entre menu, login, editor,
-carreiras e clube acontece dentro dessa rota, sem trocar de domínio. Tanto o
-botão **Menu inicial** da barra superior quanto **Salvar e voltar ao início**
-retornam ao mesmo componente minimalista `StartMenuScreen`.
+carreiras e clube acontece dentro dessa rota, sem trocar de domínio. O
+botão **Menu inicial** da barra superior retorna ao componente minimalista
+`StartMenuScreen`, sem adicionar um botão flutuante sobre o conteúdo.
 
 O menu atual contém “SEU CLUBE. SUAS REGRAS. SUA HISTÓRIA.” e não contém os botões
 indisponíveis “OPÇÕES”, “CRÉDITOS” e “SAIR DO JOGO”. Se esses botões aparecerem,

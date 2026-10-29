@@ -23,7 +23,7 @@ it("creates independent careers, preserves the lineup on returning home and alwa
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
   fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Técnico Alice" } });
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
-  fireEvent.click(await screen.findByRole("button", { name: /Salvar e voltar ao início/ }));
+  fireEvent.click(await screen.findByRole("button", { name: "Menu inicial" }));
   await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ });
   const first = readLocalSaves("alice")[0];
   expect(first.managerName).toBe("Técnico Alice");
@@ -33,7 +33,7 @@ it("creates independent careers, preserves the lineup on returning home and alwa
   fireEvent.click(screen.getByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
   fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Segunda Carreira" } });
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
-  fireEvent.click(await screen.findByRole("button", { name: /Salvar e voltar ao início/ }));
+  fireEvent.click(await screen.findByRole("button", { name: "Menu inicial" }));
   expect(readLocalSaves("alice")).toHaveLength(2);
   expect(readLocalSaves("alice").find((save) => save.id === first.id)?.progress?.starters).toEqual(first.progress?.starters);
 
@@ -45,7 +45,7 @@ it("creates independent careers, preserves the lineup on returning home and alwa
   const continueButtons = await screen.findAllByRole("button", { name: "CONTINUAR" });
   expect(continueButtons).toHaveLength(2);
   fireEvent.click(continueButtons[1]);
-  await screen.findByRole("button", { name: /Salvar e voltar ao início/ });
+  await screen.findByRole("button", { name: "Menu inicial" });
   await waitFor(() => expect(readLocalSaves("alice").find((save) => save.id === first.id)?.progress?.coach).toBe("Técnico Alice"));
 });
 
@@ -59,18 +59,21 @@ it("does not expose another account's careers on the same browser", async () => 
 });
 
 
-it("can save and return home during a match, then resume that match paused", async () => {
-  render(game());
+it("autosaves a match without a floating exit button and resumes paused after reload", async () => {
+  const view = render(game());
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
   fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Técnico da Partida" } });
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
   fireEvent.click(await screen.findByRole("button", { name: /Escalar Time/i }));
   fireEvent.click(await screen.findByRole("button", { name: /Ir para a partida/ }));
   await waitFor(() => expect(readLocalSaves("alice")[0].progress?.minute).toBeGreaterThan(0), { timeout: 2000 });
-  fireEvent.click(screen.getByRole("button", { name: /Salvar e voltar ao início/ }));
+  expect(screen.queryByRole("button", { name: /Salvar e voltar ao início/ })).toBeNull();
+  view.unmount();
   const saved = readLocalSaves("alice")[0];
   expect(saved.progress?.page).toBe("matchOverview");
   expect(saved.progress?.matchRunning).toBe(false);
+  render(game());
+  await screen.findByRole("button", { name: /CARREGAR CARREIRA/ });
   fireEvent.click(screen.getByRole("button", { name: /CARREGAR CARREIRA/ }));
   fireEvent.click(await screen.findByRole("button", { name: "CONTINUAR" }));
   expect(await screen.findByText("PARTIDA PAUSADA")).toBeTruthy();
@@ -108,7 +111,8 @@ it("keeps club navigation internal and the top Menu inicial button returns to th
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
   for (const destination of ["Agenda", "Estádio", "Juniores", "Times", "Procura", "Técnicos", "História"]) {
     fireEvent.click(await screen.findByRole("button", { name: destination }));
-    expect(screen.getByRole("button", { name: /Salvar e voltar ao início/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Salvar e voltar ao início/ })).toBeNull();
+    expect(screen.getByRole("button", { name: "Menu inicial" })).toBeTruthy();
   }
   fireEvent.click(screen.getByRole("button", { name: "Menu inicial" }));
   expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();

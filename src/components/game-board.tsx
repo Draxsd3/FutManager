@@ -770,10 +770,6 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return <div className="grid min-h-svh place-items-center bg-[#0a100e] text-white" role="status">Carregando a carreira selecionada...</div>;
   }
 
-  const homeControl = !isMenuPage(page) ? (
-    <button type="button" onClick={() => leaveActiveCareer("menu")} className="fixed right-3 bottom-3 z-[100] rounded border border-[#c2f45b] bg-[#101b14] px-4 py-2 text-xs font-bold text-white shadow-xl">⌂ Salvar e voltar ao início</button>
-  ) : null;
-
   if (page === "menu") {
     return (
       <StartMenuScreen
@@ -822,7 +818,6 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   if (page === "hub")
     return (
       <>
-        {homeControl}
         <AppShell nav={nav} teamName={club} date="22/01/2026">
           <HubScreen
             club={club}
@@ -854,7 +849,6 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   if (managementSection)
     return (
       <>
-        {homeControl}
         <AppShell nav={nav} teamName={club} date="22/01/2026">
           <ClubSectionScreen
             section={managementSection}
@@ -885,7 +879,6 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   if (page === "lineup")
     return (
       <>
-        {homeControl}
         <AppShell nav={nav} teamName={club} date="22/01/2026" hideNav>
           <LineupScreen
           club={club}
@@ -923,7 +916,6 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   if (page === "matchOverview")
     return (
       <>
-        {homeControl}
         <MatchOverviewScreen
           competition="Campeonato Estadual"
           round={round}
@@ -990,7 +982,6 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   return (
     <>
-      {homeControl}
       <ResultScreen
       round={round}
       fixtures={fixtures}
