@@ -59,6 +59,7 @@ export function enforceEditorSquadLimit(players: EditorPlayer[]) {
 }
 
 export type CareerSave = {
+  progress?: import("./progress").CareerProgress;
   id: string;
   name: string;
   managerName: string;

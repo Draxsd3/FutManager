@@ -1,3 +1,4 @@
+import { accountStorageKey } from "./save-utils";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { enforceEditorSquadLimit, type CareerSave, type EditorClub, type EditorDatabase, type EditorPlayer } from "./editor-data";
 import type { Player } from "./mock-data";
@@ -13,46 +14,50 @@ export type CloudCareer = {
 const DATABASE_KEY = "futmanager.editor.v1";
 const SAVES_KEY = "futmanager.saves.v1";
 
-export function readLocalDatabase(): EditorDatabase | null {
+export function readLocalDatabase(userId: string): EditorDatabase | null {
   try {
-    const value = localStorage.getItem(DATABASE_KEY);
+    const value = localStorage.getItem(accountStorageKey(DATABASE_KEY, userId));
     return value ? (JSON.parse(value) as EditorDatabase) : null;
   } catch {
     return null;
   }
 }
 
-export function writeLocalDatabase(database: EditorDatabase) {
-  localStorage.setItem(DATABASE_KEY, JSON.stringify({ ...database, players: enforceEditorSquadLimit(database.players) }));
+export function writeLocalDatabase(database: EditorDatabase, userId: string) {
+  try {
+    localStorage.setItem(accountStorageKey(DATABASE_KEY, userId), JSON.stringify({ ...database, players: enforceEditorSquadLimit(database.players) }));
+    return true;
+  } catch { return false; }
 }
 
-export function readLocalSaves(): CareerSave[] {
+export function readLocalSaves(userId: string): CareerSave[] {
   try {
-    const value = localStorage.getItem(SAVES_KEY);
-    return value ? (JSON.parse(value) as CareerSave[]) : [];
+    const value = localStorage.getItem(accountStorageKey(SAVES_KEY, userId));
+    const parsed = value ? JSON.parse(value) : [];
+    return Array.isArray(parsed) ? parsed as CareerSave[] : [];
   } catch {
     return [];
   }
 }
 
-export function writeLocalSaves(saves: CareerSave[]) {
-  localStorage.setItem(SAVES_KEY, JSON.stringify(saves));
+export function writeLocalSaves(saves: CareerSave[], userId: string) {
+  try {
+    localStorage.setItem(accountStorageKey(SAVES_KEY, userId), JSON.stringify(saves));
+    return true;
+  } catch { return false; }
 }
 
-async function authenticatedClient() {
+async function authenticatedClient(expectedUserId: string) {
   const client = createBrowserSupabaseClient();
-  const { data } = await client.auth.getSession();
-  if (!data.session) {
-    const { error } = await client.auth.signInAnonymously();
-    if (error) throw error;
-  }
   const { data: userData, error: userError } = await client.auth.getUser();
-  if (userError || !userData.user) throw userError ?? new Error("Sessão indisponível");
+  if (userError || !userData.user || userData.user.id !== expectedUserId || userData.user.is_anonymous) {
+    throw new Error("Entre com email e senha para salvar sua carreira.");
+  }
   return { client, userId: userData.user.id };
 }
 
-export async function readCloudDatabase(): Promise<EditorDatabase | null> {
-  const { client } = await authenticatedClient();
+export async function readCloudDatabase(userId: string): Promise<EditorDatabase | null> {
+  const { client } = await authenticatedClient(userId);
   const [{ data: clubRows, error: clubError }, { data: playerRows, error: playerError }] = await Promise.all([
     client.from("editor_clubs").select("*").order("name"),
     client.from("editor_players").select("*").order("shirt_number"),
@@ -101,8 +106,8 @@ export async function readCloudDatabase(): Promise<EditorDatabase | null> {
   };
 }
 
-export async function writeCloudDatabase(database: EditorDatabase) {
-  const { client, userId } = await authenticatedClient();
+export async function writeCloudDatabase(database: EditorDatabase, expectedUserId: string) {
+  const { client, userId } = await authenticatedClient(expectedUserId);
   const limitedPlayers = enforceEditorSquadLimit(database.players);
   const { data: remoteClubs, error: listError } = await client.from("editor_clubs").select("id");
   if (listError) throw listError;
@@ -171,8 +176,8 @@ export async function writeCloudDatabase(database: EditorDatabase) {
   }
 }
 
-export async function readCloudSaves(): Promise<CareerSave[]> {
-  const { client } = await authenticatedClient();
+export async function readCloudSaves(userId: string): Promise<CareerSave[]> {
+  const { client } = await authenticatedClient(userId);
   const { data, error } = await client.from("game_saves").select("*").order("updated_at", { ascending: false });
   if (error) throw error;
   return (data ?? []).map((row) => ({
@@ -186,13 +191,14 @@ export async function readCloudSaves(): Promise<CareerSave[]> {
     budget: Number(row.budget_brl),
     inGameDate: row.in_game_date,
     updatedAt: row.updated_at,
+    progress: row.state?.progress,
     playerCareers: row.state?.playerCareers ?? {},
     manualPositions: row.state?.manualPositions ?? {},
   })) as CareerSave[];
 }
 
-export async function writeCloudSave(save: CareerSave) {
-  const { client, userId } = await authenticatedClient();
+async function performCloudSave(save: CareerSave, expectedUserId: string) {
+  const { client, userId } = await authenticatedClient(expectedUserId);
   const { error } = await client.from("game_saves").upsert({
     id: save.id,
     owner_id: userId,
@@ -205,6 +211,7 @@ export async function writeCloudSave(save: CareerSave) {
     in_game_date: save.inGameDate,
     state: {
       clubId: save.clubId,
+      progress: save.progress,
       playerCareers: save.playerCareers ?? {},
       manualPositions: save.manualPositions ?? {},
     },
@@ -213,8 +220,9 @@ export async function writeCloudSave(save: CareerSave) {
   if (error) throw error;
 }
 
-export async function deleteCloudSave(id: string) {
-  const { client } = await authenticatedClient();
+export async function deleteCloudSave(id: string, expectedUserId: string) {
+  await saveWrites.get(`${expectedUserId}:${id}`)?.catch(() => undefined);
+  const { client } = await authenticatedClient(expectedUserId);
   const { error } = await client.from("game_saves").delete().eq("id", id);
   if (error) throw error;
 }
@@ -226,8 +234,9 @@ export async function writeCloudCareer(
   playerCareers: Record<number, PlayerCareerRecord>,
   manualPositions: Record<number, ManualPosition>,
   club: string,
+  expectedUserId: string,
 ) {
-  const { client, userId } = await authenticatedClient();
+  const { client, userId } = await authenticatedClient(expectedUserId);
   const rows = squad.map((player) => {
     const record = playerCareers[player.id] ?? createPlayerCareer(player, club);
     const position = manualPositions[player.id];
@@ -288,8 +297,8 @@ export async function writeCloudCareer(
   }
 }
 
-export async function readCloudCareer(saveId: string): Promise<CloudCareer | null> {
-  const { client } = await authenticatedClient();
+export async function readCloudCareer(saveId: string, userId: string): Promise<CloudCareer | null> {
+  const { client } = await authenticatedClient(userId);
   const { data: playerRows, error } = await client
     .from("career_players")
     .select("*")
@@ -358,4 +367,15 @@ export async function readCloudCareer(saveId: string): Promise<CloudCareer | nul
     .map((row) => numericIdByCareerId.get(row.id)!)
     .filter(Boolean);
   return { squad, starters, playerCareers, manualPositions };
+}
+
+// Serialize writes per account/save so an earlier request cannot overwrite a newer snapshot.
+const saveWrites = new Map<string, Promise<void>>();
+export function writeCloudSave(save: CareerSave, userId: string): Promise<void> {
+  const key = `${userId}:${save.id}`;
+  const previous = saveWrites.get(key) ?? Promise.resolve();
+  const next = previous.catch(() => undefined).then(() => performCloudSave(save, userId));
+  saveWrites.set(key, next);
+  void next.finally(() => { if (saveWrites.get(key) === next) saveWrites.delete(key); }).catch(() => undefined);
+  return next;
 }

@@ -3,12 +3,18 @@
 import styles from "./start-menu-screen.module.css";
 
 export function StartMenuScreen({
+  email,
+  onSignOut,
+  onLogin,
   saveCount,
   syncLabel,
   onNewGame,
   onSaves,
   onEdit,
 }: {
+  email?: string;
+  onSignOut?: () => Promise<void>;
+  onLogin?: () => void;
   saveCount: number;
   syncLabel: string;
   onNewGame: () => void;
@@ -23,6 +29,7 @@ export function StartMenuScreen({
           <span className={styles.brandMark} aria-hidden="true">FM<span /></span>
           <span>FUTMANAGER<span className={styles.brandDot}>.</span></span>
         </a>
+        <div className={styles.account}>{email ? <><span title={email}>{email}</span><button type="button" onClick={() => void onSignOut?.()}>Sair da conta ↗</button></> : <button type="button" onClick={onLogin}>Entrar / Criar conta ↗</button>}</div>
         <span className={styles.edition}>FUTEBOL BRASILEIRO <span>/</span> 2026</span>
       </header>
 
@@ -39,7 +46,7 @@ export function StartMenuScreen({
           </button>
           <button type="button" className={styles.secondary} onClick={onSaves}>
             <span className={styles.buttonNumber} aria-hidden="true">02</span>
-            <span className={styles.buttonCopy}>CARREGAR CARREIRA<small>{saveCount ? `${saveCount} carreira${saveCount === 1 ? " salva" : "s salvas"}` : "Nenhuma carreira salva"}</small></span>
+            <span className={styles.buttonCopy}>CARREGAR CARREIRA<small>{saveCount ? `${saveCount} carreira${saveCount === 1 ? " salva" : "s salvas"}` : email ? "Nenhuma carreira salva" : "Entre para acessar suas carreiras"}</small></span>
             <Arrow />
           </button>
           <button type="button" className={styles.editor} onClick={onEdit}>

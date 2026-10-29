@@ -23,7 +23,6 @@ import {
   buildStartingXI,
   buildRoundFixtures,
   type DivisionKey,
-  type Player,
   type TableRow,
   type TopScorer,
   type TopRating,
@@ -31,7 +30,9 @@ import {
 import { buildSquadFromDatabase, createDefaultDatabase, upgradeEditorDatabase, type CareerSave, type EditorDatabase } from "@/lib/game/editor-data";
 import { createPlayerCareer, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
 import { formationSlotRoles, formationSlots, playerFitAtPosition } from "@/lib/game/formations";
-import { canResumeSavedCareer, isMenuPage } from "@/lib/game/session";
+import { mergeCareerSaves } from "@/lib/game/save-utils";
+import { isMenuPage } from "@/lib/game/session";
+import type { CareerProgress } from "@/lib/game/progress";
 import {
   deleteCloudSave,
   readCloudDatabase,
@@ -40,58 +41,12 @@ import {
   readLocalDatabase,
   readLocalSaves,
   writeCloudDatabase,
-  writeCloudCareer,
   writeCloudSave,
   writeLocalDatabase,
   writeLocalSaves,
 } from "@/lib/game/persistence";
 
 type Page = "menu" | "new" | "saves" | "editor" | "hub" | "lineup" | "matchOverview" | "result" | "agenda" | "stadium" | "juniors" | "teams" | "search" | "coaches" | "history" | "finances" | "trophies" | "training";
-
-type SessionSnapshot = {
-  page: Page;
-  activeSaveId: string | null;
-  coach: string;
-  club: string;
-  division: DivisionKey;
-  round: number;
-  budget: number;
-  formation: string;
-  style: string;
-  marking: string;
-  focus: string;
-  starters: number[];
-  careerSquad: Player[] | null;
-  playerCareers: Record<number, PlayerCareerRecord>;
-  manualPositions: Record<number, ManualPosition>;
-  minute: number;
-  homeScore: number;
-  awayScore: number;
-  events: MatchEvent[];
-  substitutionsLeft: number;
-  detailOpen: boolean;
-  matchRunning: boolean;
-  matchSpeed: 1 | 2 | 4;
-  halftimeWaiting: boolean;
-};
-
-const SESSION_KEY = "futmanager.session.v1";
-const validPages = new Set<Page>(["menu", "new", "saves", "editor", "hub", "lineup", "matchOverview", "result", "agenda", "stadium", "juniors", "teams", "search", "coaches", "history", "finances", "trophies", "training"]);
-
-function readSessionSnapshot(): SessionSnapshot | null {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as SessionSnapshot;
-    return validPages.has(parsed.page) ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeSessionSnapshot(snapshot: SessionSnapshot) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(snapshot));
-}
 
 const sectionByPage: Partial<Record<Page, ClubSection>> = {
   agenda: "agenda",
@@ -106,15 +61,16 @@ const sectionByPage: Partial<Record<Page, ClubSection>> = {
   training: "training",
 };
 
-export function GameBoard() {
-  const [page, setPage] = useState<Page>("menu");
+export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { userId: string; email: string; onSignOut: () => Promise<void>; initialPage?: "menu" | "new" | "saves" | "editor" }) {
+  const [page, setPage] = useState<Page>(initialPage);
   const [database, setDatabase] = useState<EditorDatabase | null>(null);
   const [saves, setSaves] = useState<CareerSave[]>([]);
   const [activeSaveId, setActiveSaveId] = useState<string | null>(null);
   const [hydrationDone, setHydrationDone] = useState(false);
-  const [sessionResolved, setSessionResolved] = useState(false);
-  const sessionReady = useRef(false);
-  const sessionRestored = useRef(false);
+  const [careerLoaded, setCareerLoaded] = useState(false);
+  const savesRef = useRef(saves);
+  const pendingCloudSave = useRef<CareerSave | null>(null);
+  useEffect(() => { savesRef.current = saves; }, [saves]);
   const sessionRestoreVersion = useRef(0);
   const [syncLabel, setSyncLabel] = useState("Preparando banco de dados...");
   const [coach, setCoach] = useState("");
@@ -130,39 +86,44 @@ export function GameBoard() {
   const [focus, setFocus] = useState("Pelo meio");
 
   useEffect(() => {
+    let cancelled = false;
     async function hydrate() {
       await Promise.resolve();
-      const localDatabase = upgradeEditorDatabase(readLocalDatabase() ?? createDefaultDatabase());
-      const localSaves = readLocalSaves();
+      if (cancelled) return;
+      const localDatabase = upgradeEditorDatabase(readLocalDatabase(userId) ?? createDefaultDatabase());
+      const localSaves = readLocalSaves(userId);
       setDatabase(localDatabase);
       setSaves(localSaves);
-      writeLocalDatabase(localDatabase);
+      writeLocalDatabase(localDatabase, userId);
       setSyncLabel("Dados locais carregados");
 
       try {
-        const [cloudDatabase, cloudSaves] = await Promise.all([readCloudDatabase(), readCloudSaves()]);
+        const [cloudDatabase, cloudSaves] = await Promise.all([readCloudDatabase(userId), readCloudSaves(userId)]);
+        if (cancelled) return;
         if (cloudDatabase) {
           const upgradedCloudDatabase = upgradeEditorDatabase(cloudDatabase);
           setDatabase(upgradedCloudDatabase);
-          writeLocalDatabase(upgradedCloudDatabase);
+          writeLocalDatabase(upgradedCloudDatabase, userId);
         } else {
-          await writeCloudDatabase(localDatabase);
+          await writeCloudDatabase(localDatabase, userId);
         }
-        if (cloudSaves.length) {
-          setSaves(cloudSaves);
-          writeLocalSaves(cloudSaves);
-        } else if (localSaves.length) {
-          await Promise.all(localSaves.map((save) => writeCloudSave(save)));
-        }
+        const merged = mergeCareerSaves(localSaves, cloudSaves);
+        if (cancelled) return;
+        savesRef.current = merged;
+        setSaves(merged);
+        writeLocalSaves(merged, userId);
+        await Promise.all(merged.filter((save) => !cloudSaves.some((cloud) => cloud.id === save.id && cloud.updatedAt >= save.updatedAt))
+          .map((save) => writeCloudSave(save, userId)));
         setSyncLabel("Supabase conectado");
       } catch {
         setSyncLabel("Modo local — Supabase indisponível");
       } finally {
-        setHydrationDone(true);
+        if (!cancelled) setHydrationDone(true);
       }
     }
     void hydrate();
-  }, []);
+    return () => { cancelled = true; };
+  }, [userId]);
 
   const baseSquad = useMemo(() => {
     if (!database) return initialSquad;
@@ -189,68 +150,45 @@ export function GameBoard() {
   const [substitutionOut, setSubstitutionOut] = useState<number | null>(null);
   const [standingsOpen, setStandingsOpen] = useState(false);
 
+  const progress: CareerProgress = {
+    page, activeSaveId, coach, club, division, round, budget, formation, style, marking, focus,
+    starters, careerSquad: squad, playerCareers, manualPositions, minute, homeScore, awayScore,
+    events, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, halftimeWaiting,
+  };
+  const progressRef = useRef(progress);
+  useEffect(() => { progressRef.current = progress; });
+
+  // Persist each career independently. Never use a global session to reopen the game.
   useEffect(() => {
-    if (!hydrationDone || !database || sessionRestored.current) return;
-    sessionRestored.current = true;
-    const snapshot = readSessionSnapshot();
-    if (!snapshot) {
-      sessionReady.current = true;
-      queueMicrotask(() => setSessionResolved(true));
-      return;
-    }
-
-    if (!canResumeSavedCareer(snapshot.page, snapshot.activeSaveId, saves.map((save) => save.id))) {
-      sessionReady.current = true;
-      if (isMenuPage(snapshot.page)) {
-        queueMicrotask(() => setPage(snapshot.page));
-      }
-      queueMicrotask(() => setSessionResolved(true));
-      return;
-    }
-
-    const session = snapshot;
-    const activeSave = saves.find((save) => save.id === session.activeSaveId)!;
-    const restoreVersion = sessionRestoreVersion.current;
-    void loadCareer(activeSave, true).then((loadedFromBackend) => {
-      if (sessionRestoreVersion.current !== restoreVersion) return;
-      setCoach(session.coach || activeSave.managerName);
-      setClub(session.club || activeSave.clubName);
-      setDivision(session.division || activeSave.division);
-      setRound(session.round || activeSave.round);
-      setBudget(session.budget ?? activeSave.budget);
-      setFormation(session.formation || "4-3-3");
-      setStyle(session.style || "Equilibrado");
-      setMarking(session.marking || "Leve");
-      setFocus(session.focus || "Pelo meio");
-      if (session.starters?.length === 11) setStarters(session.starters);
-      if (!loadedFromBackend && session.careerSquad?.length) setCareerSquad(session.careerSquad);
-      setPlayerCareers(session.playerCareers ?? activeSave.playerCareers ?? {});
-      setManualPositions(session.manualPositions ?? activeSave.manualPositions ?? {});
-      setMinute(session.minute ?? 0);
-      setHomeScore(session.homeScore ?? 0);
-      setAwayScore(session.awayScore ?? 0);
-      setEvents(session.events ?? []);
-      setSubstitutionsLeft(session.substitutionsLeft ?? 5);
-      setDetailOpen(session.detailOpen ?? false);
-      setMatchSpeed(session.matchSpeed ?? 1);
-      setHalftimeWaiting(session.halftimeWaiting ?? false);
-      setMatchRunning(session.page === "matchOverview" ? (session.matchRunning ?? false) : false);
-      setPage(session.page);
-      sessionReady.current = true;
-      setSessionResolved(true);
-    });
-    // A restauração é executada uma única vez; depender de loadCareer recriaria a sessão a cada render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [database, hydrationDone, saves]);
+    if (!hydrationDone || !careerLoaded || !activeSaveId || isMenuPage(page)) return;
+    const current = savesRef.current.find((save) => save.id === activeSaveId);
+    if (!current) return;
+    const next = { ...current, round, budget, playerCareers, manualPositions,
+      progress: progressRef.current, updatedAt: new Date().toISOString() };
+    const nextSaves = [next, ...savesRef.current.filter((save) => save.id !== activeSaveId)];
+    savesRef.current = nextSaves;
+    writeLocalSaves(nextSaves, userId);
+    setSaves(nextSaves);
+    pendingCloudSave.current = next;
+  }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, formation, style, marking, focus,
+    starters, careerSquad, playerCareers, manualPositions, minute, homeScore, awayScore, events,
+    substitutionsLeft, detailOpen, matchSpeed, halftimeWaiting, userId]);
 
   useEffect(() => {
-    if (!hydrationDone || !database || !sessionReady.current) return;
-    writeSessionSnapshot({
-      page, activeSaveId, coach, club, division, round, budget, formation, style, marking, focus,
-      starters, careerSquad, playerCareers, manualPositions, minute, homeScore, awayScore, events,
-      substitutionsLeft, detailOpen, matchRunning, matchSpeed, halftimeWaiting,
-    });
-  }, [activeSaveId, awayScore, budget, careerSquad, club, coach, database, detailOpen, division, events, focus, formation, halftimeWaiting, homeScore, hydrationDone, manualPositions, marking, matchRunning, matchSpeed, minute, page, playerCareers, round, starters, style, substitutionsLeft]);
+    // Throttle rather than debounce: a running match changes faster than one second.
+    const timer = window.setInterval(() => {
+      const next = pendingCloudSave.current;
+      if (!next) return;
+      pendingCloudSave.current = null;
+      void writeCloudSave(next, userId).then(() => setSyncLabel("Carreira salva na sua conta"))
+        .catch(() => {
+          const latest = savesRef.current.find((save) => save.id === next.id);
+          if (latest?.updatedAt === next.updatedAt) pendingCloudSave.current ??= next;
+          setSyncLabel("Sincronização pendente — verifique sua conexão");
+        });
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [userId]);
 
   const divisionClubNames = useMemo(() => database?.clubs.filter((item) => item.division === division).map((item) => item.name) ?? [], [database, division]);
   const opponent = divisionClubNames.find((name) => name !== club) ?? divisionClubNames[1] ?? "Adversário";
@@ -371,7 +309,7 @@ export function GameBoard() {
     { icon: "magnifier", label: "Procura", active: page === "search", onClick: () => navigate("search") },
     { icon: "user_suit", label: "Técnicos", active: page === "coaches", onClick: () => navigate("coaches") },
     { icon: "clock_history_frame", label: "História", active: page === "history", onClick: () => navigate("history") },
-    { icon: "door_out", label: "Menu", onClick: () => { saveCurrentCareer(); leaveActiveCareer("menu"); } },
+    { icon: "door_out", label: "Menu", onClick: () => { leaveActiveCareer("menu"); } },
   ];
 
   function navigate(next: Page) {
@@ -381,6 +319,14 @@ export function GameBoard() {
 
   function leaveActiveCareer(nextPage: Extract<Page, "menu" | "new" | "saves" | "editor">) {
     sessionRestoreVersion.current += 1;
+    pendingCloudSave.current = null;
+    if (activeSaveId && careerLoaded) saveCurrentCareer();
+    setMatchRunning(false);
+    setDetailOpen(false);
+    setStandingsOpen(false);
+    setProfilePlayer(null);
+    setSelectedPlayer(null);
+    setCareerLoaded(false);
     setActiveSaveId(null);
     setPage(nextPage);
   }
@@ -397,11 +343,7 @@ export function GameBoard() {
       return { ...player, energy: Math.max(0, player.energy - 6), overall: player.overall + (improved ? 1 : 0) };
     });
     setCareerSquad(updatedSquad);
-    if (!activeSaveId) return;
-    setSyncLabel("Salvando sessão de treino...");
-    writeCloudCareer(activeSaveId, updatedSquad, starters, playerCareers, manualPositions, club)
-      .then(() => setSyncLabel("Treino salvo no Supabase"))
-      .catch(() => setSyncLabel("Treino aplicado localmente — sincronização pendente"));
+    setSyncLabel("Treino aplicado — salvando carreira...");
   }
 
   function changePlayerPhoto(id: number, photoDataUrl: string | null) {
@@ -417,18 +359,22 @@ export function GameBoard() {
   function changeDatabase(next: EditorDatabase) {
     const limited = upgradeEditorDatabase(next);
     setDatabase(limited);
-    writeLocalDatabase(limited);
+    writeLocalDatabase(limited, userId);
     setSyncLabel("Salvando alterações...");
-    writeCloudDatabase(limited)
+    writeCloudDatabase(limited, userId)
       .then(() => setSyncLabel("Alterações salvas no Supabase"))
       .catch(() => setSyncLabel("Salvo localmente — sincronização pendente"));
   }
 
   function persistSave(nextSave: CareerSave): Promise<void> {
-    const nextSaves = [nextSave, ...saves.filter((item) => item.id !== nextSave.id)];
+    if (pendingCloudSave.current?.id === nextSave.id) pendingCloudSave.current = null;
+    const previous = savesRef.current.find((item) => item.id === nextSave.id);
+    nextSave = { ...previous, ...nextSave, progress: nextSave.progress ?? previous?.progress };
+    const nextSaves = [nextSave, ...savesRef.current.filter((item) => item.id !== nextSave.id)];
+    savesRef.current = nextSaves;
     setSaves(nextSaves);
-    writeLocalSaves(nextSaves);
-    return writeCloudSave(nextSave)
+    writeLocalSaves(nextSaves, userId);
+    return writeCloudSave(nextSave, userId)
       .then(() => setSyncLabel("Carreira salva no Supabase"))
       .catch(() => setSyncLabel("Carreira salva neste dispositivo"));
   }
@@ -450,7 +396,8 @@ export function GameBoard() {
       updatedAt: new Date().toISOString(),
       playerCareers: nextCareers,
       manualPositions: nextPositions,
-    }).then(() => writeCloudCareer(activeSaveId, squad, nextStarters, nextCareers, nextPositions, club))
+      progress: { ...progressRef.current, playerCareers: nextCareers, manualPositions: nextPositions, starters: nextStarters },
+    })
       .then(() => setSyncLabel("Carreira e elenco sincronizados"))
       .catch(() => setSyncLabel("Carreira salva neste dispositivo"));
   }
@@ -467,31 +414,50 @@ export function GameBoard() {
       clubName: club,
       division,
       round: 1,
-      budget,
+      budget: 12624,
       inGameDate: "2026-01-22",
       updatedAt: now,
       playerCareers: {},
       manualPositions: {},
     };
+    const initialStarters = buildStartingXI("4-3-3", baseSquad);
+    save.progress = { ...progressRef.current, page: "hub", activeSaveId: save.id, coach: coach.trim(),
+      round: 1, budget: 12624, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
+      careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, manualPositions: {},
+      minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
+      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1 };
     setActiveSaveId(save.id);
     setRound(1);
-    const initialStarters = buildStartingXI(formation, baseSquad);
+    setBudget(12624);
+    setFormation("4-3-3");
+    setStyle("Equilibrado");
+    setMarking("Leve");
+    setFocus("Pelo meio");
+    setMinute(0);
+    setHomeScore(0);
+    setAwayScore(0);
+    setEvents([]);
+    setMatchRunning(false);
+    setHalftimeWaiting(false);
+    setSubstitutionsLeft(5);
+    setCareerLoaded(true);
     setCareerSquad(baseSquad);
     setStarters(initialStarters);
     setPlayerCareers({});
     setManualPositions({});
-    void persistSave(save)
-      .then(() => writeCloudCareer(save.id, baseSquad, initialStarters, {}, {}, club))
-      .then(() => setSyncLabel("Nova carreira criada no Supabase"))
-      .catch(() => setSyncLabel("Carreira criada localmente"));
+    void persistSave(save);
     setPage("hub");
   }
 
-  async function loadCareer(save: CareerSave, restoring = false): Promise<boolean> {
-    if (!restoring) sessionRestoreVersion.current += 1;
+  async function loadCareer(save: CareerSave): Promise<boolean> {
+    sessionRestoreVersion.current += 1;
     const restoreVersion = sessionRestoreVersion.current;
-    const canApply = () => !restoring || sessionRestoreVersion.current === restoreVersion;
+    const canApply = () => sessionRestoreVersion.current === restoreVersion;
     if (!canApply()) return false;
+    setCareerLoaded(false);
+    setSelectedPlayer(null);
+    setProfilePlayer(null);
+    setSubstitutionOut(null);
     setActiveSaveId(save.id);
     setCoach(save.managerName);
     setClub(save.clubName);
@@ -502,48 +468,88 @@ export function GameBoard() {
     setManualPositions(save.manualPositions ?? {});
     setHomeScore(0);
     setAwayScore(0);
+    setMatchRunning(false);
     setPage("hub");
+    if (save.progress) {
+      const state = save.progress;
+      setFormation(state.formation);
+      setStyle(state.style);
+      setMarking(state.marking);
+      setFocus(state.focus);
+      setCareerSquad(state.careerSquad);
+      setStarters(state.starters);
+      setPlayerCareers(state.playerCareers);
+      setManualPositions(state.manualPositions);
+      setMinute(state.minute);
+      setHomeScore(state.homeScore);
+      setAwayScore(state.awayScore);
+      setEvents(state.events);
+      setSubstitutionsLeft(state.substitutionsLeft);
+      setHalftimeWaiting(state.halftimeWaiting);
+      setMatchSpeed(state.matchSpeed);
+      setDetailOpen(false);
+      setPage(state.page === "matchOverview" || state.page === "result" ? state.page : "hub");
+      setCareerLoaded(true);
+      return true;
+    }
+    setFormation("4-3-3");
+    setStyle("Equilibrado");
+    setMarking("Leve");
+    setFocus("Pelo meio");
+    setMinute(0);
+    setEvents([]);
+    setHalftimeWaiting(false);
+    setSubstitutionsLeft(5);
     try {
-      const cloud = await readCloudCareer(save.id);
+      const cloud = await readCloudCareer(save.id, userId);
       if (!canApply()) return false;
       if (cloud) {
         setCareerSquad(cloud.squad);
         const savedPlayers = cloud.starters.map((id) => cloud.squad.find((player) => player.id === id)!).filter(Boolean);
-        setStarters(savedPlayers.length === 11 ? buildStartingXI(formation, savedPlayers) : buildStartingXI(formation, cloud.squad));
+        setStarters(savedPlayers.length === 11 ? cloud.starters : buildStartingXI("4-3-3", cloud.squad));
         setPlayerCareers(cloud.playerCareers);
         setManualPositions(cloud.manualPositions);
         setSyncLabel("Carreira carregada do Supabase");
         return true;
       } else {
         const snapshot = (database ? buildSquadFromDatabase(database, save.clubName) : null) ?? initialSquad;
-        const initialStarters = buildStartingXI(formation, snapshot);
+        const initialStarters = buildStartingXI("4-3-3", snapshot);
         setCareerSquad(snapshot);
         setStarters(initialStarters);
-        await writeCloudCareer(save.id, snapshot, initialStarters, save.playerCareers ?? {}, save.manualPositions ?? {}, save.clubName);
+
         setSyncLabel("Carreira migrada para o banco de dados");
         return true;
       }
     } catch {
       if (!canApply()) return false;
-      setCareerSquad(null);
+      const fallback = (database ? buildSquadFromDatabase(database, save.clubName) : null) ?? initialSquad;
+      setCareerSquad(fallback);
+      setStarters(buildStartingXI("4-3-3", fallback));
       setSyncLabel("Carreira local — sincronização pendente");
       return false;
+    } finally {
+      if (canApply()) setCareerLoaded(true);
     }
   }
 
-  function removeCareer(id: string) {
+  async function removeCareer(id: string) {
     if (!window.confirm("Excluir esta carreira definitivamente?")) return;
-    const next = saves.filter((save) => save.id !== id);
-    setSaves(next);
-    writeLocalSaves(next);
-    deleteCloudSave(id).catch(() => undefined);
+    try {
+      await deleteCloudSave(id, userId);
+      const next = savesRef.current.filter((save) => save.id !== id);
+      savesRef.current = next;
+      setSaves(next);
+      writeLocalSaves(next, userId);
+    } catch {
+      window.alert("Não foi possível excluir da sua conta. Verifique a conexão e tente novamente.");
+    }
   }
 
   function saveCurrentCareer(nextRound = round) {
     if (!activeSaveId) return;
     const current = saves.find((save) => save.id === activeSaveId);
     const selectedClub = database?.clubs.find((item) => item.name === club);
-    persistSave({
+    void persistSave({
       id: activeSaveId,
       name: current?.name ?? `${club} — ${coach}`,
       managerName: coach,
@@ -556,6 +562,7 @@ export function GameBoard() {
       updatedAt: new Date().toISOString(),
       playerCareers,
       manualPositions,
+      progress: { ...progressRef.current, round: nextRound, page: page === "result" && nextRound !== round ? "hub" : page },
     });
   }
 
@@ -665,9 +672,8 @@ export function GameBoard() {
       updatedAt: new Date().toISOString(),
       playerCareers: nextCareers,
       manualPositions,
-    }).then(() => writeCloudCareer(activeSaveId, nextSquad, nextStarters, nextCareers, manualPositions, club))
-      .then(() => setSyncLabel("Venda em leilão sincronizada"))
-      .catch(() => setSyncLabel("Venda registrada localmente"));
+      progress: { ...progressRef.current, careerSquad: nextSquad, starters: nextStarters, playerCareers: nextCareers, budget: nextBudget },
+    });
   }
 
   function movePlayers(positions: Record<number, ManualPosition>) {
@@ -749,20 +755,30 @@ export function GameBoard() {
     setSubstitutionOut(null);
   }
 
-  if (!database || !sessionResolved) {
+  if (!database || !hydrationDone) {
     return (
       <div className="grid h-dvh overflow-hidden place-items-center bg-[#f7f7f2] bg-[linear-gradient(rgba(247,247,242,.88),rgba(247,247,242,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center font-[Arial] text-sm text-[#29402f]">
         <div className="flex items-center gap-3 rounded-lg border border-[#c8d8ca] bg-white/90 px-5 py-4 shadow-lg">
           <span className="h-3 w-3 animate-pulse rounded-full bg-[#16c864]" aria-hidden="true" />
-          Restaurando sua carreira...
+          Carregando suas carreiras...
         </div>
       </div>
     );
   }
 
+  if (activeSaveId && !careerLoaded) {
+    return <div className="grid min-h-svh place-items-center bg-[#0a100e] text-white" role="status">Carregando a carreira selecionada...</div>;
+  }
+
+  const homeControl = !isMenuPage(page) ? (
+    <button type="button" onClick={() => leaveActiveCareer("menu")} className="fixed right-3 bottom-3 z-[100] rounded border border-[#c2f45b] bg-[#101b14] px-4 py-2 text-xs font-bold text-white shadow-xl">⌂ Salvar e voltar ao início</button>
+  ) : null;
+
   if (page === "menu") {
     return (
       <StartMenuScreen
+        email={email}
+        onSignOut={onSignOut}
         saveCount={saves.length}
         syncLabel={syncLabel}
         onNewGame={() => {
@@ -806,6 +822,7 @@ export function GameBoard() {
   if (page === "hub")
     return (
       <>
+        {homeControl}
         <AppShell nav={nav} teamName={club} date="22/01/2026">
           <HubScreen
             club={club}
@@ -837,6 +854,7 @@ export function GameBoard() {
   if (managementSection)
     return (
       <>
+        {homeControl}
         <AppShell nav={nav} teamName={club} date="22/01/2026">
           <ClubSectionScreen
             section={managementSection}
@@ -867,6 +885,7 @@ export function GameBoard() {
   if (page === "lineup")
     return (
       <>
+        {homeControl}
         <AppShell nav={nav} teamName={club} date="22/01/2026" hideNav>
           <LineupScreen
           club={club}
@@ -904,6 +923,7 @@ export function GameBoard() {
   if (page === "matchOverview")
     return (
       <>
+        {homeControl}
         <MatchOverviewScreen
           competition="Campeonato Estadual"
           round={round}
@@ -969,7 +989,9 @@ export function GameBoard() {
     );
 
   return (
-    <ResultScreen
+    <>
+      {homeControl}
+      <ResultScreen
       round={round}
       fixtures={fixtures}
       club={club}
@@ -990,5 +1012,6 @@ export function GameBoard() {
         setPage("hub");
       }}
     />
+    </>
   );
 }

@@ -93,3 +93,10 @@
 }
 @media (max-width: 360px) { .edition { display: none; } .primary, .secondary { gap: 12px; padding: 13px 15px; font-size: 10px; } }
 @media (prefers-reduced-motion: reduce) { .primary, .secondary, .editor { transition: none; } .primary:hover, .secondary:hover { transform: none; } }
+
+.account { display: flex; align-items: center; gap: 15px; margin-left: auto; color: #b5c0ae; font-size: 11px; }
+.account > span { max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account button { padding: 8px 10px; border: 1px solid #ffffff30; border-radius: 3px; background: #101b14; color: #c2f45b; cursor: pointer; font-size: 11px; }
+.account button:focus-visible { outline: 2px solid #c2f45b; outline-offset: 4px; }
+@media (max-width: 900px) { .edition { display: none; } }
+@media (max-width: 600px) { .account { flex-wrap: wrap; justify-content: flex-end; gap: 5px; } .account > span { max-width: 130px; font-size: 9px; } .account button { font-size: 10px; } }

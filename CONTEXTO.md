@@ -27,7 +27,7 @@ O projeto inclui telas de gestão financeira, contratos, mercado, treinamento, c
 
 A `main` é o destino final das correções e melhorias, não apenas uma branch temporária de trabalho.
 
-Respeitar as restrições do ambiente: nesta sessão Arena, todo trabalho e push devem ocorrer exclusivamente na branch `arena/0a65a8e0-futmanager`. A integração na `main` deve ocorrer por pull request dessa branch, respeitando as permissões e proteções do repositório. Não fazer checkout nem push direto para outra branch quando o ambiente proibir.
+Respeitar as restrições do ambiente: em cada sessão Arena, todo trabalho e push devem ocorrer exclusivamente na branch ativa designada pelo ambiente. A integração na `main` deve ocorrer por pull request dessa branch, respeitando as permissões e proteções do repositório. Não fazer checkout nem push direto para outra branch quando o ambiente proibir.
 
 ### 2. Sempre publicar as correções no GitHub
 
@@ -48,3 +48,16 @@ Um push, um build local ou um deploy de preview não comprovam entrega em produ�
 ### 4. Manter este contexto atualizado
 
 Adicionar neste arquivo as novas regras e decisões de contexto fornecidas pelo responsável pelo projeto. Em caso de conflito com instruções de prioridade superior ou limitações do ambiente, explicar a restrição e registrar um procedimento compatível, sem prometer ações que não possam ser executadas.
+
+### 5. Fazer o merge ao concluir
+
+O responsável autorizou fazer o merge de cada entrega para a `main` sem nova confirmação, após revisar o diff e validar as alterações. Usar o número explícito do pull request e merge imediato (não usar `--auto`). Respeitar proteções e informar qualquer bloqueio.
+
+### 6. Contas e carreiras independentes
+
+- Ao abrir o link, sempre apresentar o menu inicial; nunca reabrir automaticamente uma carreira.
+- Login e cadastro com email e senha pelo Supabase Auth, sem armazenar senhas em tabelas próprias.
+- Uma conta pode ter várias carreiras independentes. Saves, elenco e táticas não podem vazar entre contas ou carreiras.
+- Permitir salvar e voltar ao início em qualquer tela da carreira.
+- Armazenamento local separado por usuário; nuvem protegida por políticas RLS de proprietário.
+- Nunca incluir chaves secretas do Supabase no cliente ou no repositório.
