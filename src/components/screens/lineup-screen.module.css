@@ -1106,3 +1106,58 @@
     --pitch-ratio: 0.6476190476;
   }
 }
+
+/* A compact bench keeps the pitch and every reserve visible together. */
+.bench {
+  padding: 5px;
+  border-radius: 8px;
+  background: linear-gradient(#0b281db8, #0b281dc7), url('/game-assets/backgrounds/reserve-bench.webp') center / cover;
+}
+.reserve {
+  background: #f9fcf2e8;
+  border-color: #d7e5d0;
+  touch-action: none;
+  transition: transform .15s, box-shadow .15s, background .15s;
+}
+.reserve:active { transform: scale(.97); }
+.reserve b { color: #1e3a27; }
+.reserve strong { color: #426b32; }
+.reserve small { color: #536c50; }
+.detailButton {
+  border: 1px solid #ccd9c6;
+  background: #f3f8ee;
+  color: #355332;
+  border-radius: 5px;
+  padding: 5px;
+  margin-top: 7px;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.detailButton:disabled { opacity: .55; cursor: default; }
+.modalBackdrop { position: fixed; inset: 0; z-index: 100; background: #071c13b8; display: grid; place-items: center; padding: 16px; }
+.modal { width: min(100%, 440px); max-height: 90dvh; overflow: auto; background: #f8fbf5; border: 1px solid #cbdac9; border-radius: 14px; padding: 20px; box-shadow: 0 20px 60px #0006; }
+.modal header { display: flex; justify-content: space-between; align-items: start; gap: 10px; }
+.modal h2 { font-size: 20px; margin: 0; color: #173c29; }
+.modal header button { border: 0; background: #e9f1e5; border-radius: 6px; width: 34px; height: 34px; font-size: 24px; cursor: pointer; }
+.detailGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 15px 0; }
+.detailGrid p { background: #eaf2e5; margin: 0; padding: 10px; border-radius: 6px; }
+.detailGrid span, .detailGrid strong { display: block; }
+.detailGrid span { color: #6a8066; font-size: 10px; }
+.detailGrid strong { color: #24452d; font-size: 14px; margin-top: 4px; }
+.modalActions { display: flex; gap: 8px; margin-top: 14px; }
+.modalActions button { flex: 1; background: #ddebce; color: #26472c; border: 1px solid #bfd5af; border-radius: 6px; padding: 9px; font-size: 11px; cursor: pointer; }
+.modalActions button:disabled { opacity: .45; cursor: default; }
+@media (max-width: 600px) {
+  .summary { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .summary > div:nth-child(n + 4) { display: block; }
+  .summary > div { padding-inline: 3px; }
+  .summary small { font-size: 6px; letter-spacing: 0; }
+  .summary strong { font-size: 14px; }
+  .detailButton { font-size: 8px; line-height: 1.1; }
+}
+@media (max-height: 550px) {
+  .summary { display: grid; padding-block: 3px; margin-bottom: 4px; }
+  .summary strong { font-size: 13px; margin-top: 1px; }
+}
+@media (prefers-reduced-motion: reduce) { .reserve { transition: none; } }
