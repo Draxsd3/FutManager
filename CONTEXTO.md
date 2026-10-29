@@ -166,3 +166,10 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Na ilustração, movimentar os atletas das duas equipes também sem bola, mantendo a formação e as posições manuais como âncoras. O posicionamento reage à bola e à posse; um jogador de linha próximo pode pressionar, e os demais ajustam cobertura e apoio. Goleiros acompanham a bola perto da posição escolhida, sem atravessar o campo.
 - Interpolar todos os jogadores suavemente em um único ciclo visual; pausa e intervalo congelam a posição atual, velocidade acelera o movimento e a preferência de movimento reduzido é respeitada. A movimentação não altera resultados, estatísticas ou saves.
 - A referência de pesquisa inspirou princípios, não uma implementação literal de IA ou física: UT Austin Villa (formação relacionada à bola e goleiro com função própria, https://www.cs.utexas.edu/~pstone/Papers/bib2html-links/LNAI12-MacAlpine.pdf) e PhysicsFC (movimentação sem bola ancorada à formação, https://arxiv.org/html/2504.21216v1). O modelo do FutManager continua heurístico e ilustrativo.
+
+### 22. Táticas rápidas em modal durante a partida
+
+- Correção do responsável: as táticas durante o jogo devem ser um modal, não outra tela completa, pois servem apenas para alterar formação e fazer substituições. Esta decisão substitui a apresentação da seção 20; a escalação pré-jogo continua completa e inalterada.
+- Usar cartão central com dimensões limitadas, fundo da partida visível e escurecido, cabeçalho compacto com placar/minuto e apenas formação, titulares e reservas. Não reproduzir campo, plano tático avançado, indicadores e estatísticas dentro do modal.
+- A formação é aplicada ao selecionar; substituições exigem seleção de quem sai/entra e confirmação. Fechar, Escape ou clicar fora descarta a troca ainda não confirmada, sem consumir substituições. Preservar limite, posições já salvas, pausa/retomada e autosave do controlador real.
+- Manter foco dentro do modal, fundo inerte, restauração do foco ao botão de origem e bloqueio temporário da rolagem da página. Listas têm rolagem própria quando necessário em telas pequenas.
