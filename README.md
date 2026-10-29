@@ -41,11 +41,13 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Contas e carreiras
 
-O link sempre abre o menu inicial. Para criar ou continuar uma carreira, o jogador
-entra ou cria uma conta com email e senha pelo Supabase Auth. Cada conta pode ter
-várias carreiras, cada uma com seu elenco, escalação, táticas e partida próprios.
-A opção **Menu inicial** da barra superior salva a carreira ao retornar. Não há botão flutuante sobre o conteúdo.
-Uma partida retomada começa pausada.
+Ao abrir o jogo em uma nova sessão ou entrar na conta, o menu inicial é apresentado.
+Se a página for recarregada na mesma aba durante uma carreira, o jogo restaura a tela
+e o progresso ativos; partidas são retomadas pausadas. A opção **Menu inicial**
+salva a carreira e encerra essa retomada automática. Para criar ou continuar uma
+carreira, o jogador entra ou cria uma conta com email e senha pelo Supabase Auth.
+Cada conta pode ter várias carreiras, cada uma com seu elenco, escalação, táticas e
+partida próprios. Não há botão flutuante sobre o conteúdo.
 
 ### Configuração do Supabase
 
@@ -269,3 +271,6 @@ Na partida, a bola segue a posição atual e o próximo passe parte do recebedor
 ### Gols e posição dos goleiros
 
 Os jogadores se movimentam perto das posições táticas definidas, com uma área de deslocamento mais restrita para goleiros. Gols novos exibem uma comemoração temporária com autor, clube e minuto; retomadas não repetem gols antigos. O autor adversário usa um jogador do elenco cadastrado quando há dados suficientes; caso contrário, é identificado genericamente. A escalação do adversário é simulada.
+### Táticas na partida
+
+A prancheta de escalação também é usada durante a partida, com placar, relógio pausado, estatísticas e lances. O campo mantém arraste livre e camisas nas cores do clube. Selecione quem sai/entra em qualquer ordem ou arraste um reserva ao campo e confirme a troca na barra inferior; preparar ou cancelar não consome substituições. As alterações confirmadas integram o autosave da carreira. Em telas menores, use **Plano tático** para acessar formação, estilo, marcação e foco de ataque.

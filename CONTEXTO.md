@@ -55,7 +55,7 @@ O responsável autorizou fazer o merge de cada entrega para a `main` sem nova co
 
 ### 6. Contas e carreiras independentes
 
-- Ao abrir o link e após qualquer login, sempre apresentar o menu inicial; nunca abrir automaticamente o editor, outra seção ou uma carreira, mesmo se essa opção tiver sido clicada antes de entrar.
+- Ao abrir o link em uma nova sessão/aba e após qualquer login, apresentar o menu inicial; nunca reabrir automaticamente editor, seção ou carreira após autenticação. Exceção de usabilidade: atualizar a página na mesma aba durante uma carreira ativa deve restaurar a tela e o progresso da sessão; partida em andamento retorna pausada. A ação deliberada Menu inicial encerra a retomada automática para que o próximo início volte ao menu.
 - Login e cadastro com email e senha pelo Supabase Auth, sem armazenar senhas em tabelas próprias.
 - Uma conta pode ter várias carreiras independentes. Saves, elenco e táticas não podem vazar entre contas ou carreiras.
 - Usar os controles de navegação existentes, como Menu inicial na barra superior. Não exibir o botão flutuante “Salvar e voltar ao início”, removido a pedido do responsável. Manter o salvamento automático.
@@ -152,3 +152,11 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Na visualização da partida, impedir que jogadores sejam levados para o outro lado do campo por lances distantes; goleiros têm deslocamento mais limitado ao redor da posição definida pelo usuário, sem bloquear posicionamentos táticos personalizados.
 - Cada gol novo deve mostrar uma comemoração temporária “GOOOL!” com autor, clube e minuto, inclusive no intervalo ou no fim do jogo. Não repetir a comemoração ao carregar uma partida já salva. Preservar placar, lances e acessibilidade com movimento reduzido.
 - O adversário usa uma escalação simulada com atletas cadastrados no editor quando disponíveis; se o elenco não estiver disponível, identificar o autor genericamente em vez de inventar um nome. As escalações adversárias e o modelo de movimento continuam simplificados.
+### 20. Táticas durante a partida no padrão da escalação inicial
+
+- Pedido de 29/10/2026: modernizar as táticas durante o jogo, podendo usar a mesma tela de táticas anterior ao início da partida.
+- Reutilizar `LineupScreen` em modo de partida: mesma prancheta proporcional, camisas numeradas no molde obrigatório e nas cores cadastradas do clube, banco completo ao lado, busca/filtros, plano tático e guias opcionais desligadas por padrão. Não reintroduzir fotos ou posições fixas.
+- Manter placar, relógio pausado, intervalo, estatísticas, lances e quantidade de substituições restantes. Em telas menores, o plano tático abre pelo botão do cabeçalho; placar/tempo continuam visíveis mesmo em paisagem.
+- Substituições são preparadas por seleção em qualquer ordem ou arraste de reserva e exigem confirmação explícita na barra inferior, fora do banco para não esconder reservas. Cancelar ou sair sem confirmar não muda o XI nem consome substituições. Ao esgotar o limite, o reposicionamento de titulares continua livre.
+- O controlador real mantém pausa/retomada e autosave; o mesmo helper de posicionamento transfere as coordenadas do atleta que sai (ou aplica o ponto livre solicitado) ao que entra, preservando os demais. Reservas nunca passam pelo atalho de troca pré-jogo sem confirmação.
+- Regressões automatizadas cobrem seleção, confirmação/cancelamento, arraste, limite, plano tático, cores, foco e integração com partida/autosave. Revisão Chromium local em cinco resoluções, incluindo 14 reservas, preparação e confirmação, sem rolagem da página ou erros de execução. Rota temporária de revisão removida antes da publicação.
