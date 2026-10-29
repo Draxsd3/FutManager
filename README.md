@@ -274,3 +274,9 @@ Os jogadores se movimentam perto das posições táticas definidas, com uma áre
 ### Táticas na partida
 
 A prancheta de escalação também é usada durante a partida, com placar, relógio pausado, estatísticas e lances. O campo mantém arraste livre e camisas nas cores do clube. Selecione quem sai/entra em qualquer ordem ou arraste um reserva ao campo e confirme a troca na barra inferior; preparar ou cancelar não consome substituições. As alterações confirmadas integram o autosave da carreira. Em telas menores, use **Plano tático** para acessar formação, estilo, marcação e foco de ataque.
+
+### Movimentação coletiva no minicampo
+
+Os 22 jogadores da ilustração ajustam suas posições em relação à bola: a formação e as posições personalizadas permanecem como âncoras, enquanto jogadores de linha oferecem apoio ou cobertura e um defensor próximo pode pressionar. O goleiro acompanha a bola perto da sua posição escolhida. A interpolação congela na pausa e acompanha a velocidade, com respeito a movimento reduzido. É uma aproximação visual heurística; não altera o motor da partida nem representa física real.
+
+A direção foi inspirada por [UT Austin Villa: formação e atribuição de papéis](https://www.cs.utexas.edu/~pstone/Papers/bib2html-links/LNAI12-MacAlpine.pdf) e [PhysicsFC: movimentação sem bola e formação](https://arxiv.org/html/2504.21216v1), sem reproduzir os sistemas completos descritos nesses trabalhos.
