@@ -14,7 +14,10 @@ it("exibe partidas registradas e permite selecionar ações reais de mercado", (
   expect(screen.getByText("Clube 2 × 0 Rival")).toBeTruthy();
   expect(screen.getByText("Rodada 1 · 90 min")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Mercado" }));
-  fireEvent.click(screen.getByRole("button", { name: "Listar para empréstimo" }));
-  fireEvent.click(screen.getByRole("button", { name: "Confirmar ação" }));
-  expect(onMarketAction).toHaveBeenCalledWith("loan");
+  const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);
+  fireEvent.click(screen.getByRole("button", { name: "Colocar à venda" }));
+  expect(onMarketAction).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Colocar à venda" }));
+  expect(onMarketAction).toHaveBeenCalledWith({ type: "list" });
+  confirm.mockRestore();
 });

@@ -17,3 +17,29 @@ describe("registro de partidas", () => {
     expect(initial[starter.id].matches).toBeUndefined();
   });
 });
+
+import { applyNegotiation, offerEligibility } from "./career";
+
+describe("negociação simplificada", () => {
+  const base = createPlayerCareer(squad[0], "Clube");
+  it("exige multa para jogador não listado e permite proposta de qualquer clube quando listado", () => {
+    expect(offerEligibility(base, 100)).toBe(false);
+    const withClause = { ...base, releaseClause: 10 };
+    expect(offerEligibility(withClause, 9.99)).toBe(false);
+    expect(offerEligibility(withClause, 10)).toBe(true);
+    const listed = applyNegotiation(base, { type: "list" }, "2026-01-22", "Clube").record;
+    const result = applyNegotiation(listed, { type: "offer", id: "1", club: "Rival", fee: 1 }, "2026-01-22", "Clube");
+    expect(result.record.transferOffers?.[0].status).toBe("pending");
+    expect(applyNegotiation(result.record, { type: "accept", id: "1" }, "2026-01-22", "Clube").transfer?.fee).toBe(1);
+    const unlisted = applyNegotiation(result.record, { type: "unlist" }, "2026-01-22", "Clube").record;
+    expect(applyNegotiation(unlisted, { type: "accept", id: "1" }, "2026-01-22", "Clube").transfer).toBeUndefined();
+  });
+  it("valida e negocia salário, duração e multa sem alterar contratos antigos até aceite", () => {
+    const offer = { salary: base.salary, years: 3, releaseClause: 15 };
+    const accepted = applyNegotiation(base, { type: "contract", offer }, "2027-02-10", "Clube");
+    expect(accepted.record).toMatchObject({ salary: base.salary, contractUntil: "2030-12-31", releaseClause: 15 });
+    expect(applyNegotiation(base, { type: "contract", offer: { ...offer, salary: base.salary - 1 } }, "2027-02-10", "Clube").record).toBe(base);
+    expect(applyNegotiation(base, { type: "contract", offer: { ...offer, years: 0 } }, "2027-02-10", "Clube").record).toBe(base);
+    expect(base.releaseClause).toBeUndefined();
+  });
+});
