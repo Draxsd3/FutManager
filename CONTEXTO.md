@@ -89,3 +89,18 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Guias de defesa, meio, ataque e subposições devem começar **desligadas**. Ativar “Mostrar setores” oferece orientação visual e alvos opcionais, nunca restrições ou encaixe automático durante o arraste.
 - Posicionamento é livre em toda a superfície do campo: remover limites por função e zona, inclusive entre goleiros e jogadores de linha. Trocas continuam atômicas e sem duplicar atletas; adaptação permanece apenas informativa no planejamento, com o cálculo existente do motor.
 - A camisa acompanha o ponteiro preservando o ponto de pega; soltar em área livre mantém a coordenada escolhida, sem voltar a posições fixas. Cancelar ou soltar fora do campo não altera a escalação.
+
+### 11. Editor de clubes e camisas personalizadas
+
+- Modernizar o editor e preservar os três uniformes existentes. Permitir criar camisas adicionais por clube, sem substituição dos modelos cadastrados.
+- Toda geração por IA deve incluir automaticamente nome do clube e seus patrocínios, além de cores, identidade e template consistente de proporção/enquadramento. Manter realismo e coerência visual; revisar escudo, marcas e textos, cuja reprodução exata não é garantida pelo modelo.
+- Patrocínios são cadastrados pelo jogador por clube; não apresentar marcas presumidas como patrocínios oficiais atuais. Exigir inscrições ou confirmação explícita de ausência de patrocínio antes de montar um pedido válido.
+
+#### Implementação e pendências técnicas desta entrega
+
+- Estúdio oferece criador manual identificado como não IA, importação PNG/JPG/WebP, preview, prompt completo/cópia e até oito modelos adicionais por clube, com download e exclusão confirmada.
+- Biblioteca e patrocínios são locais, em IndexedDB por `[userId, clubId]`, sem sincronização em nuvem. Isso deve permanecer visível na interface. Não inserir imagens base64 no banco de dados do editor nem fingir que a biblioteca altera os uniformes das partidas.
+- Endpoint `/api/kits/generate` integra OpenAI apenas no servidor, verifica sessão real Supabase e reconstrói o prompt a partir dos dados validados. Não aceita prompt integral arbitrário como substituto da identidade obrigatória. Nunca expor a chave secreta no cliente.
+- Migração `20261029140000_kit_generation_quota.sql` fornece cota persistente, atômica e por conta (3 tentativas/janela de 1h), com RLS e acesso somente por função autenticada. Sem migração/cota válida, falhar fechado antes de chamar o provedor; não substituir por limite em memória.
+- Em 29/10/2026, a Vercel não tinha `OPENAI_API_KEY` e a migração não foi aplicada remotamente. Geração real segue indisponível; não afirmar que foi ativada/testada com imagens pagas. Administração precisa aplicar a migração, configurar chave server-only de forma segura e redeployar, conforme README. Modelo padrão `gpt-image-1`, opcional `OPENAI_IMAGE_MODEL`.
+- Validação local: testes automatizados de prompt, API simulada, isolamento IndexedDB e interface; Chromium em 1536/1366/1024/390/844 pixels, persistência após reload, troca de clube, importação raster real e diálogo por teclado. Cota SQL exercitada em PostgreSQL local/PGlite, não em Supabase remoto.

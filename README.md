@@ -135,3 +135,60 @@ Plano tático mantém formação, estilo, marcação e concentração de ataque 
 ### Tática em uma única janela
 
 Campo e banco inteiro são ajustados à altura da janela, lado a lado, inclusive em telas estreitas; não há rolagem principal nem do banco. Em telas menores, **Plano tático** abre os ajustes sob demanda. A área lateral de análise é independente. Guias de defesa/meio/ataque e 16 subposições são opcionais e desligadas por padrão. Elas não prendem o arraste a uma grade. A camisa mantém o ponto de pega e a coordenada livre de soltura; reservas substituem o titular espacialmente mais próximo ou a camisa indicada, sem filtro de posição.
+
+## Editor moderno e estúdio de uniformes
+
+Em **Editor de clubes → Estúdio de uniformes**, cada clube mantém seus três
+uniformes existentes e uma coleção de até oito conceitos adicionais. O editor
+continua oferecendo cadastro/edição de clubes, jogadores e categorias de base.
+
+- **Manual:** cores, padrão liso/listrado/faixa e prévia vetorial com silhueta fixa.
+  É um criador determinístico, não IA. Mostra até cinco inscrições abreviadas;
+  não reproduz logotipos nem posições oficiais de patrocínio.
+- **Patrocínios:** preencher um por linha, indicando posições se desejado, ou
+  confirmar expressamente a ausência de patrocinadores. Não há pesquisa nem
+  presunção automática de marcas oficiais/atuais. São aceitas até 12 inscrições
+  de 100 caracteres; o prompt inclui todas sem truncá-las.
+- **IA:** integração real no servidor com OpenAI. Todo pedido é reconstruído com
+  nome/sigla do clube, cores, padrão, patrocínios e enquadramento frontal fixo
+  1024×1536, além da direção criativa. O cliente não pode substituir o prompt
+  integral da API. Modelos podem falhar na reprodução de escudos, textos e
+  marcas: o resultado é um conceito para revisão, não uniforme oficial.
+- **Biblioteca:** IndexedDB, separada por conta e clube, **somente neste navegador**.
+  Patrocínios e imagens personalizados não são sincronizados com Supabase e
+  não alteram as camisas usadas pelo motor de partidas. Limpar dados do site ou
+  mudar de dispositivo não preserva essa biblioteca. Baixe as imagens para backup.
+- **Importar/exportar:** PNG/JPG/WebP de até 5 MB, reduzidos para até 900 pixels
+  no maior lado e recodificados no navegador. Manuais são exportados como SVG;
+  importações e resultados da IA, como WebP. Excluir exige confirmação.
+
+### Ativar geração real em produção (administração)
+
+1. Aplicar no projeto Supabase correto a migração
+   `supabase/migrations/20261029140000_kit_generation_quota.sql`.
+   Ela cria uma tabela com RLS e uma função atômica de cota: três tentativas por
+   janela de uma hora/conta autenticada, sem acesso direto à tabela. Contas
+   anônimas não podem gerar. Falhas do provedor também consomem uma tentativa.
+2. Configurar **OPENAI_API_KEY**, secreta e apenas no servidor, nas variáveis
+   do ambiente da Vercel. Nunca usar prefixo `NEXT_PUBLIC_` nem colar chaves em
+   chat/repositório. `OPENAI_IMAGE_MODEL` é opcional, padrão `gpt-image-1`.
+   Manter as duas variáveis públicas Supabase já utilizadas pelo aplicativo.
+3. Configurar limites/alertas de custo no provedor e fazer novo deploy.
+4. Validar com uma conta real: geração, revisão antes de adicionar, isolamento
+   e resposta 429 ao exceder a cota. A geração envia identidade/patrocínios e
+   descrição para a OpenAI; não envia o token do jogador ao provedor.
+
+`GET /api/kits/generate` informa apenas a presença de configuração, não atesta
+conectividade nem a aplicação da migração. `POST` valida o JWT no Supabase,
+valida o corpo e exige a cota persistente antes de chamar o provedor. Ausência de
+chave ou de cota retorna indisponibilidade (503), sem fallback falso. Token
+inválido/conta anônima: 401; cota esgotada: 429; falha do provedor: 502/504.
+A resposta usa `no-store`; a chave nunca é retornada. Há timeout de 100 segundos.
+
+**Estado da entrega em 29/10/2026:** a chave do provedor não estava configurada
+na Vercel e esta migração não foi aplicada remotamente nesta entrega. Assim,
+a criação manual, importação, biblioteca e cópia do prompt funcionam, mas a
+IA permanece indisponível até concluir a configuração. Testes de API usam
+serviços simulados, não comprovam geração paga real. A migração foi exercitada
+em PostgreSQL local (PGlite), incluindo permissões e renovação de janela;
+isso não substitui a aplicação/validação do Auth e RLS no Supabase real.

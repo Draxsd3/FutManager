@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useMemo, useState, useEffect, useRef, type CSSProperties } from "react";
 import Image from "next/image";
 import type { DivisionKey, PositionCode } from "@/lib/game/mock-data";
 import { MAX_CLUB_SQUAD_SIZE, type EditorClub, type EditorDatabase, type EditorPlayer } from "@/lib/game/editor-data";
 import styles from "./editor-screen.module.css";
+import { KitStudio } from "./kit-studio";
 import { ClassicIcon, type ClassicIconName } from "@/components/ui/classic-icon";
 import { clubCrestAsset, clubKitAsset } from "@/lib/game/assets";
 
@@ -12,7 +13,8 @@ type EditorModal = "club" | "player" | null;
 const positions: PositionCode[] = ["G", "L", "Z", "M", "A"];
 const qualities = ["Armação", "Cabeceio", "Colocação", "Cruzamento", "Desarme", "Finalização", "Marcação", "Passe", "Reflexo", "Resistência", "Velocidade"];
 
-export function EditorScreen({ database, syncLabel, onChange, onBack }: { database: EditorDatabase; syncLabel: string; onChange: (database: EditorDatabase) => void; onBack: () => void }) {
+export function EditorScreen({ database, userId, syncLabel, onChange, onBack }: { userId: string; database: EditorDatabase; syncLabel: string; onChange: (database: EditorDatabase) => void; onBack: () => void }) {
+  const [tab, setTab] = useState<"squad" | "kits">("squad");
   const [selectedClubId, setSelectedClubId] = useState(database.clubs[0]?.id ?? "");
   const [selectedPlayerId, setSelectedPlayerId] = useState("");
   const [teamSearch, setTeamSearch] = useState("");
@@ -20,6 +22,22 @@ export function EditorScreen({ database, syncLabel, onChange, onBack }: { databa
   const [positionFilter, setPositionFilter] = useState<"Todos" | PositionCode>("Todos");
   const [juniors, setJuniors] = useState(false);
   const [modal, setModal] = useState<EditorModal>(null);
+  const dialog = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!modal) return;
+    const previous = document.activeElement as HTMLElement | null;
+    dialog.current?.querySelector<HTMLElement>("input, select, button")?.focus();
+    function keyboard(event: KeyboardEvent) {
+      if (event.key === "Escape") setModal(null);
+      if (event.key !== "Tab") return;
+      const options = Array.from(dialog.current?.querySelectorAll<HTMLElement>("input, select, button:not(:disabled)") ?? []);
+      const first = options[0], last = options[options.length - 1];
+      if (event.shiftKey && document.activeElement === first) {event.preventDefault();last?.focus();}
+      if (!event.shiftKey && document.activeElement === last) {event.preventDefault();first?.focus();}
+    }
+    document.addEventListener("keydown", keyboard);
+    return () => {document.removeEventListener("keydown", keyboard);previous?.focus();};
+  }, [modal]);
   const selectedClub = database.clubs.find((club) => club.id === selectedClubId) ?? database.clubs[0] ?? null;
   const selectedPlayer = database.players.find((player) => player.id === selectedPlayerId) ?? null;
   const totalClubPlayerCount = database.players.filter((player) => player.clubId === selectedClub?.id).length;
@@ -102,9 +120,10 @@ export function EditorScreen({ database, syncLabel, onChange, onBack }: { databa
   if (!selectedClub) return <main className={styles.screen}><button onClick={addClub}>Adicionar primeira equipe</button><button onClick={onBack}>Início</button></main>;
 
   return <main className={styles.screen}>
+    <header className={styles.pageHeader}><div><p>FUTMANAGER / PERSONALIZAÇÃO</p><h1>Editor de clubes<span>.</span></h1><p>Identidade, elenco e novos uniformes. Seu futebol, do seu jeito.</p></div><button onClick={onBack}>← Voltar ao início</button></header>
     <section className={styles.teamPanel}>
       <div className={styles.teamTableHeader}><span>Time</span><span>País</span><span>Nível</span></div>
-      <div className={styles.teamList}>{visibleClubs.map((club) => <button key={club.id} className={club.id === selectedClub.id ? styles.teamSelected : ""} onClick={() => { setSelectedClubId(club.id); setSelectedPlayerId(""); }}><span>{club.name}</span><span><i className={styles.flag} />{club.country}</span><span>{club.level}</span></button>)}</div>
+      <div className={styles.teamList}>{visibleClubs.map((club) => <button key={club.id} aria-label={`${club.name}, ${club.country}, nível ${club.level}`} aria-pressed={club.id === selectedClub.id} className={club.id === selectedClub.id ? styles.teamSelected : ""} onClick={() => { setSelectedClubId(club.id); setSelectedPlayerId(""); }}><span>{club.name}</span><span><i className={styles.flag} />{club.country}</span><span>{club.level}</span></button>)}</div>
       <div className={styles.teamActions}><ClassicButton label="adicionar" icon="add" onClick={addClub} /><ClassicButton label="editar" icon="pencil" onClick={() => setModal("club")} /><ClassicButton label="deletar" icon="delete" onClick={removeClub} /></div>
       <div className={styles.searchBox}>
         <label><strong>Procurar time:</strong><input value={teamSearch} onChange={(event) => setTeamSearch(event.target.value)} /><button aria-label="Procurar time"><ClassicIcon name="magnifier" /></button></label>
@@ -119,12 +138,15 @@ export function EditorScreen({ database, syncLabel, onChange, onBack }: { databa
         <div className={styles.clubFacts}><strong>{selectedClub.name}</strong><span>{selectedClub.division}</span><b className={styles.level}>{selectedClub.level}</b><span><i className={styles.flag} /> {selectedClub.country}</span><span><ClassicIcon name="sport" /> {selectedClub.stadiumName}</span><span>{selectedClub.stadiumCapacity.toLocaleString("pt-BR")} lugares</span><span><ClassicIcon name="user_suit" /> {selectedClub.coachName}</span></div>
         <ClubCrest club={selectedClub} /><div className={styles.kits}><Shirt club={selectedClub} tone="primary" /><Shirt club={selectedClub} tone="secondary" /><Shirt club={selectedClub} tone="third" /></div>
       </header>
+      <nav className={styles.editorTabs} aria-label="Áreas do editor"><button aria-pressed={tab === "squad"} onClick={() => setTab("squad")}>Elenco e jogadores <span>{totalClubPlayerCount}</span></button><button aria-pressed={tab === "kits"} onClick={() => setTab("kits")}>✦ Estúdio de uniformes</button></nav>
+      {tab === "kits" ? <KitStudio key={`${userId}:${selectedClub.id}`} club={selectedClub} userId={userId} /> : <>
       <div className={styles.squadTabs}><button className={!juniors ? styles.activeSquadTab : ""} onClick={() => setJuniors(false)}><ClassicIcon name="bullet_green" /> Principal</button><button className={juniors ? styles.activeSquadTab : ""} onClick={() => setJuniors(true)}><ClassicIcon name="user_green" /> Juniores</button></div>
       <div className={styles.playerTableWrap}><table className={styles.playerTable}><thead><tr><th>★</th><th>Nº</th><th>Nome</th><th>Posição</th><th>2ª pos.</th><th>Força</th><th>Qualidades</th><th>Idade</th><th>Lado</th></tr></thead><tbody>{clubPlayers.map((player) => <tr key={player.id} className={player.id === selectedPlayer?.id ? styles.playerSelected : ""} onClick={() => setSelectedPlayerId(player.id)} onDoubleClick={() => { setSelectedPlayerId(player.id); setModal("player"); }}><td className={styles.stars}>{"★".repeat(player.starRating)}<span>{"☆".repeat(5 - player.starRating)}</span></td><td>{player.shirtNumber}</td><td>{player.name}</td><td>{positionName(player.primaryPosition)}</td><td>{player.secondaryPosition ? positionName(player.secondaryPosition) : "—"}</td><td><b>{player.overall}</b></td><td>{shortQuality(player.qualityPrimary)}/{shortQuality(player.qualitySecondary)}</td><td>{player.age}</td><td>{player.preferredFoot}</td></tr>)}</tbody></table></div>
       <footer className={styles.squadFooter}><span title="Limite de elenco"><ClassicIcon name="group" /> {totalClubPlayerCount}/{MAX_CLUB_SQUAD_SIZE}</span><span><ClassicIcon name="star" /> {clubPlayers.filter((player) => player.starRating >= 4).length}</span><div className={styles.iconActions}><button onClick={() => addPlayer(false)} disabled={squadIsFull} title={squadIsFull ? "Limite de 35 jogadores atingido" : "Adicionar jogador"}><ClassicIcon name="user_add" /></button><button onClick={() => selectedPlayer && setModal("player")} disabled={!selectedPlayer} title="Editar jogador"><ClassicIcon name="user_edit" /></button><button onClick={removePlayer} disabled={!selectedPlayer} title="Remover jogador"><ClassicIcon name="user_delete" /></button></div><button className={styles.randomButton} onClick={() => addPlayer(true)} disabled={squadIsFull} title={squadIsFull ? "Limite de 35 jogadores atingido" : "Criar jogador aleatório"}><ClassicIcon name="user_add" /> Criar aleatório</button><select value={positionFilter} onChange={(event) => setPositionFilter(event.target.value as "Todos" | PositionCode)}><option>Todos</option>{positions.map((position) => <option key={position} value={position}>{positionName(position)}</option>)}</select></footer>
+      </>}
     </section>
 
-    {modal && <div className={styles.modalBackdrop} onMouseDown={() => setModal(null)}><section className={styles.modal} onMouseDown={(event) => event.stopPropagation()}><header><strong>{modal === "club" ? "Editar equipe" : "Editar jogador"}</strong><button onClick={() => setModal(null)}><ClassicIcon name="cancel" /></button></header>{modal === "club" ? <ClubForm club={selectedClub} onChange={updateClub} /> : <PlayerForm player={selectedPlayer} onChange={updatePlayer} />}<footer><button onClick={() => setModal(null)}>Salvar e fechar</button></footer></section></div>}
+    {modal && <div className={styles.modalBackdrop} onMouseDown={() => setModal(null)}><section ref={dialog} role="dialog" aria-modal="true" aria-label={modal === "club" ? "Editar equipe" : "Editar jogador"} className={styles.modal} onKeyDown={(event) => { if(event.key === "Escape") setModal(null); }} onMouseDown={(event) => event.stopPropagation()}><header><strong>{modal === "club" ? "Editar equipe" : "Editar jogador"}</strong><button aria-label="Fechar editor" onClick={() => setModal(null)}><ClassicIcon name="cancel" /></button></header>{modal === "club" ? <ClubForm club={selectedClub} onChange={updateClub} /> : <PlayerForm player={selectedPlayer} onChange={updatePlayer} />}<footer><button onClick={() => setModal(null)}>Salvar e fechar</button></footer></section></div>}
     <div className={styles.syncStatus}>{syncLabel}</div>
   </main>;
 }
