@@ -2,7 +2,7 @@ import type { Player } from "@/lib/game/mock-data";
 import { formationSlotRoles, formationSlots, nearestFormationSlot, playerFitAtPosition } from "@/lib/game/formations";
 import type { ManualPosition } from "@/lib/game/career";
 import { Shirt } from "./shirt";
-import Image from "next/image";
+import { PlayerJersey } from "./player-jersey";
 
 export function Pitch({
   club,
@@ -99,7 +99,7 @@ function TacticPlayer({ player, role, selected, effectiveOverall, fitLabel, onCl
   const fitTone = fitLabel === "Natural" ? "border-[#19d66d]" : fitLabel === "Secundária" ? "border-[#f1bf31]" : "border-[#e65e50]";
   const energyTone = player.energy >= 80 ? "bg-[#17d66d]" : player.energy >= 55 ? "bg-[#f1bd31]" : "bg-[#e65e50]";
   return <button type="button" draggable onDragStart={onDragStart} onClick={onClick} className={`relative z-[1] flex w-[112px] flex-col items-center cursor-grab transition-all duration-200 active:cursor-grabbing ${selected ? "scale-110 rounded ring-2 ring-[#e6c137]" : "hover:scale-105"}`}>
-    <span className="relative grid h-16 w-16 place-items-end overflow-visible"><Image src={player.photoDataUrl ?? "/game-assets/player-silhouette.png"} alt={`Foto de ${player.name}`} width={64} height={64} unoptimized className="h-full w-full object-contain object-bottom" /><b className={`absolute -right-4 -top-1 grid h-8 w-8 place-items-center rounded-full border-2 ${fitTone} bg-[#071009] text-[12px] text-white`}>{effectiveOverall}</b></span>
+    <span className="relative grid h-16 w-16 place-items-end overflow-visible"><PlayerJersey player={player} /><b className={`absolute -right-4 -top-1 grid h-8 w-8 place-items-center rounded-full border-2 ${fitTone} bg-[#071009] text-[12px] text-white`}>{effectiveOverall}</b></span>
     <span className="mt-0.5 rounded bg-[#101610] px-1 text-[7px] font-black text-[#ffc73d]">{role}</span>
     <span className="-mt-px w-full truncate border-y border-[#0a0d0a] bg-black/95 px-1 py-0.5 text-center text-[10px] font-black uppercase text-white">{player.name}</span>
     <span className="h-1 w-[88px] overflow-hidden rounded-b bg-black/80"><i style={{ width: `${player.energy}%` }} className={`block h-full ${energyTone}`} /></span>

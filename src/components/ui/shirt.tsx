@@ -39,7 +39,7 @@ export function Shirt({
     >
       {kitAsset ? <span className={["relative block drop-shadow-[0_1px_1px_#111]", compact ? "h-11 w-10" : "h-12 w-11"].join(" ")}>
         <Image src={kitAsset} alt={`Camisa do ${club}`} width={55} height={55} unoptimized className="h-full w-full object-contain" />
-        <b className="absolute inset-0 grid place-items-center pt-1 text-[8px] text-white drop-shadow-[0_1px_2px_#000]">{player.id}</b>
+        <b className="absolute inset-0 grid place-items-center pt-1 text-[8px] text-white drop-shadow-[0_1px_2px_#000]">{player.shirtNumber ?? player.id}</b>
       </span> : <i
         className={[
           "flex items-center justify-center not-italic font-black drop-shadow-[0_1px_1px_#111]",
@@ -53,7 +53,7 @@ export function Shirt({
           outline: selected ? "2px solid var(--accent)" : "none",
         }}
       >
-        {player.id}
+        {player.shirtNumber ?? player.id}
       </i>}
       <span
         className={[

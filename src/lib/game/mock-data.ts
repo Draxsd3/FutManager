@@ -3,6 +3,7 @@ export type PositionCode = "G" | "L" | "Z" | "M" | "A";
 export type Player = {
   id: number;
   sourceId?: string;
+  shirtNumber?: number;
   name: string;
   position: PositionCode;
   secondaryPosition?: PositionCode | null;

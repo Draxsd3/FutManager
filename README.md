@@ -125,3 +125,9 @@ A agenda apresenta o compromisso disponível na rodada, filtro de mando e acesso
 - **Estádio:** dados cadastrados do estádio, capacidade, saldo da carreira e folha do elenco. Visão geral, simulador de bilheteria e infraestrutura. A projeção usa capacidade × ocupação × ingresso, menos custo informado; não altera a carreira. Ampliação e manutenção ainda não executáveis.
 
 Validação: `npm test`, `npm run lint`, `npm run build`. Testes cobrem navegação Principal, busca/ordenação e ações de saves, exploração de competições com dados ausentes, acessibilidade do diálogo e cálculo hipotético de bilheteria.
+
+### Escalação moderna
+
+O centro tático usa camisas vetoriais com o número cadastrado (IDs como fallback de saves antigos), sem upload ou exibição de fotos na escalação. Arraste uma camisa com mouse/toque para área livre do campo para personalizar a posição, ou sobre um titular para trocar; reservas podem ser arrastados pela camisa, com rolagem da lista pelo texto. Também é possível selecionar uma camisa e ativar um dos 16 destinos de setor por clique/Tab+Enter. Soltar fora do campo, cancelar o gesto ou pressionar Esc preserva o time.
+
+Plano tático mantém formação, estilo, marcação e concentração de ataque reais. Reservas têm busca/filtro; indicadores mostram força estimada com adaptação/energia e alertas. Goleiros não trocam de função com jogadores de linha. Reabrir a tela preserva o XI e as coordenadas; mudar a formação reorganiza a equipe, enquanto restaurar posições mantém os titulares. Posicionamento personalizado continua sendo interpretado pela função mais próxima do esquema no motor atual.
