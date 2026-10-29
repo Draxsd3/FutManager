@@ -184,6 +184,7 @@ export function buildSquadFromDatabase(database: EditorDatabase, clubName: strin
   return players.map((player, index) => ({
     id: index + 1,
     sourceId: player.id,
+    shirtNumber: player.shirtNumber,
     name: player.name,
     position: player.primaryPosition,
     secondaryPosition: player.secondaryPosition,

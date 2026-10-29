@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createDefaultDatabase, enforceEditorSquadLimit, MAX_CLUB_SQUAD_SIZE } from "./editor-data";
+import { createDefaultDatabase, buildSquadFromDatabase, enforceEditorSquadLimit, MAX_CLUB_SQUAD_SIZE } from "./editor-data";
 
 describe("editor database", () => {
   it("creates complete squads for all default clubs", () => {
@@ -26,4 +26,14 @@ describe("editor database", () => {
     const limited = enforceEditorSquadLimit(oversized);
     expect(limited.filter((player) => player.clubId === clubId)).toHaveLength(MAX_CLUB_SQUAD_SIZE);
   });
+});
+
+it("preserves editor shirt numbers independently of internal player ids", () => {
+  const database = createDefaultDatabase();
+  const club = database.clubs[0];
+  const player = database.players.find((p) => p.clubId === club.id)!;
+  player.shirtNumber = 99;
+  const converted = buildSquadFromDatabase(database, club.name)!.find((p) => p.sourceId === player.id)!;
+  expect(converted.shirtNumber).toBe(99);
+  expect(converted.id).not.toBe(99);
 });

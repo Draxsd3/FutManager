@@ -1,76 +1,689 @@
 "use client";
 
-import { useRef, useState } from "react";
-import Image from "next/image";
+import { useRef, useState, type PointerEvent } from "react";
 import type { Player } from "@/lib/game/mock-data";
 import type { ManualPosition } from "@/lib/game/career";
-import { Pitch } from "@/components/ui/pitch";
+import {
+  formationSlots,
+  formationSlotRoles,
+  formations,
+  nearestFormationSlot,
+  playerFitAtPosition,
+} from "@/lib/game/formations";
+import { fieldSectors } from "@/lib/game/lineup";
 import { fifaPosition } from "@/lib/game/fifa-position";
-import { formationSlotRoles, formations, tacticalFit } from "@/lib/game/formations";
-import { ClassicIcon, type ClassicIconName } from "@/components/ui/classic-icon";
+import { PlayerJersey } from "@/components/ui/player-jersey";
+import styles from "./lineup-screen.module.css";
 
-export function LineupScreen({
-  club, opponent, round, competition, formation, setFormation, style, setStyle, marking, setMarking, focus, setFocus,
-  startersData, bench, selectedPlayer, onSwap, onPlacePlayer, onPlay, onBack, manualPositions, onMovePlayer, onResetPositions, onPhotoChange,
-}: {
-  club: string; coach: string; budget: number; opponent: string; round: number; competition: string;
-  formation: string; setFormation: (value: string) => void; style: string; setStyle: (value: string) => void; marking: string; setMarking: (value: string) => void; focus: string; setFocus: (value: string) => void;
-  startersData: Player[]; bench: Player[]; selectedPlayer: Player | null; onSwap: (id: number) => void; onPlacePlayer: (id: number, slotIndex: number) => void; onPlay: () => void; onBack: () => void;
-  manualPositions: Record<number, ManualPosition>; onMovePlayer: (positions: Record<number, ManualPosition>) => void; onResetPositions: () => void;
-  onQuickAction: (action: "roster" | "finances" | "trophies" | "training") => void; onPhotoChange: (id: number, photoDataUrl: string | null) => void;
-}) {
-  const photoInput = useRef<HTMLInputElement>(null);
-  const [setPiece, setSetPiece] = useState({ freeKick: startersData[0]?.name ?? "", corner: startersData[1]?.name ?? "", penalty: startersData[2]?.name ?? "", captain: startersData[3]?.name ?? "" });
-  const [changes, setChanges] = useState<string[]>([]);
+type Props = {
+  club: string;
+  coach: string;
+  opponent: string;
+  round: number;
+  competition: string;
+  formation: string;
+  setFormation: (value: string) => void;
+  style: string;
+  setStyle: (value: string) => void;
+  marking: string;
+  setMarking: (value: string) => void;
+  focus: string;
+  setFocus: (value: string) => void;
+  startersData: Player[];
+  bench: Player[];
+  selectedPlayer: Player | null;
+  onSelectPlayer: (id: number | null) => void;
+  onPlacePlayer: (id: number, slot: number, point?: ManualPosition) => void;
+  onPlay: () => void;
+  onBack: () => void;
+  manualPositions: Record<number, ManualPosition>;
+  onResetPositions: () => void;
+};
+
+export function LineupScreen(props: Props) {
+  const {
+    club,
+    coach,
+    opponent,
+    round,
+    competition,
+    formation,
+    setFormation,
+    style,
+    setStyle,
+    marking,
+    setMarking,
+    focus,
+    setFocus,
+    startersData,
+    bench,
+    selectedPlayer,
+    onSelectPlayer,
+    onPlacePlayer,
+    onPlay,
+    onBack,
+    manualPositions,
+    onResetPositions,
+  } = props;
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [showSectors, setShowSectors] = useState(true);
+  const [message, setMessage] = useState(
+    "Selecione uma camisa e escolha um destino, ou arraste para o campo.",
+  );
+  const [dragId, setDragId] = useState<number | null>(null);
+  const [hoverSlot, setHoverSlot] = useState<number | null>(null);
+  const field = useRef<HTMLDivElement>(null),
+    ghost = useRef<HTMLDivElement>(null);
+  const gesture = useRef<{
+    id: number;
+    pointer: number;
+    x: number;
+    y: number;
+    moved: boolean;
+  } | null>(null);
+  const suppressClick = useRef(false);
+  const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
   const roles = formationSlotRoles[formation] ?? formationSlotRoles["4-3-3"];
-  const slotFits = startersData.map((player, index) => tacticalFit(player, roles[index] ?? player.position));
-  const attack = sectorStrength(startersData, ["A"], slotFits);
-  const midfield = sectorStrength(startersData, ["M"], slotFits);
-  const defense = sectorStrength(startersData, ["G", "L", "Z"], slotFits);
-  const alerts = startersData.filter((player, index) => slotFits[index]?.label !== "Natural" || player.energy < 65);
+  const players = [...startersData, ...bench];
+  const active = players.find((p) => p.id === (dragId ?? selectedPlayer?.id));
+  const visibleBench = bench.filter(
+    (p) =>
+      (filter === "all" || p.position === filter) &&
+      p.name
+        .toLocaleLowerCase("pt-BR")
+        .includes(query.toLocaleLowerCase("pt-BR")),
+  );
+  const positions = startersData.map(
+    (p, i) => manualPositions[p.id] ?? slots[i],
+  );
+  const fits = startersData.map((p, i) =>
+    playerFitAtPosition(p, formation, positions[i], i),
+  );
+  const average = (values: number[]) =>
+    values.length
+      ? Math.round(values.reduce((a, b) => a + b, 0) / values.length)
+      : 0;
+  const energy = average(startersData.map((p) => p.energy));
+  const overall = average(
+    startersData.map((p, i) => Math.max(1, p.overall - fits[i].penalty)),
+  );
+  const warnings = startersData.filter(
+    (p, i) => p.energy < 65 || fits[i].label !== "Natural",
+  );
 
-  function placePlayer(id: number, slotIndex: number) {
-    const player = [...startersData, ...bench].find((item) => item.id === id);
-    const role = roles[slotIndex];
-    if (!player || !role) return;
-    if ((role === "G") !== (player.position === "G")) { setChanges((current) => [`${player.name}: slot ${role === "G" ? "GK" : "de linha"} inválido`, ...current].slice(0, 4)); return; }
-    const fit = tacticalFit(player, role);
-    onPlacePlayer(id, slotIndex);
-    setChanges((current) => [`${player.name} → ${roleLabel(role)} · ${fit.label}`, ...current].slice(0, 4));
+  function select(id: number) {
+    if (suppressClick.current) return;
+    const target = players.find((p) => p.id === id);
+    if (!target) return;
+    if (selectedPlayer?.id === id) {
+      onSelectPlayer(null);
+      setMessage("Seleção limpa. Escolha outra camisa para continuar.");
+      return;
+    }
+    if (
+      selectedPlayer &&
+      selectedPlayer.id !== id &&
+      startersData.some((p) => p.id === id)
+    ) {
+      deploy(
+        selectedPlayer.id,
+        startersData.findIndex((p) => p.id === id),
+      );
+    } else {
+      onSelectPlayer(selectedPlayer?.id === id ? null : id);
+      setMessage(
+        `${target.name} selecionado. Escolha um setor ou uma camisa titular para trocar.`,
+      );
+    }
+  }
+  function deploy(id: number, slot: number, point?: ManualPosition) {
+    const player = players.find((p) => p.id === id);
+    if (
+      !player ||
+      slot < 0 ||
+      (player.position === "G") !== (roles[slot] === "G") ||
+      (point && (player.position === "G") !== point.top >= 82)
+    ) {
+      setMessage(
+        "Destino inválido: goleiros e jogadores de linha não podem trocar de função.",
+      );
+      return;
+    }
+    onPlacePlayer(id, slot, point);
+    setMessage(
+      `${player.name}: ${point ? "posição personalizada aplicada" : "troca de posição concluída"}. Escalação atualizada.`,
+    );
+  }
+  function deployPoint(id: number, point: ManualPosition) {
+    const player = players.find((p) => p.id === id);
+    if (!player) return;
+    const origin = startersData.findIndex((p) => p.id === id);
+    const slot =
+      origin >= 0
+        ? origin
+        : nearestFormationSlot(formation, point, player.position === "G");
+    deploy(id, slot, point);
+  }
+  function down(event: PointerEvent<HTMLElement>) {
+    if (event.button !== 0 || event.isPrimary === false) return;
+    const button = (event.target as HTMLElement).closest<HTMLElement>(
+      "[data-player]",
+    );
+    if (!button) return;
+    suppressClick.current = false;
+    gesture.current = {
+      id: Number(button.dataset.player),
+      pointer: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      moved: false,
+    };
+  }
+  function move(event: PointerEvent<HTMLElement>) {
+    const current = gesture.current;
+    if (!current || current.pointer !== event.pointerId) return;
+    if (
+      !current.moved &&
+      Math.hypot(event.clientX - current.x, event.clientY - current.y) < 6
+    )
+      return;
+    if (!current.moved) {
+      current.moved = true;
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+      setDragId(current.id);
+    }
+    if (ghost.current)
+      ghost.current.style.transform = `translate3d(${event.clientX + 12}px,${event.clientY - 40}px,0)`;
+    const target = document
+      .elementFromPoint?.(event.clientX, event.clientY)
+      ?.closest<HTMLElement>("[data-slot]");
+    setHoverSlot(target ? Number(target.dataset.slot) : null);
+  }
+  function finish(event: PointerEvent<HTMLElement>, cancelled = false) {
+    const current = gesture.current;
+    if (!current || current.pointer !== event.pointerId) return;
+    gesture.current = null;
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+    setDragId(null);
+    setHoverSlot(null);
+    if (!current.moved) return;
+    suppressClick.current = true;
+    window.setTimeout(() => {
+      suppressClick.current = false;
+    }, 0);
+    if (cancelled) {
+      setMessage("Movimento cancelado. Escalação preservada.");
+      return;
+    }
+    const rect = field.current?.getBoundingClientRect();
+    if (
+      !rect ||
+      !rect.width ||
+      !rect.height ||
+      event.clientX < rect.left ||
+      event.clientX > rect.right ||
+      event.clientY < rect.top ||
+      event.clientY > rect.bottom
+    ) {
+      setMessage("Solte dentro do campo para aplicar. Escalação preservada.");
+      return;
+    }
+    const target = document
+      .elementFromPoint?.(event.clientX, event.clientY)
+      ?.closest<HTMLElement>("[data-slot]");
+    if (target && Number(target.dataset.player) !== current.id)
+      deploy(current.id, Number(target.dataset.slot));
+    else
+      deployPoint(current.id, {
+        left: Math.max(
+          10,
+          Math.min(90, ((event.clientX - rect.left) / rect.width) * 100),
+        ),
+        top: Math.max(
+          10,
+          Math.min(91, ((event.clientY - rect.top) / rect.height) * 100),
+        ),
+      });
   }
 
-  function uploadPhoto(file: File | undefined) {
-    if (!file || !selectedPlayer) return;
-    if (!file.type.startsWith("image/") || file.size > 700_000) return;
-    const reader = new FileReader();
-    reader.onload = () => onPhotoChange(selectedPlayer.id, typeof reader.result === "string" ? reader.result : null);
-    reader.readAsDataURL(file);
-  }
-
-  return <section className="flex h-[100dvh] flex-col overflow-hidden bg-[#021b0d] bg-[linear-gradient(rgba(0,24,11,.82),rgba(0,18,8,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center p-3 font-[Arial] text-[11px] text-[#e9f7ec]">
-    <header className="mb-3 flex items-start justify-between gap-4"><div><h2 className="text-xl font-black">Escalação &amp; Tática</h2><p className="mt-0.5 text-[10px] text-[#a7c5ad]">Escalação para: {opponent} (casa) · {competition} · {round}ª rodada</p></div><div className="flex gap-2"><button onClick={onBack} className="rounded border border-white/15 bg-white/10 px-4 py-2 font-bold hover:bg-white/20">Voltar</button><button onClick={onPlay} className="rounded bg-[#16cf6d] px-5 py-2 font-black text-[#062417] hover:bg-[#2be47e]">Ir para a partida ›</button></div></header>
-    <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,24%)_minmax(0,1fr)_minmax(0,21%)] gap-3">
-      <aside className="space-y-3"><Panel title="Esquema tático"><Select label="Esquema tático" value={formation} onChange={setFormation} options={formations} /><Select label="Estilo de jogo" value={style} onChange={setStyle} options={["Equilibrado", "Ofensivo", "Defensivo"]} /><Select label="Marcação / pressão" value={marking} onChange={setMarking} options={["Leve", "Normal", "Pesada"]} /></Panel>
-        <Panel title={`Banco de reservas · ${bench.length}`}><p className="mb-2 text-[9px] text-[#a7c5ad]">Arraste um atleta sobre o slot desejado no campo.</p><div className="max-h-[calc(100dvh-435px)] space-y-1 overflow-auto">{bench.map((player) => <ReserveRow key={player.id} player={player} active={selectedPlayer?.id === player.id} onClick={() => onSwap(player.id)} />)}{!bench.length && <p className="p-2 text-[#9db7a3]">Banco vazio.</p>}</div></Panel>
-        <Panel title="Foto do atleta"><input ref={photoInput} type="file" accept="image/*" className="hidden" onChange={(event) => uploadPhoto(event.target.files?.[0])} />{selectedPlayer ? <div className="flex items-center gap-3"><Portrait player={selectedPlayer} size={44} /><div className="min-w-0 flex-1"><b className="block truncate">{selectedPlayer.name}</b><p className="text-[9px] text-[#a7c5ad]">JPG ou PNG · até 700 KB</p><div className="mt-2 flex gap-1"><button onClick={() => photoInput.current?.click()} className="rounded bg-[#1b8f4d] px-2 py-1 font-bold">Adicionar foto</button>{selectedPlayer.photoDataUrl && <button onClick={() => onPhotoChange(selectedPlayer.id, null)} className="rounded border border-white/25 px-2 py-1">Remover</button>}</div></div></div> : <p className="p-1 text-[#a7c5ad]">Selecione um atleta no campo ou no banco.</p>}</Panel>
-      </aside>
-      <main className="flex min-h-0 min-w-0 flex-col"><p className="mb-1 shrink-0 rounded bg-black/25 px-2 py-1 text-center text-[10px] text-[#d3ead8]">Clique em um jogador e escolha outro atleta ou um alvo amarelo para trocar de slot. Também é possível arrastar do banco para o campo.</p><Pitch club={club} formation={formation} starters={startersData} selectedPlayer={selectedPlayer?.id ?? null} onSelect={onSwap} manualPositions={manualPositions} onMovePlayers={onMovePlayer} onResetPositions={onResetPositions} onPlacePlayer={placePlayer} tactical />
-        <Panel title="Ajustes de equipe" className="mt-3"><div className="grid grid-cols-4 gap-2"><Select label="Batedor de falta" value={setPiece.freeKick} onChange={(value) => setSetPiece((current) => ({ ...current, freeKick: value }))} options={startersData.map((player) => player.name)} /><Select label="Batedor de escanteio" value={setPiece.corner} onChange={(value) => setSetPiece((current) => ({ ...current, corner: value }))} options={startersData.map((player) => player.name)} /><Select label="Batedor de pênalti" value={setPiece.penalty} onChange={(value) => setSetPiece((current) => ({ ...current, penalty: value }))} options={startersData.map((player) => player.name)} /><Select label="Capitão" value={setPiece.captain} onChange={(value) => setSetPiece((current) => ({ ...current, captain: value }))} options={startersData.map((player) => player.name)} /></div><p className="mt-2 text-[9px] text-[#a7c5ad]">Batedores adequados elevam a efetividade de bolas paradas; o capitão influencia a moral da equipe.</p><div className="mt-3 flex justify-end gap-2"><Button icon="arrow_refresh" onClick={() => { onResetPositions(); setChanges([]); }}>Restaurar posições</Button><Button icon="sport_soccer" onClick={onPlay}>Salvar e ir para partida</Button></div></Panel>
-      </main>
-      <aside className="space-y-3"><Panel title="Foco tático"><Select label="Concentração de ataque" value={focus} onChange={setFocus} options={["Pelo meio", "Pelas laterais"]} /><div className="mt-3 grid h-28 grid-cols-5 grid-rows-3 overflow-hidden rounded border border-[#38724d] bg-[#0c4a28]">{Array.from({ length: 15 }, (_, index) => <i key={index} className={`border border-[#2e6942] ${index === 7 ? "bg-[#1c9a52]" : ""}`} />)}</div></Panel>
-        <Panel title="Força do time"><div className="grid grid-cols-3 gap-2 text-center"><Sector value={attack} label="Ataque" tone="#16cf6d" /><Sector value={midfield} label="Meio" tone="#f1c53c" /><Sector value={defense} label="Defesa" tone="#4d9eed" /></div><div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3"><span>GERAL <b className="ml-1 text-lg">{Math.round((attack + midfield + defense) / 3)}</b></span><span className="text-[#f1ca3e]">★★★★★</span></div></Panel>
-        <Panel title="Alertas táticos"><div className="space-y-1.5">{alerts.length ? alerts.map((player) => <p key={player.id} className="rounded bg-[#6f4d13]/45 px-2 py-1.5 text-[10px]"><b>{player.name}</b> {player.energy < 65 ? "está com baixa condição física" : "atua fora da posição natural"}</p>) : <p className="rounded bg-[#0d5e31]/50 px-2 py-1.5 text-[10px]">Escalação equilibrada e sem alertas.</p>}{changes.slice(0, 2).map((change, index) => <p key={`${change}-${index}`} className="rounded bg-white/10 px-2 py-1 text-[9px] text-[#b9d7c0]">{change}</p>)}</div></Panel>
-        <Panel title="Próxima partida"><p className="font-bold">{club} x {opponent}</p><p className="mt-1 text-[#a7c5ad]">{competition} · {round}ª rodada</p><button onClick={onPlay} className="mt-3 w-full rounded bg-[#16cf6d] py-2 font-black text-[#062417]">Confirmar escalação</button></Panel>
-      </aside>
-    </div>
-  </section>;
+  return (
+    <section
+      className={styles.screen}
+      onPointerDown={down}
+      onPointerMove={move}
+      onPointerUp={(e) => finish(e)}
+      onPointerCancel={(e) => finish(e, true)}
+      onLostPointerCapture={(e) => {
+        if (e.target === e.currentTarget && gesture.current) finish(e, true);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          const current = gesture.current;
+          gesture.current = null;
+          if (current?.moved)
+            e.currentTarget.releasePointerCapture?.(current.pointer);
+          onSelectPlayer(null);
+          setDragId(null);
+          setHoverSlot(null);
+          setMessage("Movimento cancelado.");
+        }
+      }}
+    >
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <div>
+            <p className={styles.eyebrow}>CENTRO TÁTICO / {club}</p>
+            <h1>Escalação &amp; Tática</h1>
+            <p>
+              {coach} · {competition} · {round}ª rodada · Adversário: {opponent}
+            </p>
+          </div>
+          <div className={styles.headerActions}>
+            <button onClick={onBack}>← Voltar ao clube</button>
+            <button
+              className={styles.primary}
+              onClick={onPlay}
+              disabled={startersData.length !== 11}
+            >
+              Ir para a partida →
+            </button>
+          </div>
+        </header>
+        <div className={styles.summary}>
+          <div>
+            <small>ESQUEMA</small>
+            <strong>{formation}</strong>
+          </div>
+          <div>
+            <small>TITULARES</small>
+            <strong>
+              {startersData.length}
+              <em>/11</em>
+            </strong>
+          </div>
+          <div>
+            <small>FORÇA AJUSTADA</small>
+            <strong>{overall}</strong>
+          </div>
+          <div>
+            <small>ENERGIA MÉDIA</small>
+            <strong>
+              {energy}
+              <em>%</em>
+            </strong>
+          </div>
+          <div>
+            <small>ADAPTAÇÃO / CONDIÇÃO</small>
+            <strong>
+              {warnings.length}
+              <em> alertas</em>
+            </strong>
+          </div>
+        </div>
+        <div className={styles.layout}>
+          <aside className={styles.sidebar}>
+            <section className={styles.panel}>
+              <p className={styles.eyebrow}>IDENTIDADE DE JOGO</p>
+              <h2>Plano tático</h2>
+              <Select
+                label="Esquema tático"
+                value={formation}
+                onChange={setFormation}
+                options={formations}
+              />
+              <p className={styles.note}>
+                Alterar o esquema reorganiza automaticamente os titulares e
+                restaura as posições.
+              </p>
+              <Select
+                label="Estilo de jogo"
+                value={style}
+                onChange={setStyle}
+                options={["Equilibrado", "Ofensivo", "Defensivo"]}
+              />
+              <Select
+                label="Marcação / pressão"
+                value={marking}
+                onChange={setMarking}
+                options={["Leve", "Normal", "Pesada"]}
+              />
+              <Select
+                label="Concentração de ataque"
+                value={focus}
+                onChange={setFocus}
+                options={["Pelo meio", "Pelas laterais"]}
+              />
+            </section>
+            <section className={styles.panel}>
+              <p className={styles.eyebrow}>LEITURA DA EQUIPE</p>
+              <h2>Força por setor</h2>
+              {[
+                { label: "Ataque", roles: ["A"] },
+                { label: "Meio-campo", roles: ["M"] },
+                { label: "Defesa", roles: ["L", "Z"] },
+                { label: "Gol", roles: ["G"] },
+              ].map((sector) => {
+                const value = average(
+                  startersData
+                    .map((p, i) => ({ p, i }))
+                    .filter(({ i }) => sector.roles.includes(fits[i].role))
+                    .map(
+                      ({ p, i }) =>
+                        (Math.max(1, p.overall - fits[i].penalty) * p.energy) /
+                        100,
+                    ),
+                );
+                return (
+                  <div className={styles.strength} key={sector.label}>
+                    <span>{sector.label}</span>
+                    <b>{value}</b>
+                    <i>
+                      <span style={{ width: `${Math.min(100, value)}%` }} />
+                    </i>
+                  </div>
+                );
+              })}
+              <p className={styles.note}>
+                Estimativa com adaptação à função e energia. Não é uma previsão
+                do placar.
+              </p>
+            </section>
+            <section className={styles.panel}>
+              <h2>Como organizar</h2>
+              <ol className={styles.instructions}>
+                <li>Arraste a camisa com mouse ou toque.</li>
+                <li>Solte sobre outra camisa para trocar.</li>
+                <li>Solte em área livre para personalizar.</li>
+                <li>Ou selecione e clique em um setor.</li>
+              </ol>
+              <p className={styles.note}>
+                Teclado: Tab para navegar e Enter para selecionar jogador e
+                destino. Esc cancela o arraste.
+              </p>
+            </section>
+          </aside>
+          <section className={styles.board}>
+            <div className={styles.boardHeader}>
+              <div>
+                <p className={styles.eyebrow}>PRANCHETA / TITULARES</p>
+                <h2>Seu jogo começa aqui.</h2>
+              </div>
+              <label className={styles.toggle}>
+                <input
+                  type="checkbox"
+                  checked={showSectors}
+                  onChange={(e) => setShowSectors(e.target.checked)}
+                />{" "}
+                Mostrar setores
+              </label>
+            </div>
+            <div
+              ref={field}
+              className={`${styles.field} ${dragId !== null ? styles.dragging : ""}`}
+              aria-label="Campo de escalação"
+            >
+              <div className={styles.lines}>
+                <i className={styles.half} />
+                <i className={styles.circle} />
+                <i className={styles.topBox} />
+                <i className={styles.bottomBox} />
+              </div>
+              <span className={styles.direction}>ATAQUE ↑</span>
+              {showSectors &&
+                fieldSectors.map((sector) => {
+                  const allowed = active
+                    ? (active.position === "G") === sector.top >= 82
+                    : false;
+                  return (
+                    <button
+                      key={sector.name}
+                      className={`${styles.sector} ${active && allowed ? styles.valid : ""}`}
+                      style={{ left: `${sector.left}%`, top: `${sector.top}%` }}
+                      aria-label={`Posicionar em ${sector.name}`}
+                      aria-disabled={!active || !allowed}
+                      onClick={() => {
+                        if (suppressClick.current) return;
+                        if (active) deployPoint(active.id, sector);
+                        else
+                          setMessage(
+                            "Selecione um jogador antes de escolher o setor.",
+                          );
+                      }}
+                    >
+                      <span>{sector.short}</span>
+                    </button>
+                  );
+                })}
+              {startersData.map((player, index) => (
+                <button
+                  key={player.id}
+                  data-player={player.id}
+                  data-slot={index}
+                  aria-label={`${player.name}, camisa ${player.shirtNumber ?? player.id}, titular, ${fits[index].label}`}
+                  aria-pressed={selectedPlayer?.id === player.id}
+                  className={`${styles.player} ${selectedPlayer?.id === player.id ? styles.selected : ""} ${dragId === player.id ? styles.source : ""} ${hoverSlot === index ? (active && (active.position === "G") !== (roles[index] === "G") ? styles.invalid : styles.hovered) : ""}`}
+                  style={{
+                    left: `${positions[index].left}%`,
+                    top: `${positions[index].top}%`,
+                  }}
+                  onClick={() => select(player.id)}
+                >
+                  <PlayerJersey player={player} />
+                  <b>{player.name}</b>
+                  <small>
+                    {fifaPosition(player)} ·{" "}
+                    {Math.max(1, player.overall - fits[index].penalty)}{" "}
+                    <span
+                      className={
+                        fits[index].label === "Natural"
+                          ? styles.natural
+                          : styles.warning
+                      }
+                    >
+                      {fits[index].label}
+                    </span>
+                  </small>
+                  <i className={styles.energy}>
+                    <span style={{ width: `${player.energy}%` }} />
+                  </i>
+                </button>
+              ))}
+            </div>
+            <div className={styles.boardFooter}>
+              <span>
+                ↑ Ataque <span>·</span> ↓ Defesa <span>·</span> Camisas
+                douradas: goleiros
+              </span>
+              <button
+                onClick={() => {
+                  onResetPositions();
+                  setMessage(
+                    "Posições do esquema restauradas. Titulares preservados.",
+                  );
+                }}
+              >
+                Restaurar posições
+              </button>
+            </div>
+            <p role="status" className={styles.feedback}>
+              {message}
+            </p>
+          </section>
+          <aside className={styles.sidebar}>
+            <section className={styles.panel}>
+              <div className={styles.panelHeading}>
+                <div>
+                  <p className={styles.eyebrow}>OPÇÕES PARA O JOGO</p>
+                  <h2>Banco de reservas</h2>
+                </div>
+                <span className={styles.count}>{bench.length}</span>
+              </div>
+              <label className={styles.search}>
+                Buscar reserva
+                <input
+                  type="search"
+                  placeholder="Nome do jogador"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </label>
+              <Select
+                label="Filtrar setor"
+                value={filter}
+                onChange={setFilter}
+                options={["all", "G", "L", "Z", "M", "A"]}
+                labels={[
+                  "Todos os setores",
+                  "Goleiros",
+                  "Laterais",
+                  "Zagueiros",
+                  "Meio-campistas",
+                  "Atacantes",
+                ]}
+              />
+              <div className={styles.bench}>
+                {visibleBench.map((player) => (
+                  <button
+                    key={player.id}
+                    onClick={() => select(player.id)}
+                    aria-pressed={selectedPlayer?.id === player.id}
+                    className={styles.reserve}
+                  >
+                    <span
+                      data-player={player.id}
+                      className={styles.handle}
+                      title="Arrastar jogador"
+                    >
+                      <PlayerJersey player={player} />
+                    </span>
+                    <span>
+                      <b>{player.name}</b>
+                      <small>
+                        {fifaPosition(player)} · {player.age} anos · Energia{" "}
+                        {player.energy}%
+                      </small>
+                      <i className={styles.energy}>
+                        <span style={{ width: `${player.energy}%` }} />
+                      </i>
+                    </span>
+                    <strong>{player.overall}</strong>
+                  </button>
+                ))}
+                {!visibleBench.length && (
+                  <p className={styles.note}>
+                    Nenhum reserva para este filtro.
+                  </p>
+                )}
+              </div>
+            </section>
+            <section className={styles.panel}>
+              <p className={styles.eyebrow}>ATLETA EM FOCO</p>
+              {active ? (
+                <>
+                  <div className={styles.identity}>
+                    <PlayerJersey player={active} />
+                    <div>
+                      <h2>{active.name}</h2>
+                      <p>
+                        {fifaPosition(active)} · Pé{" "}
+                        {active.foot === "D" ? "direito" : "esquerdo"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className={styles.facts}>
+                    <span>
+                      Força <b>{active.overall}</b>
+                    </span>
+                    <span>
+                      Energia <b>{active.energy}%</b>
+                    </span>
+                    <span>
+                      Idade <b>{active.age}</b>
+                    </span>
+                  </div>
+                  <p className={styles.note}>
+                    A adaptação considera a função mais próxima do esquema.
+                    Amarelo indica função secundária ou improvisada.
+                  </p>
+                </>
+              ) : (
+                <p className={styles.note}>
+                  Selecione uma camisa no campo ou no banco para ver seus dados
+                  e opções de destino.
+                </p>
+              )}
+            </section>
+            <section className={styles.panel}>
+              <h2>Alertas da escalação</h2>
+              <div className={styles.alerts}>
+                {warnings.length ? (
+                  warnings.map((p) => {
+                    const i = startersData.indexOf(p);
+                    return (
+                      <p key={p.id}>
+                        <b>{p.name}</b>
+                        <span>
+                          {p.energy < 65
+                            ? `Energia baixa: ${p.energy}%`
+                            : `Adaptação: ${fits[i].label}`}
+                        </span>
+                      </p>
+                    );
+                  })
+                ) : (
+                  <p className={styles.note}>
+                    Sem alertas de adaptação ou energia.
+                  </p>
+                )}
+              </div>
+            </section>
+          </aside>
+        </div>
+        <footer className={styles.footer}>
+          FUTMANAGER / CENTRO TÁTICO{" "}
+          <span>Organize. Ajuste. Entre em campo.</span>
+        </footer>
+      </div>
+      <div
+        ref={ghost}
+        className={styles.ghost}
+        style={{ visibility: dragId === null ? "hidden" : "visible" }}
+        aria-hidden="true"
+      >
+        {active && (
+          <>
+            <PlayerJersey player={active} />
+            <b>{active.name}</b>
+          </>
+        )}
+      </div>
+    </section>
+  );
 }
-
-function Panel({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) { return <section className={`rounded-lg border border-[#3d6749] bg-[#061d0e]/90 p-2 shadow-lg ${className}`}><h3 className="mb-2 font-black uppercase text-[#18dc72]">{title}</h3>{children}</section>; }
-function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: string[] }) { return <label className="mb-2 block last:mb-0"><b className="block text-[9px] uppercase tracking-wide text-[#19ce6d]">{label}</b><select value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 h-8 w-full rounded border border-[#426c4e] bg-[#173c24] px-2 font-bold text-white outline-none">{options.map((option) => <option key={option}>{option}</option>)}</select></label>; }
-function ReserveRow({ player, active, onClick }: { player: Player; active: boolean; onClick: () => void }) { return <button draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/player-id", String(player.id)); }} onClick={onClick} className={`grid w-full cursor-grab grid-cols-[1fr_28px_14px_24px_48px_12px] items-center gap-1 border-b border-white/10 px-1 py-1.5 text-left hover:bg-white/10 active:cursor-grabbing ${active ? "bg-[#145b31]" : ""}`}><span className="truncate font-bold">{player.name}</span><b className="text-[9px] text-[#19d66d]">{fifaPosition(player)}</b><span className="text-[9px]">{player.foot}</span><b className={player.overall >= 70 ? "text-[#18da71]" : "text-[#f1c239]"}>{player.overall}</b><span className="h-1.5 overflow-hidden rounded bg-[#193a25]"><i style={{ width: `${player.energy}%` }} className={`block h-full ${player.energy >= 80 ? "bg-[#18da71]" : "bg-[#f1c239]"}`} /></span><i className={`h-2 w-2 rounded-full ${player.energy >= 75 ? "bg-[#82df54]" : "bg-[#f19e36]"}`} /></button>; }
-function Portrait({ player, size }: { player: Player; size: number }) { return player.photoDataUrl ? <Image src={player.photoDataUrl} alt={`Foto de ${player.name}`} width={size} height={size} unoptimized className="rounded-full object-cover" style={{ width: size, height: size }} /> : <span style={{ width: size, height: size }} className="inline-grid place-items-center rounded-full bg-[#17261b] text-[#84ad8d]"><ClassicIcon name="user_green" size={Math.max(16, size - 10)} /></span>; }
-function Sector({ value, label, tone }: { value: number; label: string; tone: string }) { return <div><span style={{ borderColor: tone }} className="mx-auto grid h-14 w-14 place-items-center rounded-full border-4 text-lg font-black">{value}</span><b className="mt-1 block text-[9px] uppercase text-[#a9c3ae]">{label}</b></div>; }
-function Button({ icon, onClick, children }: { icon: ClassicIconName; onClick: () => void; children: React.ReactNode }) { return <button onClick={onClick} className="flex items-center gap-1.5 rounded border border-[#3d6749] bg-[#173c24] px-3 py-2 font-bold hover:bg-[#245430]"><ClassicIcon name={icon} />{children}</button>; }
-function sectorStrength(players: Player[], positions: Player["position"][], fits: Array<{ penalty: number }>) { const picked = players.map((player, index) => ({ player, penalty: fits[index]?.penalty ?? 0 })).filter(({ player }) => positions.includes(player.position)); return picked.length ? Math.round(picked.reduce((total, item) => total + Math.max(1, item.player.overall - item.penalty) * (item.player.energy / 100), 0) / picked.length) : 0; }
-function roleLabel(role: Player["position"]) { return ({ G: "GK", L: "lateral", Z: "zagueiro", M: "meio-campo", A: "ataque" } as const)[role]; }
+function Select({
+  label,
+  value,
+  onChange,
+  options,
+  labels,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  labels?: string[];
+}) {
+  return (
+    <label className={styles.select}>
+      {label}
+      <select value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((option, i) => (
+          <option key={option} value={option}>
+            {labels?.[i] ?? option}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}

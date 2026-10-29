@@ -29,7 +29,8 @@ import {
 } from "@/lib/game/mock-data";
 import { buildSquadFromDatabase, createDefaultDatabase, upgradeEditorDatabase, type CareerSave, type EditorDatabase } from "@/lib/game/editor-data";
 import { createPlayerCareer, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
-import { formationSlotRoles, formationSlots, playerFitAtPosition } from "@/lib/game/formations";
+import { deployLineupPlayer } from "@/lib/game/lineup";
+import { formationSlots, playerFitAtPosition } from "@/lib/game/formations";
 import { mergeCareerSaves } from "@/lib/game/save-utils";
 import { isMenuPage } from "@/lib/game/session";
 import { agendaOptions, type AgendaView } from "@/components/screens/agenda-screen";
@@ -349,11 +350,6 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setSyncLabel("Treino aplicado — salvando carreira...");
   }
 
-  function changePlayerPhoto(id: number, photoDataUrl: string | null) {
-    setCareerSquad((current) => (current ?? squad).map((player) => player.id === id ? { ...player, photoDataUrl } : player));
-    setSyncLabel(photoDataUrl ? "Foto do jogador adicionada neste dispositivo" : "Foto do jogador removida");
-  }
-
   function renderStandings() {
     if (!standingsOpen || !database) return null;
     return <CompetitionCenter database={database} fixtures={fixtures} club={club} competition={division} table={table} topScorers={topScorers} topRatings={topRatings} round={round} onClose={() => setStandingsOpen(false)} />;
@@ -578,45 +574,24 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setSelectedPlayer(null);
   }
 
-  function swap(id: number) {
-    if (selectedPlayer === null) return setSelectedPlayer(id);
-    const selectedIsStarter = starters.includes(selectedPlayer);
-    const targetIsStarter = starters.includes(id);
-    if (selectedIsStarter === targetIsStarter) return setSelectedPlayer(id);
-    setStarters((current) =>
-      current.map((playerId) =>
-        playerId === selectedPlayer ? id : playerId,
-      ),
-    );
-    setSelectedPlayer(null);
-  }
-
-  function placeLineupPlayer(id: number, slotIndex: number) {
-    const player = squad.find((item) => item.id === id);
-    const roles = formationSlotRoles[formation] ?? formationSlotRoles["4-3-3"];
-    const requiredRole = roles[slotIndex];
-    if (!player || !requiredRole || (player.position === "G") !== (requiredRole === "G")) return;
-    const originIndex = starters.indexOf(id);
-    const displaced = starters[slotIndex];
-    const next = [...starters];
-    if (originIndex >= 0) {
-      next[originIndex] = displaced;
-      next[slotIndex] = id;
-    } else {
-      next[slotIndex] = id;
-    }
-    setStarters(next);
-    setManualPositions({});
+  function placeLineupPlayer(id: number, slotIndex: number, point?: ManualPosition) {
+    const result = deployLineupPlayer(starters, squad, formation, manualPositions, id, slotIndex, point);
+    if (!result) return;
+    setStarters(result.starters);
+    setManualPositions(result.positions);
     setSelectedPlayer(id);
-    void persistCareerExtras(playerCareers, {}, next);
+    void persistCareerExtras(playerCareers, result.positions, result.starters);
   }
 
   function openLineup() {
-    const arranged = buildStartingXI(formation, squad);
-    setStarters(arranged);
-    setManualPositions({});
+    // Revisiting tactics must not discard the user's XI or manually placed players.
+    if (starters.length !== 11) {
+      const arranged = buildStartingXI(formation, squad);
+      setStarters(arranged);
+      setManualPositions({});
+      void persistCareerExtras(playerCareers, {}, arranged);
+    }
     setSelectedPlayer(null);
-    void persistCareerExtras(playerCareers, {}, arranged);
     setPage("lineup");
   }
 
@@ -890,7 +865,6 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           <LineupScreen
           club={club}
           coach={coach}
-          budget={budget}
           opponent={opponent}
           round={round}
           competition="Campeonato Estadual"
@@ -905,15 +879,12 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           startersData={startersData}
           bench={bench}
           selectedPlayer={selectedPlayerData}
-          onSwap={swap}
+          onSelectPlayer={setSelectedPlayer}
           onPlacePlayer={placeLineupPlayer}
           onPlay={startMatch}
           onBack={() => setPage("hub")}
           manualPositions={manualPositions}
-          onMovePlayer={movePlayers}
           onResetPositions={resetManualPositions}
-          onQuickAction={openQuickAction}
-          onPhotoChange={changePlayerPhoto}
           />
         </AppShell>
         {renderStandings()}
