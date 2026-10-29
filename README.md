@@ -128,13 +128,13 @@ Validação: `npm test`, `npm run lint`, `npm run build`. Testes cobrem navegaç
 
 ### Escalação moderna
 
-O centro tático usa camisas texturizadas no molde padrão com o número cadastrado (IDs como fallback de saves antigos), sem upload ou exibição de fotos na escalação. Arraste uma camisa com mouse/toque para área livre do campo para personalizar a posição, ou sobre um titular para trocar; reservas podem ser arrastados pela camisa, com rolagem da lista pelo texto. Também é possível selecionar uma camisa e ativar um dos 16 destinos de setor por clique/Tab+Enter. Soltar fora do campo, cancelar o gesto ou pressionar Esc preserva o time.
+O centro tático usa camisas texturizadas no molde padrão com o número cadastrado (IDs como fallback de saves antigos), sem upload ou exibição de fotos na escalação. Arraste uma camisa com mouse/toque para área livre do campo para personalizar a posição, ou sobre um titular para trocar; reservas podem ser arrastados pela camisa, com rolagem da lista pelo texto. Também é possível selecionar uma camisa e ativar um dos 20 destinos de setor por clique/Tab+Enter. Soltar fora do campo, cancelar o gesto ou pressionar Esc preserva o time.
 
 Plano tático mantém formação, estilo, marcação e concentração de ataque reais. Reservas têm busca/filtro; indicadores mostram força estimada com adaptação/energia e alertas. Qualquer jogador pode ocupar qualquer área, inclusive goleiros no ataque ou jogadores de linha no gol; a adaptação é informativa, não um bloqueio. Reabrir a tela preserva o XI e as coordenadas; mudar a formação reorganiza a equipe, enquanto restaurar posições mantém os titulares. Posicionamento personalizado continua sendo interpretado pela função mais próxima do esquema no motor atual.
 
 ### Tática em uma única janela
 
-Campo e banco inteiro são ajustados à altura da janela, lado a lado, inclusive em telas estreitas; não há rolagem principal nem do banco. Em telas menores, **Plano tático** abre os ajustes sob demanda. A área lateral de análise é independente. Guias de defesa/meio/ataque e 16 subposições são opcionais e desligadas por padrão. Elas não prendem o arraste a uma grade. A camisa mantém o ponto de pega e a coordenada livre de soltura; reservas substituem o titular espacialmente mais próximo ou a camisa indicada, sem filtro de posição.
+Campo e banco inteiro são ajustados à altura da janela, lado a lado, inclusive em telas estreitas; não há rolagem principal nem do banco. Em telas menores, **Plano tático** abre os ajustes sob demanda. A área lateral de análise é independente. Guias de defesa/meio/ataque e 20 subposições são opcionais e desligadas por padrão. Elas não prendem o arraste a uma grade. A camisa mantém o ponto de pega e a coordenada livre de soltura; reservas substituem o titular espacialmente mais próximo ou a camisa indicada, sem filtro de posição.
 
 ## Editor moderno e estúdio de uniformes
 
@@ -229,3 +229,17 @@ comparam a silhueta e exercitam a normalização da resposta simulada do provedo
 ## Visualização da partida
 
 A central de partida inclui um minicampo ilustrativo com os titulares, formação e posições personalizadas do clube. Os pontos se movem conforme o relógio da partida e param na pausa; o adversário usa uma formação genérica. O motor ainda não calcula trajetórias de jogadores ou bola, portanto a animação não reproduz os lances reais nem altera a simulação.
+### Demarcações completas e contíguas
+
+“Mostrar setores” oferece 20 áreas cobrindo o campo inteiro, sem espaçamento
+entre elas: ST dos dois lados, CF (segundo atacante), LW/RW, CAM, LM/RM,
+três CM, CDM, LWB/RWB, LB/RB, três CB e GK. O ataque aponta para cima;
+esquerda e direita correspondem à perspectiva da equipe. Siglas seguem a
+referência, com nome completo em português no tooltip e na navegação acessível.
+
+As regiões são células de proximidade (Voronoi), calculadas a partir dos
+centros de cada posição; as bordas se encontram e cobrem inclusive as laterais
+e os cantos. Clique/Enter em uma área posiciona o jogador em seu centro.
+O arraste continua livre, sem encaixe nessas áreas ou limitação por função.
+As guias começam desligadas, não alteram as posições salvas, o motor, a
+formação ou o dimensionamento simultâneo de campo e reservas.

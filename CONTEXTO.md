@@ -117,3 +117,8 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - A tela de acompanhamento deve apresentar uma visualização moderna com minicampo, preservando placar, estatísticas, lances, resultados da rodada e controles de velocidade, pausa e táticas.
 - As bolinhas do clube controlado acompanham os titulares, a formação e as posições personalizadas, com movimentação limitada ao redor dessas posições. O adversário usa formação genérica, pois sua escalação não é fornecida pelo motor atual.
 - O motor atual não fornece trajetórias ou posse da bola por jogador: a movimentação do minicampo é ilustrativa, não representa os lances reais e não modifica os resultados. Ela acompanha o relógio e para quando a partida está pausada.
+### 14. Demarcações completas do campo
+
+- Referência enviada em 29/10/2026 inclui ST/CF, pontas, meia ofensivo, meias dos lados, meios centrais, volante, alas, laterais, zagueiros dos três lados e goleiro. Oferecer todas essas posições visualmente, incluindo segundo atacante, alas esquerdo/direito e zaga esquerda/central/direita.
+- As demarcações podem se encostar: não deixar faixas vazias entre regiões. Implementação usa 20 áreas contíguas que cobrem todo o campo, com limites compartilhados e siglas da referência; nomes acessíveis em português.
+- Preservar guias desligadas por padrão, liberdade total de arraste (sem snap ou bloqueio por posição), coordenadas salvas e campo/banco juntos sem rolagem. Demarcações são orientação visual e destinos opcionais por clique/teclado, não novas restrições do motor.

@@ -8,7 +8,7 @@ import {
   formations,
   playerFitAtPosition,
 } from "@/lib/game/formations";
-import { fieldSectors } from "@/lib/game/lineup";
+import { fieldRegions } from "@/lib/game/lineup";
 import { fifaPosition } from "@/lib/game/fifa-position";
 import { PlayerJersey } from "@/components/ui/player-jersey";
 import styles from "./lineup-screen.module.css";
@@ -510,12 +510,8 @@ export function LineupScreen(props: Props) {
                   return;
                 const rect = event.currentTarget.getBoundingClientRect();
                 deployPoint(selectedPlayer.id, {
-                  left:
-                    ((event.clientX - rect.left) / rect.width) *
-                    100,
-                  top:
-                    ((event.clientY - rect.top) / rect.height) *
-                    100,
+                  left: ((event.clientX - rect.left) / rect.width) * 100,
+                  top: ((event.clientY - rect.top) / rect.height) * 100,
                 });
               }}
               aria-label="Campo de escalação"
@@ -528,20 +524,34 @@ export function LineupScreen(props: Props) {
               </div>
               <span className={styles.direction}>ATAQUE ↑</span>
               {showSectors && (
-                <div className={styles.guideLines} aria-hidden="true">
-                  <span>Ataque</span>
-                  <span>Meio-campo</span>
-                  <span>Defesa</span>
-                </div>
+                <svg
+                  className={styles.regionBorders}
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  {fieldRegions.map((sector) => (
+                    <polygon
+                      key={sector.name}
+                      points={sector.polygon
+                        .map((point) => `${point.left},${point.top}`)
+                        .join(" ")}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  ))}
+                </svg>
               )}
               {showSectors &&
-                fieldSectors.map((sector) => {
+                fieldRegions.map((sector) => {
                   const allowed = !!active;
                   return (
                     <button
                       key={sector.name}
-                      className={`${styles.sector} ${active && allowed ? styles.valid : ""}`}
-                      style={{ left: `${sector.left}%`, top: `${sector.top}%` }}
+                      className={`${styles.sector} ${styles[sector.group]} ${active && allowed ? styles.valid : ""}`}
+                      style={{
+                        clipPath: `polygon(${sector.polygon.map((point) => `${point.left}% ${point.top}%`).join(",")})`,
+                      }}
+                      title={`${sector.short} · ${sector.name}`}
                       aria-label={`Posicionar em ${sector.name}`}
                       aria-disabled={!active || !allowed}
                       onClick={() => {
@@ -553,7 +563,14 @@ export function LineupScreen(props: Props) {
                           );
                       }}
                     >
-                      <span>{sector.short}</span>
+                      <span
+                        style={{
+                          left: `${sector.left}%`,
+                          top: `${sector.top}%`,
+                        }}
+                      >
+                        {sector.short}
+                      </span>
                     </button>
                   );
                 })}
