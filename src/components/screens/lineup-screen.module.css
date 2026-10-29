@@ -324,7 +324,7 @@
   z-index: 1;
   overflow: hidden;
 }
-.regionBorders polygon {
+.regionBorders line {
   fill: none;
   stroke: #e4efdd65;
   stroke-width: 1;
@@ -1037,4 +1037,72 @@
   transition:
     background 0.15s,
     border-color 0.15s;
+}
+
+/* Calibrated tactical-board ratios: fit both dimensions instead of stretching to the column. */
+.fieldViewport {
+  --pitch-ratio: 1.2;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  container-type: size;
+  overflow: hidden;
+  background: #edf2eb;
+  border-radius: 8px;
+}
+.fieldViewport > .field {
+  width: min(100cqw, calc(100cqh * var(--pitch-ratio)));
+  height: auto;
+  max-height: 100%;
+  aspect-ratio: var(--pitch-ratio);
+  min-height: 0;
+  border-radius: 5px;
+}
+.roleLabels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.roleLabels span {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: #10271f80;
+  color: #edf6e3bb;
+  font-size: clamp(5px, 2.1cqw, 8px);
+  font-weight: 650;
+}
+.sector span {
+  opacity: 0;
+}
+.sector:hover span,
+.sector:focus-visible span {
+  opacity: 1;
+}
+.field .player {
+  width: clamp(22px, 22cqw, 88px);
+  max-width: 25%;
+}
+.field .player svg {
+  width: clamp(12px, 10cqw, 46px);
+  height: clamp(12px, 10cqw, 46px);
+}
+.field .player > b {
+  font-size: clamp(5px, 2.1cqw, 9px);
+  max-width: 100%;
+}
+.field .player small {
+  font-size: clamp(5px, 1.7cqw, 7px);
+}
+.field .player .energy {
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  .fieldViewport {
+    --pitch-ratio: 0.6476190476;
+  }
 }

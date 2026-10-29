@@ -190,3 +190,26 @@ it("covers every reference position including second striker, wingbacks and both
     for (const role of ["Centroavante", "Ala", "Zagueiro"])
       expect(fieldSectors.some((s) => s.name === `${role} ${side}`)).toBe(true);
 });
+
+it("merges repeated role markings without removing side-specific placement targets", async () => {
+  const { fieldBoundaries, fieldRoleLabels } = await import("./lineup");
+  expect(fieldRoleLabels).toHaveLength(15);
+  expect(fieldRoleLabels.filter((s) => s.short === "CB")).toHaveLength(1);
+  expect(fieldRoleLabels.filter((s) => s.short === "CM")).toHaveLength(1);
+  expect(fieldRoleLabels.filter((s) => s.short === "ST")).toHaveLength(1);
+  expect(fieldBoundaries.length).toBeGreaterThan(0);
+  expect(fieldBoundaries.every((edge) => edge.roles[0] !== edge.roles[1])).toBe(
+    true,
+  );
+  const keys = fieldBoundaries.map(({ from, to }) =>
+    [
+      `${from.left.toFixed(5)},${from.top.toFixed(5)}`,
+      `${to.left.toFixed(5)},${to.top.toFixed(5)}`,
+    ]
+      .sort()
+      .join("|"),
+  );
+  expect(new Set(keys).size).toBe(keys.length);
+  expect(fieldRegions.filter((r) => r.short === "CB")).toHaveLength(3);
+  expect(fieldRegions.filter((r) => r.short === "CM")).toHaveLength(3);
+});

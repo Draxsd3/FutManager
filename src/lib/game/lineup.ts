@@ -103,6 +103,42 @@ export const fieldRegions = fieldSectors.map((sector) => ({
   polygon: sectorPolygon(sector),
 }));
 
+/** Draw each boundary once, excluding internal edges of the same football role. */
+export const fieldBoundaries = fieldRegions.flatMap((region, index) =>
+  region.polygon.flatMap((from, edge) => {
+    const to = region.polygon[(edge + 1) % region.polygon.length];
+    if (Math.hypot(to.left - from.left, to.top - from.top) < 1e-7) return [];
+    const midpoint = {
+      left: (from.left + to.left) / 2,
+      top: (from.top + to.top) / 2,
+    };
+    const distance = (p: Point) =>
+      (p.left - midpoint.left) ** 2 + (p.top - midpoint.top) ** 2;
+    const neighbor = fieldRegions.findIndex(
+      (other, i) =>
+        i !== index && Math.abs(distance(other) - distance(region)) < 1e-6,
+    );
+    if (
+      neighbor < 0 ||
+      neighbor <= index ||
+      fieldRegions[neighbor].short === region.short
+    )
+      return [];
+    return [{ from, to, roles: [region.short, fieldRegions[neighbor].short] }];
+  }),
+);
+/** One visible label per role; side-specific keyboard/click targets are retained. */
+export const fieldRoleLabels = Array.from(
+  new Set(fieldSectors.map((s) => s.short)),
+).map((short) => {
+  const regions = fieldSectors.filter((s) => s.short === short);
+  return {
+    short,
+    left: regions.reduce((n, s) => n + s.left, 0) / regions.length,
+    top: regions.reduce((n, s) => n + s.top, 0) / regions.length,
+  };
+});
+
 /** Pure placement: unique starters, unrestricted placement and preservation of unrelated custom positions. */
 export function deployLineupPlayer(
   starters: number[],
