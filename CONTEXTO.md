@@ -129,3 +129,8 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Simular e registrar passes, finalizações, gols, desarmes, faltas e discussões da partida do clube, apresentando o mesmo lance no campo e no resumo. Os placares dos demais confrontos avançam com o relógio e aparecem sem visualização das partidas.
 - Os demais jogos são confrontos simulados entre clubes cadastrados na divisão ativa, não uma tabela real de calendário de campeonato; os resultados são reproduzíveis por rodada e minuto, sem antecipar gols futuros. O histórico de temporada/classificação acumulada não está integrado.
 - O motor ainda é simplificado: não há física contínua, escalação real do adversário, passes errados ou contabilização completa de desempenho. Saves antigos continuam legíveis; ao retomar, a partida fica pausada.
+### 16. Reduzir poluição das demarcações e largura do campo
+
+- Regiões da mesma posição, como CB, devem aparecer juntas, sem linhas internas cortando-as. Aplicar também a CM e ST; usar uma única sigla visível por função, preservando destinos esquerdo/central/direito por teclado e coordenadas livres.
+- O campo estava excessivamente largo: limitar sua largura pela altura disponível, centralizar e manter proporções calibradas em vez de esticá-lo até preencher a coluna. Implementação da prancheta: proporção de apresentação 6:5 em desktop/paisagem e 68:105 em telas estreitas; não equivale a simular dimensões físicas universais de estádio.
+- Preservar campo e banco completo visíveis, guias opcionais inicialmente desligadas, todos os lados e arraste sem snap. O ajuste visual não deve regravar posições ou alterar a escalação.
