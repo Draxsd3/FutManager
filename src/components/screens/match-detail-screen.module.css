@@ -1,0 +1,42 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #eef2ec;
+  outline: none;
+}
+.stats { margin: 0; font-size: 11px; }
+.stats > div { display: flex; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid #e6ebdf; }
+.stats dt { color: #687d6a; }
+.stats dd { margin: 0; font-weight: 750; }
+.eventsTitle { margin: 16px 0 8px; font-size: 12px; font-weight: 750; }
+.events { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; font-size: 11px; }
+.events li { display: flex; gap: 8px; align-items: flex-start; }
+.events b { display: block; color: #6c8164; font-size: 9px; margin-bottom: 3px; }
+.substitution { flex-shrink: 0; margin-top: 4px; }
+.help { margin: 0; color: #687d6a; font-size: 10px; line-height: 1.4; }
+.exchange { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 6px 0; }
+.exchange span { min-width: 0; font-size: 8px; color: #687d6a; }
+.exchange b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #273c30; font-size: 11px; }
+.confirm, .cancel { width: 100%; border-radius: 6px; padding: 7px; font-size: 11px; font-weight: 700; cursor: pointer; }
+.confirm { color: white; background: #294c32; border: 1px solid #294c32; }
+.confirm:disabled { opacity: .45; cursor: not-allowed; }
+.cancel { color: #52664c; background: transparent; border: 0; padding: 4px; }
+.confirm:focus-visible, .cancel:focus-visible { outline: 2px solid #739f46; outline-offset: 2px; }
+@media (max-width: 600px), (max-height: 600px) {
+  .help { font-size: 8px; }
+  .confirm, .cancel { font-size: 9px; padding: 5px 2px; }
+  .exchange { margin: 3px 0; gap: 3px; }
+  .exchange b { font-size: 9px; }
+}
+.substitution { display: flex; align-items: center; gap: 12px; margin-top: 0; min-height: 32px; }
+.help { margin-right: auto; }
+.exchange { flex: 1; max-width: 540px; margin: 0; }
+.controls { display: flex; align-items: center; gap: 10px; }
+.confirm, .cancel { width: auto; white-space: nowrap; padding: 8px 14px; }
+@media (max-width: 600px) {
+  .substitution { flex-wrap: wrap; gap: 4px; }
+  .exchange { flex-basis: 100%; }
+  .controls { width: 100%; gap: 8px; }
+  .confirm, .cancel { flex: 1; padding: 6px 4px; }
+}

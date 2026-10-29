@@ -146,3 +146,12 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - A circulação da bola deve ser contínua: após um passe, o recebedor inicia o próximo lance, priorizando companheiros próximos. A bola interpola a partir da posição atual, sem reiniciar a cada minuto; pausa, intervalo e velocidade controlam a animação.
 - O painel ao vivo, a janela de táticas e o resultado mostram somente melhores momentos (finalizações, gols, faltas, discussões, cartões e alterações), sem listar passes e desarmes rotineiros. Os eventos internos continuam disponíveis para estatísticas e retomada de saves anteriores.
 - O movimento continua sendo uma simulação simplificada, sem física completa nem elenco real do adversário; não apresentá-lo como reprodução de jogo real.
+
+### 19. Táticas durante a partida no padrão da escalação inicial
+
+- Pedido de 29/10/2026: modernizar as táticas durante o jogo, podendo usar a mesma tela de táticas anterior ao início da partida.
+- Reutilizar `LineupScreen` em modo de partida: mesma prancheta proporcional, camisas numeradas no molde obrigatório e nas cores cadastradas do clube, banco completo ao lado, busca/filtros, plano tático e guias opcionais desligadas por padrão. Não reintroduzir fotos ou posições fixas.
+- Manter placar, relógio pausado, intervalo, estatísticas, lances e quantidade de substituições restantes. Em telas menores, o plano tático abre pelo botão do cabeçalho; placar/tempo continuam visíveis mesmo em paisagem.
+- Substituições são preparadas por seleção em qualquer ordem ou arraste de reserva e exigem confirmação explícita na barra inferior, fora do banco para não esconder reservas. Cancelar ou sair sem confirmar não muda o XI nem consome substituições. Ao esgotar o limite, o reposicionamento de titulares continua livre.
+- O controlador real mantém pausa/retomada e autosave; o mesmo helper de posicionamento transfere as coordenadas do atleta que sai (ou aplica o ponto livre solicitado) ao que entra, preservando os demais. Reservas nunca passam pelo atalho de troca pré-jogo sem confirmação.
+- Regressões automatizadas cobrem seleção, confirmação/cancelamento, arraste, limite, plano tático, cores, foco e integração com partida/autosave. Revisão Chromium local em cinco resoluções, incluindo 14 reservas, preparação e confirmação, sem rolagem da página ou erros de execução. Rota temporária de revisão removida antes da publicação.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
 import type { Player } from "@/lib/game/mock-data";
 import type { ManualPosition } from "@/lib/game/career";
 import {
@@ -41,6 +41,13 @@ type Props = {
   onBack: () => void;
   manualPositions: Record<number, ManualPosition>;
   onResetPositions: () => void;
+  match?: {
+    score: string;
+    period: string;
+    substitutionsLeft: number;
+    panel: ReactNode;
+    substitutionActions: ReactNode;
+  };
 };
 
 export function LineupScreen(props: Props) {
@@ -68,6 +75,7 @@ export function LineupScreen(props: Props) {
     onBack,
     manualPositions,
     onResetPositions,
+    match,
   } = props;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -136,6 +144,13 @@ export function LineupScreen(props: Props) {
       setMessage("Seleção limpa. Escolha outra camisa para continuar.");
       return;
     }
+    if (match) {
+      onSelectPlayer(id);
+      setMessage(startersData.some((p) => p.id === id)
+        ? `${target.name} selecionado. Arraste para reposicionar ou escolha um reserva.`
+        : `${target.name} selecionado. Escolha quem sai e confirme a substituição.`);
+      return;
+    }
     if (
       selectedPlayer &&
       selectedPlayer.id !== id &&
@@ -155,6 +170,15 @@ export function LineupScreen(props: Props) {
   function deploy(id: number, slot: number, point?: ManualPosition) {
     const player = players.find((p) => p.id === id);
     if (!player || slot < 0 || slot >= startersData.length) return;
+    if (match && !startersData.some((p) => p.id === id)) {
+      if (match.substitutionsLeft <= 0) {
+        setMessage("Sem substituições restantes. Os titulares ainda podem ser reposicionados.");
+        return;
+      }
+      onPlacePlayer(id, slot, point);
+      setMessage(`${player.name}: substituição preparada. Confirme na barra de substituição.`);
+      return;
+    }
     onPlacePlayer(id, slot, point);
     setMessage(
       `${player.name}: ${point ? "posição personalizada aplicada" : "troca de posição concluída"}. Escalação atualizada.`,
@@ -298,6 +322,7 @@ export function LineupScreen(props: Props) {
   return (
     <section
       className={styles.screen}
+      data-mode={match ? "match" : "prematch"}
       onPointerDown={down}
       onPointerMove={move}
       onPointerUp={(e) => finish(e)}
@@ -324,10 +349,14 @@ export function LineupScreen(props: Props) {
         <header className={styles.header}>
           <div>
             <p className={styles.eyebrow}>CENTRO TÁTICO / {club}</p>
-            <h1>Escalação &amp; Tática</h1>
-            <p>
+            <h1>{match ? "Táticas da partida" : "Escalação & Tática"}</h1>
+            {match && <div className={styles.liveScore}>
+              <span>{club}</span><b>{match.score}</b><span>{opponent}</span>
+              <strong>{match.period} · PAUSADO</strong>
+            </div>}
+            {!match && <p>
               {coach} · {competition} · {round}ª rodada · Adversário: {opponent}
-            </p>
+            </p>}
           </div>
           <div className={styles.headerActions}>
             <button
@@ -337,17 +366,26 @@ export function LineupScreen(props: Props) {
             >
               Plano tático
             </button>
-            <button onClick={onBack}>← Voltar ao clube</button>
+            {!match && <button onClick={onBack}>← Voltar ao clube</button>}
             <button
               className={styles.primary}
               onClick={onPlay}
               disabled={startersData.length !== 11}
             >
-              Ir para a partida →
+              {match ? "Voltar ao jogo →" : "Ir para a partida →"}
             </button>
           </div>
         </header>
         <div className={styles.summary}>
+          {match ? [
+            ["PLACAR", match.score],
+            ["RELÓGIO / PAUSADO", match.period],
+            ["SUBSTITUIÇÕES", String(match.substitutionsLeft)],
+            ["ESQUEMA", formation],
+            ["ENERGIA MÉDIA", `${energy}%`],
+          ].map(([label, value]) => (
+            <div key={label}><small>{label}</small><strong>{value}</strong></div>
+          )) : <>
           <div>
             <small>ESQUEMA</small>
             <strong>{formation}</strong>
@@ -377,6 +415,7 @@ export function LineupScreen(props: Props) {
               <em> alertas</em>
             </strong>
           </div>
+          </>}
         </div>
         <div className={styles.layout}>
           <aside
@@ -415,6 +454,7 @@ export function LineupScreen(props: Props) {
                 options={["Pelo meio", "Pelas laterais"]}
               />
             </section>
+            {match?.panel}
             <section className={styles.panel}>
               <p className={styles.eyebrow}>LEITURA DA EQUIPE</p>
               <h2>Força por setor</h2>
@@ -528,7 +568,7 @@ export function LineupScreen(props: Props) {
             <div className={styles.boardHeader}>
               <div>
                 <p className={styles.eyebrow}>PRANCHETA / TITULARES</p>
-                <h2>Seu jogo começa aqui.</h2>
+                <h2>{match ? "Ajuste o rumo da partida." : "Seu jogo começa aqui."}</h2>
               </div>
               <label className={styles.toggle}>
                 <input
@@ -717,12 +757,13 @@ export function LineupScreen(props: Props) {
                   "Atacantes",
                 ]}
               />
-              <button className={styles.detailButton} disabled={!selectedPlayer || !bench.some((p) => p.id === selectedPlayer.id)} onClick={(event) => { detailOrigin.current = event.currentTarget; setDetailPlayer(selectedPlayer); }}>Ver ficha do reserva selecionado</button>
+              <button className={styles.detailButton} disabled={!selectedPlayer || !bench.some((p) => p.id === selectedPlayer.id)} onClick={(event) => { detailOrigin.current = event.currentTarget; setDetailPlayer(selectedPlayer); }}>{match ? "Ficha do reserva" : "Ver ficha do reserva selecionado"}</button>
               <div
                 className={styles.bench}
                 style={
                   {
                     "--bench-count": Math.max(1, visibleBench.length),
+                    "--bench-compact-rows": Math.max(1, Math.ceil(visibleBench.length / 3)),
                     "--bench-rows": Math.max(
                       1,
                       Math.ceil(visibleBench.length / 2),
@@ -766,9 +807,9 @@ export function LineupScreen(props: Props) {
             </section>
           </aside>
         </div>
-        <footer className={styles.footer}>
-          FUTMANAGER / CENTRO TÁTICO{" "}
-          <span>Organize. Ajuste. Entre em campo.</span>
+        <footer className={`${styles.footer} ${match ? styles.matchFooter : ""}`}>
+          {match ? match.substitutionActions : <>FUTMANAGER / CENTRO TÁTICO{" "}
+          <span>Organize. Ajuste. Entre em campo.</span></>}
         </footer>
       </div>
       {detailPlayer && <div className={styles.modalBackdrop} onMouseDown={(event) => { if (event.target === event.currentTarget) setDetailPlayer(null); }}>
