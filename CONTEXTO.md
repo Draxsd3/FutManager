@@ -78,7 +78,14 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 
 - Remodelar toda a tela de escalação com visual moderno, campo central, plano tático, indicadores, reservas pesquisáveis e alertas.
 - Jogadores devem aparecer como camisas numeradas, não fotos. Remover a opção de adicionar/remover fotos da escalação. Manter compatibilidade com saves antigos; o número cadastrado do editor tem prioridade sobre o identificador legado.
-- Arrastar e soltar deve funcionar com mouse e toque, com prévia da camisa, indicação de destino, cancelamento seguro e alternativa por seleção + clique/teclado. Arraste de reservas é iniciado pela camisa para permitir rolar a lista pelo texto.
-- Exibir opções de todos os setores: pontas, centroavante, meias, meio central/lados, volantes, laterais, zaga e goleiro. Área livre permite posição personalizada; outra camisa permite troca. Não admitir goleiro em função de linha nem jogador de linha no gol.
+- Arrastar e soltar deve funcionar com mouse e toque, com prévia da camisa, indicação de destino, cancelamento seguro e alternativa por seleção + clique/teclado. Arraste de reservas é iniciado pela camisa; campo e banco completo devem caber simultaneamente na área visível, sem rolagem da tela ou do banco.
+- Exibir opções de todos os setores: pontas, centroavante, meias, meio central/lados, volantes, laterais, zaga e goleiro. Área livre permite posição personalizada; outra camisa permite troca. Não restringir funções: qualquer jogador, inclusive goleiro, pode ocupar qualquer área ou trocar com qualquer titular. Esta decisão substitui a proteção de posição anterior.
 - Reabrir a escalação deve preservar titulares e posições personalizadas. Alterar a formação reorganiza automaticamente; restaurar posições mantém os titulares. Salvar mudanças de titulares e coordenadas atomicamente.
 - Indicadores de adaptação usam a função mais próxima do esquema, como no motor atual; não fingir que setores são novas posições detalhadas do simulador. Não exibir controles de batedores/capitão com efeitos inventados ou não persistidos.
+
+### 10. Liberdade de posicionamento e visão completa da tática
+
+- Campo e banco de reservas devem permanecer visíveis ao mesmo tempo, dimensionados à altura disponível da janela. Não exigir rolagem da tela nem do banco para alcançar titulares/reservas. Informações secundárias podem ficar em painel próprio; em telas estreitas, o plano tático é aberto sob demanda sem empilhar o banco abaixo do campo.
+- Guias de defesa, meio, ataque e subposições devem começar **desligadas**. Ativar “Mostrar setores” oferece orientação visual e alvos opcionais, nunca restrições ou encaixe automático durante o arraste.
+- Posicionamento é livre em toda a superfície do campo: remover limites por função e zona, inclusive entre goleiros e jogadores de linha. Trocas continuam atômicas e sem duplicar atletas; adaptação permanece apenas informativa no planejamento, com o cálculo existente do motor.
+- A camisa acompanha o ponteiro preservando o ponto de pega; soltar em área livre mantém a coordenada escolhida, sem voltar a posições fixas. Cancelar ou soltar fora do campo não altera a escalação.

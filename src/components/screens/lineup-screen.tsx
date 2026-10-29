@@ -1,13 +1,11 @@
 "use client";
 
-import { useRef, useState, type PointerEvent } from "react";
+import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import type { Player } from "@/lib/game/mock-data";
 import type { ManualPosition } from "@/lib/game/career";
 import {
   formationSlots,
-  formationSlotRoles,
   formations,
-  nearestFormationSlot,
   playerFitAtPosition,
 } from "@/lib/game/formations";
 import { fieldSectors } from "@/lib/game/lineup";
@@ -65,11 +63,12 @@ export function LineupScreen(props: Props) {
     manualPositions,
     onResetPositions,
   } = props;
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
-  const [showSectors, setShowSectors] = useState(true);
+  const [showSectors, setShowSectors] = useState(false);
   const [message, setMessage] = useState(
-    "Selecione uma camisa e escolha um destino, ou arraste para o campo.",
+    "Arraste livremente ou selecione uma camisa e clique no campo.",
   );
   const [dragId, setDragId] = useState<number | null>(null);
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
@@ -81,10 +80,11 @@ export function LineupScreen(props: Props) {
     x: number;
     y: number;
     moved: boolean;
+    dx: number;
+    dy: number;
   } | null>(null);
   const suppressClick = useRef(false);
   const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
-  const roles = formationSlotRoles[formation] ?? formationSlotRoles["4-3-3"];
   const players = [...startersData, ...bench];
   const active = players.find((p) => p.id === (dragId ?? selectedPlayer?.id));
   const visibleBench = bench.filter(
@@ -139,17 +139,7 @@ export function LineupScreen(props: Props) {
   }
   function deploy(id: number, slot: number, point?: ManualPosition) {
     const player = players.find((p) => p.id === id);
-    if (
-      !player ||
-      slot < 0 ||
-      (player.position === "G") !== (roles[slot] === "G") ||
-      (point && (player.position === "G") !== point.top >= 82)
-    ) {
-      setMessage(
-        "Destino inválido: goleiros e jogadores de linha não podem trocar de função.",
-      );
-      return;
-    }
+    if (!player || slot < 0 || slot >= startersData.length) return;
     onPlacePlayer(id, slot, point);
     setMessage(
       `${player.name}: ${point ? "posição personalizada aplicada" : "troca de posição concluída"}. Escalação atualizada.`,
@@ -162,7 +152,17 @@ export function LineupScreen(props: Props) {
     const slot =
       origin >= 0
         ? origin
-        : nearestFormationSlot(formation, point, player.position === "G");
+        : positions.reduce(
+            (best, pos, index) =>
+              Math.hypot(pos.left - point.left, pos.top - point.top) <
+              Math.hypot(
+                positions[best].left - point.left,
+                positions[best].top - point.top,
+              )
+                ? index
+                : best,
+            0,
+          );
     deploy(id, slot, point);
   }
   function down(event: PointerEvent<HTMLElement>) {
@@ -171,6 +171,7 @@ export function LineupScreen(props: Props) {
       "[data-player]",
     );
     if (!button) return;
+    const bounds = button.getBoundingClientRect();
     suppressClick.current = false;
     gesture.current = {
       id: Number(button.dataset.player),
@@ -178,6 +179,8 @@ export function LineupScreen(props: Props) {
       x: event.clientX,
       y: event.clientY,
       moved: false,
+      dx: bounds.width ? bounds.left + bounds.width / 2 - event.clientX : 0,
+      dy: bounds.height ? bounds.top + bounds.height / 2 - event.clientY : 0,
     };
   }
   function move(event: PointerEvent<HTMLElement>) {
@@ -194,7 +197,7 @@ export function LineupScreen(props: Props) {
       setDragId(current.id);
     }
     if (ghost.current)
-      ghost.current.style.transform = `translate3d(${event.clientX + 12}px,${event.clientY - 40}px,0)`;
+      ghost.current.style.transform = `translate3d(${event.clientX + current.dx}px,${event.clientY + current.dy}px,0) translate(-50%, -50%)`;
     const target = document
       .elementFromPoint?.(event.clientX, event.clientY)
       ?.closest<HTMLElement>("[data-slot]");
@@ -237,12 +240,18 @@ export function LineupScreen(props: Props) {
     else
       deployPoint(current.id, {
         left: Math.max(
-          10,
-          Math.min(90, ((event.clientX - rect.left) / rect.width) * 100),
+          0,
+          Math.min(
+            100,
+            ((event.clientX + current.dx - rect.left) / rect.width) * 100,
+          ),
         ),
         top: Math.max(
-          10,
-          Math.min(91, ((event.clientY - rect.top) / rect.height) * 100),
+          0,
+          Math.min(
+            100,
+            ((event.clientY + current.dy - rect.top) / rect.height) * 100,
+          ),
         ),
       });
   }
@@ -280,6 +289,13 @@ export function LineupScreen(props: Props) {
             </p>
           </div>
           <div className={styles.headerActions}>
+            <button
+              className={styles.settingsToggle}
+              aria-expanded={settingsOpen}
+              onClick={() => setSettingsOpen(!settingsOpen)}
+            >
+              Plano tático
+            </button>
             <button onClick={onBack}>← Voltar ao clube</button>
             <button
               className={styles.primary}
@@ -322,7 +338,10 @@ export function LineupScreen(props: Props) {
           </div>
         </div>
         <div className={styles.layout}>
-          <aside className={styles.sidebar}>
+          <aside
+            className={`${styles.sidebar} ${styles.settings} ${settingsOpen ? styles.open : ""}`}
+            aria-label="Ajustes e análise tática"
+          >
             <section className={styles.panel}>
               <p className={styles.eyebrow}>IDENTIDADE DE JOGO</p>
               <h2>Plano tático</h2>
@@ -402,181 +421,6 @@ export function LineupScreen(props: Props) {
                 destino. Esc cancela o arraste.
               </p>
             </section>
-          </aside>
-          <section className={styles.board}>
-            <div className={styles.boardHeader}>
-              <div>
-                <p className={styles.eyebrow}>PRANCHETA / TITULARES</p>
-                <h2>Seu jogo começa aqui.</h2>
-              </div>
-              <label className={styles.toggle}>
-                <input
-                  type="checkbox"
-                  checked={showSectors}
-                  onChange={(e) => setShowSectors(e.target.checked)}
-                />{" "}
-                Mostrar setores
-              </label>
-            </div>
-            <div
-              ref={field}
-              className={`${styles.field} ${dragId !== null ? styles.dragging : ""}`}
-              aria-label="Campo de escalação"
-            >
-              <div className={styles.lines}>
-                <i className={styles.half} />
-                <i className={styles.circle} />
-                <i className={styles.topBox} />
-                <i className={styles.bottomBox} />
-              </div>
-              <span className={styles.direction}>ATAQUE ↑</span>
-              {showSectors &&
-                fieldSectors.map((sector) => {
-                  const allowed = active
-                    ? (active.position === "G") === sector.top >= 82
-                    : false;
-                  return (
-                    <button
-                      key={sector.name}
-                      className={`${styles.sector} ${active && allowed ? styles.valid : ""}`}
-                      style={{ left: `${sector.left}%`, top: `${sector.top}%` }}
-                      aria-label={`Posicionar em ${sector.name}`}
-                      aria-disabled={!active || !allowed}
-                      onClick={() => {
-                        if (suppressClick.current) return;
-                        if (active) deployPoint(active.id, sector);
-                        else
-                          setMessage(
-                            "Selecione um jogador antes de escolher o setor.",
-                          );
-                      }}
-                    >
-                      <span>{sector.short}</span>
-                    </button>
-                  );
-                })}
-              {startersData.map((player, index) => (
-                <button
-                  key={player.id}
-                  data-player={player.id}
-                  data-slot={index}
-                  aria-label={`${player.name}, camisa ${player.shirtNumber ?? player.id}, titular, ${fits[index].label}`}
-                  aria-pressed={selectedPlayer?.id === player.id}
-                  className={`${styles.player} ${selectedPlayer?.id === player.id ? styles.selected : ""} ${dragId === player.id ? styles.source : ""} ${hoverSlot === index ? (active && (active.position === "G") !== (roles[index] === "G") ? styles.invalid : styles.hovered) : ""}`}
-                  style={{
-                    left: `${positions[index].left}%`,
-                    top: `${positions[index].top}%`,
-                  }}
-                  onClick={() => select(player.id)}
-                >
-                  <PlayerJersey player={player} />
-                  <b>{player.name}</b>
-                  <small>
-                    {fifaPosition(player)} ·{" "}
-                    {Math.max(1, player.overall - fits[index].penalty)}{" "}
-                    <span
-                      className={
-                        fits[index].label === "Natural"
-                          ? styles.natural
-                          : styles.warning
-                      }
-                    >
-                      {fits[index].label}
-                    </span>
-                  </small>
-                  <i className={styles.energy}>
-                    <span style={{ width: `${player.energy}%` }} />
-                  </i>
-                </button>
-              ))}
-            </div>
-            <div className={styles.boardFooter}>
-              <span>
-                ↑ Ataque <span>·</span> ↓ Defesa <span>·</span> Camisas
-                douradas: goleiros
-              </span>
-              <button
-                onClick={() => {
-                  onResetPositions();
-                  setMessage(
-                    "Posições do esquema restauradas. Titulares preservados.",
-                  );
-                }}
-              >
-                Restaurar posições
-              </button>
-            </div>
-            <p role="status" className={styles.feedback}>
-              {message}
-            </p>
-          </section>
-          <aside className={styles.sidebar}>
-            <section className={styles.panel}>
-              <div className={styles.panelHeading}>
-                <div>
-                  <p className={styles.eyebrow}>OPÇÕES PARA O JOGO</p>
-                  <h2>Banco de reservas</h2>
-                </div>
-                <span className={styles.count}>{bench.length}</span>
-              </div>
-              <label className={styles.search}>
-                Buscar reserva
-                <input
-                  type="search"
-                  placeholder="Nome do jogador"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </label>
-              <Select
-                label="Filtrar setor"
-                value={filter}
-                onChange={setFilter}
-                options={["all", "G", "L", "Z", "M", "A"]}
-                labels={[
-                  "Todos os setores",
-                  "Goleiros",
-                  "Laterais",
-                  "Zagueiros",
-                  "Meio-campistas",
-                  "Atacantes",
-                ]}
-              />
-              <div className={styles.bench}>
-                {visibleBench.map((player) => (
-                  <button
-                    key={player.id}
-                    onClick={() => select(player.id)}
-                    aria-pressed={selectedPlayer?.id === player.id}
-                    className={styles.reserve}
-                  >
-                    <span
-                      data-player={player.id}
-                      className={styles.handle}
-                      title="Arrastar jogador"
-                    >
-                      <PlayerJersey player={player} />
-                    </span>
-                    <span>
-                      <b>{player.name}</b>
-                      <small>
-                        {fifaPosition(player)} · {player.age} anos · Energia{" "}
-                        {player.energy}%
-                      </small>
-                      <i className={styles.energy}>
-                        <span style={{ width: `${player.energy}%` }} />
-                      </i>
-                    </span>
-                    <strong>{player.overall}</strong>
-                  </button>
-                ))}
-                {!visibleBench.length && (
-                  <p className={styles.note}>
-                    Nenhum reserva para este filtro.
-                  </p>
-                )}
-              </div>
-            </section>
             <section className={styles.panel}>
               <p className={styles.eyebrow}>ATLETA EM FOCO</p>
               {active ? (
@@ -634,6 +478,214 @@ export function LineupScreen(props: Props) {
                 ) : (
                   <p className={styles.note}>
                     Sem alertas de adaptação ou energia.
+                  </p>
+                )}
+              </div>
+            </section>
+          </aside>
+          <section className={styles.board}>
+            <div className={styles.boardHeader}>
+              <div>
+                <p className={styles.eyebrow}>PRANCHETA / TITULARES</p>
+                <h2>Seu jogo começa aqui.</h2>
+              </div>
+              <label className={styles.toggle}>
+                <input
+                  type="checkbox"
+                  checked={showSectors}
+                  onChange={(e) => setShowSectors(e.target.checked)}
+                />{" "}
+                Mostrar setores
+              </label>
+            </div>
+            <div
+              ref={field}
+              className={`${styles.field} ${dragId !== null ? styles.dragging : ""}`}
+              onClick={(event) => {
+                if (
+                  suppressClick.current ||
+                  !selectedPlayer ||
+                  (event.target as HTMLElement).closest("button")
+                )
+                  return;
+                const rect = event.currentTarget.getBoundingClientRect();
+                deployPoint(selectedPlayer.id, {
+                  left:
+                    ((event.clientX - rect.left) / rect.width) *
+                    100,
+                  top:
+                    ((event.clientY - rect.top) / rect.height) *
+                    100,
+                });
+              }}
+              aria-label="Campo de escalação"
+            >
+              <div className={styles.lines}>
+                <i className={styles.half} />
+                <i className={styles.circle} />
+                <i className={styles.topBox} />
+                <i className={styles.bottomBox} />
+              </div>
+              <span className={styles.direction}>ATAQUE ↑</span>
+              {showSectors && (
+                <div className={styles.guideLines} aria-hidden="true">
+                  <span>Ataque</span>
+                  <span>Meio-campo</span>
+                  <span>Defesa</span>
+                </div>
+              )}
+              {showSectors &&
+                fieldSectors.map((sector) => {
+                  const allowed = !!active;
+                  return (
+                    <button
+                      key={sector.name}
+                      className={`${styles.sector} ${active && allowed ? styles.valid : ""}`}
+                      style={{ left: `${sector.left}%`, top: `${sector.top}%` }}
+                      aria-label={`Posicionar em ${sector.name}`}
+                      aria-disabled={!active || !allowed}
+                      onClick={() => {
+                        if (suppressClick.current) return;
+                        if (active) deployPoint(active.id, sector);
+                        else
+                          setMessage(
+                            "Selecione um jogador antes de escolher o setor.",
+                          );
+                      }}
+                    >
+                      <span>{sector.short}</span>
+                    </button>
+                  );
+                })}
+              {startersData.map((player, index) => (
+                <button
+                  key={player.id}
+                  data-player={player.id}
+                  data-slot={index}
+                  aria-label={`${player.name}, camisa ${player.shirtNumber ?? player.id}, titular, ${fits[index].label}`}
+                  aria-pressed={selectedPlayer?.id === player.id}
+                  className={`${styles.player} ${selectedPlayer?.id === player.id ? styles.selected : ""} ${dragId === player.id ? styles.source : ""} ${hoverSlot === index ? styles.hovered : ""}`}
+                  style={{
+                    left: `clamp(22px, ${positions[index].left}%, calc(100% - 22px))`,
+                    top: `clamp(30px, ${positions[index].top}%, calc(100% - 30px))`,
+                  }}
+                  onClick={() => select(player.id)}
+                >
+                  <PlayerJersey player={player} />
+                  <b>{player.name}</b>
+                  <small>
+                    {fifaPosition(player)} ·{" "}
+                    {Math.max(1, player.overall - fits[index].penalty)}{" "}
+                    <span
+                      className={
+                        fits[index].label === "Natural"
+                          ? styles.natural
+                          : styles.warning
+                      }
+                    >
+                      {fits[index].label}
+                    </span>
+                  </small>
+                  <i className={styles.energy}>
+                    <span style={{ width: `${player.energy}%` }} />
+                  </i>
+                </button>
+              ))}
+            </div>
+            <div className={styles.boardFooter}>
+              <span>
+                ↑ Ataque <span>·</span> ↓ Defesa <span>·</span> Camisas
+                douradas: goleiros
+              </span>
+              <button
+                onClick={() => {
+                  onResetPositions();
+                  setMessage(
+                    "Posições do esquema restauradas. Titulares preservados.",
+                  );
+                }}
+              >
+                Restaurar posições
+              </button>
+            </div>
+            <p role="status" className={styles.feedback}>
+              {message}
+            </p>
+          </section>
+          <aside className={styles.sidebar}>
+            <section className={`${styles.panel} ${styles.benchPanel}`}>
+              <div className={styles.panelHeading}>
+                <div>
+                  <p className={styles.eyebrow}>OPÇÕES PARA O JOGO</p>
+                  <h2>Banco de reservas</h2>
+                </div>
+                <span className={styles.count}>{bench.length}</span>
+              </div>
+              <label className={styles.search}>
+                Buscar reserva
+                <input
+                  type="search"
+                  placeholder="Nome do jogador"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </label>
+              <Select
+                label="Filtrar setor"
+                value={filter}
+                onChange={setFilter}
+                options={["all", "G", "L", "Z", "M", "A"]}
+                labels={[
+                  "Todos os setores",
+                  "Goleiros",
+                  "Laterais",
+                  "Zagueiros",
+                  "Meio-campistas",
+                  "Atacantes",
+                ]}
+              />
+              <div
+                className={styles.bench}
+                style={
+                  {
+                    "--bench-count": Math.max(1, visibleBench.length),
+                    "--bench-rows": Math.max(
+                      1,
+                      Math.ceil(visibleBench.length / 2),
+                    ),
+                  } as CSSProperties
+                }
+              >
+                {visibleBench.map((player) => (
+                  <button
+                    key={player.id}
+                    onClick={() => select(player.id)}
+                    aria-pressed={selectedPlayer?.id === player.id}
+                    className={styles.reserve}
+                  >
+                    <span
+                      data-player={player.id}
+                      className={styles.handle}
+                      title="Arrastar jogador"
+                    >
+                      <PlayerJersey player={player} />
+                    </span>
+                    <span>
+                      <b>{player.name}</b>
+                      <small>
+                        {fifaPosition(player)} · {player.age} anos · Energia{" "}
+                        {player.energy}%
+                      </small>
+                      <i className={styles.energy}>
+                        <span style={{ width: `${player.energy}%` }} />
+                      </i>
+                    </span>
+                    <strong>{player.overall}</strong>
+                  </button>
+                ))}
+                {!visibleBench.length && (
+                  <p className={styles.note}>
+                    Nenhum reserva para este filtro.
                   </p>
                 )}
               </div>

@@ -64,14 +64,20 @@ it("uses numbered shirts, not photos, and exposes every sector", () => {
   expect(starterButton(0).querySelector("svg text")?.textContent).toBe(
     String(starters[0].shirtNumber ?? starters[0].id),
   );
+  expect(screen.queryByRole("button", { name: /Posicionar em/ })).toBeNull();
+  expect(
+    (screen.getByLabelText("Mostrar setores") as HTMLInputElement).checked,
+  ).toBe(false);
+  fireEvent.click(screen.getByLabelText("Mostrar setores"));
   expect(screen.getAllByRole("button", { name: /Posicionar em/ })).toHaveLength(
     16,
   );
   fireEvent.click(screen.getByLabelText("Mostrar setores"));
   expect(screen.queryByRole("button", { name: /Posicionar em/ })).toBeNull();
 });
-it("supports click/keyboard-compatible selection, sector movement, swaps and keeper safety", () => {
+it("supports click/keyboard-compatible selection, sector movement and unrestricted keeper swaps", () => {
   const { place } = setup();
+  fireEvent.click(screen.getByLabelText("Mostrar setores"));
   fireEvent.click(starterButton(0));
   fireEvent.click(
     screen.getByRole("button", { name: "Posicionar em Meia esquerda" }),
@@ -87,8 +93,25 @@ it("supports click/keyboard-compatible selection, sector movement, swaps and kee
   fireEvent.click(
     screen.getByRole("button", { name: "Posicionar em Goleiro" }),
   );
-  expect(place).not.toHaveBeenCalled();
-  expect(screen.getByRole("status").textContent).toContain("Destino inválido");
+  expect(place).toHaveBeenCalledWith(
+    starters[0].id,
+    0,
+    expect.objectContaining({ left: 50, top: 90 }),
+  );
+  place.mockClear();
+  fireEvent.keyDown(
+    screen.getByRole("heading", { name: "Escalação & Tática" }),
+    { key: "Escape" },
+  );
+  fireEvent.click(starterButton(10));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Posicionar em Centroavante" }),
+  );
+  expect(place).toHaveBeenCalledWith(
+    starters[10].id,
+    10,
+    expect.objectContaining({ left: 50, top: 14 }),
+  );
 });
 it("filters reserves and restores positions without changing tactical controls", () => {
   const { reset, change, play } = setup();
@@ -255,4 +278,38 @@ it("drops on empty field coordinates and uses touch-sized movement threshold", (
     clientY: 350,
   });
   expect(place).toHaveBeenCalledWith(starters[0].id, 0, { left: 50, top: 50 });
+});
+
+it("places a selected player at exact field coordinates while guides are off", () => {
+  const { place } = setup();
+  const field = screen.getByLabelText("Campo de escalação");
+  vi.spyOn(field, "getBoundingClientRect").mockReturnValue({
+    left: 0,
+    top: 0,
+    width: 500,
+    height: 700,
+  } as DOMRect);
+  fireEvent.click(starterButton(10));
+  fireEvent.click(field, { clientX: 100, clientY: 70 });
+  expect(place).toHaveBeenCalledWith(starters[10].id, 10, {
+    left: 20,
+    top: 10,
+  });
+  expect(screen.queryByRole("button", { name: /Posicionar em/ })).toBeNull();
+});
+it("places reserve keepers at the nearest actual outfield location without snapping to goal", () => {
+  const { place } = setup();
+  const reserve = bench.find((p) => p.position === "G")!;
+  fireEvent.click(
+    screen.getByRole("button", { name: new RegExp(reserve.name) }),
+  );
+  fireEvent.click(screen.getByLabelText("Mostrar setores"));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Posicionar em Centroavante" }),
+  );
+  expect(place).toHaveBeenCalledWith(
+    reserve.id,
+    1,
+    expect.objectContaining({ left: 50, top: 14 }),
+  );
 });
