@@ -31,7 +31,7 @@ describe("account entry", () => {
     fireEvent.click(screen.getByRole("button", { name: /ENTRAR EM CAMPO/ }));
     await waitFor(() => expect(auth.signInWithPassword).toHaveBeenCalledWith({ email: "treinador@example.com", password: "test-password" }));
     act(() => auth.listener?.("SIGNED_IN", { user: { id: "alice", email: "treinador@example.com" } }));
-    expect(await screen.findByText("Conta alice / tela saves")).toBeTruthy();
+    expect(await screen.findByText("Conta alice / tela menu")).toBeTruthy();
   });
 
   it("always starts on the menu even with a persisted authenticated session", async () => {
@@ -78,4 +78,18 @@ it.each([/INICIAR NOVA CARREIRA/, /CARREGAR CARREIRA/, /EDITOR DE CLUBES/, /Entr
   expect(document.querySelector('[data-menu-version="minimal-v1"]')).toBeTruthy();
   expect(screen.getByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
   expect(screen.queryByLabelText("Email")).toBeNull();
+});
+
+
+it.each([/INICIAR NOVA CARREIRA/, /CARREGAR CARREIRA/, /EDITOR DE CLUBES/, /Entrar \/ Criar conta/])("always lands on the home menu after login, regardless of entry action: %s", async (action) => {
+  render(<AccountGame />);
+  await screen.findByText("Entre para salvar e continuar suas carreiras");
+  fireEvent.click(screen.getByRole("button", { name: action }));
+  fireEvent.change(screen.getByLabelText("Email"), { target: { value: "alice@example.com" } });
+  fireEvent.change(screen.getByLabelText("Senha"), { target: { value: "test-password" } });
+  fireEvent.click(screen.getByRole("button", { name: /ENTRAR EM CAMPO/ }));
+  await waitFor(() => expect(auth.signInWithPassword).toHaveBeenCalled());
+  act(() => auth.listener?.("SIGNED_IN", { user: { id: "alice", email: "alice@example.com" } }));
+  expect(await screen.findByText("Conta alice / tela menu")).toBeTruthy();
+  expect(screen.queryByText(/tela editor|tela saves|tela new/)).toBeNull();
 });

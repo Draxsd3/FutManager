@@ -55,7 +55,7 @@ O responsável autorizou fazer o merge de cada entrega para a `main` sem nova co
 
 ### 6. Contas e carreiras independentes
 
-- Ao abrir o link, sempre apresentar o menu inicial; nunca reabrir automaticamente uma carreira.
+- Ao abrir o link e após qualquer login, sempre apresentar o menu inicial; nunca abrir automaticamente o editor, outra seção ou uma carreira, mesmo se essa opção tiver sido clicada antes de entrar.
 - Login e cadastro com email e senha pelo Supabase Auth, sem armazenar senhas em tabelas próprias.
 - Uma conta pode ter várias carreiras independentes. Saves, elenco e táticas não podem vazar entre contas ou carreiras.
 - Permitir salvar e voltar ao início em qualquer tela da carreira.
