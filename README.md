@@ -240,3 +240,17 @@ e os cantos. Clique/Enter em uma área posiciona o jogador em seu centro.
 O arraste continua livre, sem encaixe nessas áreas ou limitação por função.
 As guias começam desligadas, não alteram as posições salvas, o motor, a
 formação ou o dimensionamento simultâneo de campo e reservas.
+
+### Guias agrupadas e campo com proporção controlada
+
+CB, CM e ST não têm mais linhas internas separando posições iguais, e cada
+função recebe uma única sigla visível. Os 20 destinos acessíveis por clique ou
+teclado continuam disponíveis; o posicionamento livre e os saves não mudam.
+As arestas entre funções diferentes são desenhadas uma única vez.
+
+A prancheta deixa de esticar o campo à largura inteira da coluna. Seu tamanho
+é calculado a partir da largura **e** da altura disponíveis, centralizado numa
+área própria: proporção de apresentação 6:5 em desktop/paisagem; 68:105 em
+telas estreitas. São proporções de interface, não um modelo de medidas físicas
+de estádio. Camisas/textos acompanham a largura útil do campo. Banco completo
+permanece ao lado, sem rolagem principal.

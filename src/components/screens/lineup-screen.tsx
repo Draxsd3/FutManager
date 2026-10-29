@@ -8,7 +8,11 @@ import {
   formations,
   playerFitAtPosition,
 } from "@/lib/game/formations";
-import { fieldRegions } from "@/lib/game/lineup";
+import {
+  fieldRegions,
+  fieldBoundaries,
+  fieldRoleLabels,
+} from "@/lib/game/lineup";
 import { fifaPosition } from "@/lib/game/fifa-position";
 import { PlayerJersey } from "@/components/ui/player-jersey";
 import styles from "./lineup-screen.module.css";
@@ -498,116 +502,131 @@ export function LineupScreen(props: Props) {
                 Mostrar setores
               </label>
             </div>
-            <div
-              ref={field}
-              className={`${styles.field} ${dragId !== null ? styles.dragging : ""}`}
-              onClick={(event) => {
-                if (
-                  suppressClick.current ||
-                  !selectedPlayer ||
-                  (event.target as HTMLElement).closest("button")
-                )
-                  return;
-                const rect = event.currentTarget.getBoundingClientRect();
-                deployPoint(selectedPlayer.id, {
-                  left: ((event.clientX - rect.left) / rect.width) * 100,
-                  top: ((event.clientY - rect.top) / rect.height) * 100,
-                });
-              }}
-              aria-label="Campo de escalação"
-            >
-              <div className={styles.lines}>
-                <i className={styles.half} />
-                <i className={styles.circle} />
-                <i className={styles.topBox} />
-                <i className={styles.bottomBox} />
-              </div>
-              <span className={styles.direction}>ATAQUE ↑</span>
-              {showSectors && (
-                <svg
-                  className={styles.regionBorders}
-                  viewBox="0 0 100 100"
-                  preserveAspectRatio="none"
-                  aria-hidden="true"
-                >
-                  {fieldRegions.map((sector) => (
-                    <polygon
-                      key={sector.name}
-                      points={sector.polygon
-                        .map((point) => `${point.left},${point.top}`)
-                        .join(" ")}
-                      vectorEffect="non-scaling-stroke"
-                    />
-                  ))}
-                </svg>
-              )}
-              {showSectors &&
-                fieldRegions.map((sector) => {
-                  const allowed = !!active;
-                  return (
-                    <button
-                      key={sector.name}
-                      className={`${styles.sector} ${styles[sector.group]} ${active && allowed ? styles.valid : ""}`}
-                      style={{
-                        clipPath: `polygon(${sector.polygon.map((point) => `${point.left}% ${point.top}%`).join(",")})`,
-                      }}
-                      title={`${sector.short} · ${sector.name}`}
-                      aria-label={`Posicionar em ${sector.name}`}
-                      aria-disabled={!active || !allowed}
-                      onClick={() => {
-                        if (suppressClick.current) return;
-                        if (active) deployPoint(active.id, sector);
-                        else
-                          setMessage(
-                            "Selecione um jogador antes de escolher o setor.",
-                          );
-                      }}
-                    >
-                      <span
+            <div className={styles.fieldViewport}>
+              <div
+                ref={field}
+                className={`${styles.field} ${dragId !== null ? styles.dragging : ""}`}
+                onClick={(event) => {
+                  if (
+                    suppressClick.current ||
+                    !selectedPlayer ||
+                    (event.target as HTMLElement).closest("button")
+                  )
+                    return;
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  deployPoint(selectedPlayer.id, {
+                    left: ((event.clientX - rect.left) / rect.width) * 100,
+                    top: ((event.clientY - rect.top) / rect.height) * 100,
+                  });
+                }}
+                aria-label="Campo de escalação"
+              >
+                <div className={styles.lines}>
+                  <i className={styles.half} />
+                  <i className={styles.circle} />
+                  <i className={styles.topBox} />
+                  <i className={styles.bottomBox} />
+                </div>
+                <span className={styles.direction}>ATAQUE ↑</span>
+                {showSectors && (
+                  <svg
+                    className={styles.regionBorders}
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    {fieldBoundaries.map((edge, index) => (
+                      <line
+                        key={index}
+                        x1={edge.from.left}
+                        y1={edge.from.top}
+                        x2={edge.to.left}
+                        y2={edge.to.top}
+                        vectorEffect="non-scaling-stroke"
+                      />
+                    ))}
+                  </svg>
+                )}
+                {showSectors &&
+                  fieldRegions.map((sector) => {
+                    const allowed = !!active;
+                    return (
+                      <button
+                        key={sector.name}
+                        className={`${styles.sector} ${styles[sector.group]} ${active && allowed ? styles.valid : ""}`}
                         style={{
-                          left: `${sector.left}%`,
-                          top: `${sector.top}%`,
+                          clipPath: `polygon(${sector.polygon.map((point) => `${point.left}% ${point.top}%`).join(",")})`,
+                        }}
+                        title={`${sector.short} · ${sector.name}`}
+                        aria-label={`Posicionar em ${sector.name}`}
+                        aria-disabled={!active || !allowed}
+                        onClick={() => {
+                          if (suppressClick.current) return;
+                          if (active) deployPoint(active.id, sector);
+                          else
+                            setMessage(
+                              "Selecione um jogador antes de escolher o setor.",
+                            );
                         }}
                       >
-                        {sector.short}
+                        <span
+                          style={{
+                            left: `${sector.left}%`,
+                            top: `${sector.top}%`,
+                          }}
+                        >
+                          {sector.short}
+                        </span>
+                      </button>
+                    );
+                  })}
+                {showSectors && (
+                  <div className={styles.roleLabels} aria-hidden="true">
+                    {fieldRoleLabels.map((label) => (
+                      <span
+                        key={label.short}
+                        style={{ left: `${label.left}%`, top: `${label.top}%` }}
+                      >
+                        {label.short}
                       </span>
-                    </button>
-                  );
-                })}
-              {startersData.map((player, index) => (
-                <button
-                  key={player.id}
-                  data-player={player.id}
-                  data-slot={index}
-                  aria-label={`${player.name}, camisa ${player.shirtNumber ?? player.id}, titular, ${fits[index].label}`}
-                  aria-pressed={selectedPlayer?.id === player.id}
-                  className={`${styles.player} ${selectedPlayer?.id === player.id ? styles.selected : ""} ${dragId === player.id ? styles.source : ""} ${hoverSlot === index ? styles.hovered : ""}`}
-                  style={{
-                    left: `clamp(22px, ${positions[index].left}%, calc(100% - 22px))`,
-                    top: `clamp(30px, ${positions[index].top}%, calc(100% - 30px))`,
-                  }}
-                  onClick={() => select(player.id)}
-                >
-                  <PlayerJersey player={player} />
-                  <b>{player.name}</b>
-                  <small>
-                    {fifaPosition(player)} ·{" "}
-                    {Math.max(1, player.overall - fits[index].penalty)}{" "}
-                    <span
-                      className={
-                        fits[index].label === "Natural"
-                          ? styles.natural
-                          : styles.warning
-                      }
-                    >
-                      {fits[index].label}
-                    </span>
-                  </small>
-                  <i className={styles.energy}>
-                    <span style={{ width: `${player.energy}%` }} />
-                  </i>
-                </button>
-              ))}
+                    ))}
+                  </div>
+                )}
+                {startersData.map((player, index) => (
+                  <button
+                    key={player.id}
+                    data-player={player.id}
+                    data-slot={index}
+                    aria-label={`${player.name}, camisa ${player.shirtNumber ?? player.id}, titular, ${fits[index].label}`}
+                    aria-pressed={selectedPlayer?.id === player.id}
+                    className={`${styles.player} ${selectedPlayer?.id === player.id ? styles.selected : ""} ${dragId === player.id ? styles.source : ""} ${hoverSlot === index ? styles.hovered : ""}`}
+                    style={{
+                      left: `clamp(22px, ${positions[index].left}%, calc(100% - 22px))`,
+                      top: `clamp(30px, ${positions[index].top}%, calc(100% - 30px))`,
+                    }}
+                    onClick={() => select(player.id)}
+                  >
+                    <PlayerJersey player={player} />
+                    <b>{player.name}</b>
+                    <small>
+                      {fifaPosition(player)} ·{" "}
+                      {Math.max(1, player.overall - fits[index].penalty)}{" "}
+                      <span
+                        className={
+                          fits[index].label === "Natural"
+                            ? styles.natural
+                            : styles.warning
+                        }
+                      >
+                        {fits[index].label}
+                      </span>
+                    </small>
+                    <i className={styles.energy}>
+                      <span style={{ width: `${player.energy}%` }} />
+                    </i>
+                  </button>
+                ))}
+              </div>
             </div>
             <div className={styles.boardFooter}>
               <span>
