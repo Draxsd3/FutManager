@@ -19,13 +19,6 @@ export function fieldPoint(position: ManualPosition, away: boolean): Point {
   return { x: clamp(away ? position.top : 100 - position.top, 5, 95), y: clamp(away ? 100 - position.left : position.left, 5, 95) };
 }
 
-/** Limit movement relative to the configured position, not the athlete's natural role. */
-export function boundedPlayerPoint(base: Point, desired: Point, goalkeeperSlot: boolean, outfieldLimit = 12): Point {
-  const xLimit = goalkeeperSlot ? 4 : outfieldLimit;
-  const yLimit = goalkeeperSlot ? 7 : 15;
-  return { x: clamp(desired.x, Math.max(5, base.x - xLimit), Math.min(95, base.x + xLimit)), y: clamp(desired.y, Math.max(5, base.y - yLimit), Math.min(95, base.y + yLimit)) };
-}
-
 /** Simplified Law 11: the pass recipient is involved, using 2D point positions at the kick. */
 export function isOffsideAtPass(team: "home" | "away", receiver: Point, ball: Point, opponents: Point[], exempt = false): boolean {
   if (exempt || opponents.length < 2) return false;
@@ -54,20 +47,22 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   let actorIndex = pick(action === "shot" ? Math.min(6, available) : available);
   let targetIndex = available > 1 ? (actorIndex + 1 + pick(available - 1)) % available : 0;
   const point = (index: number) => fieldPoint((team === "home" && starters[index] && positions[starters[index].id]) || slots[index] || { left: 50, top: 50 }, team === "away");
+  const positionAt = (index: number) => snapshot?.[team]?.[index] ?? point(index);
   const restart = previous?.action === "goal";
   const previousBall = restart ? { x: 50, y: 50 } : previous?.to;
   if (previous && previousBall && available > 1) {
     // A completed pass is controlled by its receiver. On a turnover use the closest player.
+    // Prefer the same live tactical positions shown in the preview over the static kickoff shape.
     actorIndex = previous.action === "pass" && previous.team === team && previous.targetIndex < available
       ? previous.targetIndex
       : Array.from({ length: available }, (_, index) => index).reduce((best, index) => {
-        const distance = (i: number) => Math.hypot(point(i).x - previousBall.x, point(i).y - previousBall.y);
-        return distance(index) < distance(best) ? index : best;
-      }, 0);
+        const distance = (i: number) => Math.hypot(positionAt(i).x - previousBall.x, positionAt(i).y - previousBall.y);
+        return distance(index) < best.distance ? { index, distance: distance(index) } : best;
+      }, { index: 0, distance: Number.POSITIVE_INFINITY }).index;
     // Pick from nearby teammates instead of sending the ball across the whole pitch.
     const candidates = Array.from({ length: available }, (_, index) => index)
       .filter((index) => index !== actorIndex)
-      .sort((a, b) => Math.hypot(point(a).x - point(actorIndex).x, point(a).y - point(actorIndex).y) - Math.hypot(point(b).x - point(actorIndex).x, point(b).y - point(actorIndex).y))
+      .sort((a, b) => Math.hypot(positionAt(a).x - positionAt(actorIndex).x, positionAt(a).y - positionAt(actorIndex).y) - Math.hypot(positionAt(b).x - positionAt(actorIndex).x, positionAt(b).y - positionAt(actorIndex).y))
       .slice(0, 3);
     targetIndex = candidates[pick(candidates.length)] ?? actorIndex;
   }
@@ -75,7 +70,7 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   const actorName = actor?.name ?? (team === "home" ? "Jogador" : `Jogador do ${opponent}`);
   const target = team === "home" ? starters[targetIndex]?.name ?? "companheiro" : opponentStarters?.[targetIndex]?.name ?? `companheiro do ${opponent}`;
   const movedPoint = (index: number) => {
-    const base = point(index);
+    const base = positionAt(index);
     const distance = index === 10 ? .5 : 2;
     return { x: clamp(base.x + Math.sin(minute * .6 + index) * distance, 5, 95), y: clamp(base.y + Math.cos(minute * .5 + index) * distance, 5, 95) };
   };

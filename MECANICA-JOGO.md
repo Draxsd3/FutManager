@@ -90,8 +90,9 @@ A adaptação à posição serve para estimar o impacto esportivo, não para pro
 
 Esta seção descreve o código consultado em 29/10/2026, não uma regra de futebol nem uma promessa de funcionalidades futuras.
 
-- `src/lib/game/live-match.ts` gera ações ao longo do relógio e define as categorias pass, shot, goal, tackle, foul e discussion. A escolha de ação é probabilística; uma finalização tem probabilidade de gol influenciada pela força da equipe.
+- `src/lib/game/live-match.ts` gera ações ao longo do relógio e define as categorias pass, shot, goal, tackle, foul, discussion e offside. A escolha de ação é probabilística; uma finalização tem probabilidade de gol influenciada pela força da equipe.
 - `src/components/game-board.tsx` calcula a força a partir de overall, energia e adaptação à posição. Essa força influencia a probabilidade de qual equipe recebe o próximo evento e a conversão de finalizações.
+- `src/lib/game/live-positioning.ts` trata formação e posições personalizadas como organização inicial: a estrutura acompanha bola e posse, com movimentos de apoio, avanço e cobertura, sem raio rígido que prenda os jogadores. O snapshot posicional é compartilhado com a ação seguinte e com o impedimento simplificado; o adversário continua genérico e o movimento é heurístico, não física contínua.
 - Os eventos alimentam o placar, estatísticas e visualização; resultados de outros jogos são calculados separadamente de modo determinístico por rodada/minuto.
 - A tela salva e apresenta estilo, marcação e foco tático, mas esses parâmetros ainda não são argumentos de `simulateAction`. Portanto, não afirmar que já alteram os eventos da partida.
 - O conjunto de ações atual não representa integralmente regras de impedimento, reinícios, faltas/cartões, expulsões e inferioridade numérica; também não implementa tempo adicional oficial ou limites completos de janelas de substituição.
@@ -106,6 +107,7 @@ Esta seção descreve o código consultado em 29/10/2026, não uma regra de fute
 - Partida pausada ou carregada não avança sozinha; progresso e decisões permanecem salvos.
 - Aleatoriedade deve ser injetável/seeded nos testes para permitir reproduzir bugs e verificar equilíbrio.
 - Mudanças táticas precisam ter testes que provem seu efeito e seus trade-offs; controles sem efeito persistido não devem ser apresentados como funcionais.
+- A formação e as coordenadas manuais descrevem a organização inicial; não impor raio fixo de deslocamento aos atletas nem regravar essas coordenadas com o movimento da partida. A função do goleiro pode modular seu comportamento sem congelá-lo.
 - Não remover liberdade de posição definida pelo projeto para simular futebol real: usar a posição como contexto informativo e de cálculo, não como bloqueio de interface.
 
 ## 7. Fontes
