@@ -17,6 +17,7 @@ O projeto inclui telas de gestão financeira, contratos, mercado, treinamento, c
 - Supabase para persistência em nuvem, com armazenamento local no navegador.
 - Vitest para testes automatizados.
 - `docs/brasfoot-reference.md`: referência de mecânicas, sem copiar interface, textos ou ativos de terceiros.
+- `MECANICA-JOGO.md`: referência de regras de futebol (IFAB), princípios táticos FIFA, limites do motor atual e critérios para implementar mecânicas sem apresentar simplificações como regras oficiais.
 - `src/components/game-board.tsx`: coordenação atual dos principais fluxos do jogo.
 - `src/lib/game/`: regras e persistência.
 - `supabase/migrations/`: evolução do banco de dados.
