@@ -38,3 +38,54 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Contas e carreiras
+
+O link sempre abre o menu inicial. Para criar ou continuar uma carreira, o jogador
+entra ou cria uma conta com email e senha pelo Supabase Auth. Cada conta pode ter
+várias carreiras, cada uma com seu elenco, escalação, táticas e partida próprios.
+O botão **Salvar e voltar ao início** fica disponível em todas as telas da carreira.
+Uma partida retomada começa pausada.
+
+### Configuração do Supabase
+
+Configure no `.env.local` e no ambiente de produção da Vercel:
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=SUA_CHAVE_PUBLICA
+```
+
+- Habilite o provedor **Email** em Authentication / Sign In Providers.
+- Configure a **Site URL** de produção e as URLs de redirecionamento autorizadas
+  em Authentication / URL Configuration. Inclua o endereço usado para testes.
+- Se a confirmação de email estiver habilitada, o usuário deve confirmar o cadastro
+  antes de entrar. Configure SMTP para entrega confiável de emails em produção.
+- Aplique as migrations de `supabase/migrations/` na ordem. As políticas RLS
+  existentes restringem os saves e os dados de carreira ao `auth.uid()` proprietário.
+- Não é necessária uma nova coluna para os checkpoints: o estado completo da
+  carreira é salvo em `game_saves.state.progress` (JSONB já existente). As tabelas
+  antigas de elenco continuam disponíveis para leitura de saves legados da conta.
+- O cliente não cria mais sessões anônimas. Caches antigos sem proprietário e
+  carreiras de sessões anônimas **não são atribuídos automaticamente** a uma conta,
+  para evitar a exposição de dados em navegadores compartilhados.
+- O cache do navegador é separado por ID de usuário. Não é uma proteção contra
+  acesso físico/devtools no mesmo dispositivo: a proteção dos dados em nuvem é RLS.
+- Mudanças locais mais recentes são recuperadas na próxima entrada. Para continuar
+  em outro dispositivo, aguarde a indicação de sincronização antes de fechar.
+- Nunca configure a chave secreta como `NEXT_PUBLIC_*`, nem a envie ao repositório.
+  Chaves secretas divulgadas devem ser revogadas/rotacionadas no Supabase.
+
+### Validação
+
+```bash
+npm ci
+npm test
+npm run lint
+npm run build
+```
+
+Os testes incluem cadastro/login com serviços simulados, separação de contas,
+carreiras independentes, retorno ao menu, retomada de partidas e ordenação dos
+checkpoints. A validação real de Auth, email e RLS exige um projeto Supabase
+configurado e acessível; mocks não substituem essa verificação em produção.

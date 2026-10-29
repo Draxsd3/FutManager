@@ -40,6 +40,7 @@ type SaveRow = {
   division: string | null; round: number; budget_brl: number; in_game_date: string;
   state: {
     clubId?: string;
+    progress?: import("@/lib/game/progress").CareerProgress;
     playerCareers?: Record<number, PlayerCareerRecord>;
     manualPositions?: Record<number, ManualPosition>;
   }; created_at: string; updated_at: string;

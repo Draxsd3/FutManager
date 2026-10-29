@@ -1,9 +1,9 @@
-import { GameBoard } from "@/components/game-board";
+import { AccountGame } from "@/components/account-game";
 
 export default function Home() {
   return (
     <main>
-      <GameBoard />
+      <AccountGame />
     </main>
   );
 }
