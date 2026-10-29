@@ -41,11 +41,13 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Contas e carreiras
 
-O link sempre abre o menu inicial. Para criar ou continuar uma carreira, o jogador
-entra ou cria uma conta com email e senha pelo Supabase Auth. Cada conta pode ter
-várias carreiras, cada uma com seu elenco, escalação, táticas e partida próprios.
-A opção **Menu inicial** da barra superior salva a carreira ao retornar. Não há botão flutuante sobre o conteúdo.
-Uma partida retomada começa pausada.
+Ao abrir o jogo em uma nova sessão ou entrar na conta, o menu inicial é apresentado.
+Se a página for recarregada na mesma aba durante uma carreira, o jogo restaura a tela
+e o progresso ativos; partidas são retomadas pausadas. A opção **Menu inicial**
+salva a carreira e encerra essa retomada automática. Para criar ou continuar uma
+carreira, o jogador entra ou cria uma conta com email e senha pelo Supabase Auth.
+Cada conta pode ter várias carreiras, cada uma com seu elenco, escalação, táticas e
+partida próprios. Não há botão flutuante sobre o conteúdo.
 
 ### Configuração do Supabase
 
@@ -261,6 +263,10 @@ permanece ao lado, sem rolagem principal.
 ### Banco de reservas compacto
 
 A prancheta mostra nome, posição e força dos reservas sobre uma imagem ilustrativa de banco. Dois cliques abrem a ficha; pelo teclado, selecione o jogador e use o botão de ficha ou a tecla I. Segure e arraste para o campo/titular para substituir ou para outro reserva para mudar a ordem. A ficha também permite reordenar por botões. A ordem é salva com o elenco da carreira; Escape cancela um arraste ou fecha a ficha.
+
+### Fluidez e melhores momentos
+
+Na partida, a bola segue a posição atual e o próximo passe parte do recebedor, com preferência por companheiros próximos. A animação respeita pausa, velocidade e a preferência de movimento reduzido. Os painéis ao vivo e o resultado destacam finalizações, gols, faltas, discussões, cartões e alterações; passes e desarmes permanecem no estado da simulação, mas não lotam o resumo. A física e o adversário continuam simplificados.
 
 ### Táticas na partida
 

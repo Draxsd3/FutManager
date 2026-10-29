@@ -1,26 +1,45 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import type { RoundFixture, Player } from "@/lib/game/mock-data";
 import type { ManualPosition } from "@/lib/game/career";
 import { formationSlots } from "@/lib/game/formations";
-import { fieldPoint } from "@/lib/game/live-match";
-import type { CSSProperties } from "react";
+import { fieldPoint, isHighlight } from "@/lib/game/live-match";
+import { LiveBall } from "./live-ball";
 import type { MatchEvent } from "@/components/screens/match-detail-screen";
 import { Crest } from "@/components/ui/club-sidebar";
 import styles from "./match-overview-screen.module.css";
 
-export function MatchOverviewScreen({ competition, round, minute, half, club, opponent, homeScore, awayScore, possession, shots, onGoal, tackles, passErrors, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, formation, starters, manualPositions }: {
+export function MatchOverviewScreen({ competition, round, minute, half, club, opponent, homeScore, awayScore, possession, shots, onGoal, tackles, passErrors, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, onRequestExit, formation, starters, manualPositions }: {
   competition: string; round: number; minute: number; half: "1º tempo" | "2º tempo" | "fim";
   club: string; opponent: string; homeScore: number; awayScore: number; possession: number; shots: number;
   onGoal: string; tackles: number; passErrors: number; fixtures: RoundFixture[]; events: MatchEvent[];
   running: boolean; speed: 1 | 2 | 4; halftimeWaiting: boolean; onToggleRunning: () => void;
-  onSpeedChange: (speed: 1 | 2 | 4) => void; onOpenDetail: () => void;
+  onSpeedChange: (speed: 1 | 2 | 4) => void; onOpenDetail: () => void; onRequestExit: () => void;
   formation: string; starters: Player[]; manualPositions: Record<number, ManualPosition>;
 }) {
+  const [exitConfirmationOpen, setExitConfirmationOpen] = useState(false);
+  const exitTriggerRef = useRef<HTMLButtonElement>(null);
+  const continueButtonRef = useRef<HTMLButtonElement>(null);
   const status = running ? "AO VIVO" : halftimeWaiting ? "INTERVALO" : minute >= 90 ? "ENCERRADA" : "PARTIDA PAUSADA";
+
+  useEffect(() => {
+    if (!exitConfirmationOpen) return;
+    const exitTrigger = exitTriggerRef.current;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setExitConfirmationOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    continueButtonRef.current?.focus();
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      exitTrigger?.focus();
+    };
+  }, [exitConfirmationOpen]);
   const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
   const currentEvent = [...events].reverse().find((event) => event.minute === minute && event.scene);
   const scene = currentEvent?.scene;
+  const highlights = events.filter(isHighlight);
   return <main className={styles.page}>
     <section className={styles.shell}>
       <header className={styles.header}>
@@ -38,8 +57,9 @@ export function MatchOverviewScreen({ competition, round, minute, half, club, op
       </div>
       <div className={styles.controls}>
         <div className={styles.speeds}><span>VELOCIDADE</span>{([1, 2, 4] as const).map(value => <button key={value} aria-pressed={speed === value} onClick={() => onSpeedChange(value)}>{value}x</button>)}</div>
-        <div className={styles.actions}>{minute < 90 && <button className={styles.primary} onClick={onToggleRunning}>{running ? "❚❚  Pausar" : halftimeWaiting ? "▶  Iniciar 2º tempo" : "▶  Continuar"}</button>}<button className={styles.secondary} onClick={onOpenDetail}>Escalação e táticas ↗</button></div>
+        <div className={styles.actions}>{minute < 90 && <button className={styles.primary} onClick={onToggleRunning}>{running ? "❚❚  Pausar" : halftimeWaiting ? "▶  Iniciar 2º tempo" : "▶  Continuar"}</button>}<button className={styles.secondary} onClick={onOpenDetail}>Escalação e táticas ↗</button><button ref={exitTriggerRef} className={styles.exitButton} onClick={() => setExitConfirmationOpen(true)}>Menu inicial</button></div>
       </div>
+      {exitConfirmationOpen && <div className={styles.dialogBackdrop}><section className={styles.exitDialog} role="alertdialog" aria-modal="true" aria-labelledby="exit-match-title" aria-describedby="exit-match-description"><span className={styles.eyebrow}>{minute < 90 ? "PARTIDA EM ANDAMENTO" : "PARTIDA FINALIZADA"}</span><h2 id="exit-match-title">{minute < 90 ? "Sair da partida?" : "Voltar ao menu inicial?"}</h2><p id="exit-match-description">{minute < 90 ? "Seu progresso será salvo neste minuto. Ao continuar esta carreira, a partida será retomada pausada." : "O resultado foi preservado. Você poderá continuar esta carreira quando quiser."}</p><div className={styles.dialogActions}><button ref={continueButtonRef} onClick={() => setExitConfirmationOpen(false)}>Continuar partida</button><button className={styles.confirmExit} onClick={onRequestExit}>Sair e salvar</button></div></section></div>}
       <div className={styles.content}>
         <section className={styles.pitchCard} aria-label="Visualização da partida simulada">
           <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>VISÃO DE JOGO</span><h2>Dentro de campo</h2></div><span className={styles.badge}>{formation}</span></div>
@@ -54,14 +74,14 @@ export function MatchOverviewScreen({ competition, round, minute, half, club, op
               return <span key={player.id} className={`${styles.player} ${styles.homePlayer} ${active || confronted ? styles.activePlayer : ""}`} style={{ left: `${location.x}%`, top: `${location.y}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} title={`${player.name} · ${player.position}`}><span>{player.shirtNumber ?? player.id}</span></span>;
             })}
             {slots.map((pos, index) => { const point = fieldPoint(pos, true); const active = scene?.team === "away" && scene.actorIndex === index; const confronted = scene?.team === "home" && (scene.action === "foul" || scene.action === "discussion" || scene.action === "tackle") && index === scene.targetIndex; const receiving = scene?.team === "away" && scene.action === "pass" && index === scene.targetIndex; const location = confronted || receiving ? scene.to : active ? scene.from : point; return <span key={index} className={`${styles.player} ${styles.awayPlayer} ${active || confronted ? styles.activePlayer : ""}`} style={{ left: `${location.x}%`, top: `${location.y}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} />; })}
-            {scene && <span key={`${minute}-${scene.action}`} className={styles.ball} style={{ "--from-x": `${scene.from.x}%`, "--from-y": `${scene.from.y}%`, "--to-x": `${scene.to.x}%`, "--to-y": `${scene.to.y}%`, animationDuration: `${700 / speed}ms`, animationName: running ? undefined : "none" } as CSSProperties} />}
-            {currentEvent && <div className={styles.actionCaption} aria-live="polite"><strong>{scene?.action === "goal" ? "GOL" : scene?.action === "shot" ? "FINALIZAÇÃO" : scene?.action === "tackle" ? "DESARME" : scene?.action === "foul" ? "FALTA" : scene?.action === "discussion" ? "DISCUSSÃO" : "PASSE"}</strong> {currentEvent.text}</div>}
+            <LiveBall target={scene?.to} running={running} speed={speed} />
+            {currentEvent && isHighlight(currentEvent) && <div className={styles.actionCaption} aria-live="polite"><strong>{scene?.action === "goal" ? "GOL" : scene?.action === "shot" ? "FINALIZAÇÃO" : scene?.action === "foul" ? "FALTA" : "DISCUSSÃO"}</strong> {currentEvent.text}</div>}
           </div>
           <div className={styles.legend}><span><i className={styles.homeKey} />{club}</span><span><i className={styles.awayKey} />{opponent}</span><span className={styles.note}>Lances simulados em campo · adversário em formação genérica</span></div>
         </section>
         <aside className={styles.sidebar}>
-          <section className={styles.panel}><div className={styles.sectionHeading}><div><span className={styles.eyebrow}>ACOMPANHE</span><h2>Últimos lances</h2></div><span className={styles.badge}>{events.length}</span></div>
-            <div className={styles.events}>{events.length === 0 ? <p className={styles.empty}>Ainda não há lances registrados.</p> : events.slice(-10).reverse().map((event, index) => <div className={styles.event} key={`${event.minute}-${index}`}><b>{event.minute}&apos;</b><span>{event.card ? (event.card === "yellow" ? "🟨" : "🟥") : event.text.startsWith("Gol") ? "⚽" : "↗"} &nbsp;{event.text}</span></div>)}</div>
+          <section className={styles.panel}><div className={styles.sectionHeading}><div><span className={styles.eyebrow}>ACOMPANHE</span><h2>Melhores momentos</h2></div><span className={styles.badge}>{highlights.length}</span></div>
+            <div className={styles.events}>{highlights.length === 0 ? <p className={styles.empty}>Ainda não há melhores momentos.</p> : highlights.slice(-10).reverse().map((event, index) => <div className={styles.event} key={`${event.minute}-${index}`}><b>{event.minute}&apos;</b><span>{event.card ? (event.card === "yellow" ? "🟨" : "🟥") : event.text.startsWith("Gol") ? "⚽" : "↗"} &nbsp;{event.text}</span></div>)}</div>
             <p className={styles.note}>{passErrors} erros de passe registrados</p>
           </section>
           <section className={styles.panel}><div className={styles.sectionHeading}><div><span className={styles.eyebrow}>PELOS ESTÁDIOS</span><h2>Jogos da rodada</h2></div></div>

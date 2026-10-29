@@ -55,7 +55,7 @@ O responsável autorizou fazer o merge de cada entrega para a `main` sem nova co
 
 ### 6. Contas e carreiras independentes
 
-- Ao abrir o link e após qualquer login, sempre apresentar o menu inicial; nunca abrir automaticamente o editor, outra seção ou uma carreira, mesmo se essa opção tiver sido clicada antes de entrar.
+- Ao abrir o link em uma nova sessão/aba e após qualquer login, apresentar o menu inicial; nunca reabrir automaticamente editor, seção ou carreira após autenticação. Exceção de usabilidade: atualizar a página na mesma aba durante uma carreira ativa deve restaurar a tela e o progresso da sessão; partida em andamento retorna pausada. A ação deliberada Menu inicial encerra a retomada automática para que o próximo início volte ao menu.
 - Login e cadastro com email e senha pelo Supabase Auth, sem armazenar senhas em tabelas próprias.
 - Uma conta pode ter várias carreiras independentes. Saves, elenco e táticas não podem vazar entre contas ou carreiras.
 - Usar os controles de navegação existentes, como Menu inicial na barra superior. Não exibir o botão flutuante “Salvar e voltar ao início”, removido a pedido do responsável. Manter o salvamento automático.
@@ -141,7 +141,13 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Segurar ou arrastar um reserva levanta uma prévia; soltá-lo em um titular ou no campo faz a substituição, e soltá-lo em outro reserva reordena o banco. Cancelar não modifica escalação. Disponibilizar reordenação também por botões na ficha e persistir a ordem no elenco da carreira.
 - Usar imagem ilustrativa de banco de reservas como fundo, preservando contraste e legibilidade. A imagem foi gerada para o projeto e não representa um estádio específico.
 
-### 18. Táticas durante a partida no padrão da escalação inicial
+### 18. Fluidez e melhores momentos na partida
+
+- A circulação da bola deve ser contínua: após um passe, o recebedor inicia o próximo lance, priorizando companheiros próximos. A bola interpola a partir da posição atual, sem reiniciar a cada minuto; pausa, intervalo e velocidade controlam a animação.
+- O painel ao vivo, a janela de táticas e o resultado mostram somente melhores momentos (finalizações, gols, faltas, discussões, cartões e alterações), sem listar passes e desarmes rotineiros. Os eventos internos continuam disponíveis para estatísticas e retomada de saves anteriores.
+- O movimento continua sendo uma simulação simplificada, sem física completa nem elenco real do adversário; não apresentá-lo como reprodução de jogo real.
+
+### 19. Táticas durante a partida no padrão da escalação inicial
 
 - Pedido de 29/10/2026: modernizar as táticas durante o jogo, podendo usar a mesma tela de táticas anterior ao início da partida.
 - Reutilizar `LineupScreen` em modo de partida: mesma prancheta proporcional, camisas numeradas no molde obrigatório e nas cores cadastradas do clube, banco completo ao lado, busca/filtros, plano tático e guias opcionais desligadas por padrão. Não reintroduzir fotos ou posições fixas.

@@ -132,3 +132,15 @@ it("retains reserve details and bench reordering without bypassing match substit
   fireEvent.click(screen.getByRole("button", { name: "Confirmar substituição" }));
   expect(substitute).toHaveBeenCalledWith(bench[0].id, undefined);
 });
+it("preserves highlights-only commentary while retaining routine actions for the match engine", () => {
+  const scene = { action: "pass" as const, team: "home" as const, actorIndex: 0, targetIndex: 1, from: { x: 20, y: 20 }, to: { x: 30, y: 30 } };
+  setup({ events: [
+    { minute: 1, half: 1, text: "Passe rotineiro", scene },
+    { minute: 2, half: 1, text: "Desarme rotineiro", scene: { ...scene, action: "tackle" } },
+    { minute: 3, half: 1, text: "Finalização perigosa", scene: { ...scene, action: "shot" } },
+  ] });
+  expect(screen.getByRole("heading", { name: "Melhores momentos" })).toBeTruthy();
+  expect(screen.queryByText("Passe rotineiro")).toBeNull();
+  expect(screen.queryByText("Desarme rotineiro")).toBeNull();
+  expect(screen.getByText("Finalização perigosa")).toBeTruthy();
+});

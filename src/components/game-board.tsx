@@ -31,7 +31,12 @@ import { createPlayerCareer, type ManualPosition, type PlayerCareerRecord } from
 import { deployLineupPlayer } from "@/lib/game/lineup";
 import { formationSlots, playerFitAtPosition } from "@/lib/game/formations";
 import { mergeCareerSaves } from "@/lib/game/save-utils";
-import { isMenuPage } from "@/lib/game/session";
+import {
+  isMenuPage,
+  readActiveCareerSession,
+  resumableCareerPage,
+  writeActiveCareerSession,
+} from "@/lib/game/session";
 import { agendaOptions, type AgendaView } from "@/components/screens/agenda-screen";
 import type { CareerProgress } from "@/lib/game/progress";
 import { otherScore, simulateAction } from "@/lib/game/live-match";
@@ -75,6 +80,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const pendingCloudSave = useRef<CareerSave | null>(null);
   useEffect(() => { savesRef.current = saves; }, [saves]);
   const sessionRestoreVersion = useRef(0);
+  const sessionRestoreAttempted = useRef(false);
   const [syncLabel, setSyncLabel] = useState("Preparando banco de dados...");
   const [coach, setCoach] = useState("");
   const [division, setDivision] = useState<DivisionKey>("Série A");
@@ -95,6 +101,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       if (cancelled) return;
       const localDatabase = upgradeEditorDatabase(readLocalDatabase(userId) ?? createDefaultDatabase());
       const localSaves = readLocalSaves(userId);
+      savesRef.current = localSaves;
       setDatabase(localDatabase);
       setSaves(localSaves);
       writeLocalDatabase(localDatabase, userId);
@@ -127,6 +134,17 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     void hydrate();
     return () => { cancelled = true; };
   }, [userId]);
+
+  useEffect(() => {
+    if (!hydrationDone || sessionRestoreAttempted.current) return;
+    sessionRestoreAttempted.current = true;
+    const resumeId = readActiveCareerSession(userId);
+    const resumeSave = resumeId ? savesRef.current.find((save) => save.id === resumeId) : undefined;
+    if (resumeSave?.progress) void loadCareer(resumeSave);
+    else if (resumeId) writeActiveCareerSession(userId, null);
+    // Restoration is intentionally one-shot per mount; hydration triggers it after the latest save list is ready.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrationDone, userId]);
 
   const baseSquad = useMemo(() => {
     if (!database) return initialSquad;
@@ -176,6 +194,13 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, formation, style, marking, focus,
     starters, careerSquad, playerCareers, manualPositions, minute, homeScore, awayScore, events,
     substitutionsLeft, detailOpen, matchSpeed, halftimeWaiting, userId]);
+
+  useEffect(() => {
+    if (!hydrationDone) return;
+    if (careerLoaded && activeSaveId && !isMenuPage(page)) {
+      writeActiveCareerSession(userId, activeSaveId);
+    }
+  }, [hydrationDone, careerLoaded, activeSaveId, page, userId]);
 
   useEffect(() => {
     // Throttle rather than debounce: a running match changes faster than one second.
@@ -235,7 +260,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     if (page !== "matchOverview" || !matchRunning || detailOpen || minute >= 90) return;
     const timer = window.setTimeout(() => {
       const nextMinute = Math.min(90, minute + 1);
-      const event = simulateAction({ minute: nextMinute, starters: startersData, formation, positions: manualPositions, opponent, strength });
+      const event = simulateAction({ minute: nextMinute, starters: startersData, formation, positions: manualPositions, opponent, strength, previous: [...events].reverse().find((item) => item.scene)?.scene });
       setMinute(nextMinute);
       setEvents((current) => [...current, event]);
       if (event.scene?.action === "goal") {
@@ -252,7 +277,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       }
     }, 700 / matchSpeed);
     return () => window.clearTimeout(timer);
-  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, page, startersData, formation, manualPositions, strength]);
+  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, page, startersData, formation, manualPositions, strength, events]);
 
   useEffect(() => {
     if (page !== "matchOverview" || minute !== 90 || detailOpen) return;
@@ -313,6 +338,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   function leaveActiveCareer(nextPage: Extract<Page, "menu" | "new" | "saves" | "editor">) {
     sessionRestoreVersion.current += 1;
+    writeActiveCareerSession(userId, null);
     pendingCloudSave.current = null;
     if (activeSaveId && careerLoaded) saveCurrentCareer();
     setMatchRunning(false);
@@ -477,7 +503,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       setHalftimeWaiting(state.halftimeWaiting);
       setMatchSpeed(state.matchSpeed);
       setDetailOpen(false);
-      setPage(state.page === "matchOverview" || state.page === "result" ? state.page : "hub");
+      setPage(resumableCareerPage(state.page) as Page);
       setCareerLoaded(true);
       return true;
     }
@@ -554,6 +580,20 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       progress: { ...progressRef.current, round: nextRound, page: page === "result" && nextRound !== round ? "hub" : page },
     });
   }
+
+  const beforeUnloadSave = useRef<() => void>(() => {});
+  useEffect(() => { beforeUnloadSave.current = saveCurrentCareer; });
+
+  useEffect(() => {
+    if (page !== "matchOverview" || minute >= 90 || !activeSaveId || !careerLoaded) return;
+    const warnBeforeLeavingMatch = (event: BeforeUnloadEvent) => {
+      beforeUnloadSave.current();
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeLeavingMatch);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeavingMatch);
+  }, [page, minute, activeSaveId, careerLoaded]);
 
   function changeFormation(next: string) {
     setFormation(next);
@@ -926,6 +966,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           }}
           onSpeedChange={setMatchSpeed}
           onOpenDetail={openMatchTactics}
+          onRequestExit={() => leaveActiveCareer("menu")}
         />
         {detailOpen && (
           <MatchDetailScreen

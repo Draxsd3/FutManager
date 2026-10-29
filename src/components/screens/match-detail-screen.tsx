@@ -10,7 +10,7 @@ import type { ManualPosition } from "@/lib/game/career";
 import { ClassicIcon } from "@/components/ui/classic-icon";
 
 export type { MatchEvent } from "@/lib/game/live-match";
-import type { MatchEvent } from "@/lib/game/live-match";
+import { isHighlight, type MatchEvent } from "@/lib/game/live-match";
 
 export function MatchDetailScreen({
   club,
@@ -90,6 +90,7 @@ export function MatchDetailScreen({
       if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
     };
   }, []);
+  const highlights = events.filter(isHighlight).slice(-8).reverse();
   const selected = [...startersData, ...bench].find((p) => p.id === selectedPlayer) ?? null;
   const outgoing = startersData.find((p) => p.id === substitutionOut);
   const incoming = bench.find((p) => p.id === selectedPlayer);
@@ -152,11 +153,11 @@ export function MatchDetailScreen({
               <div><dt>Desarmes</dt><dd>{tackles}</dd></div>
               <div><dt>Erros de passe</dt><dd>{passErrors}</dd></div>
             </dl>
-            <h3 className={styles.eventsTitle}>Últimos lances</h3>
+            <h3 className={styles.eventsTitle}>Melhores momentos</h3>
             <ol className={styles.events}>
-              {!events.length && <li>Nenhum evento ainda.</li>}
-              {events.slice(-8).reverse().map((event, index) => <li key={index}>
-                <ClassicIcon name={event.card === "yellow" ? "bullet_yellow" : event.card === "red" ? "flag_red_dull" : "sport_soccer"} />
+              {!highlights.length && <li>Nenhum evento ainda.</li>}
+              {highlights.map((event, index) => <li key={index}>
+                <ClassicIcon name={event.card === "yellow" ? "bullet_yellow" : event.card === "red" ? "flag_red_dull" : event.scene?.action === "goal" || event.text.startsWith("Gol") ? "sport_soccer" : "arrow_refresh"} />
                 <span><b>{event.minute}′ · {event.half}º tempo</b>{event.text}</span>
               </li>)}
             </ol>
