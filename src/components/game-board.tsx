@@ -195,6 +195,12 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   const divisionClubNames = useMemo(() => database?.clubs.filter((item) => item.division === division).map((item) => item.name) ?? [], [database, division]);
   const opponent = divisionClubNames.find((name) => name !== club) ?? divisionClubNames[1] ?? "Adversário";
+  const opponentStarters = useMemo(() => {
+    if (!database) return undefined;
+    const opponents = buildSquadFromDatabase(database, opponent);
+    if (!opponents) return undefined;
+    return buildStartingXI(formation, opponents).map((id) => opponents.find((player) => player.id === id)!).filter(Boolean);
+  }, [database, opponent, formation]);
   const startersData = useMemo(
     () => starters.map((id) => squad.find((p) => p.id === id)!).filter(Boolean),
     [starters, squad],
@@ -235,7 +241,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     if (page !== "matchOverview" || !matchRunning || detailOpen || minute >= 90) return;
     const timer = window.setTimeout(() => {
       const nextMinute = Math.min(90, minute + 1);
-      const event = simulateAction({ minute: nextMinute, starters: startersData, formation, positions: manualPositions, opponent, strength, previous: [...events].reverse().find((item) => item.scene)?.scene });
+      const event = simulateAction({ minute: nextMinute, starters: startersData, formation, positions: manualPositions, opponent, opponentStarters, strength, previous: [...events].reverse().find((item) => item.scene)?.scene });
       setMinute(nextMinute);
       setEvents((current) => [...current, event]);
       if (event.scene?.action === "goal") {
@@ -252,13 +258,14 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       }
     }, 700 / matchSpeed);
     return () => window.clearTimeout(timer);
-  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, page, startersData, formation, manualPositions, strength, events]);
+  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, opponentStarters, page, startersData, formation, manualPositions, strength, events]);
 
   useEffect(() => {
     if (page !== "matchOverview" || minute !== 90 || detailOpen) return;
-    const timer = window.setTimeout(() => setPage("result"), 1800);
+    const finalGoal = events.some((event) => event.minute === 90 && event.scene?.action === "goal");
+    const timer = window.setTimeout(() => setPage("result"), finalGoal ? 3000 : 1800);
     return () => window.clearTimeout(timer);
-  }, [detailOpen, minute, page]);
+  }, [detailOpen, minute, page, events]);
 
   const table: TableRow[] = useMemo(() => {
     const played = page === "result" ? 1 : 0;

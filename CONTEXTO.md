@@ -146,3 +146,9 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - A circulação da bola deve ser contínua: após um passe, o recebedor inicia o próximo lance, priorizando companheiros próximos. A bola interpola a partir da posição atual, sem reiniciar a cada minuto; pausa, intervalo e velocidade controlam a animação.
 - O painel ao vivo, a janela de táticas e o resultado mostram somente melhores momentos (finalizações, gols, faltas, discussões, cartões e alterações), sem listar passes e desarmes rotineiros. Os eventos internos continuam disponíveis para estatísticas e retomada de saves anteriores.
 - O movimento continua sendo uma simulação simplificada, sem física completa nem elenco real do adversário; não apresentá-lo como reprodução de jogo real.
+
+### 19. Goleiros e comemoração de gol ao vivo
+
+- Na visualização da partida, impedir que jogadores sejam levados para o outro lado do campo por lances distantes; goleiros têm deslocamento mais limitado ao redor da posição definida pelo usuário, sem bloquear posicionamentos táticos personalizados.
+- Cada gol novo deve mostrar uma comemoração temporária “GOOOL!” com autor, clube e minuto, inclusive no intervalo ou no fim do jogo. Não repetir a comemoração ao carregar uma partida já salva. Preservar placar, lances e acessibilidade com movimento reduzido.
+- O adversário usa uma escalação simulada com atletas cadastrados no editor quando disponíveis; se o elenco não estiver disponível, identificar o autor genericamente em vez de inventar um nome. As escalações adversárias e o modelo de movimento continuam simplificados.

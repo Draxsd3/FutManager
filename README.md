@@ -265,3 +265,7 @@ A prancheta mostra nome, posição e força dos reservas sobre uma imagem ilustr
 ### Fluidez e melhores momentos
 
 Na partida, a bola segue a posição atual e o próximo passe parte do recebedor, com preferência por companheiros próximos. A animação respeita pausa, velocidade e a preferência de movimento reduzido. Os painéis ao vivo e o resultado destacam finalizações, gols, faltas, discussões, cartões e alterações; passes e desarmes permanecem no estado da simulação, mas não lotam o resumo. A física e o adversário continuam simplificados.
+
+### Gols e posição dos goleiros
+
+Os jogadores se movimentam perto das posições táticas definidas, com uma área de deslocamento mais restrita para goleiros. Gols novos exibem uma comemoração temporária com autor, clube e minuto; retomadas não repetem gols antigos. O autor adversário usa um jogador do elenco cadastrado quando há dados suficientes; caso contrário, é identificado genericamente. A escalação do adversário é simulada.
