@@ -303,6 +303,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     .map((player) => ({ name: player.name, club: clubNamesById[player.clubId] ?? "-", rating: player.averageRating ?? 0, played: round - 1, role: player.primaryPosition }));
 
   const nav: NavItem[] = [
+    { icon: "house", label: "Principal", active: page === "hub", onClick: () => navigate("hub") },
     { icon: "calendar", label: "Agenda", active: page === "agenda", onClick: () => navigate("agenda"), children: agendaOptions.map((option) => ({ label: option.label, description: option.description, onClick: () => { setAgendaView(option.id); navigate("agenda"); } })) },
     { icon: "data_table", label: "Tabelas", active: standingsOpen, onClick: () => setStandingsOpen(true) },
     { icon: "sport", label: "Estádio", active: page === "stadium", onClick: () => navigate("stadium") },
@@ -354,8 +355,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   function renderStandings() {
-    if (!standingsOpen) return null;
-    return <CompetitionCenter club={club} competition={division} table={table} topScorers={topScorers} topRatings={topRatings} round={round} onClose={() => setStandingsOpen(false)} />;
+    if (!standingsOpen || !database) return null;
+    return <CompetitionCenter database={database} fixtures={fixtures} club={club} competition={division} table={table} topScorers={topScorers} topRatings={topRatings} round={round} onClose={() => setStandingsOpen(false)} />;
   }
 
   function changeDatabase(next: EditorDatabase) {
@@ -857,6 +858,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             agendaView={agendaView}
             onAgendaViewChange={setAgendaView}
             onPrepare={openLineup}
+            onAgenda={() => { setAgendaView("matches"); navigate("agenda"); }}
             database={database}
             club={club}
             coach={coach}

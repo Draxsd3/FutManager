@@ -6,6 +6,7 @@ import type { EditorDatabase } from "@/lib/game/editor-data";
 import type { Player, RoundFixture } from "@/lib/game/mock-data";
 import { ClassicIcon } from "@/components/ui/classic-icon";
 import { Crest } from "@/components/ui/club-sidebar";
+import { StadiumScreen } from "./stadium-screen";
 import { AgendaScreen, type AgendaView } from "./agenda-screen";
 import { competitionTrophies } from "@/lib/game/assets";
 
@@ -25,6 +26,7 @@ export function ClubSectionScreen({
   agendaView = "matches",
   onAgendaViewChange,
   onPrepare,
+  onAgenda,
   onBack,
   onOpenPlayer,
   onTrainPlayer,
@@ -32,6 +34,7 @@ export function ClubSectionScreen({
   agendaView?: AgendaView;
   onAgendaViewChange?: (view: AgendaView) => void;
   onPrepare?: () => void;
+  onAgenda?: () => void;
   section: ClubSection;
   database: EditorDatabase;
   club: string;
@@ -77,6 +80,8 @@ export function ClubSectionScreen({
     training: "CENTRO DE TREINAMENTO",
   }[section];
 
+  if (section === "stadium") return <StadiumScreen key={club} club={currentClub} budget={budget} payroll={monthlyPayroll} onBack={onBack} onAgenda={onAgenda} />;
+
   if (section === "agenda") return <AgendaScreen club={club} coach={coach} competition={competition} inGameDate={inGameDate} round={round} fixtures={fixtures} view={agendaView} onViewChange={onAgendaViewChange ?? (() => undefined)} onBack={onBack} onPrepare={onPrepare ?? onBack} />;
 
   return (
@@ -88,13 +93,6 @@ export function ClubSectionScreen({
         </header>
 
 
-
-        {section === "stadium" && (
-          <div className="grid gap-4 p-4 lg:grid-cols-[1.4fr_1fr]">
-            <div className="relative min-h-80 overflow-hidden border border-black bg-cover bg-center" style={{ backgroundImage: "url('/game-assets/backgrounds/stadium.jpg')" }}><div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10"/><div className="absolute inset-x-0 bottom-0 p-4 text-white"><b className="text-xl">{currentClub?.stadiumName ?? "Estádio Municipal"}</b><p>{currentClub?.stadiumCapacity.toLocaleString("pt-BR")} lugares</p></div></div>
-            <Panel title="ADMINISTRAÇÃO DO ESTÁDIO"><Info label="Clube" value={club}/><Info label="Capacidade" value={`${currentClub?.stadiumCapacity.toLocaleString("pt-BR") ?? 0} torcedores`}/><Info label="Gramado" value="Excelente"/><Info label="Caixa disponível" value={`R$ ${(budget / 1000).toFixed(2)} milhões`}/><p className="mt-5 border-t pt-3 text-[#68757b]">As reformas e ampliações serão liberadas conforme a evolução financeira da carreira.</p></Panel>
-          </div>
-        )}
 
         {section === "juniors" && (
           <div className="p-4"><Panel title="JOGADORES JOVENS MONITORADOS"><DataTable headers={["Nome", "Posição", "Idade", "Força", "Energia"]}>{squad.filter((player) => player.age <= 25).map((player) => <tr key={player.id} onDoubleClick={() => onOpenPlayer(player.id)} className="cursor-pointer border-b hover:bg-[#e4eef3]"><Cell>{player.name}</Cell><Cell>{player.position}</Cell><Cell>{player.age}</Cell><Cell>{player.overall}</Cell><Cell>{player.energy}%</Cell></tr>)}</DataTable><p className="mt-3 text-[11px] text-[#68757b]">Dê dois cliques para abrir a ficha completa do jogador.</p></Panel></div>

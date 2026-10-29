@@ -115,6 +115,10 @@ it("keeps club navigation internal and the top Menu inicial button returns to th
     expect(screen.queryByRole("button", { name: /Salvar e voltar ao início/ })).toBeNull();
     expect(screen.getByRole("button", { name: "Menu inicial" })).toBeTruthy();
   }
+  fireEvent.click(screen.getByRole("button", { name: "Principal" }));
+  expect(screen.queryByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeNull();
+  expect(screen.getByRole("button", { name: "Principal" }).className).toContain("bg-[var(--team-accent)]");
+  expect(screen.getAllByRole("table").length).toBeGreaterThan(0);
   fireEvent.click(screen.getByRole("button", { name: "Menu inicial" }));
   expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
   expect(document.querySelector('[data-menu-version="minimal-v1"]')).toBeTruthy();

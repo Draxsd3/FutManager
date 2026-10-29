@@ -5,7 +5,7 @@ import { clubCrestAsset } from "@/lib/game/assets";
 import { ClassicIcon, type ClassicIconName } from "./classic-icon";
 
 export function Crest({ club, size = "md" }: { club: string; size?: "sm" | "md" }) {
-  const theme = clubThemes[club] ?? clubThemes.Palmeiras;
+  const theme = clubThemes[club] ?? { primary: "#334155", secondary: "#64748b", text: "#ffffff", short: club.split(/\s+/).filter(Boolean).map((word) => word[0]).join("").slice(0, 3).toUpperCase() };
   const dims = size === "sm" ? "h-10 w-9 text-[9px]" : "h-20 w-16 text-[11px]";
   const asset = clubCrestAsset(club, size === "sm");
   if (asset) {
