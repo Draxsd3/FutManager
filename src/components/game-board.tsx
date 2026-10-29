@@ -27,7 +27,7 @@ import {
   type TopRating,
 } from "@/lib/game/mock-data";
 import { buildSquadFromDatabase, createDefaultDatabase, upgradeEditorDatabase, type CareerSave, type EditorDatabase } from "@/lib/game/editor-data";
-import { createPlayerCareer, recordPlayerMatch, type MatchParticipation, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
+import { createPlayerCareer, recordPlayerMatch, applyNegotiation, type MarketAction, type MatchParticipation, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
 import { deployLineupPlayer } from "@/lib/game/lineup";
 import { formationSlots, playerFitAtPosition } from "@/lib/game/formations";
 import { mergeCareerSaves } from "@/lib/game/save-utils";
@@ -666,55 +666,44 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setProfilePlayer(id);
   }
 
-  function applyPlayerMarketAction(id: number, action: string) {
+  function applyPlayerMarketAction(id: number, action: MarketAction): string {
     const player = squad.find((item) => item.id === id);
-    if (!player) return;
-    const currentRecord = playerCareers[id] ?? createPlayerCareer(player, club);
-    const nextRecord: PlayerCareerRecord = action === "loan"
-      ? { ...currentRecord, marketStatus: "loan", retirementYear: null }
-      : action === "retiring"
-        ? { ...currentRecord, marketStatus: "retiring", retirementYear: 2026 }
-        : action === "contract"
-          ? { ...currentRecord, marketStatus: "normal", retirementYear: null, contractUntil: "31/dez/2029", salary: Math.round(currentRecord.salary * 1.1) }
-          : { ...currentRecord, marketStatus: "sale", retirementYear: null };
-    const nextCareers = { ...playerCareers, [id]: nextRecord };
-
-    if (action !== "auction") {
-      setPlayerCareers(nextCareers);
+    if (!player) return "Atleta não encontrado.";
+    if (action.type === "offer" && !database?.clubs.some((item) => item.name === action.club && item.name !== club)) return "Clube inválido.";
+    const current = playerCareers[id] ?? createPlayerCareer(player, club);
+    const gameDate = saves.find((save) => save.id === activeSaveId)?.inGameDate ?? "2026-01-22";
+    const result = applyNegotiation(current, action, gameDate, club);
+    if (result.record === current) return result.message;
+    const nextCareers = { ...playerCareers, [id]: result.record };
+    setPlayerCareers(nextCareers);
+    if (!result.transfer) {
       void persistCareerExtras(nextCareers, manualPositions);
-      setSyncLabel(action === "contract" ? "Proposta de renovação registrada" : "Decisão de mercado salva");
-      return;
+      return result.message;
     }
-
-    const revenue = Math.round(player.marketValue * 1000 * 0.9);
     const nextSquad = squad.filter((item) => item.id !== id);
     const nextStarters = starters.filter((starterId) => starterId !== id);
-    const nextBudget = budget + revenue;
+    const nextBudget = budget + Math.round(result.transfer.fee * 1000);
+    const nextPositions = { ...manualPositions };
+    delete nextPositions[id];
     setCareerSquad(nextSquad);
     setStarters(nextStarters);
-    setPlayerCareers(nextCareers);
+    setManualPositions(nextPositions);
     setBudget(nextBudget);
     setSelectedPlayer(null);
     setProfilePlayer(null);
-    setSyncLabel(`${player.name} vendido em leilão por R$ ${(revenue / 1000).toFixed(2)} mi`);
-    if (!activeSaveId) return;
-    const currentSave = saves.find((save) => save.id === activeSaveId);
-    const selectedClub = database?.clubs.find((item) => item.name === club);
-    void persistSave({
-      id: activeSaveId,
-      name: currentSave?.name ?? `${club} — ${coach}`,
-      managerName: coach,
-      clubId: selectedClub?.id ?? currentSave?.clubId ?? "",
-      clubName: club,
-      division,
-      round,
-      budget: nextBudget,
-      inGameDate: currentSave?.inGameDate ?? "2026-01-22",
-      updatedAt: new Date().toISOString(),
-      playerCareers: nextCareers,
-      manualPositions,
-      progress: { ...progressRef.current, careerSquad: nextSquad, starters: nextStarters, playerCareers: nextCareers, budget: nextBudget },
-    });
+    setSyncLabel(result.message);
+    if (activeSaveId) {
+      const currentSave = saves.find((save) => save.id === activeSaveId);
+      const selectedClub = database?.clubs.find((item) => item.name === club);
+      void persistSave({
+        id: activeSaveId, name: currentSave?.name ?? `${club} — ${coach}`, managerName: coach,
+        clubId: selectedClub?.id ?? currentSave?.clubId ?? "", clubName: club, division, round, budget: nextBudget,
+        inGameDate: currentSave?.inGameDate ?? "2026-01-22", updatedAt: new Date().toISOString(),
+        playerCareers: nextCareers, manualPositions: nextPositions,
+        progress: { ...progressRef.current, careerSquad: nextSquad, starters: nextStarters, playerCareers: nextCareers, manualPositions: nextPositions, budget: nextBudget },
+      });
+    }
+    return result.message;
   }
 
   function resetManualPositions() {
@@ -886,7 +875,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           const player = squad.find((item) => item.id === profilePlayer);
           if (!player) return null;
           const record = playerCareers[profilePlayer] ?? createPlayerCareer(player, club);
-          return <CareerPlayerProfile player={player} club={club} record={record} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onClose={() => setProfilePlayer(null)} />;
+          return <CareerPlayerProfile player={player} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onClose={() => setProfilePlayer(null)} />;
         })()}
       </>
     );
@@ -921,7 +910,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           const player = squad.find((item) => item.id === profilePlayer);
           if (!player) return null;
           const record = playerCareers[profilePlayer] ?? createPlayerCareer(player, club);
-          return <CareerPlayerProfile player={player} club={club} record={record} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onClose={() => setProfilePlayer(null)} />;
+          return <CareerPlayerProfile player={player} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onClose={() => setProfilePlayer(null)} />;
         })()}
       </>
     );
