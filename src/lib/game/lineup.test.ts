@@ -54,10 +54,8 @@ it("moves a starter into a free sector without rearranging the XI", () => {
   expect(result.starters).toEqual(starters);
   expect(result.positions[starters[0]]).toEqual({ left: 16, top: 46 });
 });
-it("rejects keeper swaps, invalid slots, nonfinite coordinates and keeper moves out of goal", () => {
+it("rejects invalid ids, slots and nonfinite coordinates without restricting roles", () => {
   for (const [id, slot] of [
-    [starters[0], 10],
-    [starters[10], 0],
     [99999, 0],
     [starters[0], -1],
     [starters[0], 0.5],
@@ -66,12 +64,6 @@ it("rejects keeper swaps, invalid slots, nonfinite coordinates and keeper moves 
       deployLineupPlayer(starters, squad, "4-3-3", {}, id, slot),
     ).toBeNull();
   }
-  expect(
-    deployLineupPlayer(starters, squad, "4-3-3", {}, starters[10], 10, {
-      left: 20,
-      top: 30,
-    }),
-  ).toBeNull();
   expect(
     deployLineupPlayer(starters, squad, "4-3-3", {}, starters[0], 0, {
       left: NaN,
@@ -82,12 +74,42 @@ it("rejects keeper swaps, invalid slots, nonfinite coordinates and keeper moves 
     deployLineupPlayer(starters, squad, "4-3-3", {}, starters[0], 0, {
       left: 50,
       top: 90,
-    }),
-  ).toBeNull();
+    })!.positions[starters[0]],
+  ).toEqual({ left: 50, top: 90 });
 });
 it("exposes distinct options for all lanes, midfield lines and goal", () => {
   expect(fieldSectors).toHaveLength(16);
   expect(new Set(fieldSectors.map((s) => s.name)).size).toBe(16);
   expect(fieldSectors.some((s) => s.name === "Volante central")).toBe(true);
   expect(fieldSectors.some((s) => s.name === "Goleiro")).toBe(true);
+});
+
+it("allows keepers in attack, outfield players in goal, and swaps across all functions", () => {
+  const result = deployLineupPlayer(
+    starters,
+    squad,
+    "4-3-3",
+    {},
+    starters[10],
+    0,
+  )!;
+  expect(result.starters[0]).toBe(starters[10]);
+  expect(result.starters[10]).toBe(starters[0]);
+  expect(new Set(result.starters).size).toBe(11);
+  const free = deployLineupPlayer(
+    starters,
+    squad,
+    "4-3-3",
+    {},
+    starters[10],
+    10,
+    { left: 3, top: 4 },
+  )!;
+  expect(free.positions[starters[10]]).toEqual({ left: 3, top: 4 });
+  expect(
+    deployLineupPlayer(starters, squad, "4-3-3", {}, starters[0], 0, {
+      left: 0,
+      top: 100,
+    })!.positions[starters[0]],
+  ).toEqual({ left: 0, top: 100 });
 });

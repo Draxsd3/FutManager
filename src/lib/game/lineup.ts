@@ -1,6 +1,6 @@
 import type { ManualPosition } from "./career";
 import type { Player } from "./mock-data";
-import { formationSlotRoles } from "./formations";
+import { formationSlots } from "./formations";
 
 export const fieldSectors = [
   { name: "Ponta esquerda", short: "PE", left: 16, top: 14 },
@@ -21,7 +21,7 @@ export const fieldSectors = [
   { name: "Goleiro", short: "GOL", left: 50, top: 90 },
 ];
 
-/** Pure placement: unique starters, keeper safety and preservation of unrelated custom positions. */
+/** Pure placement: unique starters, unrestricted placement and preservation of unrelated custom positions. */
 export function deployLineupPlayer(
   starters: number[],
   squad: Player[],
@@ -32,19 +32,11 @@ export function deployLineupPlayer(
   point?: ManualPosition,
 ) {
   const player = squad.find((item) => item.id === id);
-  const role = (formationSlotRoles[formation] ?? formationSlotRoles["4-3-3"])[
-    slot
-  ];
-  if (
-    !player ||
-    !role ||
-    !Number.isInteger(slot) ||
-    (role === "G") !== (player.position === "G")
-  )
+  const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
+  if (!player || !Number.isInteger(slot) || slot < 0 || slot >= slots.length)
     return null;
   if (point && (!Number.isFinite(point.left) || !Number.isFinite(point.top)))
     return null;
-  if (point && (player.position === "G") !== point.top >= 82) return null;
   const origin = starters.indexOf(id),
     displaced = starters[slot];
   if (displaced === undefined) return null;
@@ -59,8 +51,8 @@ export function deployLineupPlayer(
   } else if (origin < 0) delete nextPositions[displaced];
   if (point)
     nextPositions[id] = {
-      left: Math.min(90, Math.max(10, point.left)),
-      top: Math.min(91, Math.max(10, point.top)),
+      left: Math.min(100, Math.max(0, point.left)),
+      top: Math.min(100, Math.max(0, point.top)),
     };
   else if (positions[displaced]) nextPositions[id] = positions[displaced];
   else delete nextPositions[id];
