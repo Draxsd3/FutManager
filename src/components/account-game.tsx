@@ -7,13 +7,10 @@ import { GameBoard } from "./game-board";
 import { StartMenuScreen } from "./screens/start-menu-screen";
 import styles from "./screens/account-screen.module.css";
 
-type Destination = "menu" | "new" | "saves" | "editor";
-
 export function AccountGame() {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
-  const [destination, setDestination] = useState<Destination>("menu");
   const [configurationError, setConfigurationError] = useState(false);
   const [logoutError, setLogoutError] = useState("");
 
@@ -45,8 +42,7 @@ export function AccountGame() {
     }
   }, []);
 
-  function requestAccount(next: Destination) {
-    setDestination(next);
+  function requestAccount() {
     setAuthOpen(true);
   }
 
@@ -54,20 +50,19 @@ export function AccountGame() {
     if (!window.confirm("Sair da conta? Suas carreiras salvas permanecerão disponíveis ao entrar novamente.")) return;
     const { error } = await createBrowserSupabaseClient().auth.signOut();
     if (error) { setLogoutError("Não foi possível sair. Tente novamente."); return; }
-    setDestination("menu");
     setAuthOpen(false);
     setUser(null);
   }
 
   if (ready && user) {
-    return <>{logoutError && <p role="alert" className={styles.notice}>{logoutError}</p>}<GameBoard key={user.id} userId={user.id} email={user.email ?? "Minha conta"} onSignOut={signOut} initialPage={destination} /></>;
+    return <>{logoutError && <p role="alert" className={styles.notice}>{logoutError}</p>}<GameBoard key={user.id} userId={user.id} email={user.email ?? "Minha conta"} onSignOut={signOut} initialPage="menu" /></>;
   }
 
   if (authOpen) {
-    return <AccountScreen unavailable={configurationError} onBack={() => { setAuthOpen(false); setDestination("menu"); }} />;
+    return <AccountScreen unavailable={configurationError} onBack={() => { setAuthOpen(false); }} />;
   }
 
-  return <StartMenuScreen saveCount={0} syncLabel={!ready ? "Verificando sua conta..." : "Entre para salvar e continuar suas carreiras"} onNewGame={() => requestAccount("new")} onSaves={() => requestAccount("saves")} onEdit={() => requestAccount("editor")} onLogin={() => requestAccount("menu")} />;
+  return <StartMenuScreen saveCount={0} syncLabel={!ready ? "Verificando sua conta..." : "Entre para salvar e continuar suas carreiras"} onNewGame={requestAccount} onSaves={requestAccount} onEdit={requestAccount} onLogin={requestAccount} />;
 }
 
 function AccountScreen({ onBack, unavailable }: { onBack: () => void; unavailable: boolean }) {
