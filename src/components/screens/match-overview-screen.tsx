@@ -68,9 +68,9 @@ export function MatchOverviewScreen({ competition, round, minute, half, club, op
             <LivePlayers starters={starters} formation={formation} manualPositions={manualPositions} scene={scene} minute={minute} running={running} speed={speed} />
             <LiveBall target={scene?.to} running={running} speed={speed} />
             <GoalCelebration events={events} club={club} opponent={opponent} />
-            {currentEvent && isHighlight(currentEvent) && <div className={styles.actionCaption} aria-live="polite"><strong>{scene?.action === "goal" ? "GOL" : scene?.action === "shot" ? "FINALIZAÇÃO" : scene?.action === "foul" ? "FALTA" : "DISCUSSÃO"}</strong> {currentEvent.text}</div>}
+            {currentEvent && isHighlight(currentEvent) && <div className={styles.actionCaption} aria-live="polite"><strong>{scene?.action === "goal" ? "GOL" : scene?.action === "shot" ? "FINALIZAÇÃO" : scene?.action === "foul" ? "FALTA" : scene?.action === "offside" ? "IMPEDIMENTO" : "DISCUSSÃO"}</strong> {currentEvent.text}</div>}
           </div>
-          <div className={styles.legend}><span><i className={styles.homeKey} />{club}</span><span><i className={styles.awayKey} />{opponent}</span><span className={styles.note}>Lances simulados em campo · adversário em formação genérica</span></div>
+          <div className={styles.legend}><span><i className={styles.homeKey} />{club}</span><span><i className={styles.awayKey} />{opponent}</span><span><i className={styles.keeperKey} />Goleiros</span><span className={styles.note}>Lances simulados em campo · adversário em formação genérica</span></div>
         </section>
         <aside className={styles.sidebar}>
           <section className={styles.panel}><div className={styles.sectionHeading}><div><span className={styles.eyebrow}>ACOMPANHE</span><h2>Melhores momentos</h2></div><span className={styles.badge}>{highlights.length}</span></div>

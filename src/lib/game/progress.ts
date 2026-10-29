@@ -1,5 +1,5 @@
 import type { DivisionKey, Player } from "./mock-data";
-import type { ManualPosition, PlayerCareerRecord } from "./career";
+import type { ManualPosition, PlayerCareerRecord, MatchParticipation } from "./career";
 import type { MatchEvent } from "@/components/screens/match-detail-screen";
 
 export type CareerProgress = {
@@ -22,6 +22,7 @@ export type CareerProgress = {
   homeScore: number;
   awayScore: number;
   events: MatchEvent[];
+  participation?: MatchParticipation;
   substitutionsLeft: number;
   detailOpen: boolean;
   matchRunning: boolean;
