@@ -3,6 +3,8 @@
 import type { RoundFixture, Player } from "@/lib/game/mock-data";
 import type { ManualPosition } from "@/lib/game/career";
 import { formationSlots } from "@/lib/game/formations";
+import { fieldPoint } from "@/lib/game/live-match";
+import type { CSSProperties } from "react";
 import type { MatchEvent } from "@/components/screens/match-detail-screen";
 import { Crest } from "@/components/ui/club-sidebar";
 import styles from "./match-overview-screen.module.css";
@@ -17,6 +19,8 @@ export function MatchOverviewScreen({ competition, round, minute, half, club, op
 }) {
   const status = running ? "AO VIVO" : halftimeWaiting ? "INTERVALO" : minute >= 90 ? "ENCERRADA" : "PARTIDA PAUSADA";
   const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
+  const currentEvent = [...events].reverse().find((event) => event.minute === minute && event.scene);
+  const scene = currentEvent?.scene;
   return <main className={styles.page}>
     <section className={styles.shell}>
       <header className={styles.header}>
@@ -37,38 +41,34 @@ export function MatchOverviewScreen({ competition, round, minute, half, club, op
         <div className={styles.actions}>{minute < 90 && <button className={styles.primary} onClick={onToggleRunning}>{running ? "❚❚  Pausar" : halftimeWaiting ? "▶  Iniciar 2º tempo" : "▶  Continuar"}</button>}<button className={styles.secondary} onClick={onOpenDetail}>Escalação e táticas ↗</button></div>
       </div>
       <div className={styles.content}>
-        <section className={styles.pitchCard} aria-label="Visualização ilustrativa da partida">
+        <section className={styles.pitchCard} aria-label="Visualização da partida simulada">
           <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>VISÃO DE JOGO</span><h2>Dentro de campo</h2></div><span className={styles.badge}>{formation}</span></div>
-          <div className={styles.pitch} role="img" aria-label={`Campo ilustrativo: ${club} em ${formation}, contra ${opponent}`}>
+          <div className={styles.pitch} role="img" aria-label={`Campo simulado: ${club} em ${formation}, contra ${opponent}`}>
             <div className={styles.fieldLine} /><div className={styles.midline} /><div className={styles.circle} /><div className={styles.boxLeft} /><div className={styles.boxRight} /><div className={styles.goalLeft} /><div className={styles.goalRight} />
             {starters.slice(0, 11).map((player, index) => {
-              const pos = manualPositions[player.id] ?? slots[index] ?? { left: 50, top: 50 };
-              const point = playerPoint(pos, minute, index, false);
-              return <span key={player.id} className={`${styles.player} ${styles.homePlayer}`} style={{ left: `${point.x}%`, top: `${point.y}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} title={`${player.name} · ${player.position}`}><span>{player.shirtNumber ?? player.id}</span></span>;
+              const point = fieldPoint(manualPositions[player.id] ?? slots[index] ?? { left: 50, top: 50 }, false);
+              const active = scene?.team === "home" && scene.actorIndex === index;
+              const confronted = scene?.team === "away" && (scene.action === "foul" || scene.action === "discussion" || scene.action === "tackle") && index === scene.targetIndex;
+              const receiving = scene?.team === "home" && scene.action === "pass" && index === scene.targetIndex;
+              const location = confronted || receiving ? scene.to : active ? scene.from : point;
+              return <span key={player.id} className={`${styles.player} ${styles.homePlayer} ${active || confronted ? styles.activePlayer : ""}`} style={{ left: `${location.x}%`, top: `${location.y}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} title={`${player.name} · ${player.position}`}><span>{player.shirtNumber ?? player.id}</span></span>;
             })}
-            {slots.map((pos, index) => { const point = playerPoint(pos, minute, index, true); return <span key={index} className={`${styles.player} ${styles.awayPlayer}`} style={{ left: `${point.x}%`, top: `${point.y}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} />; })}
-            <span className={styles.ball} style={{ left: `${50 + Math.sin(minute * .31) * 25}%`, top: `${50 + Math.cos(minute * .43) * 23}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} />
+            {slots.map((pos, index) => { const point = fieldPoint(pos, true); const active = scene?.team === "away" && scene.actorIndex === index; const confronted = scene?.team === "home" && (scene.action === "foul" || scene.action === "discussion" || scene.action === "tackle") && index === scene.targetIndex; const receiving = scene?.team === "away" && scene.action === "pass" && index === scene.targetIndex; const location = confronted || receiving ? scene.to : active ? scene.from : point; return <span key={index} className={`${styles.player} ${styles.awayPlayer} ${active || confronted ? styles.activePlayer : ""}`} style={{ left: `${location.x}%`, top: `${location.y}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} />; })}
+            {scene && <span key={`${minute}-${scene.action}`} className={styles.ball} style={{ "--from-x": `${scene.from.x}%`, "--from-y": `${scene.from.y}%`, "--to-x": `${scene.to.x}%`, "--to-y": `${scene.to.y}%`, animationDuration: `${700 / speed}ms`, animationName: running ? undefined : "none" } as CSSProperties} />}
+            {currentEvent && <div className={styles.actionCaption} aria-live="polite"><strong>{scene?.action === "goal" ? "GOL" : scene?.action === "shot" ? "FINALIZAÇÃO" : scene?.action === "tackle" ? "DESARME" : scene?.action === "foul" ? "FALTA" : scene?.action === "discussion" ? "DISCUSSÃO" : "PASSE"}</strong> {currentEvent.text}</div>}
           </div>
-          <div className={styles.legend}><span><i className={styles.homeKey} />{club}</span><span><i className={styles.awayKey} />{opponent}</span><span className={styles.note}>Movimentação ilustrativa · adversário em formação genérica · não representa os lances do motor</span></div>
+          <div className={styles.legend}><span><i className={styles.homeKey} />{club}</span><span><i className={styles.awayKey} />{opponent}</span><span className={styles.note}>Lances simulados em campo · adversário em formação genérica</span></div>
         </section>
         <aside className={styles.sidebar}>
           <section className={styles.panel}><div className={styles.sectionHeading}><div><span className={styles.eyebrow}>ACOMPANHE</span><h2>Últimos lances</h2></div><span className={styles.badge}>{events.length}</span></div>
-            <div className={styles.events}>{events.length === 0 ? <p className={styles.empty}>Ainda não há lances registrados.</p> : events.slice(-5).reverse().map((event, index) => <div className={styles.event} key={`${event.minute}-${index}`}><b>{event.minute}&apos;</b><span>{event.card ? (event.card === "yellow" ? "🟨" : "🟥") : event.text.startsWith("Gol") ? "⚽" : "↗"} &nbsp;{event.text}</span></div>)}</div>
+            <div className={styles.events}>{events.length === 0 ? <p className={styles.empty}>Ainda não há lances registrados.</p> : events.slice(-10).reverse().map((event, index) => <div className={styles.event} key={`${event.minute}-${index}`}><b>{event.minute}&apos;</b><span>{event.card ? (event.card === "yellow" ? "🟨" : "🟥") : event.text.startsWith("Gol") ? "⚽" : "↗"} &nbsp;{event.text}</span></div>)}</div>
             <p className={styles.note}>{passErrors} erros de passe registrados</p>
           </section>
           <section className={styles.panel}><div className={styles.sectionHeading}><div><span className={styles.eyebrow}>PELOS ESTÁDIOS</span><h2>Jogos da rodada</h2></div></div>
-            <div className={styles.fixtures}>{fixtures.map(fixture => <div className={styles.fixture} key={`${fixture.home}-${fixture.away}`}><div className={fixture.live ? styles.fixtureLive : ""}><span>{fixture.home}</span><b>{fixture.homeScore} - {fixture.awayScore}</b><span>{fixture.away}</span></div><small>{fixture.stadium} · {fixture.attendance.toLocaleString("pt-BR")} pessoas</small></div>)}</div>
+            <div className={styles.fixtures}>{fixtures.map(fixture => <div className={styles.fixture} key={`${fixture.home}-${fixture.away}`}><div className={fixture.live ? styles.fixtureLive : ""}><span>{fixture.home}</span><b>{fixture.homeScore} - {fixture.awayScore}</b><span>{fixture.away}</span></div><small>{fixture.live ? "Sua partida" : "Resultado simulado"}</small></div>)}</div>
           </section>
         </aside>
       </div>
     </section>
   </main>;
-}
-
-// O motor não fornece trajetórias: deslocamentos pequenos mantêm cada atleta próximo da posição tática.
-function playerPoint(pos: ManualPosition, minute: number, index: number, away: boolean) {
-  const x = away ? pos.top : 100 - pos.top;
-  const y = away ? 100 - pos.left : pos.left;
-  const movement = index === 10 ? 1 : 3;
-  return { x: Math.max(3, Math.min(97, x + Math.sin(minute * .42 + index * 1.7) * movement)), y: Math.max(4, Math.min(96, y + Math.cos(minute * .35 + index * 1.3) * movement)) };
 }

@@ -15,7 +15,7 @@ function setup(overrides: Partial<ComponentProps<typeof MatchDetailScreen>> = {}
     const [selected, select] = useState<number | null>(null);
     const [out, setOut] = useState<number | null>(null);
     return <MatchDetailScreen club="Flamengo" opponent="Palmeiras" homeScore={2} awayScore={1} minute={35}
-      formation="4-3-3" setFormation={change} startersData={starters} bench={bench}
+      formation="4-3-3" setFormation={change} startersData={starters} bench={bench} onReorderBench={vi.fn()}
       events={[{ minute: 12, half: 1, text: "Gol do Flamengo" }]} possession={56} shots={7} onGoal="4/3" tackles={8} passErrors={5}
       style="Equilibrado" setStyle={change} marking="Normal" setMarking={change} focus="Pelo meio" setFocus={change}
       substitutionsLeft={5} selectedPlayer={selected} substitutionOut={out}
@@ -116,4 +116,19 @@ it("inherits registered club colors and restores focus when leaving the match di
   expect(document.activeElement).toBe(dialog);
   expect(dialog.firstElementChild?.getAttribute("style")).toContain("--team-primary: #342acd");
   unmount(); expect(document.activeElement).toBe(opener); opener.remove();
+});
+it("retains reserve details and bench reordering without bypassing match substitution confirmation", () => {
+  const reorder = vi.fn();
+  const { substitute, place } = setup({ onReorderBench: reorder });
+  fireEvent.click(reserve());
+  fireEvent.click(screen.getByRole("button", { name: "Ficha do reserva" }));
+  expect(screen.getByRole("dialog", { name: bench[0].name })).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Mover no banco →" }));
+  expect(reorder).toHaveBeenCalledWith(bench[0].id, bench[1].id);
+  fireEvent.keyDown(screen.getByRole("dialog", { name: bench[0].name }), { key: "Escape" });
+  expect(screen.queryByRole("dialog", { name: bench[0].name })).toBeNull();
+  expect(substitute).not.toHaveBeenCalled(); expect(place).not.toHaveBeenCalled();
+  fireEvent.click(starter());
+  fireEvent.click(screen.getByRole("button", { name: "Confirmar substituição" }));
+  expect(substitute).toHaveBeenCalledWith(bench[0].id, undefined);
 });

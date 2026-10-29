@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { useState } from "react";
 import { afterEach, beforeAll, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { squad, buildStartingXI, type Player } from "@/lib/game/mock-data";
 import { LineupScreen } from "./lineup-screen";
 const ids = buildStartingXI("4-3-3", squad);
@@ -19,7 +19,8 @@ function setup() {
   const place = vi.fn(),
     reset = vi.fn(),
     play = vi.fn(),
-    change = vi.fn();
+    change = vi.fn(),
+    reorder = vi.fn();
   function Wrapper() {
     const [selected, select] = useState<Player | null>(null);
     return (
@@ -39,6 +40,7 @@ function setup() {
         setFocus={change}
         startersData={starters}
         bench={bench}
+        onReorderBench={reorder}
         selectedPlayer={selected}
         onSelectPlayer={(id) => select(squad.find((p) => p.id === id) ?? null)}
         onPlacePlayer={place}
@@ -50,7 +52,7 @@ function setup() {
     );
   }
   render(<Wrapper />);
-  return { place, reset, play, change };
+  return { place, reset, play, change, reorder };
 }
 const starterButton = (index: number) =>
   screen.getByRole("button", {
@@ -357,4 +359,53 @@ it("draws merged role outlines and a single label per role while preserving all 
   expect(screen.getAllByRole("button", { name: /Posicionar em/ })).toHaveLength(
     20,
   );
+});
+
+
+it("opens a compact reserve card's details with double click or keyboard and closes on Escape", () => {
+  setup();
+  const button = screen.getByRole("button", { name: new RegExp(bench[0].name + ",") });
+  fireEvent.doubleClick(button);
+  const dialog = screen.getByRole("dialog", { name: bench[0].name });
+  expect(dialog.textContent).toContain(`${bench[0].energy}%`);
+  expect(document.activeElement).toBe(screen.getByRole("button", { name: "Fechar ficha" }));
+  fireEvent.keyDown(screen.getByRole("button", { name: "Fechar ficha" }), { key: "Escape" });
+  expect(screen.queryByRole("dialog")).toBeNull();
+  fireEvent.keyDown(button, { key: "i" });
+  expect(screen.getByRole("dialog")).toBeTruthy();
+});
+
+it("offers keyboard-accessible reserve ordering from the detail dialog", () => {
+  const { reorder } = setup();
+  const button = screen.getByRole("button", { name: new RegExp(bench[0].name + ",") });
+  fireEvent.doubleClick(button);
+  fireEvent.click(screen.getByRole("button", { name: /Mover no banco →/ }));
+  expect(reorder).toHaveBeenCalledWith(bench[0].id, bench[1].id);
+});
+
+it("can drag a reserve onto another reserve without changing starters", () => {
+  const { reorder, place } = setup();
+  const first = screen.getByRole("button", { name: new RegExp(bench[0].name + ",") });
+  const second = screen.getByRole("button", { name: new RegExp(bench[1].name + ",") });
+  Object.defineProperty(document, "elementFromPoint", { configurable: true, value: vi.fn(() => second) });
+  fireEvent.pointerDown(first, { isPrimary: true, pointerId: 1, button: 0, clientX: 10, clientY: 10 });
+  fireEvent.pointerMove(first, { isPrimary: true, pointerId: 1, clientX: 40, clientY: 40 });
+  fireEvent.pointerUp(first, { isPrimary: true, pointerId: 1, clientX: 40, clientY: 40 });
+  expect(reorder).toHaveBeenCalledWith(bench[0].id, bench[1].id);
+  expect(place).not.toHaveBeenCalled();
+});
+
+
+it("lifts a held reserve and cancels safely without a drop", () => {
+  const { reorder, place } = setup();
+  const player = screen.getByRole("button", { name: new RegExp(bench[0].name + ",") });
+  vi.useFakeTimers();
+  try {
+    fireEvent.pointerDown(player, { isPrimary: true, pointerId: 1, button: 0, clientX: 10, clientY: 10 });
+    act(() => vi.advanceTimersByTime(350));
+    expect(screen.getByRole("status").textContent).toContain("Arraste para o campo");
+    fireEvent.pointerCancel(player, { isPrimary: true, pointerId: 1, clientX: 10, clientY: 10 });
+    expect(reorder).not.toHaveBeenCalled();
+    expect(place).not.toHaveBeenCalled();
+  } finally { vi.useRealTimers(); }
 });

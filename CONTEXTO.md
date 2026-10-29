@@ -116,20 +116,32 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 
 - A tela de acompanhamento deve apresentar uma visualização moderna com minicampo, preservando placar, estatísticas, lances, resultados da rodada e controles de velocidade, pausa e táticas.
 - As bolinhas do clube controlado acompanham os titulares, a formação e as posições personalizadas, com movimentação limitada ao redor dessas posições. O adversário usa formação genérica, pois sua escalação não é fornecida pelo motor atual.
-- O motor atual não fornece trajetórias ou posse da bola por jogador: a movimentação do minicampo é ilustrativa, não representa os lances reais e não modifica os resultados. Ela acompanha o relógio e para quando a partida está pausada.
+- A visualização de partida utiliza lances simulados estruturados, compartilhados pelo placar, resumo e minicampo; respeita as posições configuradas e para ao pausar. O adversário ainda tem formação genérica e o modelo é simplificado, não uma simulação física completa.
 ### 14. Demarcações completas do campo
 
 - Referência enviada em 29/10/2026 inclui ST/CF, pontas, meia ofensivo, meias dos lados, meios centrais, volante, alas, laterais, zagueiros dos três lados e goleiro. Oferecer todas essas posições visualmente, incluindo segundo atacante, alas esquerdo/direito e zaga esquerda/central/direita.
 - As demarcações podem se encostar: não deixar faixas vazias entre regiões. Implementação usa 20 áreas contíguas que cobrem todo o campo, com limites compartilhados e siglas da referência; nomes acessíveis em português.
 - Preservar guias desligadas por padrão, liberdade total de arraste (sem snap ou bloqueio por posição), coordenadas salvas e campo/banco juntos sem rolagem. Demarcações são orientação visual e destinos opcionais por clique/teclado, não novas restrições do motor.
 
-### 14. Reduzir poluição das demarcações e largura do campo
+
+### 15. Lances e resultados ao vivo
+
+- Simular e registrar passes, finalizações, gols, desarmes, faltas e discussões da partida do clube, apresentando o mesmo lance no campo e no resumo. Os placares dos demais confrontos avançam com o relógio e aparecem sem visualização das partidas.
+- Os demais jogos são confrontos simulados entre clubes cadastrados na divisão ativa, não uma tabela real de calendário de campeonato; os resultados são reproduzíveis por rodada e minuto, sem antecipar gols futuros. O histórico de temporada/classificação acumulada não está integrado.
+- O motor ainda é simplificado: não há física contínua, escalação real do adversário, passes errados ou contabilização completa de desempenho. Saves antigos continuam legíveis; ao retomar, a partida fica pausada.
+### 16. Reduzir poluição das demarcações e largura do campo
 
 - Regiões da mesma posição, como CB, devem aparecer juntas, sem linhas internas cortando-as. Aplicar também a CM e ST; usar uma única sigla visível por função, preservando destinos esquerdo/central/direito por teclado e coordenadas livres.
 - O campo estava excessivamente largo: limitar sua largura pela altura disponível, centralizar e manter proporções calibradas em vez de esticá-lo até preencher a coluna. Implementação da prancheta: proporção de apresentação 6:5 em desktop/paisagem e 68:105 em telas estreitas; não equivale a simular dimensões físicas universais de estádio.
 - Preservar campo e banco completo visíveis, guias opcionais inicialmente desligadas, todos os lados e arraste sem snap. O ajuste visual não deve regravar posições ou alterar a escalação.
 
-### 15. Táticas durante a partida no padrão da escalação inicial
+### 17. Banco de reservas compacto
+
+- Na escalação, manter campo, banco completo e indicadores principais visíveis, inclusive em telas pequenas. Cards de reservas exibem apenas identificação, posição e força; detalhes ficam na ficha aberta por duplo clique, tecla I ou botão acessível após selecionar o atleta.
+- Segurar ou arrastar um reserva levanta uma prévia; soltá-lo em um titular ou no campo faz a substituição, e soltá-lo em outro reserva reordena o banco. Cancelar não modifica escalação. Disponibilizar reordenação também por botões na ficha e persistir a ordem no elenco da carreira.
+- Usar imagem ilustrativa de banco de reservas como fundo, preservando contraste e legibilidade. A imagem foi gerada para o projeto e não representa um estádio específico.
+
+### 18. Táticas durante a partida no padrão da escalação inicial
 
 - Pedido de 29/10/2026: modernizar as táticas durante o jogo, podendo usar a mesma tela de táticas anterior ao início da partida.
 - Reutilizar `LineupScreen` em modo de partida: mesma prancheta proporcional, camisas numeradas no molde obrigatório e nas cores cadastradas do clube, banco completo ao lado, busca/filtros, plano tático e guias opcionais desligadas por padrão. Não reintroduzir fotos ou posições fixas.

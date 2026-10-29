@@ -9,7 +9,8 @@ import styles from "./match-detail-screen.module.css";
 import type { ManualPosition } from "@/lib/game/career";
 import { ClassicIcon } from "@/components/ui/classic-icon";
 
-export type MatchEvent = { minute: number; half: 1 | 2; text: string; card?: "yellow" | "red" };
+export type { MatchEvent } from "@/lib/game/live-match";
+import type { MatchEvent } from "@/lib/game/live-match";
 
 export function MatchDetailScreen({
   club,
@@ -22,6 +23,7 @@ export function MatchDetailScreen({
   setFormation,
   startersData,
   bench,
+  onReorderBench,
   events,
   possession,
   shots,
@@ -55,6 +57,7 @@ export function MatchDetailScreen({
   setFormation: (value: string) => void;
   startersData: Player[];
   bench: Player[];
+  onReorderBench: (id: number, targetId: number) => void;
   events: MatchEvent[];
   possession: number;
   shots: number;
@@ -131,7 +134,7 @@ export function MatchDetailScreen({
         club={club} coach="" opponent={opponent} competition="" round={0}
         formation={formation} setFormation={(value) => { pending.current = null; setFormation(value); }}
         style={style} setStyle={setStyle} marking={marking} setMarking={setMarking}
-        focus={focus} setFocus={setFocus} startersData={startersData} bench={bench}
+        focus={focus} setFocus={setFocus} startersData={startersData} bench={bench} onReorderBench={onReorderBench}
         selectedPlayer={selected} onSelectPlayer={choose} onPlacePlayer={place}
         onPlay={onClose} onBack={onClose} manualPositions={manualPositions}
         onResetPositions={onResetPositions}
@@ -149,10 +152,10 @@ export function MatchDetailScreen({
               <div><dt>Desarmes</dt><dd>{tackles}</dd></div>
               <div><dt>Erros de passe</dt><dd>{passErrors}</dd></div>
             </dl>
-            <h3 className={styles.eventsTitle}>Gols e cartões</h3>
+            <h3 className={styles.eventsTitle}>Últimos lances</h3>
             <ol className={styles.events}>
               {!events.length && <li>Nenhum evento ainda.</li>}
-              {events.map((event, index) => <li key={index}>
+              {events.slice(-8).reverse().map((event, index) => <li key={index}>
                 <ClassicIcon name={event.card === "yellow" ? "bullet_yellow" : event.card === "red" ? "flag_red_dull" : "sport_soccer"} />
                 <span><b>{event.minute}′ · {event.half}º tempo</b>{event.text}</span>
               </li>)}
