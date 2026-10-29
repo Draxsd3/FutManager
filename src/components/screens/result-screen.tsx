@@ -1,7 +1,7 @@
 "use client";
 
 import type { Player, RoundFixture } from "@/lib/game/mock-data";
-import type { MatchEvent } from "./match-detail-screen";
+import { isHighlight, type MatchEvent } from "@/lib/game/live-match";
 import { ClassicIcon } from "@/components/ui/classic-icon";
 
 export function ResultScreen({
@@ -37,6 +37,7 @@ export function ResultScreen({
 }) {
 
 
+  const highlights = events.filter(isHighlight);
   return (
     <div className="h-dvh overflow-hidden bg-[#06170a] bg-[linear-gradient(rgba(3,23,9,.86),rgba(3,23,9,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover p-3 font-[Arial] text-white">
       <section className="mx-auto grid h-full max-w-[1200px] grid-cols-1 gap-3 overflow-hidden lg:grid-cols-[240px_1fr]">
@@ -92,10 +93,10 @@ export function ResultScreen({
               ))}
             </Panel>
 
-            <Panel title="Resumo do jogo">
-              {events.length === 0 && <p className="text-white/60">Sem eventos na partida.</p>}
+            <Panel title="Melhores momentos">
+              {highlights.length === 0 && <p className="text-white/60">Sem eventos na partida.</p>}
               <div className="max-h-96 space-y-1.5 overflow-auto">
-                {events.map((event, index) => <p key={index} className="flex items-start gap-1.5"><span>{event.card ? "🟨" : event.scene?.action === "goal" ? "⚽" : event.scene?.action === "shot" ? "◎" : event.scene?.action === "foul" ? "✋" : event.scene?.action === "discussion" ? "!" : "↗"}</span>{event.minute}&apos; · {event.text}</p>)}
+                {highlights.map((event, index) => <p key={index} className="flex items-start gap-1.5"><span>{event.card ? "🟨" : event.scene?.action === "goal" ? "⚽" : event.scene?.action === "shot" ? "◎" : event.scene?.action === "foul" ? "✋" : event.scene?.action === "discussion" ? "!" : "↗"}</span>{event.minute}&apos; · {event.text}</p>)}
               </div>
             </Panel>
 

@@ -7,7 +7,7 @@ import { formations } from "@/lib/game/formations";
 import { ClassicIcon } from "@/components/ui/classic-icon";
 
 export type { MatchEvent } from "@/lib/game/live-match";
-import type { MatchEvent } from "@/lib/game/live-match";
+import { isHighlight, type MatchEvent } from "@/lib/game/live-match";
 
 export function MatchDetailScreen({
   club,
@@ -132,13 +132,13 @@ export function MatchDetailScreen({
 
             <div className="border border-[#d1bf59] bg-[#203e14] p-3">
               <h3 className="mb-2 text-xs font-bold text-[var(--accent)]">
-                Lances da partida
+                Melhores momentos
               </h3>
               <div className="max-h-24 space-y-1 overflow-auto text-[11px]">
-                {events.length === 0 && (
+                {events.filter(isHighlight).length === 0 && (
                   <p className="text-white/50">Nenhum evento ainda.</p>
                 )}
-                {events.map((event, index) => (
+                {events.filter(isHighlight).map((event, index) => (
                   <p key={index} className="flex items-center gap-1.5">
                     <ClassicIcon name={event.card === "yellow" ? "bullet_yellow" : event.card === "red" ? "flag_red_dull" : event.scene?.action === "goal" || event.text.startsWith("Gol") ? "sport_soccer" : "arrow_refresh"} />
                     {event.text} · {event.minute}&apos; - {event.half}º

@@ -34,3 +34,24 @@ describe("live match model", () => {
     expect(otherScore("A", "B", 1, 200)).toEqual(b);
   });
 });
+
+it("continues a completed pass from the receiving player without moving the ball backwards", () => {
+  const first = generate([0, .1, 0, 0]);
+  let n = 0;
+  const rolls = [.99, .1, .2, .2, .2];
+  const next = simulateAction({ minute: 31, starters: players, formation: "4-3-3", positions: {}, opponent: "Rival", previous: first.scene, random: () => rolls[n++] ?? 0 });
+  expect(next.scene?.team).toBe(first.scene?.team);
+  expect(next.scene?.actorIndex).toBe(first.scene?.targetIndex);
+  expect(next.scene?.from).toEqual(first.scene?.to);
+  expect(next.scene?.targetIndex).not.toBe(next.scene?.actorIndex);
+});
+
+it("filters ordinary circulation but keeps key moments and legacy events", async () => {
+  const { isHighlight } = await import("./live-match");
+  expect(isHighlight(generate([0, .1, 0, 0]))).toBe(false);
+  expect(isHighlight(generate([0, .82, 0, 0]))).toBe(false);
+  expect(isHighlight(generate([0, .7, 0, 0, 0]))).toBe(true);
+  expect(isHighlight(generate([0, .9, 0, 0]))).toBe(true);
+  expect(isHighlight({ minute: 5, half: 1, text: "Substituição" })).toBe(true);
+  expect(isHighlight({ ...generate([0, .1, 0, 0]), card: "yellow" })).toBe(true);
+});

@@ -261,3 +261,7 @@ permanece ao lado, sem rolagem principal.
 ### Banco de reservas compacto
 
 A prancheta mostra nome, posição e força dos reservas sobre uma imagem ilustrativa de banco. Dois cliques abrem a ficha; pelo teclado, selecione o jogador e use o botão de ficha ou a tecla I. Segure e arraste para o campo/titular para substituir ou para outro reserva para mudar a ordem. A ficha também permite reordenar por botões. A ordem é salva com o elenco da carreira; Escape cancela um arraste ou fecha a ficha.
+
+### Fluidez e melhores momentos
+
+Na partida, a bola segue a posição atual e o próximo passe parte do recebedor, com preferência por companheiros próximos. A animação respeita pausa, velocidade e a preferência de movimento reduzido. Os painéis ao vivo e o resultado destacam finalizações, gols, faltas, discussões, cartões e alterações; passes e desarmes permanecem no estado da simulação, mas não lotam o resumo. A física e o adversário continuam simplificados.
