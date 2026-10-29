@@ -41,11 +41,13 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Contas e carreiras
 
-O link sempre abre o menu inicial. Para criar ou continuar uma carreira, o jogador
-entra ou cria uma conta com email e senha pelo Supabase Auth. Cada conta pode ter
-várias carreiras, cada uma com seu elenco, escalação, táticas e partida próprios.
-A opção **Menu inicial** da barra superior salva a carreira ao retornar. Não há botão flutuante sobre o conteúdo.
-Uma partida retomada começa pausada.
+Ao abrir o jogo em uma nova sessão ou entrar na conta, o menu inicial é apresentado.
+Se a página for recarregada na mesma aba durante uma carreira, o jogo restaura a tela
+e o progresso ativos; partidas são retomadas pausadas. A opção **Menu inicial**
+salva a carreira e encerra essa retomada automática. Para criar ou continuar uma
+carreira, o jogador entra ou cria uma conta com email e senha pelo Supabase Auth.
+Cada conta pode ter várias carreiras, cada uma com seu elenco, escalação, táticas e
+partida próprios. Não há botão flutuante sobre o conteúdo.
 
 ### Configuração do Supabase
 
