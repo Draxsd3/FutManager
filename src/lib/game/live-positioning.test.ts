@@ -13,7 +13,7 @@ describe("live visual positioning", () => {
     expect(result.filter((p) => p.key.startsWith("home-") && p.target.x !== p.base.x).length).toBeGreaterThan(8);
     expect(result.filter((p) => p.key.startsWith("away-") && p.target.x !== p.base.x).length).toBeGreaterThan(8);
     for (const p of result) {
-      expect(Math.abs(p.target.x - p.base.x)).toBeLessThanOrEqual(p.goalkeeper ? 4 : 12);
+      expect(Math.abs(p.target.x - p.base.x)).toBeLessThanOrEqual(p.goalkeeper ? 4 : p.key.startsWith("away-") ? 25 : 12);
       expect(Math.abs(p.target.y - p.base.y)).toBeLessThanOrEqual(p.goalkeeper ? 7 : 15);
       expect(p.target.x).toBeGreaterThanOrEqual(5); expect(p.target.x).toBeLessThanOrEqual(95);
     }

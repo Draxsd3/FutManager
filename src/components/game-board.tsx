@@ -27,7 +27,7 @@ import {
   type TopRating,
 } from "@/lib/game/mock-data";
 import { buildSquadFromDatabase, createDefaultDatabase, upgradeEditorDatabase, type CareerSave, type EditorDatabase } from "@/lib/game/editor-data";
-import { createPlayerCareer, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
+import { createPlayerCareer, recordPlayerMatch, type MatchParticipation, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
 import { deployLineupPlayer } from "@/lib/game/lineup";
 import { formationSlots, playerFitAtPosition } from "@/lib/game/formations";
 import { mergeCareerSaves } from "@/lib/game/save-utils";
@@ -40,6 +40,7 @@ import {
 import { agendaOptions, type AgendaView } from "@/components/screens/agenda-screen";
 import type { CareerProgress } from "@/lib/game/progress";
 import { otherScore, simulateAction } from "@/lib/game/live-match";
+import { visualFormation } from "@/lib/game/live-positioning";
 import {
   deleteCloudSave,
   readCloudDatabase,
@@ -163,6 +164,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
   const [events, setEvents] = useState<MatchEvent[]>([]);
+  const [participation, setParticipation] = useState<MatchParticipation>({});
   const [substitutionsLeft, setSubstitutionsLeft] = useState(5);
   const [detailOpen, setDetailOpen] = useState(false);
   const [matchRunning, setMatchRunning] = useState(false);
@@ -174,7 +176,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const progress: CareerProgress = {
     page, activeSaveId, coach, club, division, round, budget, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, manualPositions, minute, homeScore, awayScore,
-    events, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, halftimeWaiting,
+    events, participation, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, halftimeWaiting,
   };
   const progressRef = useRef(progress);
   useEffect(() => { progressRef.current = progress; });
@@ -193,7 +195,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     pendingCloudSave.current = next;
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, formation, style, marking, focus,
     starters, careerSquad, playerCareers, manualPositions, minute, homeScore, awayScore, events,
-    substitutionsLeft, detailOpen, matchSpeed, halftimeWaiting, userId]);
+    participation, substitutionsLeft, detailOpen, matchSpeed, halftimeWaiting, userId]);
 
   useEffect(() => {
     if (!hydrationDone) return;
@@ -266,7 +268,11 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     if (page !== "matchOverview" || !matchRunning || detailOpen || minute >= 90) return;
     const timer = window.setTimeout(() => {
       const nextMinute = Math.min(90, minute + 1);
-      const event = simulateAction({ minute: nextMinute, starters: startersData, formation, positions: manualPositions, opponent, opponentStarters, strength, previous: [...events].reverse().find((item) => item.scene)?.scene });
+      const previousEvent = [...events].reverse().find((item) => item.scene);
+      const previous = previousEvent?.scene;
+      const visual = visualFormation({ starters: startersData, formation, manualPositions, scene: previous, minute: previousEvent?.minute ?? 0 });
+      const snapshot = { home: visual.filter((player) => player.key.startsWith("home-")).map((player) => player.target), away: visual.filter((player) => player.key.startsWith("away-")).map((player) => player.target) };
+      const event = simulateAction({ minute: nextMinute, starters: startersData, formation, positions: manualPositions, opponent, opponentStarters, strength, previous, snapshot });
       setMinute(nextMinute);
       setEvents((current) => [...current, event]);
       if (event.scene?.action === "goal") {
@@ -280,10 +286,16 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       if (nextMinute === 90) {
         setMatchRunning(false);
         setBudget((value) => value + 151);
+        const goals: Record<number, number> = {};
+        for (const item of [...events, event]) if (item.scorerId !== undefined && item.scene?.team === "home") goals[item.scorerId] = (goals[item.scorerId] ?? 0) + 1;
+        const home = homeScore + (event.scene?.action === "goal" && event.scene.team === "home" ? 1 : 0);
+        const away = awayScore + (event.scene?.action === "goal" && event.scene.team === "away" ? 1 : 0);
+        const played = Object.keys(participation).length ? participation : Object.fromEntries(starters.map((id) => [id, { entered: 0 }]));
+        setPlayerCareers((current) => recordPlayerMatch(current, squad, club, played, { key: `${round}|${club}|${opponent}`, round, opponent, homeScore: home, awayScore: away }, goals));
       }
     }, 700 / matchSpeed);
     return () => window.clearTimeout(timer);
-  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, opponentStarters, page, startersData, formation, manualPositions, strength, events]);
+  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, opponentStarters, page, startersData, formation, manualPositions, strength, events, participation, starters, squad, club, round, homeScore, awayScore]);
 
   useEffect(() => {
     if (page !== "matchOverview" || minute !== 90 || detailOpen) return;
@@ -506,6 +518,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       setHomeScore(state.homeScore);
       setAwayScore(state.awayScore);
       setEvents(state.events);
+      setParticipation(state.participation ?? {});
       setSubstitutionsLeft(state.substitutionsLeft);
       setHalftimeWaiting(state.halftimeWaiting);
       setMatchSpeed(state.matchSpeed);
@@ -710,6 +723,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   function startMatch() {
+    setParticipation(Object.fromEntries(starters.map((id) => [id, { entered: 0 }])));
     setMinute(0);
     setHomeScore(0);
     setAwayScore(0);
@@ -772,6 +786,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     const incoming = squad.find((player) => player.id === id)?.name ?? "Jogador";
     const result = deployLineupPlayer(starters, squad, formation, manualPositions, id, starters.indexOf(substitutionOut), point);
     if (!result) return;
+    setParticipation((current) => ({ ...current, [substitutionOut]: { ...(current[substitutionOut] ?? { entered: 0 }), left: minute }, [id]: { entered: minute } }));
     setStarters(result.starters);
     setManualPositions(result.positions);
     setSubstitutionsLeft((value) => value - 1);

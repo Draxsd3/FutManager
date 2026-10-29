@@ -1,5 +1,5 @@
 import type { ManualPosition } from "./career";
-import { formationSlots } from "./formations";
+import { formationSlots, formationSlotRoles } from "./formations";
 import { boundedPlayerPoint, fieldPoint, type MatchScene } from "./live-match";
 import type { Player } from "./mock-data";
 
@@ -38,15 +38,18 @@ export function visualFormation({ starters, formation, manualPositions, scene, m
       let desired = base;
       if (scene) {
         if (active) desired = scene.from;
-        else if (receiving || involved) desired = scene.to;
+        else if (receiving || involved || (scene.team === team && scene.action === "offside" && scene.targetIndex === index)) desired = scene.to;
         else if (goalkeeper) {
           // Track the ball laterally while remaining near the configured position.
           desired = { x: base.x + (ball.x - 50) * .018, y: base.y + (ball.y - 50) * .10 };
         } else {
           const attacking = scene.team === team;
           const phase = minute * .37 + index * 1.71 + (away ? 1.3 : 0);
+          const role = (formationSlotRoles[formation] ?? formationSlotRoles["4-3-3"])[index];
+          // Forwards and midfielders regroup towards their own goal without possession.
+          const retreat = !attacking ? (role === "A" ? 17 : role === "M" ? 8 : 3) * (away ? 1 : -1) : 0;
           desired = {
-            x: base.x + (ball.x - 50) * (attacking ? .13 : .10) + Math.sin(phase) * 1.25,
+            x: base.x + retreat + (ball.x - 50) * (attacking ? .13 : .10) + Math.sin(phase) * 1.25,
             y: base.y + (ball.y - 50) * .12 + Math.cos(phase * .83) * 1.1,
           };
           if (index === pressIndex) {
@@ -54,7 +57,7 @@ export function visualFormation({ starters, formation, manualPositions, scene, m
           }
         }
       }
-      return { key: away ? `away-${index}` : `home-${player!.id}`, base, target: boundedPlayerPoint(base, desired, goalkeeper), goalkeeper, active: !!(active || involved) };
+      return { key: away ? `away-${index}` : `home-${player!.id}`, base, target: boundedPlayerPoint(base, desired, goalkeeper, defending ? 25 : 12), goalkeeper, active: !!(active || involved) };
     });
     // Soft separation preserves space without changing persisted positions or displacing the ball carrier.
     for (let i = 0; i < result.length; i++) {
@@ -65,8 +68,8 @@ export function visualFormation({ starters, formation, manualPositions, scene, m
         if (distance >= 4 || distance === 0 || (a.active && b.active)) continue;
         const push = (4 - distance) / 2;
         const x = dx / distance * push, y = dy / distance * push;
-        if (!a.active) a.target = boundedPlayerPoint(a.base, { x: a.target.x - x, y: a.target.y - y }, a.goalkeeper);
-        if (!b.active) b.target = boundedPlayerPoint(b.base, { x: b.target.x + x, y: b.target.y + y }, b.goalkeeper);
+        if (!a.active) a.target = boundedPlayerPoint(a.base, { x: a.target.x - x, y: a.target.y - y }, a.goalkeeper, defending ? 25 : 12);
+        if (!b.active) b.target = boundedPlayerPoint(b.base, { x: b.target.x + x, y: b.target.y + y }, b.goalkeeper, defending ? 25 : 12);
       }
     }
     return result;
