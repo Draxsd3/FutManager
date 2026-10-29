@@ -5,17 +5,23 @@ import { TopNav, type NavItem } from "./top-nav";
 export function AppShell({
   nav,
   teamName,
+  clubColors,
   date,
   hideNav = false,
   children,
 }: {
   nav: NavItem[];
   teamName: string;
+  clubColors?: { primaryColor: string; secondaryColor: string };
   date: string;
   hideNav?: boolean;
   children: React.ReactNode;
 }) {
-  const theme = clubThemes[teamName] ?? clubThemes.Palmeiras;
+  const fallback = clubThemes[teamName] ?? clubThemes.Palmeiras;
+  const primary = clubColors?.primaryColor ?? fallback.primary;
+  const rgb = [1, 3, 5].map((offset) => parseInt(primary.slice(offset, offset + 2), 16));
+  const theme = { ...fallback, primary, secondary: clubColors?.secondaryColor ?? fallback.secondary,
+    text: rgb[0] * .299 + rgb[1] * .587 + rgb[2] * .114 > 145 ? "#111111" : "#ffffff" };
   const safeAccentByClub: Record<string, { color: string; text: string }> = {
     Flamengo: { color: "#c9474e", text: "#ffffff" },
     Palmeiras: { color: "#168249", text: "#ffffff" },

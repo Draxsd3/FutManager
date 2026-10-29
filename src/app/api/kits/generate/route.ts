@@ -1,3 +1,7 @@
+import {
+  kitReferenceImage,
+  normalizeGeneratedKit,
+} from "@/lib/kits/render-server";
 import { createClient } from "@supabase/supabase-js";
 import { buildKitPrompt, kitRequestSchema } from "@/lib/kits/design";
 
@@ -84,26 +88,28 @@ export async function POST(request: Request) {
   }
   const prompt = buildKitPrompt(parsed.data);
   try {
-    const response = await fetch(
-      "https://api.openai.com/v1/images/generations",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: process.env.OPENAI_IMAGE_MODEL || "gpt-image-1",
-          prompt,
-          n: 1,
-          size: "1024x1536",
-          quality: "medium",
-          output_format: "webp",
-          output_compression: 70,
-        }),
-        signal: AbortSignal.timeout(100000),
-      },
+    const form = new FormData();
+    form.set("model", process.env.OPENAI_IMAGE_MODEL || "gpt-image-1");
+    form.set("prompt", prompt);
+    form.set("n", "1");
+    form.set("size", "1024x1536");
+    form.set("quality", "medium");
+    form.set("input_fidelity", "high");
+    form.set("output_format", "webp");
+    form.set("output_compression", "70");
+    form.set(
+      "image[]",
+      new Blob([new Uint8Array(await kitReferenceImage())], {
+        type: "image/png",
+      }),
+      "molde-profissional.png",
     );
+    const response = await fetch("https://api.openai.com/v1/images/edits", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+      body: form,
+      signal: AbortSignal.timeout(100000),
+    });
     if (!response.ok)
       return reply(
         {
@@ -129,7 +135,25 @@ export async function POST(request: Request) {
         { error: "O provedor retornou um formato de imagem inesperado." },
         502,
       );
-    return reply({ image: `data:image/webp;base64,${image}`, prompt });
+    let normalized: Buffer;
+    try {
+      normalized = await normalizeGeneratedKit(
+        bytes,
+        parsed.data.club.primaryColor,
+      );
+    } catch {
+      return reply(
+        {
+          error:
+            "O provedor retornou uma imagem fora do molde esperado. Nenhum modelo foi salvo.",
+        },
+        502,
+      );
+    }
+    return reply({
+      image: `data:image/webp;base64,${normalized.toString("base64")}`,
+      prompt,
+    });
   } catch {
     return reply(
       {

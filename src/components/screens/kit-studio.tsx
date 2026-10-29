@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { EditorClub } from "@/lib/game/editor-data";
 import {
+  automaticKitSvg,
   buildKitPrompt,
   emptyKitProject,
   kitRequestSchema,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/kits/design";
 import { readKitProject, writeKitProject } from "@/lib/kits/storage";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { fittedKitSvg } from "@/lib/kits/template";
 import { clubKitAsset } from "@/lib/game/assets";
 import styles from "./kit-studio.module.css";
 
@@ -246,11 +248,15 @@ export function KitStudio({
       context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
       bitmap.close();
       setDraft({
-        image: canvas.toDataURL("image/webp", 0.85),
+        image: svgImage(
+          fittedKitSvg(canvas.toDataURL("image/png"), club.primaryColor),
+        ),
         prompt,
         source: "import",
       });
-      setStatus("Imagem importada. Revise a identidade e adicione à coleção.");
+      setStatus(
+        "Imagem ajustada ao molde-padrão. Revise a estampa e adicione à coleção.",
+      );
     } catch {
       setStatus("Não foi possível ler esta imagem. Tente outro arquivo.");
     } finally {
@@ -286,25 +292,25 @@ export function KitStudio({
               />
             ) : (
               <Image
-                src={svgImage(
-                  manualKitSvg(
-                    request.club,
-                    n === 2 ? club.secondaryColor : club.primaryColor,
-                    club.secondaryColor,
-                    club.kitStyle,
-                    [],
-                  ),
-                )}
-                alt={`Modelo ${n} cadastrado`}
+                src={svgImage(automaticKitSvg(request.club, n))}
+                alt={`Uniforme ${n} automático: ${n === 1 ? "cor principal" : n === 2 ? "cor secundária" : "cor neutra"}`}
                 width={80}
                 height={95}
                 unoptimized
               />
             )}
             <div>
-              <small>ACERVO EXISTENTE</small>
+              <small>
+                {clubKitAsset(club.name, n)
+                  ? "ACERVO EXISTENTE"
+                  : "MODELO AUTOMÁTICO"}
+              </small>
               <h3>Uniforme {n}</h3>
-              <span>Preservado</span>
+              <span>
+                {clubKitAsset(club.name, n)
+                  ? "Preservado"
+                  : "Molde profissional"}
+              </span>
             </div>
           </article>
         ))}
@@ -472,7 +478,7 @@ export function KitStudio({
             />
             <div>
               <h3>{name || "Seu próximo uniforme"}</h3>
-              <p>Proporção frontal padronizada · conceito personalizado</p>
+              <p>Molde profissional · gola V · proporção fixa 0,86</p>
             </div>
             <button
               className={styles.primary}
@@ -573,7 +579,7 @@ export function KitStudio({
                 </button>
                 <a
                   href={kit.image}
-                  download={`${club.shortName}-${kit.id}.${kit.source === "manual" ? "svg" : "webp"}`}
+                  download={`${club.shortName}-${kit.id}.${kit.image.startsWith("data:image/svg+xml") ? "svg" : "webp"}`}
                 >
                   Baixar
                 </a>

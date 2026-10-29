@@ -160,3 +160,28 @@ it("does not announce a successful save when browser storage fails", async () =>
   await screen.findByText(/Não foi possível salvar/);
   expect(screen.queryByText(/Modelo adicionado/)).toBeNull();
 });
+it("shows primary red and reserve black on the same photographic mold when no kit is registered", async () => {
+  render(
+    <KitStudio
+      club={{
+        ...club,
+        name: "Clube sem camisa",
+        primaryColor: "#cc0000",
+        secondaryColor: "#000000",
+      }}
+      userId="alice"
+    />,
+  );
+  await screen.findByText(/Biblioteca local pronta/);
+  const home = screen.getByAltText(
+    "Uniforme 1 automático: cor principal",
+  ) as HTMLImageElement;
+  const away = screen.getByAltText(
+    "Uniforme 2 automático: cor secundária",
+  ) as HTMLImageElement;
+  expect(decodeURIComponent(home.src)).toContain('flood-color="#cc0000"');
+  expect(decodeURIComponent(away.src)).toContain('flood-color="#000000"');
+  for (const image of [home, away])
+    expect(decodeURIComponent(image.src)).toContain('viewBox="0 0 870 1000"');
+  expect(screen.getAllByText("MODELO AUTOMÁTICO")).toHaveLength(3);
+});

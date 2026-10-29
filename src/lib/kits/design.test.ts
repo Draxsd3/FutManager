@@ -22,8 +22,8 @@ it("always sends the full club identity, all sponsors and a fixed silhouette tem
     "Marca A — peito",
     "Marca B — mangas",
     "1024x1536",
-    "80%",
-    "0,90",
+    "gola em V",
+    "0,86",
   ])
     expect(prompt).toContain(term);
   expect(prompt).toContain('"Textura contemporânea"');
@@ -59,7 +59,25 @@ it("manual SVG previews escape sponsor/club markup and retain the same proportio
     "listrada",
     ["<script>alert(1)</script>"],
   );
-  expect(svg).toContain('viewBox="0 0 400 500"');
+  expect(svg).toContain('viewBox="0 0 870 1000"');
   expect(svg).not.toContain("<script>");
   expect(svg).toContain("&lt;");
+});
+it("uses a photographic mold and the first/second colors for unregistered home/away shirts", async () => {
+  const { automaticKitSvg } = await import("./design");
+  const club = {
+    ...input.club,
+    primaryColor: "#cc0000",
+    secondaryColor: "#000000",
+    kitStyle: "listrada" as const,
+  };
+  const home = automaticKitSvg(club, 1),
+    away = automaticKitSvg(club, 2);
+  expect(home).toContain('flood-color="#cc0000"');
+  expect(away).toContain('flood-color="#000000"');
+  for (const svg of [home, away]) {
+    expect(svg).toContain('viewBox="0 0 870 1000"');
+    expect(svg).toContain("data:image/png;base64,");
+    expect(svg).not.toContain("<g clip-path");
+  }
 });

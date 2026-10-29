@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
@@ -89,7 +90,13 @@ it("fails closed when persistent quota is missing or exhausted", async () => {
   expect(fetch).not.toHaveBeenCalled();
 });
 it("constructs every provider prompt on the server with club and sponsor metadata", async () => {
-  const image = Buffer.from("RIFF0000WEBPtest").toString("base64");
+  const image = (
+    await sharp({
+      create: { width: 1024, height: 1536, channels: 3, background: "#ffffff" },
+    })
+      .webp()
+      .toBuffer()
+  ).toString("base64");
   vi.mocked(fetch).mockResolvedValue(
     Response.json({ data: [{ b64_json: image }] }),
   );
@@ -98,12 +105,19 @@ it("constructs every provider prompt on the server with club and sponsor metadat
   );
   expect(response.status).toBe(200);
   const options = vi.mocked(fetch).mock.calls[0][1]!;
-  const body = JSON.parse(options.body as string);
+  const form = options.body as FormData;
+  const body = Object.fromEntries(form.entries()) as Record<string, string>;
+  expect(fetch).toHaveBeenCalledWith(
+    "https://api.openai.com/v1/images/edits",
+    expect.any(Object),
+  );
+  expect((form.get("image[]") as File).type).toBe("image/png");
+  expect((form.get("image[]") as File).size).toBeGreaterThan(1000);
   expect(body.prompt).toContain("Corinthians");
   expect(body.prompt).toContain("Marca A — peito");
   expect(body.prompt).not.toContain("omit club");
   expect(body.size).toBe("1024x1536");
-  expect(body.n).toBe(1);
+  expect(body.n).toBe("1");
   expect((options.headers as Record<string, string>).Authorization).toBe(
     "Bearer server-test-key",
   );

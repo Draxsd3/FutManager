@@ -1,6 +1,5 @@
 import type { Player } from "@/lib/game/mock-data";
-import Image from "next/image";
-import { clubKitAsset } from "@/lib/game/assets";
+import { PlayerJersey } from "./player-jersey";
 
 export function Shirt({
   player,
@@ -11,7 +10,6 @@ export function Shirt({
   onDragStart,
   effectiveOverall,
   fitLabel,
-  club,
 }: {
   player: Player;
   selected?: boolean;
@@ -23,7 +21,6 @@ export function Shirt({
   fitLabel?: "Natural" | "Secundária" | "Improvisado";
   club?: string;
 }) {
-  const kitAsset = club ? clubKitAsset(club) : null;
   return (
     <button
       onClick={onClick}
@@ -37,24 +34,7 @@ export function Shirt({
         selected ? "scale-105 drop-shadow-[0_0_6px_var(--accent)]" : "",
       ].join(" ")}
     >
-      {kitAsset ? <span className={["relative block drop-shadow-[0_1px_1px_#111]", compact ? "h-11 w-10" : "h-12 w-11"].join(" ")}>
-        <Image src={kitAsset} alt={`Camisa do ${club}`} width={55} height={55} unoptimized className="h-full w-full object-contain" />
-        <b className="absolute inset-0 grid place-items-center pt-1 text-[8px] text-white drop-shadow-[0_1px_2px_#000]">{player.shirtNumber ?? player.id}</b>
-      </span> : <i
-        className={[
-          "flex items-center justify-center not-italic font-black drop-shadow-[0_1px_1px_#111]",
-          compact ? "h-11 w-10 text-[9px]" : "h-12 w-11 text-[10px]",
-        ].join(" ")}
-        style={{
-          background:
-            "linear-gradient(90deg, var(--team-primary) 0 42%, var(--team-secondary) 42% 58%, var(--team-primary) 58%)",
-          color: "var(--team-text)",
-          clipPath: "polygon(25% 0,38% 8%,62% 8%,75% 0,100% 20%,84% 38%,76% 31%,76% 100%,24% 100%,24% 31%,16% 38%,0 20%)",
-          outline: selected ? "2px solid var(--accent)" : "none",
-        }}
-      >
-        {player.shirtNumber ?? player.id}
-      </i>}
+      <span className={compact ? "h-11 w-10 [&>svg]:h-full [&>svg]:w-full" : "h-12 w-11 [&>svg]:h-full [&>svg]:w-full"}><PlayerJersey player={player}/></span>
       <span
         className={[
           "mt-1 max-w-full truncate font-bold text-white drop-shadow",
