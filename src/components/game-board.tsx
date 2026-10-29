@@ -951,6 +951,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             setMarking={setMarking}
             focus={focus}
             setFocus={setFocus}
+            onReorderBench={reorderBench}
             substitutionsLeft={substitutionsLeft}
             selectedPlayer={selectedPlayer}
             substitutionOut={substitutionOut}
