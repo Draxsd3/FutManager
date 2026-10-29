@@ -16,37 +16,53 @@ export function StartMenuScreen({
   onEdit: () => void;
 }) {
   return (
-    <main className={styles.screen}>
-      <div className={styles.pitch} aria-hidden="true" />
-      <div className={styles.stripes} aria-hidden="true" />
-      <div className={styles.shade} aria-hidden="true" />
-      <div className={styles.fieldLines} aria-hidden="true" />
+    <div className={styles.screen}>
+      <div className={styles.backdrop} aria-hidden="true" />
       <header className={styles.topbar}>
-        <span className={styles.topMark} aria-hidden="true">FM</span><strong>FutManager</strong><span className={styles.version}>v0.2</span><span className={styles.settings} aria-label="Opções em desenvolvimento">☼</span>
+        <a className={styles.brand} href="#menu-principal" aria-label="FutManager — menu principal">
+          <span className={styles.brandMark} aria-hidden="true">FM<span /></span>
+          <span>FUTMANAGER<span className={styles.brandDot}>.</span></span>
+        </a>
+        <span className={styles.edition}>FUTEBOL BRASILEIRO <span>/</span> 2026</span>
       </header>
-      <section className={styles.panel} aria-label="Menu principal">
-        <header className={styles.header}>
-          <div className={styles.crest} aria-hidden="true"><span>FM</span></div><h1>FUT<span>MANAGER</span></h1><p>GERENCIADOR DE FUTEBOL BRASILEIRO</p><i aria-hidden="true" />
-        </header>
 
-        <nav className={styles.menu}>
-          <MenuButton icon="⚽" title="NOVO JOGO" onClick={onNewGame} accent />
-          <MenuButton icon="▣" title="CARREGAR JOGO" detail={saveCount ? `${saveCount} carreira${saveCount === 1 ? "" : "s"} disponível${saveCount === 1 ? "" : "is"}` : "Nenhuma carreira salva"} onClick={onSaves} />
-          <MenuButton icon="♟" title="EDITOR DE TIMES" onClick={onEdit} />
-          <MenuButton icon="⚙" title="OPÇÕES" disabled />
-          <MenuButton icon="ⓘ" title="CRÉDITOS" disabled />
-          <MenuButton icon="⇥" title="SAIR DO JOGO" disabled />
+      <section className={styles.content} id="menu-principal" aria-label="Menu principal">
+        <div className={styles.eyebrow}><span /> O JOGO COMEÇA NO SEU COMANDO</div>
+        <h1 className={styles.title}>SEU CLUBE.<br />SUAS REGRAS.<br /><span>SUA HISTÓRIA.</span></h1>
+        <p className={styles.description}>O talento entra em campo. A estratégia vem de você.<br />Assuma o comando e construa o seu legado.</p>
+
+        <nav className={styles.menu} aria-label="Ações da carreira">
+          <button type="button" className={styles.primary} onClick={onNewGame}>
+            <span className={styles.buttonNumber} aria-hidden="true">01</span>
+            <span>INICIAR NOVA CARREIRA</span>
+            <Arrow />
+          </button>
+          <button type="button" className={styles.secondary} onClick={onSaves}>
+            <span className={styles.buttonNumber} aria-hidden="true">02</span>
+            <span className={styles.buttonCopy}>CARREGAR CARREIRA<small>{saveCount ? `${saveCount} carreira${saveCount === 1 ? " salva" : "s salvas"}` : "Nenhuma carreira salva"}</small></span>
+            <Arrow />
+          </button>
+          <button type="button" className={styles.editor} onClick={onEdit}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 5h16v14H4zM12 5v14" /><circle cx="12" cy="12" r="3" /><path d="M4 9h3v6H4m16-6h-3v6h3" /></svg>
+            EDITOR DE CLUBES <span aria-hidden="true">↗</span>
+          </button>
         </nav>
       </section>
-      <footer className={styles.bottomBar}><div className={styles.nextMatch}><span className={styles.calendar} aria-hidden="true">⚽</span><span><small>CARREIRA</small><strong>{saveCount ? "Continue sua trajetória" : "Crie a sua primeira carreira"}</strong><em>{syncLabel}</em></span></div><span className={styles.support}><i aria-hidden="true">♟</i><span><small>TORCIDA FUTMANAGER</small><strong>Comando, estratégia e glória</strong></span></span></footer>
-    </main>
+
+      <aside className={styles.touchline} aria-label="Filosofia do jogo">
+        <span className={styles.coordinate}>23° S / 46° W</span>
+        <span className={styles.touchlineRule} />
+        <p>90 MINUTOS EM CAMPO.<br /><strong>UMA VIDA PELO CLUBE.</strong></p>
+      </aside>
+
+      <footer className={styles.footer}>
+        <span className={styles.sync} role="status"><span aria-hidden="true" />{syncLabel}</span>
+        <span className={styles.footerMotto}>GESTÃO. PAIXÃO. FUTEBOL.</span>
+      </footer>
+    </div>
   );
 }
 
-function MenuButton({ icon, title, detail, onClick, accent = false, disabled = false }: { icon: string; title: string; detail?: string; onClick?: () => void; accent?: boolean; disabled?: boolean }) {
-  return (
-    <button type="button" className={`${styles.menuButton} ${accent ? styles.accent : ""}`} onClick={onClick} disabled={disabled} title={disabled ? "Disponível em breve" : undefined}>
-      <span className={styles.icon} aria-hidden="true">{icon}</span><span className={styles.copy}><strong>{title}</strong>{detail && <small>{detail}</small>}</span>{accent && <span className={styles.arrow} aria-hidden="true">›</span>}
-    </button>
-  );
+function Arrow() {
+  return <svg className={styles.arrow} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" /></svg>;
 }
