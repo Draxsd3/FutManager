@@ -280,3 +280,7 @@ Durante a partida, **Escalação e táticas** abre um modal compacto sobre o jog
 Os 22 jogadores da ilustração ajustam suas posições em relação à bola: a formação e as posições personalizadas permanecem como âncoras, enquanto jogadores de linha oferecem apoio ou cobertura e um defensor próximo pode pressionar. O goleiro acompanha a bola perto da sua posição escolhida. A interpolação congela na pausa e acompanha a velocidade, com respeito a movimento reduzido. É uma aproximação visual heurística; não altera o motor da partida nem representa física real.
 
 A direção foi inspirada por [UT Austin Villa: formação e atribuição de papéis](https://www.cs.utexas.edu/~pstone/Papers/bib2html-links/LNAI12-MacAlpine.pdf) e [PhysicsFC: movimentação sem bola e formação](https://arxiv.org/html/2504.21216v1), sem reproduzir os sistemas completos descritos nesses trabalhos.
+
+### Central de elenco
+
+A central de carreira usa uma identidade grafite/verde-lima e ícones vetoriais monoline consistentes. O elenco oferece busca por nome/posição, filtros de titulares/reservas e setor, ordenação por posição, força, nome, energia ou valor, além das abas **Visão geral** e **Desempenho**. Selecione uma linha para analisar o atleta; nome, seta, Enter ou duplo clique abrem o perfil completo. Métricas e desempenho vêm dos dados da carreira; os indicadores fixos de confiança são explicitamente ilustrativos. Dados não disponíveis de jogos disputados e estimativas artificiais de forma/satisfação não são apresentados como estatísticas reais.
