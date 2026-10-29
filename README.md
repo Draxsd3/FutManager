@@ -257,3 +257,7 @@ A prancheta deixa de esticar o campo à largura inteira da coluna. Seu tamanho
 telas estreitas. São proporções de interface, não um modelo de medidas físicas
 de estádio. Camisas/textos acompanham a largura útil do campo. Banco completo
 permanece ao lado, sem rolagem principal.
+
+### Táticas na partida
+
+A prancheta de escalação também é usada durante a partida, com placar, relógio pausado, estatísticas e lances. O campo mantém arraste livre e camisas nas cores do clube. Selecione quem sai/entra em qualquer ordem ou arraste um reserva ao campo e confirme a troca na barra inferior; preparar ou cancelar não consome substituições. As alterações confirmadas integram o autosave da carreira. Em telas menores, use **Plano tático** para acessar formação, estilo, marcação e foco de ataque.

@@ -654,12 +654,6 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     });
   }
 
-  function movePlayers(positions: Record<number, ManualPosition>) {
-    const next = { ...manualPositions, ...positions };
-    setManualPositions(next);
-    void persistCareerExtras(playerCareers, next);
-  }
-
   function resetManualPositions() {
     setManualPositions({});
     void persistCareerExtras(playerCareers, {});
@@ -708,22 +702,28 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     void persistCareerExtras(playerCareers, {}, arranged);
   }
 
-  function selectMatchPlayer(id: number) {
+  function selectMatchPlayer(id: number | null) {
+    if (id === null) {
+      setSelectedPlayer(null);
+      setSubstitutionOut(null);
+      return;
+    }
     if (starters.includes(id)) {
       setSubstitutionOut(id);
-      setSelectedPlayer(id);
+      setSelectedPlayer((current) => current !== null && !starters.includes(current) ? current : id);
       return;
     }
     setSelectedPlayer(id);
   }
 
-  function substitute(id: number) {
-    if (substitutionOut === null || substitutionsLeft === 0 || starters.includes(id)) return;
+  function substitute(id: number, point?: ManualPosition) {
+    if (substitutionOut === null || substitutionsLeft <= 0 || starters.includes(id)) return;
     const outgoing = squad.find((player) => player.id === substitutionOut)?.name ?? "Jogador";
     const incoming = squad.find((player) => player.id === id)?.name ?? "Jogador";
-    setStarters((current) =>
-      current.map((playerId) => (playerId === substitutionOut ? id : playerId)),
-    );
+    const result = deployLineupPlayer(starters, squad, formation, manualPositions, id, starters.indexOf(substitutionOut), point);
+    if (!result) return;
+    setStarters(result.starters);
+    setManualPositions(result.positions);
     setSubstitutionsLeft((value) => value - 1);
     setEvents((current) => [
       ...current,
@@ -926,6 +926,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         {detailOpen && (
           <MatchDetailScreen
             club={club}
+            clubColors={database.clubs.find((item) => item.name === club)}
             opponent={opponent}
             homeScore={homeScore}
             awayScore={awayScore}
@@ -954,7 +955,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             onClose={closeMatchTactics}
             isHalftime={halftimeWaiting}
             manualPositions={manualPositions}
-            onMovePlayers={movePlayers}
+            onPlacePlayer={(id, slot, point) => {
+              // Reserves must go through substitute(), never the pre-match placement shortcut.
+              if (starters.includes(id)) placeLineupPlayer(id, slot, point);
+            }}
             onResetPositions={resetManualPositions}
           />
         )}

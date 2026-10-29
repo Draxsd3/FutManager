@@ -1106,3 +1106,59 @@
     --pitch-ratio: 0.6476190476;
   }
 }
+
+/* In-match context stays visible even when compact layouts hide the summary. */
+.liveScore {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 10px;
+  margin-top: 5px;
+  font-size: 11px;
+  color: #52664c;
+}
+.liveScore b { color: #273c30; font-size: 14px; white-space: nowrap; }
+.liveScore strong { font-size: 9px; color: #687d6a; white-space: nowrap; }
+@media (max-width: 600px), (max-height: 550px) {
+  .liveScore { font-size: 9px; gap: 3px 6px; margin-top: 3px; }
+  .liveScore b { font-size: 11px; }
+  .liveScore strong { font-size: 8px; }
+}
+.matchFooter {
+  display: block;
+  background: white;
+  border: 1px solid #dce5d5;
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+.matchFooter span { display: initial; }
+@media (max-height: 650px) and (min-width: 601px) {
+  .screen[data-mode="match"] .benchPanel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 4px;
+  }
+  .screen[data-mode="match"] .benchPanel .panelHeading,
+  .screen[data-mode="match"] .bench { grid-column: 1 / -1; }
+  .screen[data-mode="match"] .benchPanel .eyebrow { display: none; }
+  .screen[data-mode="match"] .benchPanel h2 { margin-bottom: 0; }
+  .screen[data-mode="match"] .benchPanel .search,
+  .screen[data-mode="match"] .benchPanel .select { margin-top: 0; font-size: 9px; }
+  .screen[data-mode="match"] .benchPanel .search input,
+  .screen[data-mode="match"] .benchPanel select { padding: 5px; }
+  .screen[data-mode="match"] .bench { margin-top: 3px; }
+  .screen[data-mode="match"] .reserve svg { width: 20px; height: 22px; }
+  .screen[data-mode="match"] .reserve > .handle { flex-basis: 20px; }
+}
+@media (max-height: 550px) {
+  .screen[data-mode="match"] .boardHeader h2 { display: none; }
+  .screen[data-mode="match"] .reserve small,
+  .screen[data-mode="match"] .reserve .energy { display: none; }
+}
+@media (max-height: 550px) {
+  .screen[data-mode="match"] .benchPanel .count { display: none; }
+  .screen[data-mode="match"] .reserve { padding: 2px 4px; }
+  .screen[data-mode="match"] .reserve svg { width: 17px; height: 19px; }
+  .screen[data-mode="match"] .reserve > .handle { flex-basis: 17px; }
+}
