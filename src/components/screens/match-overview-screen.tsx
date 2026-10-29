@@ -1,182 +1,74 @@
 "use client";
 
-import type { RoundFixture } from "@/lib/game/mock-data";
+import type { RoundFixture, Player } from "@/lib/game/mock-data";
+import type { ManualPosition } from "@/lib/game/career";
+import { formationSlots } from "@/lib/game/formations";
 import type { MatchEvent } from "@/components/screens/match-detail-screen";
-import { ClassicIcon } from "@/components/ui/classic-icon";
 import { Crest } from "@/components/ui/club-sidebar";
+import styles from "./match-overview-screen.module.css";
 
-export function MatchOverviewScreen({
-  competition,
-  round,
-  minute,
-  half,
-  club,
-  opponent,
-  homeScore,
-  awayScore,
-  possession,
-  shots,
-  onGoal,
-  tackles,
-  passErrors,
-  fixtures,
-  events,
-  running,
-  speed,
-  halftimeWaiting,
-  onToggleRunning,
-  onSpeedChange,
-  onOpenDetail,
-}: {
-  competition: string;
-  round: number;
-  minute: number;
-  half: "1º tempo" | "2º tempo" | "fim";
-  club: string;
-  opponent: string;
-  homeScore: number;
-  awayScore: number;
-  possession: number;
-  shots: number;
-  onGoal: string;
-  tackles: number;
-  passErrors: number;
-  fixtures: RoundFixture[];
-  events: MatchEvent[];
-  running: boolean;
-  speed: 1 | 2 | 4;
-  halftimeWaiting: boolean;
-  onToggleRunning: () => void;
-  onSpeedChange: (speed: 1 | 2 | 4) => void;
-  onOpenDetail: () => void;
+export function MatchOverviewScreen({ competition, round, minute, half, club, opponent, homeScore, awayScore, possession, shots, onGoal, tackles, passErrors, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, formation, starters, manualPositions }: {
+  competition: string; round: number; minute: number; half: "1º tempo" | "2º tempo" | "fim";
+  club: string; opponent: string; homeScore: number; awayScore: number; possession: number; shots: number;
+  onGoal: string; tackles: number; passErrors: number; fixtures: RoundFixture[]; events: MatchEvent[];
+  running: boolean; speed: 1 | 2 | 4; halftimeWaiting: boolean; onToggleRunning: () => void;
+  onSpeedChange: (speed: 1 | 2 | 4) => void; onOpenDetail: () => void;
+  formation: string; starters: Player[]; manualPositions: Record<number, ManualPosition>;
 }) {
-  const progress = Math.min(100, Math.round((minute / 90) * 100));
-  return (
-    <div className="h-dvh overflow-hidden bg-[#06170a] bg-cover bg-center p-3 font-[Arial] text-white" style={{ backgroundImage: "linear-gradient(rgba(3,23,9,.72),rgba(3,23,9,.78)),url('/game-assets/backgrounds/stadium.jpg')" }}>
-      <section className="mx-auto h-full max-w-[1000px] overflow-auto border border-[#477d51] bg-[#0b2411] shadow-2xl">
-        <header className="flex items-center justify-between border-b border-[#e7c84d] bg-[#174c27] px-4 py-3">
-          <b className="text-[#f1d457]">{competition}</b>
-          <div className="h-1.5 w-40 overflow-hidden rounded bg-white/20">
-            <div
-              className="h-full bg-[var(--accent)] transition-all"
-              style={{ width: `${progress}%` }}
-            />
+  const status = running ? "AO VIVO" : halftimeWaiting ? "INTERVALO" : minute >= 90 ? "ENCERRADA" : "PARTIDA PAUSADA";
+  const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
+  return <main className={styles.page}>
+    <section className={styles.shell}>
+      <header className={styles.header}>
+        <div><span className={styles.eyebrow}>CENTRAL DA PARTIDA</span><h1>{competition}</h1><span className={styles.muted}>{round}ª rodada</span></div>
+        <div className={styles.status}><span className={running ? styles.liveDot : styles.dot} /><span>{status}</span><strong>{minute}&apos; <small>· {halftimeWaiting ? "Intervalo" : half}</small></strong></div>
+      </header>
+      <div className={styles.progress}><div style={{ width: `${Math.min(100, minute / 90 * 100)}%` }} /></div>
+      <div className={styles.scoreboard}>
+        <div className={styles.team}><Crest club={club} size="sm" /><strong>{club}</strong><span>SEU CLUBE</span></div>
+        <div className={styles.score}><span>{homeScore}</span><i>:</i><span>{awayScore}</span></div>
+        <div className={styles.team}><Crest club={opponent} size="sm" /><strong>{opponent}</strong><span>ADVERSÁRIO</span></div>
+      </div>
+      <div className={styles.stats}>
+        {[{ label: "Posse de bola", value: `${possession}%` }, { label: "Finalizações", value: shots }, { label: "No gol / fora", value: onGoal }, { label: "Desarmes", value: tackles }].map(stat => <div key={stat.label}><strong>{stat.value}</strong><span>{stat.label}</span></div>)}
+      </div>
+      <div className={styles.controls}>
+        <div className={styles.speeds}><span>VELOCIDADE</span>{([1, 2, 4] as const).map(value => <button key={value} aria-pressed={speed === value} onClick={() => onSpeedChange(value)}>{value}x</button>)}</div>
+        <div className={styles.actions}>{minute < 90 && <button className={styles.primary} onClick={onToggleRunning}>{running ? "❚❚  Pausar" : halftimeWaiting ? "▶  Iniciar 2º tempo" : "▶  Continuar"}</button>}<button className={styles.secondary} onClick={onOpenDetail}>Escalação e táticas ↗</button></div>
+      </div>
+      <div className={styles.content}>
+        <section className={styles.pitchCard} aria-label="Visualização ilustrativa da partida">
+          <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>VISÃO DE JOGO</span><h2>Dentro de campo</h2></div><span className={styles.badge}>{formation}</span></div>
+          <div className={styles.pitch} role="img" aria-label={`Campo ilustrativo: ${club} em ${formation}, contra ${opponent}`}>
+            <div className={styles.fieldLine} /><div className={styles.midline} /><div className={styles.circle} /><div className={styles.boxLeft} /><div className={styles.boxRight} /><div className={styles.goalLeft} /><div className={styles.goalRight} />
+            {starters.slice(0, 11).map((player, index) => {
+              const pos = manualPositions[player.id] ?? slots[index] ?? { left: 50, top: 50 };
+              const point = playerPoint(pos, minute, index, false);
+              return <span key={player.id} className={`${styles.player} ${styles.homePlayer}`} style={{ left: `${point.x}%`, top: `${point.y}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} title={`${player.name} · ${player.position}`}><span>{player.shirtNumber ?? player.id}</span></span>;
+            })}
+            {slots.map((pos, index) => { const point = playerPoint(pos, minute, index, true); return <span key={index} className={`${styles.player} ${styles.awayPlayer}`} style={{ left: `${point.x}%`, top: `${point.y}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} />; })}
+            <span className={styles.ball} style={{ left: `${50 + Math.sin(minute * .31) * 25}%`, top: `${50 + Math.cos(minute * .43) * 23}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} />
           </div>
-          <b className="text-sm">
-            {minute}&apos; - {halftimeWaiting ? "intervalo" : half}
-          </b>
-        </header>
-
-        <button
-          onClick={onOpenDetail}
-          className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-5 text-center transition hover:bg-white/5"
-        >
-          <div className="flex items-center justify-end gap-3">
-            <span className="text-lg font-bold">{club}</span>
-            <MiniCrest club={club} />
-          </div>
-          <strong className="text-4xl font-black">
-            {homeScore} <span className="text-white/50">x</span> {awayScore}
-          </strong>
-          <div className="flex items-center gap-3">
-            <MiniCrest club={opponent} />
-            <span className="text-lg font-bold">{opponent}</span>
-          </div>
-        </button>
-
-        <div className="grid grid-cols-4 gap-2 border-y border-white/10 bg-white/5 px-6 py-3 text-center text-xs">
-          <Stat label="posse de bola" value={`${possession}%`} />
-          <Stat label="finalizações" value={shots} />
-          <Stat label="no gol/fora" value={onGoal} />
-          <Stat label="desarmes" value={tackles} />
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-[#183b20] px-4 py-2 text-xs">
-          <div className="flex items-center gap-2">
-            <span className={["h-2 w-2 rounded-full", running ? "animate-pulse bg-[#6cff7a]" : "bg-[#f2d64b]"].join(" ")} />
-            <b>{running ? "PARTIDA EM ANDAMENTO" : halftimeWaiting ? "INTERVALO" : minute >= 90 ? "ENCERRADA" : "PARTIDA PAUSADA"}</b>
-          </div>
-          <div className="flex items-center gap-1">
-            {[1, 2, 4].map((value) => (
-              <button
-                key={value}
-                onClick={() => onSpeedChange(value as 1 | 2 | 4)}
-                className={[
-                  "border px-2 py-1 font-bold",
-                  speed === value ? "border-[#e7c84d] bg-[#e7c84d] text-[#14391d]" : "border-white/30 bg-black/30",
-                ].join(" ")}
-              >
-                {value}x
-              </button>
-            ))}
-            {minute < 90 && (
-              <button onClick={onToggleRunning} className="ml-2 rounded border border-[#e7c84d] bg-[#e7c84d] px-3 py-1 font-bold text-[#14391d]">
-                {running ? "Pausar" : halftimeWaiting ? "Iniciar 2º tempo" : "Continuar"}
-              </button>
-            )}
-            <button onClick={onOpenDetail} className="ml-1 border border-[#d1bf59] bg-[#e8e8e8] px-3 py-1 font-bold text-black">
-              Escalação e táticas
-            </button>
-          </div>
-        </div>
-
-        <div className="px-4 py-3">
-          <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-white/60">
-            {round}ª rodada
-          </h2>
-          <div className="divide-y divide-white/10">
-            {fixtures.map((fixture) => (
-              <div
-                key={`${fixture.home}-${fixture.away}`}
-                className={[
-                  "flex items-center gap-3 py-2 text-sm",
-                  fixture.live ? "text-[var(--accent)]" : "text-white/90",
-                ].join(" ")}
-              >
-                <span className="w-40 shrink-0 truncate text-[11px] text-white/50">
-                  {fixture.stadium} | {fixture.attendance.toLocaleString("pt-BR")}
-                </span>
-                <span className="flex-1 text-right font-semibold">{fixture.home}</span>
-                <span className="w-14 shrink-0 rounded bg-black/40 px-2 py-0.5 text-center font-black">
-                  {fixture.homeScore} - {fixture.awayScore}
-                </span>
-                <span className="flex-1 font-semibold">{fixture.away}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mx-4 mb-3 border border-white/15 bg-[#071c0d]">
-          <h3 className="bg-black/40 px-3 py-1.5 text-[11px] font-bold uppercase text-[var(--accent)]">Últimos lances</h3>
-          <div className="min-h-20 space-y-1 px-3 py-2 text-xs">
-            {events.length === 0 ? (
-              <p className="text-white/45">A bola está rolando. Acompanhe os acontecimentos da partida.</p>
-            ) : (
-              events.slice(-5).reverse().map((event, index) => (
-                <p key={`${event.minute}-${index}`} className="flex items-center">
-                  <b className="mr-2 text-[var(--accent)]">{event.minute}&apos;</b>
-                  <ClassicIcon name={event.card === "yellow" ? "bullet_yellow" : event.card === "red" ? "flag_red_dull" : event.text.startsWith("Gol") ? "sport_soccer" : "arrow_refresh"} className="mr-1.5" />{event.text}
-                </p>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="px-4 pb-4 text-right text-[11px] text-white/50">
-          {passErrors} erros de passe registrados
-        </div>
-      </section>
-    </div>
-  );
+          <div className={styles.legend}><span><i className={styles.homeKey} />{club}</span><span><i className={styles.awayKey} />{opponent}</span><span className={styles.note}>Movimentação ilustrativa · adversário em formação genérica · não representa os lances do motor</span></div>
+        </section>
+        <aside className={styles.sidebar}>
+          <section className={styles.panel}><div className={styles.sectionHeading}><div><span className={styles.eyebrow}>ACOMPANHE</span><h2>Últimos lances</h2></div><span className={styles.badge}>{events.length}</span></div>
+            <div className={styles.events}>{events.length === 0 ? <p className={styles.empty}>Ainda não há lances registrados.</p> : events.slice(-5).reverse().map((event, index) => <div className={styles.event} key={`${event.minute}-${index}`}><b>{event.minute}&apos;</b><span>{event.card ? (event.card === "yellow" ? "🟨" : "🟥") : event.text.startsWith("Gol") ? "⚽" : "↗"} &nbsp;{event.text}</span></div>)}</div>
+            <p className={styles.note}>{passErrors} erros de passe registrados</p>
+          </section>
+          <section className={styles.panel}><div className={styles.sectionHeading}><div><span className={styles.eyebrow}>PELOS ESTÁDIOS</span><h2>Jogos da rodada</h2></div></div>
+            <div className={styles.fixtures}>{fixtures.map(fixture => <div className={styles.fixture} key={`${fixture.home}-${fixture.away}`}><div className={fixture.live ? styles.fixtureLive : ""}><span>{fixture.home}</span><b>{fixture.homeScore} - {fixture.awayScore}</b><span>{fixture.away}</span></div><small>{fixture.stadium} · {fixture.attendance.toLocaleString("pt-BR")} pessoas</small></div>)}</div>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>;
 }
 
-function MiniCrest({ club }: { club: string }) { return <Crest club={club} size="sm" />; }
-
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div>
-      <p className="text-base font-black text-[var(--accent)]">{value}</p>
-      <p className="text-white/60">{label}</p>
-    </div>
-  );
+// O motor não fornece trajetórias: deslocamentos pequenos mantêm cada atleta próximo da posição tática.
+function playerPoint(pos: ManualPosition, minute: number, index: number, away: boolean) {
+  const x = away ? pos.top : 100 - pos.top;
+  const y = away ? 100 - pos.left : pos.left;
+  const movement = index === 10 ? 1 : 3;
+  return { x: Math.max(3, Math.min(97, x + Math.sin(minute * .42 + index * 1.7) * movement)), y: Math.max(4, Math.min(96, y + Math.cos(minute * .35 + index * 1.3) * movement)) };
 }

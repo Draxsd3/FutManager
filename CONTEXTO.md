@@ -111,3 +111,9 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Sem camisa cadastrada, gerar a principal na primeira cor do clube e a reserva na segunda, sempre no mesmo molde. Exemplo expresso: vermelho/preto → principal vermelha e reserva preta. Não usar um formato diferente para cada cor nem atribuir cores de outro clube a times personalizados.
 - Implementação: molde fotográfico transparente derivado da imagem fornecida em `src/lib/kits/fabric-template.json`; script reproduzível `scripts/build-kit-template.mjs`. Criador, uniformes automáticos e camisas numeradas compartilham o molde. Importações são projetadas nele e a IA recebe a imagem de referência, com recorte/mascaramento posterior no servidor. Acervo anterior é preservado sem regravação destrutiva.
 - IA continua indisponível até configurar a chave e aplicar a migração; não confundir colorização/recorte determinístico ou testes com imagens simuladas com geração paga real.
+
+### 13. Tela de partida e minicampo
+
+- A tela de acompanhamento deve apresentar uma visualização moderna com minicampo, preservando placar, estatísticas, lances, resultados da rodada e controles de velocidade, pausa e táticas.
+- As bolinhas do clube controlado acompanham os titulares, a formação e as posições personalizadas, com movimentação limitada ao redor dessas posições. O adversário usa formação genérica, pois sua escalação não é fornecida pelo motor atual.
+- O motor atual não fornece trajetórias ou posse da bola por jogador: a movimentação do minicampo é ilustrativa, não representa os lances reais e não modifica os resultados. Ela acompanha o relógio e para quando a partida está pausada.
