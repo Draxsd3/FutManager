@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { squad, buildStartingXI } from "./mock-data";
-import { deployLineupPlayer, fieldSectors } from "./lineup";
+import { deployLineupPlayer, fieldSectors, fieldRegions } from "./lineup";
 const starters = buildStartingXI("4-3-3", squad);
 it("swaps starters atomically without duplicates or losing other custom coordinates", () => {
   const positions = {
@@ -78,8 +78,8 @@ it("rejects invalid ids, slots and nonfinite coordinates without restricting rol
   ).toEqual({ left: 50, top: 90 });
 });
 it("exposes distinct options for all lanes, midfield lines and goal", () => {
-  expect(fieldSectors).toHaveLength(16);
-  expect(new Set(fieldSectors.map((s) => s.name)).size).toBe(16);
+  expect(fieldSectors).toHaveLength(20);
+  expect(new Set(fieldSectors.map((s) => s.name)).size).toBe(20);
   expect(fieldSectors.some((s) => s.name === "Volante central")).toBe(true);
   expect(fieldSectors.some((s) => s.name === "Goleiro")).toBe(true);
 });
@@ -112,4 +112,81 @@ it("allows keepers in attack, outfield players in goal, and swaps across all fun
       top: 100,
     })!.positions[starters[0]],
   ).toEqual({ left: 0, top: 100 });
+});
+
+it("tiles the whole pitch without gaps or overlapping interiors", () => {
+  const area = (poly: (typeof fieldRegions)[number]["polygon"]) =>
+    Math.abs(
+      poly.reduce((sum, p, i) => {
+        const q = poly[(i + 1) % poly.length];
+        return sum + p.left * q.top - q.left * p.top;
+      }, 0) / 2,
+    );
+  expect(fieldRegions.reduce((sum, r) => sum + area(r.polygon), 0)).toBeCloseTo(
+    10000,
+    7,
+  );
+  const contains = (
+    poly: (typeof fieldRegions)[number]["polygon"],
+    x: number,
+    y: number,
+  ) =>
+    poly.every((p, i) => {
+      const q = poly[(i + 1) % poly.length];
+      return (
+        (q.left - p.left) * (y - p.top) - (q.top - p.top) * (x - p.left) >=
+        -1e-7
+      );
+    });
+  for (const region of fieldRegions) {
+    expect(area(region.polygon)).toBeGreaterThan(0);
+    expect(contains(region.polygon, region.left, region.top)).toBe(true);
+    expect(
+      region.polygon.every(
+        (p) =>
+          Number.isFinite(p.left) &&
+          Number.isFinite(p.top) &&
+          p.left >= -1e-7 &&
+          p.left <= 100 + 1e-7 &&
+          p.top >= -1e-7 &&
+          p.top <= 100 + 1e-7,
+      ),
+    ).toBe(true);
+  }
+  for (let x = 0.371; x < 100; x += 2)
+    for (let y = 0.613; y < 100; y += 2)
+      expect(
+        fieldRegions.filter((r) => contains(r.polygon, x, y)),
+      ).toHaveLength(1);
+  for (const [x, y] of [
+    [0, 0],
+    [0, 100],
+    [100, 0],
+    [100, 100],
+  ])
+    expect(fieldRegions.some((r) => contains(r.polygon, x, y))).toBe(true);
+});
+it("covers every reference position including second striker, wingbacks and both sides of the center backs", () => {
+  expect(new Set(fieldSectors.map((s) => s.short))).toEqual(
+    new Set([
+      "ST",
+      "CF",
+      "LW",
+      "RW",
+      "CAM",
+      "LM",
+      "RM",
+      "CM",
+      "CDM",
+      "LWB",
+      "RWB",
+      "LB",
+      "RB",
+      "CB",
+      "GK",
+    ]),
+  );
+  for (const side of ["esquerdo", "direito"])
+    for (const role of ["Centroavante", "Ala", "Zagueiro"])
+      expect(fieldSectors.some((s) => s.name === `${role} ${side}`)).toBe(true);
 });
