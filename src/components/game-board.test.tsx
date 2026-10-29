@@ -198,27 +198,32 @@ it("preserves the custom lineup when reopening tactics and after a saved-career 
   expect(document.querySelector(`[data-player="${id}"][data-slot]`)?.getAttribute("style")).toContain("10%");
 });
 
-it("uses the modern in-match board, confirms substitutions once and transfers custom positions into autosave", async () => {
+it("uses the compact in-match modal, confirms substitutions once and transfers custom positions into autosave", async () => {
   render(game());
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
   fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Teste Táticas" } });
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
   fireEvent.click(await screen.findByRole("button", { name: /Escalar Time/i }));
+  const initialShirt = screen.getAllByRole("button", { name: /camisa.*titular/ })[0];
+  const initialId = Number(initialShirt.getAttribute("data-player"));
+  fireEvent.click(screen.getByLabelText("Mostrar setores"));
+  fireEvent.click(initialShirt);
+  fireEvent.click(screen.getByRole("button", { name: "Posicionar em Centroavante esquerdo" }));
+  await waitFor(() => expect(readLocalSaves("alice")[0].manualPositions?.[initialId]).toEqual({ left: 38, top: 9 }));
   fireEvent.click(await screen.findByRole("button", { name: /Ir para a partida/ }));
-  fireEvent.click(await screen.findByRole("button", { name: /Escalação e táticas/ }));
+  const tacticsTrigger = await screen.findByRole("button", { name: /Escalação e táticas/ });
+  tacticsTrigger.focus();
+  fireEvent.click(tacticsTrigger);
   await screen.findByRole("dialog", { name: "Táticas da partida" });
   await waitFor(() => expect(readLocalSaves("alice")[0].progress?.detailOpen).toBe(true));
   const before = readLocalSaves("alice")[0].progress!;
   const id = before.starters[0];
-  const shirt = () => document.querySelector<HTMLButtonElement>(`button[data-player="${id}"]`)!;
-  fireEvent.click(screen.getByLabelText("Mostrar setores"));
+  expect(screen.queryByLabelText("Campo de escalação")).toBeNull();
+  expect(document.querySelector('[inert]')).toBeTruthy();
+  const shirt = () => document.querySelector<HTMLButtonElement>(`button[data-starter="${id}"]`)!;
+  const reserve = document.querySelector<HTMLButtonElement>('button[data-reserve]')!;
+  const incoming = Number(reserve.dataset.reserve);
   fireEvent.click(shirt());
-  fireEvent.click(screen.getByRole("button", { name: "Posicionar em Centroavante esquerdo" }));
-  await waitFor(() => expect(readLocalSaves("alice")[0].progress?.manualPositions[id]).toEqual({ left: 38, top: 9 }));
-  const reserve = document.querySelector<HTMLButtonElement>('button[class*="reserve"]')!;
-  const incoming = Number(reserve.querySelector<HTMLElement>('[data-player]')!.dataset.player);
-  fireEvent.click(shirt()); // clear the selected shirt after repositioning
-  fireEvent.click(shirt()); // choose who leaves
   fireEvent.click(reserve);
   expect(readLocalSaves("alice")[0].progress?.starters).toEqual(before.starters);
   expect(readLocalSaves("alice")[0].progress?.substitutionsLeft).toBe(5);
@@ -233,6 +238,8 @@ it("uses the modern in-match board, confirms substitutions once and transfers cu
   expect(after.events.length).toBe(before.events.length + 1);
   fireEvent.click(screen.getByRole("button", { name: /Voltar ao jogo/ }));
   expect(screen.queryByRole("dialog", { name: "Táticas da partida" })).toBeNull();
+  expect(document.activeElement).toBe(tacticsTrigger);
   fireEvent.click(screen.getByRole("button", { name: /Escalação e táticas/ }));
-  expect(document.querySelector(`button[data-player="${incoming}"]`)?.getAttribute("style")).toContain("38%");
+  expect(document.querySelector(`button[data-starter="${incoming}"]`)).toBeTruthy();
+  expect(readLocalSaves("alice")[0].progress?.manualPositions[incoming]).toEqual({ left: 38, top: 9 });
 });
