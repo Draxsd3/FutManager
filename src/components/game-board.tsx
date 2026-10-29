@@ -895,6 +895,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return (
       <>
         <MatchOverviewScreen
+          formation={formation}
+          starters={startersData}
+          manualPositions={manualPositions}
           competition="Campeonato Estadual"
           round={round}
           minute={minute}

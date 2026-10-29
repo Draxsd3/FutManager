@@ -226,6 +226,9 @@ Para reconstruí-la a partir do PNG original fornecido (1536×1024):
 explícito e reproduzível, sem geração por IA. Testes rasterizam as cores,
 comparam a silhueta e exercitam a normalização da resposta simulada do provedor.
 
+## Visualização da partida
+
+A central de partida inclui um minicampo ilustrativo com os titulares, formação e posições personalizadas do clube. Os pontos se movem conforme o relógio da partida e param na pausa; o adversário usa uma formação genérica. O motor ainda não calcula trajetórias de jogadores ou bola, portanto a animação não reproduz os lances reais nem altera a simulação.
 ### Demarcações completas e contíguas
 
 “Mostrar setores” oferece 20 áreas cobrindo o campo inteiro, sem espaçamento
