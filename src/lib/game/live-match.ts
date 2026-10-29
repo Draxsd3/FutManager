@@ -11,7 +11,7 @@ export type MatchScene = {
   from: { x: number; y: number };
   to: { x: number; y: number };
 };
-export type MatchEvent = { minute: number; half: 1 | 2; text: string; card?: "yellow" | "red"; scene?: MatchScene };
+export type MatchEvent = { minute: number; half: 1 | 2; text: string; card?: "yellow" | "red"; scene?: MatchScene; scorer?: string };
 
 type Point = { x: number; y: number };
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
@@ -19,10 +19,17 @@ export function fieldPoint(position: ManualPosition, away: boolean): Point {
   return { x: clamp(away ? position.top : 100 - position.top, 5, 95), y: clamp(away ? 100 - position.left : position.left, 5, 95) };
 }
 
+/** Limit movement relative to the configured position, not the athlete's natural role. */
+export function boundedPlayerPoint(base: Point, desired: Point, goalkeeperSlot: boolean): Point {
+  const xLimit = goalkeeperSlot ? 4 : 12;
+  const yLimit = goalkeeperSlot ? 7 : 15;
+  return { x: clamp(desired.x, Math.max(5, base.x - xLimit), Math.min(95, base.x + xLimit)), y: clamp(desired.y, Math.max(5, base.y - yLimit), Math.min(95, base.y + yLimit)) };
+}
+
 /** A single source for the commentary, score and visual action. */
-export function simulateAction({ minute, starters, formation, positions, opponent, previous, strength = 74, random = Math.random }: {
+export function simulateAction({ minute, starters, formation, positions, opponent, opponentStarters, previous, strength = 74, random = Math.random }: {
   minute: number; starters: Player[]; formation: string; positions: Record<number, ManualPosition>;
-  opponent: string; previous?: MatchScene; strength?: number; random?: () => number;
+  opponent: string; opponentStarters?: Player[]; previous?: MatchScene; strength?: number; random?: () => number;
 }): MatchEvent {
   const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
   const randomTeam = random() < clamp(.5 + (strength - 74) * .005, .35, .65) ? "home" : "away";
@@ -35,12 +42,14 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   let actorIndex = pick(action === "shot" ? Math.min(6, available) : available);
   let targetIndex = available > 1 ? (actorIndex + 1 + pick(available - 1)) % available : 0;
   const point = (index: number) => fieldPoint((team === "home" && starters[index] && positions[starters[index].id]) || slots[index] || { left: 50, top: 50 }, team === "away");
-  if (previous && available > 1) {
+  const restart = previous?.action === "goal";
+  const previousBall = restart ? { x: 50, y: 50 } : previous?.to;
+  if (previous && previousBall && available > 1) {
     // A completed pass is controlled by its receiver. On a turnover use the closest player.
     actorIndex = previous.action === "pass" && previous.team === team && previous.targetIndex < available
       ? previous.targetIndex
       : Array.from({ length: available }, (_, index) => index).reduce((best, index) => {
-        const distance = (i: number) => Math.hypot(point(i).x - previous.to.x, point(i).y - previous.to.y);
+        const distance = (i: number) => Math.hypot(point(i).x - previousBall.x, point(i).y - previousBall.y);
         return distance(index) < distance(best) ? index : best;
       }, 0);
     // Pick from nearby teammates instead of sending the ball across the whole pitch.
@@ -50,15 +59,15 @@ export function simulateAction({ minute, starters, formation, positions, opponen
       .slice(0, 3);
     targetIndex = candidates[pick(candidates.length)] ?? actorIndex;
   }
-  const actor = starters[actorIndex];
-  const actorName = team === "home" ? actor?.name ?? "Jogador" : `Jogador do ${opponent}`;
-  const target = team === "home" ? starters[targetIndex]?.name ?? "companheiro" : `companheiro do ${opponent}`;
+  const actor = team === "home" ? starters[actorIndex] : opponentStarters?.[actorIndex];
+  const actorName = actor?.name ?? (team === "home" ? "Jogador" : `Jogador do ${opponent}`);
+  const target = team === "home" ? starters[targetIndex]?.name ?? "companheiro" : opponentStarters?.[targetIndex]?.name ?? `companheiro do ${opponent}`;
   const movedPoint = (index: number) => {
     const base = point(index);
     const distance = index === 10 ? .5 : 2;
     return { x: clamp(base.x + Math.sin(minute * .6 + index) * distance, 5, 95), y: clamp(base.y + Math.cos(minute * .5 + index) * distance, 5, 95) };
   };
-  const from = previous?.to ?? movedPoint(actorIndex);
+  const from = previousBall ?? movedPoint(actorIndex);
   let to = movedPoint(targetIndex);
   let finalAction: LiveAction = action;
   let text: string;
@@ -79,7 +88,7 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   } else {
     text = `${actorName} toca para ${target}.`;
   }
-  return { minute, half: minute <= 45 ? 1 : 2, text, scene: { action: finalAction, team, actorIndex, targetIndex, from, to } };
+  return { minute, half: minute <= 45 ? 1 : 2, text, ...(finalAction === "goal" ? { scorer: actorName } : {}), scene: { action: finalAction, team, actorIndex, targetIndex, from, to } };
 }
 
 /** Keep routine circulation out of commentary while retaining it for simulation and statistics. */

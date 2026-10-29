@@ -55,3 +55,20 @@ it("filters ordinary circulation but keeps key moments and legacy events", async
   expect(isHighlight({ minute: 5, half: 1, text: "Substituição" })).toBe(true);
   expect(isHighlight({ ...generate([0, .1, 0, 0]), card: "yellow" })).toBe(true);
 });
+
+it("bounds both goalkeeper and outfield motion around the chosen tactical position", async () => {
+  const { boundedPlayerPoint } = await import("./live-match");
+  const selected = { x: 80, y: 35 };
+  expect(boundedPlayerPoint(selected, { x: 5, y: 95 }, true)).toEqual({ x: 76, y: 42 });
+  expect(boundedPlayerPoint(selected, { x: 5, y: 95 }, false)).toEqual({ x: 68, y: 50 });
+});
+
+it("restarts in midfield after a goal and stores named scorers when available", () => {
+  const previous = { action: "goal" as const, team: "home" as const, actorIndex: 0, targetIndex: 1, from: { x: 75, y: 50 }, to: { x: 95, y: 50 } };
+  let n = 0;
+  const rolls = [.99, .7, .0, .0, .0, .0];
+  const event = simulateAction({ minute: 60, starters: players, opponentStarters: players, formation: "4-3-3", positions: {}, opponent: "Rival", previous, random: () => rolls[n++] ?? 0 });
+  expect(event.scene?.from).toEqual({ x: 50, y: 50 });
+  expect(event.scene?.action).toBe("goal");
+  expect(event.scorer).toBe(players[event.scene!.actorIndex].name);
+});

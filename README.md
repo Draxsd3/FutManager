@@ -268,6 +268,9 @@ A prancheta mostra nome, posição e força dos reservas sobre uma imagem ilustr
 
 Na partida, a bola segue a posição atual e o próximo passe parte do recebedor, com preferência por companheiros próximos. A animação respeita pausa, velocidade e a preferência de movimento reduzido. Os painéis ao vivo e o resultado destacam finalizações, gols, faltas, discussões, cartões e alterações; passes e desarmes permanecem no estado da simulação, mas não lotam o resumo. A física e o adversário continuam simplificados.
 
+### Gols e posição dos goleiros
+
+Os jogadores se movimentam perto das posições táticas definidas, com uma área de deslocamento mais restrita para goleiros. Gols novos exibem uma comemoração temporária com autor, clube e minuto; retomadas não repetem gols antigos. O autor adversário usa um jogador do elenco cadastrado quando há dados suficientes; caso contrário, é identificado genericamente. A escalação do adversário é simulada.
 ### Táticas na partida
 
 A prancheta de escalação também é usada durante a partida, com placar, relógio pausado, estatísticas e lances. O campo mantém arraste livre e camisas nas cores do clube. Selecione quem sai/entra em qualquer ordem ou arraste um reserva ao campo e confirme a troca na barra inferior; preparar ou cancelar não consome substituições. As alterações confirmadas integram o autosave da carreira. Em telas menores, use **Plano tático** para acessar formação, estilo, marcação e foco de ataque.

@@ -75,6 +75,16 @@ it("shows only important moments while preserving routine events in the model", 
   expect(screen.getAllByText(/Gol importante/).length).toBeGreaterThan(0);
 });
 
+it("keeps the goalkeeper close to the user's chosen location even in a distant confrontation", () => {
+  const players = squad.slice(0, 11).map((player, i) => i === 10 ? { ...player, position: "G" as const } : player);
+  const scene = { action: "foul" as const, team: "away" as const, actorIndex: 0, targetIndex: 10, from: { x: 94, y: 90 }, to: { x: 95, y: 95 } };
+  const { container } = render(<MatchOverviewScreen competition="Liga" round={1} minute={15} half="1º tempo" club="A" opponent="B" homeScore={0} awayScore={0} possession={50} shots={0} onGoal="0/0" tackles={0} passErrors={0} fixtures={[]} events={[{ minute: 15, half: 1, text: "Falta", scene }]} running={false} speed={1} halftimeWaiting={false} formation="4-3-3" starters={players} manualPositions={{ [players[10].id]: { left: 25, top: 80 } }} onToggleRunning={vi.fn()} onSpeedChange={vi.fn()} onOpenDetail={vi.fn()} onRequestExit={vi.fn()} />);
+  const keeper = screen.getByTitle(`${players[10].name} · G`);
+  expect(parseFloat(keeper.style.left)).toBeLessThanOrEqual(24);
+  expect(parseFloat(keeper.style.top)).toBeLessThanOrEqual(32);
+  expect(container.querySelectorAll('[class*="awayPlayer"]')).toHaveLength(11);
+});
+
 it("explains that leaving saves the minute and lets the user cancel or confirm", () => {
   const { props, onRequestExit } = matchProps();
   render(<MatchOverviewScreen {...props} />);

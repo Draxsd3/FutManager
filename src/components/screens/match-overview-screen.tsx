@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import type { RoundFixture, Player } from "@/lib/game/mock-data";
 import type { ManualPosition } from "@/lib/game/career";
 import { formationSlots } from "@/lib/game/formations";
-import { fieldPoint, isHighlight } from "@/lib/game/live-match";
+import { boundedPlayerPoint, fieldPoint, isHighlight } from "@/lib/game/live-match";
 import { LiveBall } from "./live-ball";
+import { GoalCelebration } from "./goal-celebration";
 import type { MatchEvent } from "@/components/screens/match-detail-screen";
 import { Crest } from "@/components/ui/club-sidebar";
 import styles from "./match-overview-screen.module.css";
@@ -63,18 +64,20 @@ export function MatchOverviewScreen({ competition, round, minute, half, club, op
       <div className={styles.content}>
         <section className={styles.pitchCard} aria-label="Visualização da partida simulada">
           <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>VISÃO DE JOGO</span><h2>Dentro de campo</h2></div><span className={styles.badge}>{formation}</span></div>
-          <div className={styles.pitch} role="img" aria-label={`Campo simulado: ${club} em ${formation}, contra ${opponent}`}>
+          <div className={styles.pitch} role="group" aria-label={`Campo simulado: ${club} em ${formation}, contra ${opponent}`}>
             <div className={styles.fieldLine} /><div className={styles.midline} /><div className={styles.circle} /><div className={styles.boxLeft} /><div className={styles.boxRight} /><div className={styles.goalLeft} /><div className={styles.goalRight} />
             {starters.slice(0, 11).map((player, index) => {
               const point = fieldPoint(manualPositions[player.id] ?? slots[index] ?? { left: 50, top: 50 }, false);
               const active = scene?.team === "home" && scene.actorIndex === index;
               const confronted = scene?.team === "away" && (scene.action === "foul" || scene.action === "discussion" || scene.action === "tackle") && index === scene.targetIndex;
               const receiving = scene?.team === "home" && scene.action === "pass" && index === scene.targetIndex;
-              const location = confronted || receiving ? scene.to : active ? scene.from : point;
+              const desired = confronted || receiving ? scene.to : active ? scene.from : point;
+              const location = boundedPlayerPoint(point, desired, index === 10 || player.position === "G");
               return <span key={player.id} className={`${styles.player} ${styles.homePlayer} ${active || confronted ? styles.activePlayer : ""}`} style={{ left: `${location.x}%`, top: `${location.y}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} title={`${player.name} · ${player.position}`}><span>{player.shirtNumber ?? player.id}</span></span>;
             })}
-            {slots.map((pos, index) => { const point = fieldPoint(pos, true); const active = scene?.team === "away" && scene.actorIndex === index; const confronted = scene?.team === "home" && (scene.action === "foul" || scene.action === "discussion" || scene.action === "tackle") && index === scene.targetIndex; const receiving = scene?.team === "away" && scene.action === "pass" && index === scene.targetIndex; const location = confronted || receiving ? scene.to : active ? scene.from : point; return <span key={index} className={`${styles.player} ${styles.awayPlayer} ${active || confronted ? styles.activePlayer : ""}`} style={{ left: `${location.x}%`, top: `${location.y}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} />; })}
+            {slots.map((pos, index) => { const point = fieldPoint(pos, true); const active = scene?.team === "away" && scene.actorIndex === index; const confronted = scene?.team === "home" && (scene.action === "foul" || scene.action === "discussion" || scene.action === "tackle") && index === scene.targetIndex; const receiving = scene?.team === "away" && scene.action === "pass" && index === scene.targetIndex; const desired = confronted || receiving ? scene.to : active ? scene.from : point; const location = boundedPlayerPoint(point, desired, index === 10); return <span key={index} className={`${styles.player} ${styles.awayPlayer} ${active || confronted ? styles.activePlayer : ""}`} style={{ left: `${location.x}%`, top: `${location.y}%`, transitionDuration: `${running ? 700 / speed : 0}ms` }} />; })}
             <LiveBall target={scene?.to} running={running} speed={speed} />
+            <GoalCelebration events={events} club={club} opponent={opponent} />
             {currentEvent && isHighlight(currentEvent) && <div className={styles.actionCaption} aria-live="polite"><strong>{scene?.action === "goal" ? "GOL" : scene?.action === "shot" ? "FINALIZAÇÃO" : scene?.action === "foul" ? "FALTA" : "DISCUSSÃO"}</strong> {currentEvent.text}</div>}
           </div>
           <div className={styles.legend}><span><i className={styles.homeKey} />{club}</span><span><i className={styles.awayKey} />{opponent}</span><span className={styles.note}>Lances simulados em campo · adversário em formação genérica</span></div>
