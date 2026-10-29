@@ -309,7 +309,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     { icon: "magnifier", label: "Procura", active: page === "search", onClick: () => navigate("search") },
     { icon: "user_suit", label: "Técnicos", active: page === "coaches", onClick: () => navigate("coaches") },
     { icon: "clock_history_frame", label: "História", active: page === "history", onClick: () => navigate("history") },
-    { icon: "door_out", label: "Menu", onClick: () => { leaveActiveCareer("menu"); } },
+    { icon: "door_out", label: "Menu inicial", onClick: () => { leaveActiveCareer("menu"); } },
   ];
 
   function navigate(next: Page) {

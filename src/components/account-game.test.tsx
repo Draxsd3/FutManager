@@ -68,3 +68,14 @@ describe("account entry", () => {
     expect((await screen.findByRole("alert")).textContent).toBe("Email ou senha incorretos.");
   });
 });
+
+
+it.each([/INICIAR NOVA CARREIRA/, /CARREGAR CARREIRA/, /EDITOR DE CLUBES/, /Entrar \/ Criar conta/])("returns from account entry to the same redesigned public menu: %s", async (action) => {
+  render(<AccountGame />);
+  await screen.findByText("Entre para salvar e continuar suas carreiras");
+  fireEvent.click(screen.getByRole("button", { name: action }));
+  fireEvent.click(screen.getByRole("button", { name: /Voltar ao início/ }));
+  expect(document.querySelector('[data-menu-version="minimal-v1"]')).toBeTruthy();
+  expect(screen.getByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
+  expect(screen.queryByLabelText("Email")).toBeNull();
+});

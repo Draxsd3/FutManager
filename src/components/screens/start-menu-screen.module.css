@@ -100,3 +100,5 @@
 .account button:focus-visible { outline: 2px solid #c2f45b; outline-offset: 4px; }
 @media (max-width: 900px) { .edition { display: none; } }
 @media (max-width: 600px) { .account { flex-wrap: wrap; justify-content: flex-end; gap: 5px; } .account > span { max-width: 130px; font-size: 9px; } .account button { font-size: 10px; } }
+
+.build { margin-left: 16px; color: #9eaa9e; font-size: 9px; letter-spacing: .5px; text-transform: none; }

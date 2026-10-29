@@ -22,7 +22,7 @@ export function StartMenuScreen({
   onEdit: () => void;
 }) {
   return (
-    <div className={styles.screen}>
+    <div className={styles.screen} data-menu-version="minimal-v1">
       <div className={styles.backdrop} aria-hidden="true" />
       <header className={styles.topbar}>
         <a className={styles.brand} href="#menu-principal" aria-label="FutManager — menu principal">
@@ -64,7 +64,7 @@ export function StartMenuScreen({
 
       <footer className={styles.footer}>
         <span className={styles.sync} role="status"><span aria-hidden="true" />{syncLabel}</span>
-        <span className={styles.footerMotto}>GESTÃO. PAIXÃO. FUTEBOL.</span>
+        <span className={styles.footerMotto}>GESTÃO. PAIXÃO. FUTEBOL. <span className={styles.build}>Build {process.env.NEXT_PUBLIC_BUILD_REVISION ?? "local"}</span></span>
       </footer>
     </div>
   );
