@@ -65,3 +65,11 @@ O responsável autorizou fazer o merge de cada entrega para a `main` sem nova co
 ### 7. Navegação da agenda
 
 Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amistosos e Central de empregos. Só navegar após escolher uma opção. A agenda deve priorizar clareza, próximo compromisso e calendário legível, sem inventar partidas, propostas ou funcionalidades ainda indisponíveis.
+
+### 8. Carreiras, navegação principal, competições e estádio
+
+- A tela de carregar carreiras deve ter visual moderno, cards, busca por clube/técnico/carreira e ordenação. Continuar/excluir sempre atua na carreira escolhida e mantém o isolamento por conta.
+- A navbar deve oferecer **Principal**, voltando ao elenco/jogadores da carreira atual, sem confundir com **Menu inicial**.
+- A central de competições deve permitir consultar outros campeonatos além do clube controlado, organizada em Nacional, Internacional, Seleções, Estadual e Regional, com busca e filtro de localidade.
+- O catálogo é metadado de navegação, não inscrição confirmada. Ligas usam os clubes/países/divisões do editor. Outras divisões não herdam estatísticas da carreira atual; copas e estaduais sem participantes/grupos/resultados cadastrados mostram indisponibilidade explícita. Histórico de títulos e resultados acumulados ainda não está integrado ao motor.
+- O estádio deve apresentar ficha do clube, capacidade, caixa, folha salarial, infraestrutura e simulador de bilheteria. A imagem é ilustrativa. Simulação é hipotética, não altera ingressos, caixa nem patrimônio; obras e condições técnicas não cadastradas não podem ser inventadas.

@@ -116,3 +116,12 @@ endereço e o projeto corretos.
 O botão Agenda abre um submenu com Jogos do seu time, Jogos amistosos e Central de empregos. Cada escolha abre a seção correspondente; as abas da agenda também permitem alternar entre elas. O submenu aceita teclado (setas, Home, End e Escape) e fecha ao clicar fora.
 
 A agenda apresenta o compromisso disponível na rodada, filtro de mando e acesso à escalação. Não gera datas futuras nem convocações fictícias. Amistosos e empregos mostram estados vazios informando que agendamento e ofertas ainda não estão implementados.
+
+## Central de gestão
+
+- **Carreiras salvas:** cards responsivos, busca por carreira/clube/técnico, ordenação por atualização, clube ou rodada, continuar e excluir dentro da conta conectada.
+- **Principal:** volta ao elenco da carreira ativa. **Menu inicial** preserva o progresso via autosave e retorna às opções iniciais. Agenda mantém o submenu antes da navegação.
+- **Tabelas:** catálogo Nacional, Internacional, Seleções, Estadual e Regional com busca e filtro de país/região. As ligas refletem o banco editável; consultar outra divisão não atribui a ela os resultados da divisão ativa. Copas e estaduais sem inscrições integradas exibem estados vazios, não classificações inventadas. O resumo ativo usa os dados atuais do motor; não equivale a um histórico acumulado de temporadas.
+- **Estádio:** dados cadastrados do estádio, capacidade, saldo da carreira e folha do elenco. Visão geral, simulador de bilheteria e infraestrutura. A projeção usa capacidade × ocupação × ingresso, menos custo informado; não altera a carreira. Ampliação e manutenção ainda não executáveis.
+
+Validação: `npm test`, `npm run lint`, `npm run build`. Testes cobrem navegação Principal, busca/ordenação e ações de saves, exploração de competições com dados ausentes, acessibilidade do diálogo e cálculo hipotético de bilheteria.

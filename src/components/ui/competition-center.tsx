@@ -1,54 +1,532 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { TableRow, TopRating, TopScorer } from "@/lib/game/mock-data";
-import { Crest } from "@/components/ui/club-sidebar";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type {
+  RoundFixture,
+  TableRow,
+  TopRating,
+  TopScorer,
+} from "@/lib/game/mock-data";
+import type { EditorDatabase } from "@/lib/game/editor-data";
+import {
+  buildCompetitionCatalog,
+  competitionCategories,
+  type CompetitionCategory,
+} from "@/lib/game/competitions";
+import { Crest } from "./club-sidebar";
+import { ClassicIcon } from "./classic-icon";
+import styles from "./competition-center.module.css";
 
-type Scope = "classificacao" | "jogos" | "estatisticas";
+export function CompetitionCenter({
+  club,
+  competition,
+  database,
+  table,
+  topScorers,
+  topRatings,
+  fixtures,
+  round,
+  onClose,
+}: {
+  club: string;
+  competition: string;
+  database: EditorDatabase;
+  table: TableRow[];
+  topScorers: TopScorer[];
+  topRatings: TopRating[];
+  fixtures: RoundFixture[];
+  round: number;
+  onClose: () => void;
+}) {
+  const catalog = useMemo(() => buildCompetitionCatalog(database), [database]);
+  const country =
+    database.clubs.find((item) => item.name === club)?.country ?? "Brasil";
+  const activeId = `league:${country}:${competition}`;
+  const [category, setCategory] = useState<CompetitionCategory>("national");
+  const [selectedId, setSelectedId] = useState(activeId);
+  const [scope, setScope] = useState("table");
+  const [location, setLocation] = useState("all");
+  const [search, setSearch] = useState("");
+  const panel = useRef<HTMLDivElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButton.current?.focus();
+    function keyboard(event: KeyboardEvent) {
+      if (event.key === "Escape") onCloseRef.current();
+      if (event.key === "Tab") {
+        const options = Array.from(
+          panel.current?.querySelectorAll<HTMLElement>(
+            'button:not(:disabled), input, select, [tabindex="0"]',
+          ) ?? [],
+        );
+        const first = options[0],
+          last = options[options.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        }
+        if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }
+    }
+    document.addEventListener("keydown", keyboard);
+    return () => {
+      document.removeEventListener("keydown", keyboard);
+      document.body.style.overflow = previousOverflow;
+      previous?.focus();
+    };
+  }, []);
+  const inCategory = catalog.filter((item) => item.category === category);
+  const locations = [...new Set(inCategory.map((item) => item.location))];
+  const options = inCategory.filter(
+    (item) =>
+      (location === "all" || item.location === location) &&
+      item.name
+        .toLocaleLowerCase("pt-BR")
+        .includes(search.toLocaleLowerCase("pt-BR")),
+  );
+  const selected = options.find((item) => item.id === selectedId) ?? options[0];
+  const isActive = selected?.id === activeId;
+  const rows = selected
+    ? [...selected.clubs]
+        .map((name) => ({
+          club: name,
+          result: isActive ? table.find((row) => row.club === name) : undefined,
+        }))
+        .sort(
+          (a, b) =>
+            (b.result?.points ?? 0) - (a.result?.points ?? 0) ||
+            (b.result?.goalsFor ?? 0) -
+              (b.result?.goalsAgainst ?? 0) -
+              ((a.result?.goalsFor ?? 0) - (a.result?.goalsAgainst ?? 0)) ||
+            a.club.localeCompare(b.club, "pt-BR"),
+        )
+    : [];
+  const goals = isActive
+    ? table.reduce((sum, row) => sum + row.goalsFor, 0)
+    : null;
+  const games = isActive
+    ? table.reduce((sum, row) => sum + row.played, 0) / 2
+    : null;
+  const scorers = isActive
+    ? topScorers.filter((player) => player.goals > 0 && player.played > 0)
+    : [];
+  const ratings = isActive
+    ? topRatings.filter((player) => player.rating > 0 && player.played > 0)
+    : [];
 
-export function CompetitionCenter({ club, competition, table, topScorers, topRatings, round, onClose }: { club: string; competition: string; table: TableRow[]; topScorers: TopScorer[]; topRatings: TopRating[]; round: number; onClose: () => void }) {
-  const [scope, setScope] = useState<Scope>("classificacao");
-  const ordered = useMemo(() => [...table].sort((a, b) => b.points - a.points || (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst) || b.goalsFor - a.goalsFor || a.club.localeCompare(b.club)), [table]);
-  const own = ordered.find((row) => row.club === club);
-  const rank = Math.max(1, ordered.findIndex((row) => row.club === club) + 1);
-  const scored = ordered.reduce((total, row) => total + row.goalsFor, 0);
-  const matches = ordered.reduce((total, row) => total + row.played, 0) / 2;
-
-  return <div className="fixed inset-0 z-50 bg-[#f4f7f3]/95 p-3 text-[#1d2d20] backdrop-blur-sm sm:p-5">
-    <main className="mx-auto flex h-full max-w-[1500px] flex-col overflow-hidden rounded-2xl border border-[#d7e0d8] bg-white shadow-2xl">
-      <header className="flex shrink-0 items-center gap-4 border-b border-[#dce7dd] bg-[var(--team-accent)] px-5 py-4 text-[var(--team-accent-text)]">
-        <div className="min-w-0"><p className="text-[10px] font-black tracking-[.2em] opacity-80">CENTRAL DE COMPETIÇÕES · TEMPORADA 2026</p><h1 className="truncate text-xl font-black sm:text-2xl">{competition}</h1></div>
-        <div className="ml-auto flex items-center gap-2"><span className="hidden rounded-full bg-black/15 px-3 py-1 text-xs font-bold sm:block">Rodada {round}</span><button onClick={onClose} className="rounded-lg border border-current/30 bg-white/15 px-4 py-2 text-xs font-black transition hover:bg-white/25">FECHAR</button></div>
-      </header>
-
-      <div className="flex shrink-0 gap-2 border-b border-[#e0e8e0] bg-[#fbfdfb] px-4 py-2">
-        {(["classificacao", "jogos", "estatisticas"] as Scope[]).map((item) => <button key={item} onClick={() => setScope(item)} className={`rounded-lg px-4 py-2 text-xs font-black uppercase transition ${scope === item ? "bg-[var(--team-accent)] text-[var(--team-accent-text)]" : "text-[#607064] hover:bg-[#eaf1eb]"}`}>{item === "classificacao" ? "Classificação" : item === "jogos" ? "Jogos e rodadas" : "Estatísticas"}</button>)}
-        <span className="ml-auto hidden items-center text-xs font-bold text-[#68756b] lg:flex">Fase de liga · Pontos corridos</span>
-      </div>
-
-      <section className="min-h-0 flex-1 overflow-auto p-4 lg:overflow-hidden">
-        <div className="grid h-full min-h-[550px] gap-4 lg:grid-cols-[1fr_310px]">
-          <div className="min-w-0 overflow-hidden rounded-xl border border-[#dce6dd] bg-[#fbfdfb]">
-            {scope === "classificacao" && <Classification table={ordered} club={club} />}
-            {scope === "jogos" && <Rounds club={club} table={ordered} round={round} />}
-            {scope === "estatisticas" && <Statistics scorers={topScorers} ratings={topRatings} />}
+  return (
+    <div className={styles.overlay}>
+      <div
+        ref={panel}
+        className={styles.window}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="competitions-title"
+      >
+        <header className={styles.header}>
+          <div>
+            <p>CENTRAL DE COMPETIÇÕES / 2026</p>
+            <h1 id="competitions-title">
+              O futebol além do seu clube<span>.</span>
+            </h1>
           </div>
-          <aside className="grid content-start gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <section className="rounded-xl border border-[#dce6dd] bg-white p-4"><p className="text-[10px] font-black tracking-[.15em] text-[#69776b]">SUA CAMPANHA</p><div className="mt-3 flex items-center gap-3"><Crest club={club} size="sm"/><div><b className="block text-lg">{club}</b><span className="text-xs text-[#6a786d]">{rank}º colocado</span></div></div><div className="mt-4 grid grid-cols-3 divide-x divide-[#e4ebe5] text-center"><Metric value={`${own?.points ?? 0}`} label="Pontos"/><Metric value={`${own?.played ?? 0}`} label="Jogos"/><Metric value={`${(own?.goalsFor ?? 0) - (own?.goalsAgainst ?? 0)}`} label="Saldo"/></div></section>
-            <section className="rounded-xl border border-[#dce6dd] bg-[#f8fbf8] p-4"><p className="text-[10px] font-black tracking-[.15em] text-[#69776b]">FAIXAS DA TABELA</p><div className="mt-3 space-y-2 text-xs"><Legend color="bg-[#1976d2]" label="Classificação internacional"/><Legend color="bg-[#21a452]" label="Classificação continental"/><Legend color="bg-[#f0b429]" label="Meio da tabela"/><Legend color="bg-[#d74747]" label="Zona de rebaixamento"/></div></section>
-            <section className="rounded-xl border border-[#dce6dd] bg-white p-4 sm:col-span-2 lg:col-span-1"><p className="text-[10px] font-black tracking-[.15em] text-[#69776b]">RESUMO DO CAMPEONATO</p><div className="mt-3 grid grid-cols-3 gap-2 text-center"><Metric value={String(ordered.length)} label="Clubes"/><Metric value={String(Math.round(matches))} label="Partidas"/><Metric value={String(scored)} label="Gols"/></div><p className="mt-3 text-[11px] text-[#6b796e]">A classificação é atualizada depois de cada partida da carreira.</p></section>
+          <button
+            ref={closeButton}
+            onClick={onClose}
+            aria-label="Fechar central de competições"
+          >
+            Fechar <span aria-hidden="true">×</span>
+          </button>
+        </header>
+        <nav
+          className={styles.categories}
+          aria-label="Categorias de competição"
+        >
+          {competitionCategories.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                setCategory(item.id);
+                setLocation("all");
+                setSearch("");
+                setScope("table");
+              }}
+              aria-current={category === item.id ? "page" : undefined}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+        <div className={styles.layout}>
+          <aside className={styles.browser}>
+            <p className={styles.eyebrow}>EXPLORAR CAMPEONATOS</p>
+            <label>
+              Buscar campeonato
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Nome da competição"
+              />
+            </label>
+            <label>
+              País / região
+              <select
+                value={location}
+                onChange={(event) => setLocation(event.target.value)}
+              >
+                <option value="all">Todos</option>
+                {locations.map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </select>
+            </label>
+            <div className={styles.competitionList}>
+              {options.map((item) => (
+                <button
+                  key={item.id}
+                  aria-pressed={selected?.id === item.id}
+                  onClick={() => {
+                    setSelectedId(item.id);
+                    setScope("table");
+                  }}
+                >
+                  <span className={styles.trophy} aria-hidden="true">
+                    <ClassicIcon name="medal_award_gold" size={24} />
+                  </span>
+                  <span>
+                    <strong>{item.name}</strong>
+                    <small>{item.location}</small>
+                  </span>
+                  {item.clubs.includes(club) && (
+                    <i
+                      title="Seu clube está nesta divisão"
+                      aria-label="Divisão do seu clube"
+                    >
+                      ●
+                    </i>
+                  )}
+                </button>
+              ))}
+            </div>
+            <p className={styles.catalogNote}>
+              {options.length} competição(ões) no catálogo.
+              <br />
+              Catálogo não significa inscrição confirmada.
+            </p>
           </aside>
+          <section className={styles.content}>
+            {selected ? (
+              <>
+                <header className={styles.competitionHeader}>
+                  <div>
+                    <p className={styles.eyebrow}>
+                      {selected.location} / TEMPORADA 2026
+                    </p>
+                    <h2>{selected.name}</h2>
+                    <p>
+                      {selected.format} <span>·</span>{" "}
+                      {rows.length
+                        ? `${rows.length} clubes cadastrados na divisão`
+                        : "Participantes ainda não cadastrados"}
+                    </p>
+                  </div>
+                  <span className={styles.badge}>
+                    {isActive ? "DADOS DA CARREIRA" : "CATÁLOGO"}
+                  </span>
+                </header>
+                <div className={styles.metrics}>
+                  <Metric
+                    label="Clubes cadastrados"
+                    value={rows.length ? String(rows.length) : "—"}
+                  />
+                  <Metric
+                    label="Partidas registradas"
+                    value={games === null ? "—" : String(games)}
+                  />
+                  <Metric
+                    label="Gols registrados"
+                    value={goals === null ? "—" : String(goals)}
+                  />
+                  <Metric
+                    label="Média de gols"
+                    value={
+                      games && goals !== null ? (goals / games).toFixed(2) : "—"
+                    }
+                  />
+                </div>
+                <nav
+                  className={styles.scopes}
+                  aria-label="Detalhes da competição"
+                >
+                  {[
+                    { id: "table", label: "Classificação" },
+                    { id: "rounds", label: "Rodadas" },
+                    { id: "stats", label: "Estatísticas" },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setScope(item.id)}
+                      aria-current={scope === item.id ? "page" : undefined}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </nav>
+                <div className={styles.dataGrid}>
+                  <div className={styles.mainData}>
+                    {scope === "table" && (
+                      <>
+                        <div className={styles.sectionTitle}>
+                          <h3>
+                            {selected.format === "Liga"
+                              ? "Classificação geral"
+                              : "Fases e grupos"}
+                          </h3>
+                          <span>
+                            {isActive
+                              ? `Rodada ${round}`
+                              : "Resultados não integrados"}
+                          </span>
+                        </div>
+                        {rows.length ? (
+                          <div className={styles.tableWrap}>
+                            <table>
+                              <caption className={styles.srOnly}>
+                                Classificação de {selected.name}
+                              </caption>
+                              <thead>
+                                <tr>
+                                  {[
+                                    "#",
+                                    "Clube",
+                                    "PTS",
+                                    "J",
+                                    "V",
+                                    "E",
+                                    "D",
+                                    "GP",
+                                    "GC",
+                                    "SG",
+                                  ].map((title) => (
+                                    <th key={title} scope="col">
+                                      {title}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {rows.map((row, index) => (
+                                  <tr
+                                    key={row.club}
+                                    className={
+                                      row.club === club ? styles.ownClub : ""
+                                    }
+                                  >
+                                    <td>{isActive ? index + 1 : "—"}</td>
+                                    <th scope="row">
+                                      <span>
+                                        <Crest club={row.club} size="sm" />
+                                        {row.club}
+                                        {row.club === club && (
+                                          <small>SEU CLUBE</small>
+                                        )}
+                                      </span>
+                                    </th>
+                                    {[
+                                      row.result?.points,
+                                      row.result?.played,
+                                      row.result?.wins,
+                                      row.result?.draws,
+                                      row.result?.losses,
+                                      row.result?.goalsFor,
+                                      row.result?.goalsAgainst,
+                                      row.result
+                                        ? row.result.goalsFor -
+                                          row.result.goalsAgainst
+                                        : undefined,
+                                    ].map((value, i) => (
+                                      <td key={i}>{value ?? "—"}</td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <Empty
+                            title="Tabela ainda não disponível"
+                            text="Participantes, fases e grupos desta competição ainda não foram cadastrados na carreira. Não há classificação para exibir."
+                          />
+                        )}
+                        <p className={styles.disclaimer}>
+                          {isActive
+                            ? "Resumo atualmente disponível no motor da carreira. Histórico acumulado de temporadas ainda não integrado."
+                            : "Clubes de outras divisões podem ser consultados. Pontuação, grupos e resultados só aparecem quando registrados para a competição."}
+                        </p>
+                      </>
+                    )}
+                    {scope === "rounds" && (
+                      <>
+                        <div className={styles.sectionTitle}>
+                          <h3>Jogos e rodadas</h3>
+                          <span>
+                            {isActive ? `${round}ª rodada` : "Sem calendário"}
+                          </span>
+                        </div>
+                        {isActive && fixtures.length ? (
+                          fixtures.map((match, i) => (
+                            <article
+                              className={styles.fixture}
+                              key={`${match.home}-${i}`}
+                            >
+                              <span>
+                                {round}ª rodada <small>{match.stadium}</small>
+                              </span>
+                              <strong>{match.home}</strong>
+                              <b>×</b>
+                              <strong>{match.away}</strong>
+                            </article>
+                          ))
+                        ) : (
+                          <Empty
+                            title="Calendário não cadastrado"
+                            text="Os confrontos e resultados desta competição aparecerão aqui quando estiverem disponíveis."
+                          />
+                        )}
+                        <p className={styles.disclaimer}>
+                          Confrontos disponíveis na rodada. Resultados passados
+                          não são presumidos.
+                        </p>
+                      </>
+                    )}
+                    {scope === "stats" && (
+                      <>
+                        <div className={styles.sectionTitle}>
+                          <h3>Estatísticas da competição</h3>
+                        </div>
+                        <div className={styles.statGrid}>
+                          <Rank
+                            title="Artilharia"
+                            rows={scorers.map((item) => ({
+                              name: item.name,
+                              club: item.club,
+                              value: `${item.goals} gols`,
+                            }))}
+                          />
+                          <Rank
+                            title="Melhores notas"
+                            rows={ratings.map((item) => ({
+                              name: item.name,
+                              club: item.club,
+                              value: item.rating.toFixed(1),
+                            }))}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <aside className={styles.sidebar}>
+                    <Rank
+                      title="Artilheiros"
+                      rows={scorers
+                        .slice(0, 5)
+                        .map((item) => ({
+                          name: item.name,
+                          club: item.club,
+                          value: String(item.goals),
+                        }))}
+                    />
+                    <Rank
+                      title="Melhores notas"
+                      rows={ratings
+                        .slice(0, 5)
+                        .map((item) => ({
+                          name: item.name,
+                          club: item.club,
+                          value: item.rating.toFixed(1),
+                        }))}
+                    />
+                    <section className={styles.history}>
+                      <p className={styles.eyebrow}>ESTATÍSTICAS E HISTÓRIA</p>
+                      <h3>Um título, muitas histórias.</h3>
+                      <dl>
+                        <dt>Último campeão</dt>
+                        <dd>Não registrado</dd>
+                        <dt>Maior vencedor</dt>
+                        <dd>Não registrado</dd>
+                        <dt>Maior goleada</dt>
+                        <dd>Não registrada</dd>
+                      </dl>
+                    </section>
+                  </aside>
+                </div>
+              </>
+            ) : (
+              <Empty
+                title="Nenhuma competição encontrada"
+                text="Altere o nome pesquisado ou o filtro de região."
+              />
+            )}
+          </section>
         </div>
-      </section>
-    </main>
-  </div>;
+      </div>
+    </div>
+  );
 }
-
-function Classification({ table, club }: { table: TableRow[]; club: string }) { return <><div className="flex items-center justify-between border-b border-[#e1e9e2] px-4 py-3"><div><h2 className="font-black">Classificação geral</h2><p className="text-[11px] text-[#6a786d]">Pontos, saldo de gols e gols marcados definem os desempates.</p></div><span className="rounded bg-[#eaf1eb] px-2 py-1 text-[10px] font-black text-[#536157]">ATUALIZADA</span></div><div className="h-full overflow-auto"><table className="w-full min-w-[660px] text-left text-xs"><thead className="sticky top-0 bg-[#f0f5f0] text-[10px] uppercase tracking-wide text-[#617063]"><tr><th className="px-4 py-3">#</th><th>Clube</th><th className="text-center">Pts</th><th className="text-center">J</th><th className="text-center">V</th><th className="text-center">E</th><th className="text-center">D</th><th className="text-center">GP</th><th className="text-center">GC</th><th className="text-center">SG</th><th className="px-4">Forma</th></tr></thead><tbody>{table.map((row, index) => { const diff = row.goalsFor - row.goalsAgainst; const isClub = row.club === club; return <tr key={row.club} className={`border-t border-[#edf1ed] ${isClub ? "bg-[color:color-mix(in_srgb,var(--team-accent)_12%,white)] font-black" : "hover:bg-[#f6faf6]"}`}><td className="px-4 py-3"><span className={`inline-flex h-5 w-5 items-center justify-center rounded text-[10px] text-white ${index < 1 ? "bg-[#1976d2]" : index < 2 ? "bg-[#21a452]" : index >= table.length - 1 ? "bg-[#d74747]" : "bg-[#9ba89d]"}`}>{index + 1}</span></td><td><span className="flex items-center gap-2"><Crest club={row.club} size="sm"/><span>{row.club}</span></span></td><td className="text-center text-sm">{row.points}</td><td className="text-center">{row.played}</td><td className="text-center">{row.wins}</td><td className="text-center">{row.draws}</td><td className="text-center">{row.losses}</td><td className="text-center">{row.goalsFor}</td><td className="text-center">{row.goalsAgainst}</td><td className={`text-center font-bold ${diff > 0 ? "text-[#168146]" : diff < 0 ? "text-[#bf4141]" : ""}`}>{diff > 0 ? `+${diff}` : diff}</td><td className="px-4"><Form wins={row.wins} draws={row.draws} losses={row.losses}/></td></tr>; })}</tbody></table></div></>; }
-function Rounds({ club, table, round }: { club: string; table: TableRow[]; round: number }) { const opponents = table.filter((row) => row.club !== club); return <div className="p-4"><h2 className="font-black">Jogos e rodadas</h2><p className="mt-1 text-xs text-[#6a786d]">Acompanhe a sequência de partidas da competição.</p><div className="mt-5 grid gap-3 md:grid-cols-2">{opponents.map((opponent, index) => <article key={opponent.club} className={`rounded-xl border p-4 ${index + 1 === round ? "border-[var(--team-accent)] bg-[color:color-mix(in_srgb,var(--team-accent)_8%,white)]" : "border-[#dce6dd] bg-white"}`}><p className="text-[10px] font-black tracking-wider text-[#6a786d]">RODADA {index + 1} {index + 1 === round ? "· ATUAL" : index + 1 < round ? "· ENCERRADA" : "· A DISPUTAR"}</p><div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center text-sm font-black"><span className="flex items-center justify-end gap-2">{club}<Crest club={club} size="sm"/></span><span className="rounded bg-[#243329] px-2 py-1 text-xs text-white">{index + 1 < round ? "0 × 0" : "×"}</span><span className="flex items-center gap-2"><Crest club={opponent.club} size="sm"/>{opponent.club}</span></div><p className="mt-3 text-center text-[11px] text-[#6a786d]">{index % 2 === 0 ? "Casa" : "Fora"} · Campeonato 2026</p></article>)}</div></div>; }
-function Statistics({ scorers, ratings }: { scorers: TopScorer[]; ratings: TopRating[] }) { return <div className="grid h-full gap-px bg-[#dce6dd] md:grid-cols-2"><RankList title="Artilharia" rows={scorers.map((item) => ({ primary: item.name, secondary: item.club, value: `${item.goals} gols` }))}/><RankList title="Melhores notas" rows={ratings.map((item) => ({ primary: item.name, secondary: `${item.club} · ${item.role}`, value: item.rating ? item.rating.toFixed(1) : "—" }))}/><RankList title="Participações em gol" rows={scorers.map((item) => ({ primary: item.name, secondary: item.club, value: `${item.goals} part.` }))}/><section className="bg-white p-5"><h2 className="font-black">Indicadores da competição</h2><div className="mt-5 space-y-4"><Bar label="Média de gols por jogo" value={62}/><Bar label="Vitórias mandantes" value={57}/><Bar label="Jogos com ambas marcam" value={38}/></div></section></div>; }
-function RankList({ title, rows }: { title: string; rows: { primary: string; secondary: string; value: string }[] }) { return <section className="bg-white p-5"><h2 className="font-black">{title}</h2><div className="mt-4 space-y-2">{rows.map((row, index) => <div key={`${title}-${row.primary}`} className="flex items-center gap-3 rounded-lg bg-[#f5f8f5] px-3 py-2"><b className="w-4 text-[var(--team-accent)]">{index + 1}</b><div className="min-w-0 flex-1"><b className="block truncate text-xs">{row.primary}</b><span className="text-[10px] text-[#748076]">{row.secondary}</span></div><b className="text-xs">{row.value}</b></div>)}</div></section>; }
-function Form({ wins, draws, losses }: { wins: number; draws: number; losses: number }) { const values = [...Array(Math.min(3, wins)).fill("V"), ...Array(Math.min(2, draws)).fill("E"), ...Array(Math.min(2, losses)).fill("D")].slice(0, 5); return <span className="flex gap-1">{values.length ? values.map((value, index) => <i key={`${value}-${index}`} className={`inline-flex h-4 w-4 items-center justify-center rounded text-[8px] not-italic text-white ${value === "V" ? "bg-[#1f9b50]" : value === "E" ? "bg-[#e5a828]" : "bg-[#d84d4d]"}`}>{value}</i>) : <small className="text-[#9aa59c]">—</small>}</span>; }
-function Metric({ value, label }: { value: string; label: string }) { return <div><b className="block text-lg text-[var(--team-accent)]">{value}</b><span className="text-[10px] text-[#6b786d]">{label}</span></div>; }
-function Legend({ color, label }: { color: string; label: string }) { return <p className="flex items-center gap-2"><i className={`h-2 w-2 rounded-full ${color}`}/>{label}</p>; }
-function Bar({ label, value }: { label: string; value: number }) { return <div><div className="mb-1 flex justify-between text-[11px]"><span>{label}</span><b>{value}%</b></div><div className="h-2 overflow-hidden rounded bg-[#e6ece6]"><i className="block h-full rounded bg-[var(--team-accent)]" style={{ width: `${value}%` }}/></div></div>; }
+function Metric({ value, label }: { value: string; label: string }) {
+  return (
+    <div>
+      <small>{label}</small>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+function Empty({ title, text }: { title: string; text: string }) {
+  return (
+    <div className={styles.empty}>
+      <span aria-hidden="true">◎</span>
+      <h3>{title}</h3>
+      <p>{text}</p>
+    </div>
+  );
+}
+function Rank({
+  title,
+  rows,
+}: {
+  title: string;
+  rows: { name: string; club: string; value: string }[];
+}) {
+  return (
+    <section className={styles.rank}>
+      <h3>{title}</h3>
+      {rows.length ? (
+        <ol>
+          {rows.map((row, index) => (
+            <li key={`${row.name}-${index}`}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <strong>{row.name}</strong>
+                <small>{row.club}</small>
+              </div>
+              <b>{row.value}</b>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className={styles.noStats}>Sem estatísticas registradas.</p>
+      )}
+    </section>
+  );
+}
