@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import type { Player } from "@/lib/game/mock-data";
 import type { ManualPosition } from "@/lib/game/career";
 import {
@@ -33,6 +33,7 @@ type Props = {
   setFocus: (value: string) => void;
   startersData: Player[];
   bench: Player[];
+  onReorderBench: (id: number, targetId: number) => void;
   selectedPlayer: Player | null;
   onSelectPlayer: (id: number | null) => void;
   onPlacePlayer: (id: number, slot: number, point?: ManualPosition) => void;
@@ -59,6 +60,7 @@ export function LineupScreen(props: Props) {
     setFocus,
     startersData,
     bench,
+    onReorderBench,
     selectedPlayer,
     onSelectPlayer,
     onPlacePlayer,
@@ -74,6 +76,15 @@ export function LineupScreen(props: Props) {
   const [message, setMessage] = useState(
     "Arraste livremente ou selecione uma camisa e clique no campo.",
   );
+  const [detailPlayer, setDetailPlayer] = useState<Player | null>(null);
+  const detailClose = useRef<HTMLButtonElement>(null);
+  const detailOrigin = useRef<HTMLElement | null>(null);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (detailPlayer) detailClose.current?.focus();
+    else detailOrigin.current?.focus();
+  }, [detailPlayer]);
+  useEffect(() => () => { if (holdTimer.current) clearTimeout(holdTimer.current); }, []);
   const [dragId, setDragId] = useState<number | null>(null);
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
   const field = useRef<HTMLDivElement>(null),
@@ -177,6 +188,7 @@ export function LineupScreen(props: Props) {
     if (!button) return;
     const bounds = button.getBoundingClientRect();
     suppressClick.current = false;
+    if (holdTimer.current) clearTimeout(holdTimer.current);
     gesture.current = {
       id: Number(button.dataset.player),
       pointer: event.pointerId,
@@ -186,6 +198,18 @@ export function LineupScreen(props: Props) {
       dx: bounds.width ? bounds.left + bounds.width / 2 - event.clientX : 0,
       dy: bounds.height ? bounds.top + bounds.height / 2 - event.clientY : 0,
     };
+    if (bench.some((player) => player.id === Number(button.dataset.player))) {
+      const host = event.currentTarget;
+      holdTimer.current = setTimeout(() => {
+        const current = gesture.current;
+        if (!current || current.moved) return;
+        current.moved = true;
+        host.setPointerCapture?.(current.pointer);
+        setDragId(current.id);
+        if (ghost.current) ghost.current.style.transform = `translate3d(${current.x + current.dx}px,${current.y + current.dy}px,0) translate(-50%, -50%)`;
+        setMessage("Reserva selecionado. Arraste para o campo ou para outro lugar no banco.");
+      }, 350);
+    }
   }
   function move(event: PointerEvent<HTMLElement>) {
     const current = gesture.current;
@@ -196,6 +220,7 @@ export function LineupScreen(props: Props) {
     )
       return;
     if (!current.moved) {
+      if (holdTimer.current) clearTimeout(holdTimer.current);
       current.moved = true;
       event.currentTarget.setPointerCapture?.(event.pointerId);
       setDragId(current.id);
@@ -211,6 +236,7 @@ export function LineupScreen(props: Props) {
     const current = gesture.current;
     if (!current || current.pointer !== event.pointerId) return;
     gesture.current = null;
+    if (holdTimer.current) clearTimeout(holdTimer.current);
     event.currentTarget.releasePointerCapture?.(event.pointerId);
     setDragId(null);
     setHoverSlot(null);
@@ -221,6 +247,15 @@ export function LineupScreen(props: Props) {
     }, 0);
     if (cancelled) {
       setMessage("Movimento cancelado. Escalação preservada.");
+      return;
+    }
+    const reserveTarget = document.elementFromPoint?.(event.clientX, event.clientY)?.closest<HTMLElement>("[data-reserve]");
+    if (reserveTarget && bench.some((player) => player.id === current.id)) {
+      const targetId = Number(reserveTarget.dataset.reserve);
+      if (targetId !== current.id) {
+        onReorderBench(current.id, targetId);
+        setMessage("Ordem dos reservas atualizada.");
+      } else setMessage("Reserva mantido no mesmo lugar.");
       return;
     }
     const rect = field.current?.getBoundingClientRect();
@@ -272,6 +307,8 @@ export function LineupScreen(props: Props) {
       }}
       onKeyDown={(e) => {
         if (e.key === "Escape") {
+          if (detailPlayer) { setDetailPlayer(null); return; }
+          if (holdTimer.current) clearTimeout(holdTimer.current);
           const current = gesture.current;
           gesture.current = null;
           if (current?.moved)
@@ -680,6 +717,7 @@ export function LineupScreen(props: Props) {
                   "Atacantes",
                 ]}
               />
+              <button className={styles.detailButton} disabled={!selectedPlayer || !bench.some((p) => p.id === selectedPlayer.id)} onClick={(event) => { detailOrigin.current = event.currentTarget; setDetailPlayer(selectedPlayer); }}>Ver ficha do reserva selecionado</button>
               <div
                 className={styles.bench}
                 style={
@@ -696,6 +734,12 @@ export function LineupScreen(props: Props) {
                   <button
                     key={player.id}
                     onClick={() => select(player.id)}
+                    onDoubleClick={(event) => { detailOrigin.current = event.currentTarget; setDetailPlayer(player); }}
+                    onKeyDown={(event) => { if (event.key.toLowerCase() === "i") { event.preventDefault(); detailOrigin.current = event.currentTarget; setDetailPlayer(player); } }}
+                    data-player={player.id}
+                    data-reserve={player.id}
+                    title="Dois cliques para detalhes; segure e arraste para mover"
+                    aria-label={`${player.name}, ${fifaPosition(player)}, força ${player.overall}. Dois cliques ou tecla I para detalhes`}
                     aria-pressed={selectedPlayer?.id === player.id}
                     className={styles.reserve}
                   >
@@ -708,13 +752,7 @@ export function LineupScreen(props: Props) {
                     </span>
                     <span>
                       <b>{player.name}</b>
-                      <small>
-                        {fifaPosition(player)} · {player.age} anos · Energia{" "}
-                        {player.energy}%
-                      </small>
-                      <i className={styles.energy}>
-                        <span style={{ width: `${player.energy}%` }} />
-                      </i>
+                      <small>{fifaPosition(player)}</small>
                     </span>
                     <strong>{player.overall}</strong>
                   </button>
@@ -733,6 +771,25 @@ export function LineupScreen(props: Props) {
           <span>Organize. Ajuste. Entre em campo.</span>
         </footer>
       </div>
+      {detailPlayer && <div className={styles.modalBackdrop} onMouseDown={(event) => { if (event.target === event.currentTarget) setDetailPlayer(null); }}>
+        <section className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="reserve-detail-title" onKeyDown={(event) => {
+          if (event.key !== "Tab") return;
+          const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"));
+          if (!buttons.length) return;
+          if (event.shiftKey && document.activeElement === buttons[0]) { event.preventDefault(); buttons[buttons.length - 1].focus(); }
+          else if (!event.shiftKey && document.activeElement === buttons[buttons.length - 1]) { event.preventDefault(); buttons[0].focus(); }
+        }}>
+          <header><div><p className={styles.eyebrow}>FICHA DO RESERVA</p><h2 id="reserve-detail-title">{detailPlayer.name}</h2></div><button ref={detailClose} onClick={() => setDetailPlayer(null)} aria-label="Fechar ficha">×</button></header>
+          <div className={styles.detailGrid}>
+            <p><span>Posição</span><strong>{fifaPosition(detailPlayer)}</strong></p><p><span>Força</span><strong>{detailPlayer.overall}</strong></p><p><span>Energia</span><strong>{detailPlayer.energy}%</strong></p><p><span>Idade</span><strong>{detailPlayer.age} anos</strong></p><p><span>Gols</span><strong>{detailPlayer.goals}</strong></p><p><span>Assistências</span><strong>{detailPlayer.assists}</strong></p><p><span>Nota média</span><strong>{detailPlayer.avgRating?.toFixed(1) ?? "—"}</strong></p><p><span>Contrato até</span><strong>{detailPlayer.contractUntil}</strong></p>
+          </div>
+          <p className={styles.note}>Qualidades: {detailPlayer.traits || "Não informadas"}</p>
+          <div className={styles.modalActions}>
+            <button disabled={bench.findIndex((p) => p.id === detailPlayer.id) <= 0} onClick={() => { const i = bench.findIndex((p) => p.id === detailPlayer.id); if (i > 0) onReorderBench(detailPlayer.id, bench[i - 1].id); }}>← Mover no banco</button>
+            <button disabled={bench.findIndex((p) => p.id === detailPlayer.id) >= bench.length - 1} onClick={() => { const i = bench.findIndex((p) => p.id === detailPlayer.id); if (i >= 0 && i < bench.length - 1) onReorderBench(detailPlayer.id, bench[i + 1].id); }}>Mover no banco →</button>
+          </div>
+        </section>
+      </div>}
       <div
         ref={ghost}
         className={styles.ghost}

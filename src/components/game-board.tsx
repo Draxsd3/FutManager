@@ -573,6 +573,19 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     void persistCareerExtras(playerCareers, result.positions, result.starters);
   }
 
+  function reorderBench(id: number, targetId: number) {
+    const reserves = squad.filter((player) => !starters.includes(player.id));
+    const from = reserves.findIndex((player) => player.id === id);
+    const to = reserves.findIndex((player) => player.id === targetId);
+    if (from < 0 || to < 0 || from === to) return;
+    const reordered = [...reserves];
+    const [player] = reordered.splice(from, 1);
+    reordered.splice(to, 0, player);
+    let index = 0;
+    const nextSquad = squad.map((player) => starters.includes(player.id) ? player : reordered[index++]);
+    setCareerSquad(nextSquad);
+  }
+
   function openLineup() {
     // Revisiting tactics must not discard the user's XI or manually placed players.
     if (starters.length !== 11) {
@@ -868,6 +881,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           setFocus={setFocus}
           startersData={startersData}
           bench={bench}
+          onReorderBench={reorderBench}
           selectedPlayer={selectedPlayerData}
           onSelectPlayer={setSelectedPlayer}
           onPlacePlayer={placeLineupPlayer}

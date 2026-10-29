@@ -257,3 +257,7 @@ A prancheta deixa de esticar o campo à largura inteira da coluna. Seu tamanho
 telas estreitas. São proporções de interface, não um modelo de medidas físicas
 de estádio. Camisas/textos acompanham a largura útil do campo. Banco completo
 permanece ao lado, sem rolagem principal.
+
+### Banco de reservas compacto
+
+A prancheta mostra nome, posição e força dos reservas sobre uma imagem ilustrativa de banco. Dois cliques abrem a ficha; pelo teclado, selecione o jogador e use o botão de ficha ou a tecla I. Segure e arraste para o campo/titular para substituir ou para outro reserva para mudar a ordem. A ficha também permite reordenar por botões. A ordem é salva com o elenco da carreira; Escape cancela um arraste ou fecha a ficha.
