@@ -21,7 +21,6 @@ import { ClubSectionScreen, type ClubSection } from "@/components/screens/club-s
 import {
   squad as initialSquad,
   buildStartingXI,
-  buildRoundFixtures,
   type DivisionKey,
   type TableRow,
   type TopScorer,
@@ -35,6 +34,7 @@ import { mergeCareerSaves } from "@/lib/game/save-utils";
 import { isMenuPage } from "@/lib/game/session";
 import { agendaOptions, type AgendaView } from "@/components/screens/agenda-screen";
 import type { CareerProgress } from "@/lib/game/progress";
+import { otherScore, simulateAction } from "@/lib/game/live-match";
 import {
   deleteCloudSave,
   readCloudDatabase,
@@ -213,45 +213,35 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     }, 0) /
       (startersData.length || 1),
   );
-  const possession = Math.min(78, Math.max(35, 50 + strength - 74));
-  const shots = Math.max(1, Math.floor(minute / 10) + Math.floor(homeScore * 3));
-  const onGoalStat = `${Math.max(1, Math.floor(shots * 0.6))}/${Math.max(0, shots - Math.floor(shots * 0.6))}`;
-  const tackles = Math.max(2, Math.floor(minute / 8));
-  const passErrors = Math.max(1, Math.floor((100 - strength) / 6));
+  const actionEvents = events.filter((event) => event.scene);
+  const possession = actionEvents.length ? Math.round(100 * actionEvents.filter((event) => event.scene?.team === "home").length / actionEvents.length) : 50;
+  const shots = events.filter((event) => event.scene?.team === "home" && (event.scene.action === "shot" || event.scene.action === "goal")).length;
+  const onGoalStat = `${events.filter((event) => event.scene?.team === "home" && event.scene.action === "goal").length}/${events.filter((event) => event.scene?.team === "home" && event.scene.action === "shot").length}`;
+  const tackles = events.filter((event) => event.scene?.action === "tackle" && event.scene.team === "home").length;
+  const passErrors = 0; // The current action model does not yet simulate misplaced passes.
 
-  const fixtures = useMemo(
-    () => buildRoundFixtures(division, club, opponent, homeScore, awayScore),
-    [division, club, opponent, homeScore, awayScore],
-  );
+  const fixtures = useMemo(() => {
+    const others = divisionClubNames.filter((name) => name !== club && name !== opponent);
+    const live = page === "matchOverview" || page === "result";
+    const result = [{ stadium: "", attendance: 0, home: club, away: opponent, homeScore, awayScore, live: true }];
+    for (let i = 0; i + 1 < others.length; i += 2) {
+      const [h, a] = live ? otherScore(others[i], others[i + 1], round, minute) : [0, 0];
+      result.push({ stadium: "", attendance: 0, home: others[i], away: others[i + 1], homeScore: h, awayScore: a, live: false });
+    }
+    return result;
+  }, [divisionClubNames, club, opponent, homeScore, awayScore, page, round, minute]);
 
   useEffect(() => {
     if (page !== "matchOverview" || !matchRunning || detailOpen || minute >= 90) return;
     const timer = window.setTimeout(() => {
       const nextMinute = Math.min(90, minute + 1);
-      const strengthFactor = (strength - 74) * 0.001;
-      const homeGoal = Math.random() < Math.max(0.006, 0.016 + strengthFactor);
-      const awayGoal = Math.random() < Math.max(0.006, 0.014 - strengthFactor / 2);
-      const card = Math.random() < 0.018;
-      const half: 1 | 2 = nextMinute <= 45 ? 1 : 2;
-
+      const event = simulateAction({ minute: nextMinute, starters: startersData, formation, positions: manualPositions, opponent, strength });
       setMinute(nextMinute);
-      setEvents((current) => {
-        const updated = [...current];
-        if (homeGoal) {
-          const attackingPlayers = startersData.filter((player) => player.position === "A" || player.position === "M");
-          const scorerPool = attackingPlayers.length ? attackingPlayers : startersData;
-          const scorer = scorerPool[Math.floor(Math.random() * scorerPool.length)]?.name ?? "Atacante";
-          updated.push({ minute: nextMinute, half, text: `Gol de ${scorer}` });
-        }
-        if (awayGoal) updated.push({ minute: nextMinute, half, text: `Gol do ${opponent}` });
-        if (card) {
-          const player = startersData[Math.floor(Math.random() * startersData.length)];
-          if (player) updated.push({ minute: nextMinute, half, text: player.name, card: "yellow" });
-        }
-        return updated;
-      });
-      if (homeGoal) setHomeScore((score) => score + 1);
-      if (awayGoal) setAwayScore((score) => score + 1);
+      setEvents((current) => [...current, event]);
+      if (event.scene?.action === "goal") {
+        if (event.scene.team === "home") setHomeScore((score) => score + 1);
+        else setAwayScore((score) => score + 1);
+      }
       if (nextMinute === 45) {
         setMatchRunning(false);
         setHalftimeWaiting(true);
@@ -262,7 +252,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       }
     }, 700 / matchSpeed);
     return () => window.clearTimeout(timer);
-  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, page, startersData, strength]);
+  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, page, startersData, formation, manualPositions, strength]);
 
   useEffect(() => {
     if (page !== "matchOverview" || minute !== 90 || detailOpen) return;
