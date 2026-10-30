@@ -1,7 +1,7 @@
 "use client";
 
 import type { Player, RoundFixture } from "@/lib/game/mock-data";
-import { isHighlight, type MatchEvent } from "@/lib/game/live-match";
+import { isHighlight, type MatchEvent, type MatchPlayerRating, type MatchWeather } from "@/lib/game/live-match";
 import { ClassicIcon } from "@/components/ui/classic-icon";
 
 export function ResultScreen({
@@ -13,6 +13,10 @@ export function ResultScreen({
   awayScore,
   startersData,
   events,
+  weather,
+  motivationHome,
+  motivationAway,
+  playerRatings,
   possession,
   shots,
   onGoal,
@@ -28,6 +32,10 @@ export function ResultScreen({
   awayScore: number;
   startersData: Player[];
   events: MatchEvent[];
+  weather?: MatchWeather;
+  motivationHome?: number;
+  motivationAway?: number;
+  playerRatings: MatchPlayerRating[];
   possession: number;
   shots: number;
   onGoal: string;
@@ -79,18 +87,23 @@ export function ResultScreen({
             <b className="text-lg">{opponent}</b>
           </div>
 
+          <div className="mx-4 mt-3 flex flex-wrap items-center justify-between gap-2 rounded border border-[#3e7448] bg-[#102b18] px-4 py-3 text-xs text-white/80">
+            <span><b className="text-[#f1d457]">CLIMA SIMULADO</b> · {weather ? `${weather.label}, ${weather.temperatureC} °C, vento ${weather.windKmh} km/h` : "condições indisponíveis"}</span>
+            <span>Motivação estimada / 100 · {motivationHome ?? "—"} × {motivationAway ?? "—"}</span>
+            <span>{events.filter((event) => event.scene?.action === "foul").length} faltas · {events.filter((event) => event.card).length} cartões · {passErrors} passes interceptados</span>
+          </div>
+
           <div className="grid gap-3 p-4 md:grid-cols-3">
-            <Panel title={club}>
-              {startersData.map((player) => (
-                <p key={player.id} className="flex justify-between text-[12px]">
-                  <span className="truncate">
-                    {player.position} · {player.name}
+            <Panel title={`${club} · notas dos atletas`}>
+              {startersData.map((player) => {
+                const rating = playerRatings.find((item) => item.playerId === player.id);
+                return <p key={player.id} className="flex items-start justify-between gap-2 text-[12px]">
+                  <span className="min-w-0 truncate">
+                    {player.position} · {player.name}<small className="block text-[10px] text-white/50">{rating?.goals ? `${rating.goals} gol${rating.goals === 1 ? "" : "s"}` : ""}{rating?.assists ? ` · ${rating.assists} assist.` : ""}{rating?.tackles ? ` · ${rating.tackles} desarmes` : ""}{rating?.saves ? ` · ${rating.saves} defesas` : ""}</small>
                   </span>
-                  <span className="font-bold">
-                    {(6 + player.overall / 30).toFixed(1)}
-                  </span>
-                </p>
-              ))}
+                  <span className="font-bold text-[#f1d457]">{rating?.rating.toFixed(1) ?? "—"}</span>
+                </p>;
+              })}
             </Panel>
 
             <Panel title="Melhores momentos">
