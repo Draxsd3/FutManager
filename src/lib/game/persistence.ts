@@ -103,6 +103,7 @@ export async function readCloudDatabase(userId: string): Promise<EditorDatabase 
       ownGoals: row.own_goals,
       averageRating: row.average_rating === null ? null : Number(row.average_rating),
       contractEndsOn: row.contract_ends_on,
+      marketStatus: row.market_status ?? "normal",
     })) as EditorPlayer[],
   };
 }
@@ -172,6 +173,7 @@ export async function writeCloudDatabase(database: EditorDatabase, expectedUserI
       own_goals: player.ownGoals,
       average_rating: player.averageRating,
       contract_ends_on: player.contractEndsOn,
+      market_status: player.marketStatus ?? "normal",
       updated_at: new Date().toISOString(),
     })));
     if (error) throw error;

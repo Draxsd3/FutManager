@@ -34,7 +34,7 @@ export type ManualPosition = { left: number; top: number };
 
 export function createPlayerCareer(player: Player, club: string, season = 2026): PlayerCareerRecord {
   return {
-    marketStatus: "normal",
+    marketStatus: player.marketAvailability === "sale" || player.marketAvailability === "loan" ? player.marketAvailability : "normal",
     contractUntil: player.contractUntil,
     salary: player.salary,
     retirementYear: null,
@@ -150,6 +150,7 @@ export type ContractOffer = { salary: number; years: number; releaseClause: numb
 export type TransferOffer = { id: string; club: string; fee: number; status: "pending" | "rejected" | "accepted" };
 export type MarketAction =
   | { type: "list" }
+  | { type: "loan" }
   | { type: "unlist" }
   | { type: "contract"; offer: ContractOffer }
   | { type: "offer"; club: string; fee: number; id: string }
@@ -169,7 +170,8 @@ export function offerEligibility(record: PlayerCareerRecord, fee: number): boole
 }
 
 export function applyNegotiation(record: PlayerCareerRecord, action: MarketAction, gameDate: string, ownClub: string): { record: PlayerCareerRecord; message: string; transfer?: TransferOffer } {
-  if (action.type === "list") return { record: { ...record, marketStatus: "sale" }, message: "Atleta disponível no mercado." };
+  if (action.type === "list") return { record: { ...record, marketStatus: "sale" }, message: "Atleta listado para venda." };
+  if (action.type === "loan") return { record: { ...record, marketStatus: "loan" }, message: "Atleta listado para empréstimo." };
   if (action.type === "unlist") return { record: { ...record, marketStatus: "normal" }, message: "Atleta retirado do mercado." };
   if (action.type === "contract") {
     const error = validateContractOffer(action.offer);

@@ -16,6 +16,7 @@ type PlayerRow = {
   energy: number; salary_monthly_brl: number; market_value_brl: number;
   goals: number; assists: number; own_goals: number; average_rating: number | null;
   contract_ends_on: string;
+  market_status: "normal" | "sale" | "loan";
 };
 
 export type CareerPlayerRow = {
