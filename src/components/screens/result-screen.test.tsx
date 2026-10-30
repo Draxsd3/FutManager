@@ -22,7 +22,7 @@ it("shows the Google-inspired post-match tabs, both formations, stats and all ro
     { minute: 20, half: 1 as const, team: "home" as const, text: "Passe de rotina", scene: { action: "pass" as const, team: "home" as const, actorIndex: 0, targetIndex: 1, from: { x: 40, y: 40 }, to: { x: 50, y: 50 }, possessionAfter: "home" as const } },
   ];
   render(<ResultScreen
-    competition="Campeonato Estadual" round={8}
+    competition="Campeonato Estadual" trophyAsset="/game-assets/trophies/catalog/tr_estadual_RJ.png" round={8}
     fixtures={[
       { home: "Flamengo", away: "Botafogo", stadium: "Maracanã", attendance: 0, homeScore: 1, awayScore: 0 },
       { home: "Palmeiras", away: "Corinthians", stadium: "Allianz Parque", attendance: 0, homeScore: 2, awayScore: 1 },
@@ -38,7 +38,7 @@ it("shows the Google-inspired post-match tabs, both formations, stats and all ro
   />);
 
   expect(screen.getByText("Campeonato Estadual")).toBeTruthy();
-  expect(screen.getByLabelText("Troféu do campeonato")).toBeTruthy();
+  expect(screen.getByRole("img", { name: "Troféu Campeonato Estadual" }).getAttribute("src")).toContain("tr_estadual_RJ.png");
   expect(document.body.textContent).toContain("1–0");
   expect(screen.getByText("GOL! Rossi finaliza.")).toBeTruthy();
   expect(screen.getByText("Reserva entrou no lugar do titular")).toBeTruthy();

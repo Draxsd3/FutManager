@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/ui/app-shell";
 import { CompetitionCenter, type CareerCompetitionView } from "@/components/ui/competition-center";
+import { buildCompetitionCatalog } from "@/lib/game/competitions";
+import { competitionTrophyAsset } from "@/lib/game/competition-trophies";
 import { CareerPlayerProfile } from "@/components/ui/career-player-profile";
 import type { NavItem } from "@/components/ui/top-nav";
 import { NewCareerScreen } from "@/components/screens/new-career-screen";
@@ -420,6 +422,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   const activeLeagueId = `league:${managedClubRecord?.country ?? "Brasil"}:${division}`;
   const competitionName = activeFixture?.competitionName ?? "Temporada encerrada";
+  const trophyEntry = database && activeFixture ? buildCompetitionCatalog(database).find((entry) => entry.id === activeFixture.competitionId) : undefined;
+  const matchTrophy = trophyEntry ? competitionTrophyAsset(trophyEntry) : null;
   const competitionRoundLabel = activeFixture?.roundLabel ?? `${round}ª rodada`;
   const competitionRound = activeFixture?.competitionRound ?? round;
   const displayedHomeScore = userIsHome ? homeScore : awayScore;
@@ -1224,6 +1228,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           rulesLoading={matchRulesLoading}
           rulesError={matchRulesError}
           competition={competitionName}
+          trophyAsset={matchTrophy}
           round={competitionRound}
           roundLabel={competitionRoundLabel}
           minute={minute}
@@ -1275,6 +1280,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   return (
     <>
       <ResultScreen
+      trophyAsset={matchTrophy}
       competition={competitionName}
       round={competitionRound}
       roundLabel={competitionRoundLabel}
