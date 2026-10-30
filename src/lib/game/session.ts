@@ -14,6 +14,7 @@ const resumableCareerPages = new Set([
   "finances",
   "trophies",
   "training",
+  "settings",
 ]);
 const ACTIVE_CAREER_SESSION_KEY = "futmanager.activeCareerSession.v1";
 

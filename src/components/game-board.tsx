@@ -17,6 +17,8 @@ import { ResultScreen } from "@/components/screens/result-screen";
 import { StartMenuScreen } from "@/components/screens/start-menu-screen";
 import { SavesScreen } from "@/components/screens/saves-screen";
 import { EditorScreen } from "@/components/screens/editor-screen";
+import { WorldScreens, historyOptions, type HistoryView } from "@/components/screens/world-screens";
+import { recruitPlayer } from "@/lib/game/recruitment";
 import { ClubSectionScreen, type ClubSection } from "@/components/screens/club-section-screen";
 import {
   squad as initialSquad,
@@ -54,7 +56,7 @@ import {
   writeLocalSaves,
 } from "@/lib/game/persistence";
 
-type Page = "menu" | "new" | "saves" | "editor" | "hub" | "lineup" | "matchOverview" | "result" | "agenda" | "stadium" | "juniors" | "teams" | "search" | "coaches" | "history" | "finances" | "trophies" | "training";
+type Page = "menu" | "new" | "saves" | "editor" | "hub" | "lineup" | "matchOverview" | "result" | "agenda" | "stadium" | "juniors" | "teams" | "search" | "coaches" | "history" | "finances" | "trophies" | "training" | "settings";
 
 const sectionByPage: Partial<Record<Page, ClubSection>> = {
   agenda: "agenda",
@@ -168,6 +170,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [substitutionsLeft, setSubstitutionsLeft] = useState(5);
   const [detailOpen, setDetailOpen] = useState(false);
   const [matchRunning, setMatchRunning] = useState(false);
+  const [defaultMatchSpeed, setDefaultMatchSpeed] = useState<1 | 2 | 4>(1);
+  const [historyView, setHistoryView] = useState<HistoryView>("players");
   const [matchSpeed, setMatchSpeed] = useState<1 | 2 | 4>(1);
   const [halftimeWaiting, setHalftimeWaiting] = useState(false);
   const [matchPreparation, setMatchPreparation] = useState<MatchPreparation | null>(null);
@@ -180,7 +184,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const progress: CareerProgress = {
     page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, manualPositions, minute, homeScore, awayScore,
-    events, participation, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, halftimeWaiting,
+    events, participation, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
   };
   const progressRef = useRef(progress);
   useEffect(() => { progressRef.current = progress; });
@@ -199,7 +203,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     pendingCloudSave.current = next;
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, formation, style, marking, focus,
     starters, careerSquad, playerCareers, manualPositions, minute, homeScore, awayScore, events,
-    participation, substitutionsLeft, detailOpen, matchSpeed, halftimeWaiting, matchPreparation, userId]);
+    participation, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, userId]);
 
   useEffect(() => {
     if (!hydrationDone) return;
@@ -390,10 +394,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     { icon: "sport", label: "Estádio", active: page === "stadium", onClick: () => navigate("stadium") },
     { icon: "user_green", label: "Juniores", active: page === "juniors", onClick: () => navigate("juniors") },
     { icon: "t_shirt_print", label: "Times", active: page === "teams", onClick: () => navigate("teams") },
-    { icon: "magnifier", label: "Procura", active: page === "search", onClick: () => navigate("search") },
+    { icon: "magnifier", label: "Mercado", active: page === "search", onClick: () => navigate("search") },
     { icon: "user_suit", label: "Técnicos", active: page === "coaches", onClick: () => navigate("coaches") },
-    { icon: "clock_history_frame", label: "História", active: page === "history", onClick: () => navigate("history") },
-    { icon: "door_out", label: "Menu inicial", onClick: () => { leaveActiveCareer("menu"); } },
+    { icon: "clock_history_frame", label: "História", active: page === "history", onClick: () => navigate("history"), children: historyOptions.map((option) => ({ label: option.label, description: option.description, onClick: () => { setHistoryView(option.id); navigate("history"); } })) },
+    { icon: "door_out", label: "Configurações", active: page === "settings", onClick: () => navigate("settings") },
   ];
 
   function navigate(next: Page) {
@@ -414,6 +418,21 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setCareerLoaded(false);
     setActiveSaveId(null);
     setPage(nextPage);
+  }
+
+
+  function hirePlayer(id: string): string {
+    if (!database) return "Banco de dados indisponível.";
+    const result = recruitPlayer(database, squad, club, budget, id, Object.keys(playerCareers).map(Number));
+    if (result.squad === squad) return result.message;
+    setCareerSquad(result.squad);
+    setBudget(result.budget);
+    if (activeSaveId) {
+      const current = saves.find((save) => save.id === activeSaveId);
+      if (current) void persistSave({ ...current, budget: result.budget, updatedAt: new Date().toISOString(), playerCareers, manualPositions,
+        progress: { ...progressRef.current, careerSquad: result.squad, budget: result.budget, playerCareers, manualPositions } });
+    }
+    return result.message;
   }
 
   function openQuickAction(action: "roster" | "finances" | "trophies" | "training") {
@@ -505,14 +524,16 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       round: 1, budget: 12624, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
       careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
-      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1 };
+      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1 };
     setActiveSaveId(save.id);
     setRound(1);
+    setDefaultMatchSpeed(1);
     setBudget(12624);
     setFormation("4-3-3");
     setStyle("Equilibrado");
     setMarking("Leve");
     setFocus("Pelo meio");
+    setDefaultMatchSpeed(1);
     setMinute(0);
     setHomeScore(0);
     setAwayScore(0);
@@ -572,6 +593,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       setSubstitutionsLeft(state.substitutionsLeft);
       setHalftimeWaiting(state.halftimeWaiting);
       setMatchSpeed(state.matchSpeed);
+      setDefaultMatchSpeed(state.defaultMatchSpeed ?? 1);
       setMatchPreparation(state.matchPreparation ?? null);
       setMatchRulesError(null);
       setDetailOpen(false);
@@ -592,6 +614,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setStyle("Equilibrado");
     setMarking("Leve");
     setFocus("Pelo meio");
+    setDefaultMatchSpeed(1);
     setMinute(0);
     setEvents([]);
     setHalftimeWaiting(false);
@@ -801,7 +824,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setSubstitutionOut(null);
     setDetailOpen(false);
     setHalftimeWaiting(false);
-    setMatchSpeed(1);
+    setMatchSpeed(defaultMatchSpeed);
     setMatchRunning(true);
     setPage("matchOverview");
   }
@@ -978,12 +1001,14 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       </>
     );
 
+  if (page === "settings") return <AppShell nav={nav} teamName={club} clubColors={database.clubs.find((item) => item.name === club)} date="22/01/2026"><section className="h-full overflow-auto bg-[#f1f5f2] p-6 text-[#263a2c]"><div className="mx-auto max-w-3xl space-y-4"><header className="rounded-2xl bg-[#173428] p-6 text-white"><p className="text-xs uppercase tracking-widest text-[#9bc9a8]">Carreira / Preferências</p><h1 className="mt-2 text-2xl font-black">Configurações</h1><p className="mt-1 text-sm text-[#c1d5c6]">Personalize sua experiência ou volte ao menu inicial.</p></header><div className="rounded-2xl border border-[#dfe9e1] bg-white p-6"><h2 className="text-lg font-black">Partida</h2><label className="mt-4 block text-sm font-bold">Velocidade padrão para novas partidas <select value={defaultMatchSpeed} onChange={(e) => setDefaultMatchSpeed(Number(e.target.value) as 1 | 2 | 4)} className="ml-3 rounded-lg border border-[#d5e0d8] bg-white p-2"><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><p className="mt-2 text-xs text-[#718477]">Salva na carreira; pode ser alterada durante cada jogo.</p></div><div className="rounded-2xl border border-[#dfe9e1] bg-white p-6"><h2 className="text-lg font-black">Sessão</h2><p className="mt-1 text-sm text-[#718477]">A carreira é salva antes de voltar ao menu inicial.</p><button onClick={() => leaveActiveCareer("menu")} className="mt-4 rounded-lg bg-[#246e43] px-4 py-2 text-xs font-bold text-white">Voltar ao menu inicial</button></div></div></section></AppShell>;
+
   const managementSection = sectionByPage[page];
   if (managementSection)
     return (
       <>
         <AppShell nav={nav} teamName={club} clubColors={database.clubs.find((item) => item.name === club)} date="22/01/2026">
-          <ClubSectionScreen
+          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onRecruit={hirePlayer} onBack={() => navigate("hub")} /> : <ClubSectionScreen
             section={managementSection}
             agendaView={agendaView}
             onAgendaViewChange={setAgendaView}
@@ -1001,7 +1026,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             onBack={() => navigate("hub")}
             onOpenPlayer={openPlayerProfile}
             onTrainPlayer={trainPlayer}
-          />
+          />}
         </AppShell>
         {renderStandings()}
         {profilePlayer !== null && (() => {

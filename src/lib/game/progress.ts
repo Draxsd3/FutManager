@@ -37,6 +37,7 @@ export type CareerProgress = {
   detailOpen: boolean;
   matchRunning: boolean;
   matchSpeed: 1 | 2 | 4;
+  defaultMatchSpeed?: 1 | 2 | 4;
   halftimeWaiting: boolean;
 };
 
