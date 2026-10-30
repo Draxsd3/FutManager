@@ -19,6 +19,7 @@ import { SavesScreen } from "@/components/screens/saves-screen";
 import { EditorScreen } from "@/components/screens/editor-screen";
 import { WorldScreens, historyOptions, type HistoryView } from "@/components/screens/world-screens";
 import { recruitPlayer } from "@/lib/game/recruitment";
+import { databaseWithCompletedTransfers, proposeTransfer, respondToTransferNegotiation, type TransferNegotiation, type TransferNegotiationAction } from "@/lib/game/transfers";
 import { ClubSectionScreen, type ClubSection } from "@/components/screens/club-section-screen";
 import {
   squad as initialSquad,
@@ -164,6 +165,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [manualPositions, setManualPositions] = useState<Record<number, ManualPosition>>({});
   const [competitionSeason, setCompetitionSeason] = useState<CareerSeason | undefined>();
   const [activeFixtureId, setActiveFixtureId] = useState<string>();
+  const [transferNegotiations, setTransferNegotiations] = useState<TransferNegotiation[]>([]);
+  const careerDatabase = useMemo(() => database ? databaseWithCompletedTransfers(database, transferNegotiations) : null, [database, transferNegotiations]);
 
   const [minute, setMinute] = useState(0);
   const [homeScore, setHomeScore] = useState(0);
@@ -188,7 +191,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, manualPositions, minute, homeScore, awayScore,
     events, participation, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
-    competitionSeason, activeFixtureId,
+    competitionSeason, activeFixtureId, transferNegotiations,
   };
   const progressRef = useRef(progress);
   useEffect(() => { progressRef.current = progress; });
@@ -207,7 +210,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     pendingCloudSave.current = next;
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, formation, style, marking, focus,
     starters, careerSquad, playerCareers, manualPositions, minute, homeScore, awayScore, events,
-    participation, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, activeFixtureId, userId]);
+    participation, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, activeFixtureId, transferNegotiations, userId]);
 
   useEffect(() => {
     if (!hydrationDone) return;
@@ -242,8 +245,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const opponent = activeFixture ? (userIsHome ? activeFixture.away : activeFixture.home) : awayTeamName;
   const opponentFormation = "4-3-3";
   const opponentSquad = useMemo(
-    () => (database ? buildSquadFromDatabase(database, opponent) : null) ?? initialSquad,
-    [database, opponent],
+    () => (careerDatabase ? buildSquadFromDatabase(careerDatabase, opponent) : null) ?? initialSquad,
+    [careerDatabase, opponent],
   );
   const opponentStarters = useMemo(
     () => buildStartingXI(opponentFormation, opponentSquad).map((id) => opponentSquad.find((player) => player.id === id)!).filter(Boolean),
@@ -384,12 +387,12 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         }]));
         const actualHome = userIsHome ? home : away;
         const actualAway = userIsHome ? away : home;
-        const contributions = database && managedClubRecord ? playerContributionsFromMatch({ database, clubId: managedClubRecord.id, squad, events: finalEvents, participation: finalParticipation, ratings: ratingById }) : [];
+        const contributions = careerDatabase && managedClubRecord ? playerContributionsFromMatch({ database: careerDatabase, clubId: managedClubRecord.id, squad, events: finalEvents, participation: finalParticipation, ratings: ratingById }) : [];
         if (competitionSeason && activeFixture) {
           const winnerClubId = activeFixture.type === "cup" && actualHome === actualAway
             ? (seededRandom(`${activeFixture.id}|penalties`)() < 0.5 ? activeFixture.homeClubId : activeFixture.awayClubId)
             : undefined;
-          setCompetitionSeason((current) => current ? completeCareerFixture(current, activeFixture.id, { home: actualHome, away: actualAway, winnerClubId, playerContributions: contributions }, database!) : current);
+          setCompetitionSeason((current) => current ? completeCareerFixture(current, activeFixture.id, { home: actualHome, away: actualAway, winnerClubId, playerContributions: contributions }, careerDatabase!) : current);
         }
         setPlayerCareers((current) => recordPlayerMatch(current, squad, club, finalParticipation, {
           key: activeFixture?.id ?? matchPreparation.matchKey,
@@ -406,7 +409,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       }
     }, 700 / matchSpeed);
     return () => window.clearTimeout(timer);
-  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, opponentFormation, opponentStarters, page, startersData, formation, manualPositions, style, marking, focus, matchPreparation, events, participation, starters, squad, club, round, homeScore, awayScore, userIsHome, activeFixture, competitionSeason, database, managedClubRecord, matchKey]);
+  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, opponentFormation, opponentStarters, page, startersData, formation, manualPositions, style, marking, focus, matchPreparation, events, participation, starters, squad, club, round, homeScore, awayScore, userIsHome, activeFixture, competitionSeason, database, careerDatabase, managedClubRecord, matchKey]);
 
   useEffect(() => {
     if (page !== "matchOverview" || minute !== 90 || detailOpen) return;
@@ -437,7 +440,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     .map((player) => ({ name: player.playerName, club: player.club, goals: player.goals, played: player.played }));
   const centerTopRatings: TopRating[] = centerPlayerStats.filter((player) => player.rating !== null && player.played > 0)
     .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 5)
-    .map((player) => ({ name: player.playerName, club: player.club, rating: player.rating ?? 0, played: player.played, role: database?.players.find((item) => item.id === player.playerId)?.primaryPosition ?? "M" }));
+    .map((player) => ({ name: player.playerName, club: player.club, rating: player.rating ?? 0, played: player.played, role: careerDatabase?.players.find((item) => item.id === player.playerId)?.primaryPosition ?? "M" }));
   const careerCompetitionData: Record<string, CareerCompetitionView> = {};
   for (const competitionId of new Set((competitionSeason?.fixtures ?? []).map((fixture) => fixture.competitionId))) {
     const competitionFixtures = (competitionSeason?.fixtures ?? []).filter((fixture) => fixture.competitionId === competitionId && fixture.status !== "cancelled");
@@ -464,7 +467,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         .map((player) => ({ name: player.playerName, club: player.club, goals: player.goals, played: player.played })),
       topRatings: playerStats.filter((player) => player.rating !== null && player.played > 0)
         .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 5)
-        .map((player) => ({ name: player.playerName, club: player.club, rating: player.rating ?? 0, played: player.played, role: database?.players.find((item) => item.id === player.playerId)?.primaryPosition ?? "M" })),
+        .map((player) => ({ name: player.playerName, club: player.club, rating: player.rating ?? 0, played: player.played, role: careerDatabase?.players.find((item) => item.id === player.playerId)?.primaryPosition ?? "M" })),
       matchesPlayed: scored.length,
       goals: scored.reduce((sum, fixture) => sum + (fixture.homeScore ?? 0) + (fixture.awayScore ?? 0), 0),
     };
@@ -504,18 +507,47 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
 
-  function hirePlayer(id: string): string {
+  function makeTransferOffer(playerId: string, feeBrl: number, wageSharePercent: number): string {
     if (!database) return "Banco de dados indisponível.";
-    const result = recruitPlayer(database, squad, club, budget, id, Object.keys(playerCareers).map(Number));
+    const buyer = database.clubs.find((item) => item.name === club);
+    if (!buyer) return "Clube comprador não encontrado.";
+    const result = proposeTransfer(database, transferNegotiations, {
+      id: crypto.randomUUID(), playerId, buyerClubId: buyer.id, feeBrl, wageSharePercent,
+    });
+    if (!result.negotiation) return result.message;
+    setTransferNegotiations((current) => [result.negotiation!, ...current]);
+    return result.message;
+  }
+
+  function handleTransferAction(id: string, action: TransferNegotiationAction): string {
+    const negotiation = transferNegotiations.find((item) => item.id === id);
+    if (!negotiation) return "Negociação não encontrada.";
+    if (action.type !== "complete") {
+      const result = respondToTransferNegotiation(negotiation, action);
+      setTransferNegotiations((current) => current.map((item) => item.id === id ? result.negotiation : item));
+      return result.message;
+    }
+    if (!database || negotiation.status !== "agreed" || negotiation.agreedFeeBrl === undefined) return "A proposta ainda não foi acordada.";
+    const gameDate = saves.find((save) => save.id === activeSaveId)?.inGameDate ?? new Date().toISOString().slice(0, 10);
+    const result = recruitPlayer(database, squad, club, budget, negotiation.playerId, Object.keys(playerCareers).map(Number), {
+      feeBrl: negotiation.agreedFeeBrl,
+      kind: negotiation.kind,
+      wageSharePercent: negotiation.agreedWageSharePercent ?? 0,
+      loanMonths: 6,
+      gameDate,
+    });
     if (result.squad === squad) return result.message;
+    const completed = respondToTransferNegotiation(negotiation, action);
+    const nextNegotiations = transferNegotiations.map((item) => item.id === id ? completed.negotiation : item);
     setCareerSquad(result.squad);
     setBudget(result.budget);
+    setTransferNegotiations(nextNegotiations);
     if (activeSaveId) {
       const current = saves.find((save) => save.id === activeSaveId);
       if (current) void persistSave({ ...current, budget: result.budget, updatedAt: new Date().toISOString(), playerCareers, manualPositions,
-        progress: { ...progressRef.current, careerSquad: result.squad, budget: result.budget, playerCareers, manualPositions } });
+        progress: { ...progressRef.current, careerSquad: result.squad, budget: result.budget, transferNegotiations: nextNegotiations, playerCareers, manualPositions } });
     }
-    return result.message;
+    return `${result.message} ${completed.message}`;
   }
 
   function openQuickAction(action: "roster" | "finances" | "trophies" | "training") {
@@ -614,10 +646,11 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       round: 1, budget: 12624, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
       careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
-      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, activeFixtureId: firstFixture?.id };
+      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, activeFixtureId: firstFixture?.id, transferNegotiations: [] };
     setActiveSaveId(save.id);
     setCompetitionSeason(newSeason);
     setActiveFixtureId(firstFixture?.id);
+    setTransferNegotiations([]);
     setRound(1);
     setDefaultMatchSpeed(1);
     setBudget(12624);
@@ -660,6 +693,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setBudget(save.budget);
     setPlayerCareers(save.playerCareers ?? {});
     setManualPositions(save.manualPositions ?? {});
+    setTransferNegotiations(save.progress?.transferNegotiations ?? []);
     setHomeScore(0);
     setAwayScore(0);
     setMatchRunning(false);
@@ -1113,7 +1147,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return (
       <>
         <AppShell nav={nav} teamName={club} clubColors={database.clubs.find((item) => item.name === club)} date="22/01/2026">
-          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onRecruit={hirePlayer} onBack={() => navigate("hub")} /> : <ClubSectionScreen
+          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
             section={managementSection}
             agendaView={agendaView}
             onAgendaViewChange={setAgendaView}

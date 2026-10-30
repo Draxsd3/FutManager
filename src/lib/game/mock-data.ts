@@ -21,6 +21,9 @@ export type Player = {
   contractUntil: string;
   marketValue: number; // em milhões
   photoDataUrl?: string | null;
+  acquisitionType?: "permanent" | "loan";
+  loanExpiresOn?: string;
+  marketAvailability?: "normal" | "sale" | "loan";
 };
 
 export type ClubTheme = {
