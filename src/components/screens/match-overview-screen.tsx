@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import type { RoundFixture } from "@/lib/game/mock-data";
 import { isHighlight, type MatchEvent, type MatchStatistics, type MatchWeather } from "@/lib/game/live-match";
 import { Crest } from "@/components/ui/club-sidebar";
@@ -47,8 +48,8 @@ function TimelineCard({ event, home }: { event: MatchEvent; home: boolean }) {
   </div>;
 }
 
-export function MatchOverviewScreen({ competition, round, roundLabel, minute, half, club, opponent, homeScore, awayScore, statistics, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, onRequestExit, weather, motivationHome, motivationAway, rulesLoading, rulesError }: {
-  competition: string; round: number; roundLabel?: string; minute: number; half: "1º tempo" | "2º tempo" | "fim";
+export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabel, minute, half, club, opponent, homeScore, awayScore, statistics, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, onRequestExit, weather, motivationHome, motivationAway, rulesLoading, rulesError }: {
+  competition: string; trophyAsset?: string | null; round: number; roundLabel?: string; minute: number; half: "1º tempo" | "2º tempo" | "fim";
   club: string; opponent: string; homeScore: number; awayScore: number; statistics: MatchStatistics; fixtures: RoundFixture[]; events: MatchEvent[];
   running: boolean; speed: 1 | 2 | 4; halftimeWaiting: boolean; onToggleRunning: () => void | Promise<void>;
   onSpeedChange: (speed: 1 | 2 | 4) => void; onOpenDetail: () => void; onRequestExit: () => void;
@@ -84,7 +85,7 @@ export function MatchOverviewScreen({ competition, round, roundLabel, minute, ha
     <section className={styles.shell}>
       <header className={styles.header}>
         <div className={styles.competitionTitle}>
-          <span className={styles.trophy} aria-label={`Taça do ${competition}`}><InterfaceIcon name="trophy" size={30} /></span>
+          <span className={styles.trophy}>{trophyAsset ? <Image src={trophyAsset} alt={`Troféu ${competition}`} width={38} height={42} unoptimized style={{ width: "80%", height: "88%", objectFit: "contain" }} /> : <span role="img" aria-label={`Troféu ${competition}`}><InterfaceIcon name="trophy" size={30} /></span>}</span>
           <div><span className={styles.eyebrow}>CENTRAL DA PARTIDA · RELATO TEXTUAL</span><h1>{competition}</h1><span className={styles.muted}>{roundLabel ?? `${round}ª rodada`}</span></div>
         </div>
         <div className={styles.status}><span className={running ? styles.liveDot : styles.dot} /><span>{status}</span><strong>{minute}&apos; <small>· {halftimeWaiting ? "Intervalo" : half}</small></strong></div>

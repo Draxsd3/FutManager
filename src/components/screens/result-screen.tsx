@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import type { Player, RoundFixture } from "@/lib/game/mock-data";
 import { isHighlight, type MatchEvent, type MatchPlayerRating, type MatchStatistics, type MatchWeather } from "@/lib/game/live-match";
 import { formationSlotRoles, formationSlots } from "@/lib/game/formations";
@@ -68,6 +69,7 @@ function FormationCard({ club, players, formation, ratings }: { club: string; pl
 
 export function ResultScreen({
   competition,
+  trophyAsset,
   round,
   roundLabel,
   fixtures,
@@ -89,6 +91,7 @@ export function ResultScreen({
   onContinue,
 }: {
   competition: string;
+  trophyAsset?: string | null;
   round: number;
   roundLabel?: string;
   fixtures: RoundFixture[];
@@ -120,7 +123,7 @@ export function ResultScreen({
     <div className={styles.layout}>
       <section className={styles.matchCard}>
         <header className={styles.header}>
-          <span className={styles.trophy} role="img" aria-label="Troféu do campeonato"><InterfaceIcon name="trophy" size={26} /></span>
+          <span className={styles.trophy}>{trophyAsset ? <Image src={trophyAsset} alt={`Troféu ${competition}`} width={38} height={42} unoptimized style={{ width: "80%", height: "88%", objectFit: "contain" }} /> : <span role="img" aria-label={`Troféu ${competition}`}><InterfaceIcon name="trophy" size={26} /></span>}</span>
           <div><span className={styles.eyebrow}>FIM DE JOGO · {roundLabel ?? `${round}ª RODADA`}</span><h1>{competition}</h1><span className={styles.dateLabel}>Resumo da partida</span></div>
         </header>
         <section className={styles.scoreboard} aria-label={`Resultado final: ${club} ${homeScore}, ${opponent} ${awayScore}`}>
