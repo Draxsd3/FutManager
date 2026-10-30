@@ -23,7 +23,8 @@ it("creates independent careers, preserves the lineup on returning home and open
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
   fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Técnico Alice" } });
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
-  fireEvent.click(await screen.findByRole("button", { name: "Menu inicial" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Configurações" }));
+  fireEvent.click(screen.getByRole("button", { name: "Voltar ao menu inicial" }));
   await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ });
   const first = readLocalSaves("alice")[0];
   expect(first.managerName).toBe("Técnico Alice");
@@ -33,7 +34,8 @@ it("creates independent careers, preserves the lineup on returning home and open
   fireEvent.click(screen.getByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
   fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Segunda Carreira" } });
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
-  fireEvent.click(await screen.findByRole("button", { name: "Menu inicial" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Configurações" }));
+  fireEvent.click(screen.getByRole("button", { name: "Voltar ao menu inicial" }));
   expect(readLocalSaves("alice")).toHaveLength(2);
   expect(readLocalSaves("alice").find((save) => save.id === first.id)?.progress?.starters).toEqual(first.progress?.starters);
 
@@ -45,7 +47,7 @@ it("creates independent careers, preserves the lineup on returning home and open
   const continueButtons = await screen.findAllByRole("button", { name: "CONTINUAR" });
   expect(continueButtons).toHaveLength(2);
   fireEvent.click(continueButtons[1]);
-  await screen.findByRole("button", { name: "Menu inicial" });
+  await screen.findByRole("button", { name: "Configurações" });
   await waitFor(() => expect(readLocalSaves("alice").find((save) => save.id === first.id)?.progress?.coach).toBe("Técnico Alice"));
 });
 
@@ -137,17 +139,19 @@ it("keeps club navigation internal and the top Menu inicial button returns to th
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
   fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Teste Navegação" } });
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
-  for (const destination of ["Agenda", "Estádio", "Juniores", "Times", "Procura", "Técnicos", "História"]) {
+  for (const destination of ["Agenda", "Estádio", "Juniores", "Times", "Mercado", "Técnicos", "História"]) {
     fireEvent.click(await screen.findByRole("button", { name: destination }));
     if (destination === "Agenda") fireEvent.click(screen.getByRole("menuitem", { name: /Jogos do seu time/ }));
+    if (destination === "História") fireEvent.click(screen.getByRole("menuitem", { name: /História dos jogadores/ }));
     expect(screen.queryByRole("button", { name: /Salvar e voltar ao início/ })).toBeNull();
-    expect(screen.getByRole("button", { name: "Menu inicial" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Configurações" })).toBeTruthy();
   }
   fireEvent.click(screen.getByRole("button", { name: "Principal" }));
   expect(screen.queryByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeNull();
   expect(screen.getByRole("button", { name: "Principal" }).className).toContain("bg-[var(--team-accent)]");
   expect(screen.getAllByRole("table").length).toBeGreaterThan(0);
-  fireEvent.click(screen.getByRole("button", { name: "Menu inicial" }));
+  fireEvent.click(screen.getByRole("button", { name: "Configurações" }));
+  fireEvent.click(screen.getByRole("button", { name: "Voltar ao menu inicial" }));
   expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
   expect(document.querySelector('[data-menu-version="minimal-v1"]')).toBeTruthy();
   expect(readLocalSaves("alice")[0].managerName).toBe("Teste Navegação");

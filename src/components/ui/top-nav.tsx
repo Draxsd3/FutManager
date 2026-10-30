@@ -68,7 +68,7 @@ function NavButton({ item }: { item: NavItem }) {
         }
         if (event.key === "Tab") setPosition(null);
       }}>
-      <p className={styles.menuTitle}>AGENDA DO CLUBE</p>
+      <p className={styles.menuTitle}>{item.label.toLocaleUpperCase("pt-BR")}</p>
       {item.children?.map((child, index) => <button key={child.label} type="button" role="menuitem" onClick={() => { setPosition(null); button.current?.focus(); child.onClick(); }} className={styles.menuItem}><span aria-hidden="true" className="text-xs text-[#92a398]">0{index + 1}</span><span><strong className="block text-xs">{child.label}</strong><small className="mt-1 block text-[10px] text-[#9aa6a1]">{child.description}</small></span><span aria-hidden="true" className="ml-auto">›</span></button>)}
     </div>, document.body)}
   </>;
