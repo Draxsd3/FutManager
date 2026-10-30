@@ -38,7 +38,7 @@ import {
 } from "@/lib/game/session";
 import { agendaOptions, type AgendaView } from "@/components/screens/agenda-screen";
 import type { CareerProgress, MatchPreparation } from "@/lib/game/progress";
-import { calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, otherScore, seededRandom, simulateAction } from "@/lib/game/live-match";
+import { calculateMatchStatistics, calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, otherScore, seededRandom, simulateAction } from "@/lib/game/live-match";
 import { loadMatchRules, type MatchRules } from "@/lib/game/match-rules";
 import { visualFormation } from "@/lib/game/live-positioning";
 import {
@@ -263,20 +263,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     motivationHome: homeMotivation,
     motivationAway: awayMotivation,
   });
-  const actionEvents = events.filter((event) => event.scene);
-  const possessionCount = actionEvents.filter((event) => {
-    const scene = event.scene!;
-    if (scene.possessionAfter) return scene.possessionAfter === "home";
-    return scene.action === "goal" || scene.action === "offside" ? scene.team === "away" : scene.team === "home";
-  }).length;
-  const possession = actionEvents.length ? Math.round(100 * possessionCount / actionEvents.length) : 50;
-  const homeShots = events.filter((event) => event.scene?.team === "home" && (event.scene.action === "shot" || event.scene.action === "goal"));
-  const shots = homeShots.length;
-  const onTarget = homeShots.filter((event) => event.scene?.action === "goal" || event.outcome === "saved").length;
-  const missed = homeShots.filter((event) => event.outcome === "missed" || (event.scene?.action === "shot" && !event.outcome)).length;
-  const onGoalStat = `${onTarget}/${missed}`;
-  const tackles = events.filter((event) => event.scene?.action === "tackle" && event.scene.team === "home").length;
-  const passErrors = events.filter((event) => event.scene?.action === "turnover" && event.scene.team === "home").length;
+  const matchStats = calculateMatchStatistics(events);
   const fixtures = useMemo(() => {
     const clubStrength = (name: string) => {
       const clubRecord = database?.clubs.find((item) => item.name === name);
@@ -284,10 +271,11 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       return roster.length ? roster.reduce((sum, player) => sum + player.overall, 0) / roster.length : 70;
     };
     const others = divisionClubNames.filter((name) => name !== club && name !== opponent);
-    const live = page === "matchOverview" || page === "result";
-    const result = [{ stadium: "", attendance: 0, home: club, away: opponent, homeScore, awayScore, live: true }];
+    const hasResults = page === "matchOverview" || page === "result";
+    const inProgress = page === "matchOverview";
+    const result = [{ stadium: "", attendance: 0, home: club, away: opponent, homeScore, awayScore, live: inProgress }];
     for (let i = 0; i + 1 < others.length; i += 2) {
-      const [h, a] = live ? otherScore(others[i], others[i + 1], round, minute, clubStrength(others[i]), clubStrength(others[i + 1])) : [0, 0];
+      const [h, a] = hasResults ? otherScore(others[i], others[i + 1], round, page === "result" ? 90 : minute, clubStrength(others[i]), clubStrength(others[i + 1])) : [0, 0];
       result.push({ stadium: "", attendance: 0, home: others[i], away: others[i + 1], homeScore: h, awayScore: a, live: false });
     }
     return result;
@@ -863,7 +851,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setSubstitutionOut(null);
     setEvents((current) => [
       ...current,
-      { minute, half: minute <= 45 ? 1 : 2, text: `Formação alterada para ${next}` },
+      { minute, half: minute <= 45 ? 1 : 2, team: "home", text: `Formação alterada para ${next}` },
     ]);
     void persistCareerExtras(playerCareers, {}, arranged);
   }
@@ -894,7 +882,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setSubstitutionsLeft((value) => value - 1);
     setEvents((current) => [
       ...current,
-      { minute, half: minute <= 45 ? 1 : 2, text: `${incoming} entrou no lugar de ${outgoing}` },
+      { minute, half: minute <= 45 ? 1 : 2, team: "home", text: `${incoming} entrou no lugar de ${outgoing}` },
     ]);
     setSelectedPlayer(null);
     setSubstitutionOut(null);
@@ -1079,11 +1067,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           opponent={opponent}
           homeScore={homeScore}
           awayScore={awayScore}
-          possession={possession}
-          shots={shots}
-          onGoal={onGoalStat}
-          tackles={tackles}
-          passErrors={passErrors}
+          statistics={matchStats}
           fixtures={fixtures}
           events={events}
           running={matchRunning}
@@ -1122,26 +1106,29 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   const reportPlayers = squad.filter((player) => participation[player.id] || starters.includes(player.id));
   const playerRatings = calculatePlayerRatings(reportPlayers, events, "home");
+  const opponentRatings = calculatePlayerRatings(opponentStarters, events, "away");
   return (
     <>
       <ResultScreen
+      competition="Campeonato Estadual"
       round={round}
       fixtures={fixtures}
       club={club}
       opponent={opponent}
       homeScore={homeScore}
       awayScore={awayScore}
-      startersData={reportPlayers}
+      homeFormation={formation}
+      awayFormation={formation}
+      homeFormationPlayers={startersData}
+      awayFormationPlayers={opponentStarters}
+      ratingPlayers={reportPlayers}
       events={events}
       weather={matchPreparation?.weather}
       motivationHome={matchPreparation?.motivationHome}
       motivationAway={matchPreparation?.motivationAway}
-      playerRatings={playerRatings}
-      possession={possession}
-      shots={shots}
-      onGoal={onGoalStat}
-      tackles={tackles}
-      passErrors={passErrors}
+      homePlayerRatings={playerRatings}
+      awayPlayerRatings={opponentRatings}
+      statistics={matchStats}
       onContinue={() => {
         const nextRound = round + 1;
         setRound(nextRound);

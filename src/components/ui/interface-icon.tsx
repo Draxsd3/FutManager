@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { ClassicIconName } from "./classic-icon";
 
-type Name = ClassicIconName | "chevron_right" | "search" | "shield" | "arrow_up_right" | "activity" | "arrow_right";
+type Name = ClassicIconName | "chevron_right" | "search" | "shield" | "arrow_up_right" | "activity" | "arrow_right" | "trophy" | "tactics";
 const paths: Record<string, ReactNode> = {
   home: <><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z" /></>,
   users: <><circle cx="9" cy="8" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 4v2"/></>,

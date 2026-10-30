@@ -39,7 +39,7 @@ Esses pontos registram o fluxo funcional observado; não autorizam copiar aparê
 
 ## Situação atual do FutManager (30/10/2026)
 
-- A visão gráfica de campo durante a partida está temporariamente removida. A partida é acompanhada por comentário textual, placar, estatísticas, clima simulado, disciplina e resultados da rodada; o pós-jogo também é um relatório textual.
+- A visão gráfica de campo durante a partida está temporariamente removida. O acompanhamento apresenta placar, estatísticas comparativas dos dois times, taça e linha do tempo sem passes rotineiros. O pós-jogo tem abas de eventos, estatísticas e formações estáticas, com os demais jogos da rodada ao lado; não há animação de jogo.
 - A formação organiza o XI inicial. As posições funcionam como referências para adaptação e leitura tática, nunca como fronteiras rígidas de movimentação.
 - Antes de iniciar ou retomar uma partida, o jogo precisa carregar e validar as regras canônicas em [`../public/game-assets/match-engine-rules.md`](../public/game-assets/match-engine-rules.md). Falha de leitura/validação bloqueia a partida; a lógica de leitura está em `src/lib/game/match-rules.ts` e o resumo de implementação em [`match-engine.md`](match-engine.md).
 - O motor considera força e qualidades disponíveis dos atletas, energia, motivação estimada, tática, clima e aleatoriedade reproduzível. O favorito tem vantagem estatística, não vitória garantida. Motivação do adversário sem dados próprios é uma estimativa, não um atributo factual.

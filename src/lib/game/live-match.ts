@@ -28,6 +28,8 @@ export type MatchEvent = {
   minute: number;
   half: 1 | 2;
   text: string;
+  /** Side responsible for non-possession events such as substitutions or tactical changes. */
+  team?: MatchSide;
   card?: "yellow" | "red";
   scene?: MatchScene;
   scorer?: string;
@@ -494,6 +496,55 @@ export function matchEnergyAfter(players: Player[], participation: Record<number
     const loss = played * (rules.baseFatiguePerMinute + pressingFatigue + heatFatigue);
     return { ...player, energy: Math.max(15, Math.round(player.energy - loss)) };
   });
+}
+
+export type MatchTeamStatistics = {
+  possession: number;
+  shots: number;
+  shotsOnTarget: number;
+  passes: number;
+  passesCompleted: number;
+  tackles: number;
+  fouls: number;
+  offsides: number;
+  yellowCards: number;
+  redCards: number;
+};
+export type MatchStatistics = { home: MatchTeamStatistics; away: MatchTeamStatistics };
+
+/** Derives both teams' match-center statistics from the same saved event stream as the score. */
+export function calculateMatchStatistics(events: MatchEvent[]): MatchStatistics {
+  const stats: MatchStatistics = {
+    home: { possession: 50, shots: 0, shotsOnTarget: 0, passes: 0, passesCompleted: 0, tackles: 0, fouls: 0, offsides: 0, yellowCards: 0, redCards: 0 },
+    away: { possession: 50, shots: 0, shotsOnTarget: 0, passes: 0, passesCompleted: 0, tackles: 0, fouls: 0, offsides: 0, yellowCards: 0, redCards: 0 },
+  };
+  const scenes = events.flatMap((event) => event.scene ? [{ event, scene: event.scene }] : []);
+  if (!scenes.length) return stats;
+  let homePossessions = 0;
+  for (const { event, scene } of scenes) {
+    let after = scene.possessionAfter;
+    if (!after) {
+      after = ["goal", "offside", "turnover", "foul"].includes(scene.action)
+        ? scene.team === "home" ? "away" : "home"
+        : scene.team;
+    }
+    if (after === "home") homePossessions++;
+    const side = stats[scene.team];
+    if (scene.action === "shot" || scene.action === "goal") {
+      side.shots++;
+      if (scene.action === "goal" || event.outcome === "saved") side.shotsOnTarget++;
+    }
+    if (scene.action === "pass" || scene.action === "turnover") side.passes++;
+    if (scene.action === "pass") side.passesCompleted++;
+    if (scene.action === "tackle") side.tackles++;
+    if (scene.action === "foul") side.fouls++;
+    if (scene.action === "offside") side.offsides++;
+    if (event.card === "yellow") side.yellowCards++;
+    if (event.card === "red") side.redCards++;
+  }
+  stats.home.possession = Math.round(homePossessions / scenes.length * 100);
+  stats.away.possession = 100 - stats.home.possession;
+  return stats;
 }
 
 export type MatchPlayerRating = { playerId: number; rating: number; goals: number; assists: number; shots: number; tackles: number; saves: number; passes: number; errors: number; cards: number };
