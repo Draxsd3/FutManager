@@ -4,7 +4,7 @@ import type { EditorDatabase } from "@/lib/game/editor-data";
 import type { Player } from "@/lib/game/mock-data";
 import type { PlayerCareerRecord } from "@/lib/game/career";
 import { askingFeeBrl, formatBrl, type TransferNegotiation, type TransferNegotiationAction } from "@/lib/game/transfers";
-import { Crest } from "@/components/ui/club-sidebar";
+import { TeamDirectory } from "@/components/screens/team-directory";
 
 export type HistoryView = "players" | "awards" | "champions";
 export const historyOptions: { id: HistoryView; label: string; description: string }[] = [
@@ -25,7 +25,6 @@ export function WorldScreens({ section, database, squad, club, coach, budget, re
   const countries = [...new Set(database.clubs.map((item) => item.country).filter(Boolean))].sort();
   const divisions = [...new Set(database.clubs.filter((item) => !country || item.country === country).map((item) => item.division))].sort();
   const hired = new Set(squad.map((item) => item.sourceId));
-  const clubs = database.clubs.filter((item) => (!country || item.country === country) && (!division || item.division === division) && item.name.toLocaleLowerCase("pt-BR").includes(query.toLocaleLowerCase("pt-BR"))).sort((a, b) => a.name.localeCompare(b.name));
   const players = database.players.filter((p) => {
     const team = clubsById.get(p.clubId);
     const isListed = p.marketStatus === "sale" || p.marketStatus === "loan";
@@ -38,14 +37,12 @@ export function WorldScreens({ section, database, squad, club, coach, budget, re
   }).sort((a, b) => b.overall - a.overall || a.name.localeCompare(b.name));
   const youth = squad.filter((p) => p.age <= 21).sort((a, b) => a.age - b.age);
   const coaches = database.clubs.map((team) => ({ id: team.id, name: team.name === club ? coach : team.coachName, team })).filter((item) => item.name && item.name.toLocaleLowerCase("pt-BR").includes(query.toLocaleLowerCase("pt-BR")));
-  const activeClub = clubs.find((item) => item.id === selected) ?? clubs[0];
   const activeCoach = coaches.find((item) => item.id === selected);
-  const list = section === "teams" ? clubs : players;
-  const pages = Math.max(1, Math.ceil(list.length / 12)); const visiblePage = Math.min(page, pages - 1);
+  const pages = Math.max(1, Math.ceil(players.length / 12)); const visiblePage = Math.min(page, pages - 1);
   const commonFilter = <div className="flex flex-wrap gap-2"><input aria-label="Buscar por nome" className={`${select} min-w-[180px] flex-1`} placeholder="Buscar por nome" value={query} onChange={(e) => { setQuery(e.target.value); setPage(0); }}/><select aria-label="País" className={select} value={country} onChange={(e) => { setCountry(e.target.value); setDivision(""); setPage(0); }}><option value="">Todos os países</option>{countries.map((c) => <option key={c}>{c}</option>)}</select><select aria-label="Competição" className={select} value={division} onChange={(e) => { setDivision(e.target.value); setPage(0); }}><option value="">Todas as divisões</option>{divisions.map((d) => <option key={d}>{d}</option>)}</select></div>;
   return <div className="h-full overflow-auto bg-[#f1f5f2] p-4 text-[#263a2c] sm:p-6"><div className="mx-auto max-w-[1200px] space-y-4">
     {section === "juniors" && <><Header eyebrow="base" title="Juniores" detail="Acompanhe os jovens que já fazem parte do seu elenco." onBack={onBack}/><section className={box}><div className="mb-4 flex justify-between"><div><p className={label}>Desenvolvimento</p><h2 className="mt-1 text-lg font-black">Jogadores até 21 anos</h2></div><b className="text-xl text-[#246e43]">{youth.length}</b></div><p className="mb-4 text-xs text-[#75867a]">Esta lista mostra jovens do elenco principal; categorias de base e promoções ainda não são simuladas.</p><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{youth.map((p) => <button key={p.id} onClick={() => onOpenPlayer(p.id)} className="flex items-center justify-between rounded-xl border border-[#e1eae3] p-4 text-left hover:border-[#62a677]"><div><b className="text-sm">{p.name}</b><p className="mt-1 text-xs text-[#718477]">{p.position} · {p.age} anos · energia {p.energy}%</p></div><b className="text-xl text-[#246e43]">{p.overall}</b></button>)}</div>{!youth.length && <Empty>Nenhum jogador até 21 anos no elenco atual.</Empty>}</section></>}
-    {section === "teams" && <><Header eyebrow="mundo" title="Times" detail="Explore os clubes cadastrados por país e divisão." onBack={onBack}/><section className={box}>{commonFilter}<p className="my-3 text-xs text-[#718477]">{clubs.length} clubes encontrados · divisões refletem o cadastro atual</p><div className="grid gap-4 lg:grid-cols-[1fr_1fr]"><div className="space-y-2">{clubs.slice(visiblePage * 12, visiblePage * 12 + 12).map((item) => <button key={item.id} onClick={() => setSelected(item.id)} className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left ${activeClub?.id === item.id ? "border-[#4e9a66] bg-[#f0f8f2]" : "border-[#e2eae4]"}`}><Crest club={item.name} size="sm"/><span><b className="text-sm">{item.name}</b><small className="block text-[#718477]">{item.country} · {item.division}</small></span></button>)}{!clubs.length && <Empty>Nenhum clube encontrado.</Empty>}</div>{activeClub && <article className="rounded-xl bg-[#f2f7f3] p-5"><Crest club={activeClub.name}/><h2 className="mt-3 text-xl font-black">{activeClub.name}</h2><p className="mt-1 text-sm text-[#6c8070]">{activeClub.country} · {activeClub.division}</p><dl className="mt-5 space-y-3 text-sm"><div><dt className={label}>Estádio</dt><dd>{activeClub.stadiumName} · {activeClub.stadiumCapacity.toLocaleString("pt-BR")} lugares</dd></div><div><dt className={label}>Técnico</dt><dd>{activeClub.name === club ? coach : activeClub.coachName}</dd></div><div><dt className={label}>Fundação</dt><dd>{activeClub.foundedYear}</dd></div></dl></article>}</div><Pagination page={visiblePage} pages={pages} setPage={setPage}/></section></>}
+    {section === "teams" && <TeamDirectory database={database} club={club} coach={coach} squad={squad} budget={budget} records={records} negotiations={negotiations} onOpenPlayer={onOpenPlayer} onTransferOffer={onTransferOffer} onBack={onBack}/> }
     {section === "search" && <>
       <Header eyebrow="transferências" title="Mercado" detail="Pesquise atletas listados à venda ou para empréstimo e negocie com o clube." onBack={onBack}/>
       <section className={box}>
