@@ -19,8 +19,11 @@ export type EditorClub = {
   kitStyle: "lisa" | "listrada" | "faixa";
 };
 
+export type EditorPlayerMarketStatus = "normal" | "sale" | "loan";
+
 export type EditorPlayer = {
   id: string;
+  marketStatus: EditorPlayerMarketStatus;
   clubId: string;
   name: string;
   shirtNumber: number;
@@ -163,6 +166,7 @@ export function createDefaultDatabase(): EditorDatabase {
           ownGoals: base.ownGoals,
           averageRating: base.avgRating,
           contractEndsOn: "2027-12-31",
+          marketStatus: playerIndex === squad.length - 2 ? "sale" : playerIndex === squad.length - 1 ? "loan" : "normal",
         });
       });
     });
@@ -172,30 +176,40 @@ export function createDefaultDatabase(): EditorDatabase {
 }
 
 export function upgradeEditorDatabase(database: EditorDatabase): EditorDatabase {
-  return {
-    clubs: database.clubs.map((club, index) => ({
-      ...club,
-      country: club.country ?? "Brasil",
-      state: club.state ?? clubStates[club.name],
-      level: club.level ?? Math.max(1, 16 - Object.keys(clubs).indexOf(club.division) * 3 - (index % 4)),
-      coachName: club.coachName ?? "Técnico interino",
-      kitStyle: club.kitStyle ?? "listrada",
-    })),
-    players: enforceEditorSquadLimit(database.players.map((player) => ({
-      ...player,
-      starRating: player.starRating ?? (player.overall >= 82 ? 4 : player.overall >= 76 ? 3 : 2),
-      qualityPrimary: !player.qualityPrimary || (player.qualityPrimary === "Passe" && player.qualitySecondary === "Marcação") ? ({ G: "Colocação", L: "Cruzamento", Z: "Desarme", M: "Armação", A: "Finalização" } as const)[player.primaryPosition] : player.qualityPrimary,
-      qualitySecondary: !player.qualitySecondary || (player.qualityPrimary === "Passe" && player.qualitySecondary === "Marcação") ? ({ G: "Reflexo", L: "Velocidade", Z: "Cabeceio", M: "Passe", A: "Velocidade" } as const)[player.primaryPosition] : player.qualitySecondary,
-      energy: player.energy ?? 100,
-      salaryMonthlyBrl: player.salaryMonthlyBrl ?? player.overall * 1000,
-      marketValueBrl: player.marketValueBrl ?? Math.round((player.overall / 18) * 1_000_000),
-      goals: player.goals ?? 0,
-      assists: player.assists ?? 0,
-      ownGoals: player.ownGoals ?? 0,
-      averageRating: player.averageRating ?? null,
-      contractEndsOn: player.contractEndsOn ?? "2027-12-31",
-    }))),
-  };
+  const legacyMarketData = !database.players.some((player) => player.marketStatus !== undefined);
+  const clubsData = database.clubs.map((club, index) => ({
+    ...club,
+    country: club.country ?? "Brasil",
+    state: club.state ?? clubStates[club.name],
+    level: club.level ?? Math.max(1, 16 - Object.keys(clubs).indexOf(club.division) * 3 - (index % 4)),
+    coachName: club.coachName ?? "Técnico interino",
+    kitStyle: club.kitStyle ?? "listrada",
+  }));
+  let players = enforceEditorSquadLimit(database.players.map((player) => ({
+    ...player,
+    starRating: player.starRating ?? (player.overall >= 82 ? 4 : player.overall >= 76 ? 3 : 2),
+    qualityPrimary: !player.qualityPrimary || (player.qualityPrimary === "Passe" && player.qualitySecondary === "Marcação") ? ({ G: "Colocação", L: "Cruzamento", Z: "Desarme", M: "Armação", A: "Finalização" } as const)[player.primaryPosition] : player.qualityPrimary,
+    qualitySecondary: !player.qualitySecondary || (player.qualityPrimary === "Passe" && player.qualitySecondary === "Marcação") ? ({ G: "Reflexo", L: "Velocidade", Z: "Cabeceio", M: "Passe", A: "Velocidade" } as const)[player.primaryPosition] : player.qualitySecondary,
+    energy: player.energy ?? 100,
+    salaryMonthlyBrl: player.salaryMonthlyBrl ?? player.overall * 1000,
+    marketValueBrl: player.marketValueBrl ?? Math.round((player.overall / 18) * 1_000_000),
+    goals: player.goals ?? 0,
+    assists: player.assists ?? 0,
+    ownGoals: player.ownGoals ?? 0,
+    averageRating: player.averageRating ?? null,
+    contractEndsOn: player.contractEndsOn ?? "2027-12-31",
+    marketStatus: player.marketStatus === "sale" || player.marketStatus === "loan" ? player.marketStatus : "normal",
+  })));
+  if (legacyMarketData) {
+    const seeded = new Map<string, EditorPlayerMarketStatus>();
+    for (const club of clubsData) {
+      const roster = players.filter((player) => player.clubId === club.id).sort((a, b) => b.shirtNumber - a.shirtNumber);
+      if (roster[0]) seeded.set(roster[0].id, "sale");
+      if (roster[1]) seeded.set(roster[1].id, "loan");
+    }
+    players = players.map((player) => ({ ...player, marketStatus: seeded.get(player.id) ?? player.marketStatus }));
+  }
+  return { clubs: clubsData, players };
 }
 
 export function buildSquadFromDatabase(database: EditorDatabase, clubName: string): Player[] | null {
@@ -222,5 +236,6 @@ export function buildSquadFromDatabase(database: EditorDatabase, clubName: strin
     avgRating: player.averageRating,
     contractUntil: player.contractEndsOn,
     marketValue: Number((player.marketValueBrl / 1_000_000).toFixed(1)),
+    marketAvailability: player.marketStatus ?? "normal",
   }));
 }

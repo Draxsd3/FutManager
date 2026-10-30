@@ -3,6 +3,7 @@ import type { ManualPosition, PlayerCareerRecord, MatchParticipation } from "./c
 import type { MatchEvent, MatchWeather } from "@/lib/game/live-match";
 import type { MatchRules } from "@/lib/game/match-rules";
 import type { CareerSeason } from "./season";
+import type { TransferNegotiation } from "./transfers";
 
 export type MatchPreparation = {
   matchKey: string;
@@ -42,5 +43,6 @@ export type CareerProgress = {
   halftimeWaiting: boolean;
   competitionSeason?: CareerSeason;
   activeFixtureId?: string;
+  transferNegotiations?: TransferNegotiation[];
 };
 
