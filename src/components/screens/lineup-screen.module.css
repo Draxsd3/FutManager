@@ -39,6 +39,15 @@
   display: flex;
   gap: 10px;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.errorMessage {
+  flex-basis: 100%;
+  margin: 0;
+  color: #982c2c;
+  font-size: 11px;
+  text-align: right;
 }
 .headerActions button,
 .boardFooter button {

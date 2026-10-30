@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { GameBoard } from "./game-board";
@@ -14,8 +15,13 @@ vi.mock("@/lib/game/persistence", async (importOriginal) => ({
   deleteCloudSave: vi.fn().mockResolvedValue(undefined),
 }));
 
-afterEach(cleanup);
-beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
+const matchRulesMarkdown = readFileSync("public/game-assets/match-engine-rules.md", "utf8");
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+beforeEach(() => {
+  localStorage.clear();
+  sessionStorage.clear();
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, text: async () => matchRulesMarkdown }));
+});
 const game = (id = "alice") => <GameBoard userId={id} email={`${id}@example.com`} onSignOut={async () => {}} />;
 
 it("creates independent careers, preserves the lineup on returning home and opens the menu after a deliberate exit", async () => {
@@ -59,6 +65,21 @@ it("does not expose another account's careers on the same browser", async () => 
 });
 
 
+it("requires the canonical Markdown rules before starting a match and stays on the lineup when loading fails", async () => {
+  const failedFetch = vi.fn().mockRejectedValue(new Error("offline"));
+  vi.stubGlobal("fetch", failedFetch);
+  render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Regras obrigatórias" } });
+  fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /Escalar Time/i }));
+  fireEvent.click(await screen.findByRole("button", { name: /Ir para a partida/ }));
+  expect(await screen.findByRole("alert")).toBeTruthy();
+  expect(failedFetch).toHaveBeenCalledWith("/game-assets/match-engine-rules.md", { cache: "no-store" });
+  expect(screen.queryByRole("heading", { name: "O jogo minuto a minuto" })).toBeNull();
+  expect(readLocalSaves("alice")[0].progress?.minute).toBe(0);
+});
+
 it("autosaves a match without a floating exit button and resumes paused after reload", async () => {
   const view = render(game());
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
@@ -72,8 +93,11 @@ it("autosaves a match without a floating exit button and resumes paused after re
   const saved = readLocalSaves("alice")[0];
   expect(saved.progress?.page).toBe("matchOverview");
   expect(saved.progress?.matchRunning).toBe(false);
+  expect(saved.progress?.matchPreparation?.weather).toBeTruthy();
+  const savedWeather = saved.progress?.matchPreparation?.weather;
   render(game());
   expect(await screen.findByText("PARTIDA PAUSADA")).toBeTruthy();
+  expect(screen.getByText(new RegExp(`${savedWeather?.label} · ${savedWeather?.temperatureC} °C · vento ${savedWeather?.windKmh} km/h`))).toBeTruthy();
   expect(screen.queryByRole("button", { name: /CARREGAR CARREIRA/ })).toBeNull();
   expect(readLocalSaves("alice")[0].progress?.minute).toBe(saved.progress?.minute);
 });

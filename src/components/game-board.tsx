@@ -29,7 +29,6 @@ import {
 import { buildSquadFromDatabase, createDefaultDatabase, upgradeEditorDatabase, type CareerSave, type EditorDatabase } from "@/lib/game/editor-data";
 import { createPlayerCareer, recordPlayerMatch, type MatchParticipation, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
 import { deployLineupPlayer } from "@/lib/game/lineup";
-import { formationSlots, playerFitAtPosition } from "@/lib/game/formations";
 import { mergeCareerSaves } from "@/lib/game/save-utils";
 import {
   isMenuPage,
@@ -38,8 +37,9 @@ import {
   writeActiveCareerSession,
 } from "@/lib/game/session";
 import { agendaOptions, type AgendaView } from "@/components/screens/agenda-screen";
-import type { CareerProgress } from "@/lib/game/progress";
-import { otherScore, simulateAction } from "@/lib/game/live-match";
+import type { CareerProgress, MatchPreparation } from "@/lib/game/progress";
+import { calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, otherScore, seededRandom, simulateAction } from "@/lib/game/live-match";
+import { loadMatchRules, type MatchRules } from "@/lib/game/match-rules";
 import { visualFormation } from "@/lib/game/live-positioning";
 import {
   deleteCloudSave,
@@ -170,11 +170,15 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [matchRunning, setMatchRunning] = useState(false);
   const [matchSpeed, setMatchSpeed] = useState<1 | 2 | 4>(1);
   const [halftimeWaiting, setHalftimeWaiting] = useState(false);
+  const [matchPreparation, setMatchPreparation] = useState<MatchPreparation | null>(null);
+  const [matchRulesLoading, setMatchRulesLoading] = useState(false);
+  const [matchRulesError, setMatchRulesError] = useState<string | null>(null);
+  const matchRulesLoadInProgress = useRef(false);
   const [substitutionOut, setSubstitutionOut] = useState<number | null>(null);
   const [standingsOpen, setStandingsOpen] = useState(false);
 
   const progress: CareerProgress = {
-    page, activeSaveId, coach, club, division, round, budget, formation, style, marking, focus,
+    page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, manualPositions, minute, homeScore, awayScore,
     events, participation, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, halftimeWaiting,
   };
@@ -195,7 +199,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     pendingCloudSave.current = next;
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, formation, style, marking, focus,
     starters, careerSquad, playerCareers, manualPositions, minute, homeScore, awayScore, events,
-    participation, substitutionsLeft, detailOpen, matchSpeed, halftimeWaiting, userId]);
+    participation, substitutionsLeft, detailOpen, matchSpeed, halftimeWaiting, matchPreparation, userId]);
 
   useEffect(() => {
     if (!hydrationDone) return;
@@ -222,12 +226,14 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   const divisionClubNames = useMemo(() => database?.clubs.filter((item) => item.division === division).map((item) => item.name) ?? [], [database, division]);
   const opponent = divisionClubNames.find((name) => name !== club) ?? divisionClubNames[1] ?? "Adversário";
-  const opponentStarters = useMemo(() => {
-    if (!database) return undefined;
-    const opponents = buildSquadFromDatabase(database, opponent);
-    if (!opponents) return undefined;
-    return buildStartingXI(formation, opponents).map((id) => opponents.find((player) => player.id === id)!).filter(Boolean);
-  }, [database, opponent, formation]);
+  const opponentSquad = useMemo(
+    () => (database ? buildSquadFromDatabase(database, opponent) : null) ?? initialSquad,
+    [database, opponent],
+  );
+  const opponentStarters = useMemo(
+    () => buildStartingXI(formation, opponentSquad).map((id) => opponentSquad.find((player) => player.id === id)!).filter(Boolean),
+    [opponentSquad, formation],
+  );
   const startersData = useMemo(
     () => starters.map((id) => squad.find((p) => p.id === id)!).filter(Boolean),
     [starters, squad],
@@ -238,41 +244,85 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   );
   const selectedPlayerData = squad.find((p) => p.id === selectedPlayer) ?? null;
 
-  const strength = Math.round(
-    startersData.reduce((sum, p, index) => {
-      const position = manualPositions[p.id] ?? formationSlots[formation]?.[index] ?? { left: 50, top: 50 };
-      const fit = playerFitAtPosition(p, formation, position, index);
-      return sum + Math.max(1, p.overall - fit.penalty) * (p.energy / 100);
-    }, 0) /
-      (startersData.length || 1),
-  );
+  const matchKey = `${activeSaveId ?? "career"}|${round}|${club}|${opponent}`;
+  const recentForm = [...new Map(Object.values(playerCareers)
+    .flatMap((record) => record.matches ?? [])
+    .filter((match) => match.minutes > 0)
+    .map((match) => [match.key, match] as const)).values()]
+    .sort((a, b) => b.round - a.round).slice(0, 5);
+  const pointsPerMatch = recentForm.length
+    ? recentForm.reduce((sum, match) => sum + (match.homeScore > match.awayScore ? 3 : match.homeScore === match.awayScore ? 1 : 0), 0) / recentForm.length
+    : 1.2;
+  const averageEnergy = startersData.length ? startersData.reduce((sum, player) => sum + player.energy, 0) / startersData.length : 70;
+  const homeMotivation = Math.max(40, Math.min(92, Math.round(64 + (pointsPerMatch - 1.2) * 6 + (averageEnergy - 70) * .08)));
+  const awayMotivation = Math.round(58 + (seededRandom(`${matchKey}|away-motivation`)() - .5) * 16);
+  const createPreparation = (rules: MatchRules, key = matchKey): MatchPreparation => ({
+    matchKey: key,
+    rules,
+    weather: createMatchWeather(key, rules),
+    motivationHome: homeMotivation,
+    motivationAway: awayMotivation,
+  });
   const actionEvents = events.filter((event) => event.scene);
-  const possession = actionEvents.length ? Math.round(100 * actionEvents.filter((event) => event.scene?.team === "home").length / actionEvents.length) : 50;
-  const shots = events.filter((event) => event.scene?.team === "home" && (event.scene.action === "shot" || event.scene.action === "goal")).length;
-  const onGoalStat = `${events.filter((event) => event.scene?.team === "home" && event.scene.action === "goal").length}/${events.filter((event) => event.scene?.team === "home" && event.scene.action === "shot").length}`;
+  const possessionCount = actionEvents.filter((event) => {
+    const scene = event.scene!;
+    if (scene.possessionAfter) return scene.possessionAfter === "home";
+    return scene.action === "goal" || scene.action === "offside" ? scene.team === "away" : scene.team === "home";
+  }).length;
+  const possession = actionEvents.length ? Math.round(100 * possessionCount / actionEvents.length) : 50;
+  const homeShots = events.filter((event) => event.scene?.team === "home" && (event.scene.action === "shot" || event.scene.action === "goal"));
+  const shots = homeShots.length;
+  const onTarget = homeShots.filter((event) => event.scene?.action === "goal" || event.outcome === "saved").length;
+  const missed = homeShots.filter((event) => event.outcome === "missed" || (event.scene?.action === "shot" && !event.outcome)).length;
+  const onGoalStat = `${onTarget}/${missed}`;
   const tackles = events.filter((event) => event.scene?.action === "tackle" && event.scene.team === "home").length;
-  const passErrors = 0; // The current action model does not yet simulate misplaced passes.
-
+  const passErrors = events.filter((event) => event.scene?.action === "turnover" && event.scene.team === "home").length;
   const fixtures = useMemo(() => {
+    const clubStrength = (name: string) => {
+      const clubRecord = database?.clubs.find((item) => item.name === name);
+      const roster = clubRecord ? database?.players.filter((player) => player.clubId === clubRecord.id) ?? [] : [];
+      return roster.length ? roster.reduce((sum, player) => sum + player.overall, 0) / roster.length : 70;
+    };
     const others = divisionClubNames.filter((name) => name !== club && name !== opponent);
     const live = page === "matchOverview" || page === "result";
     const result = [{ stadium: "", attendance: 0, home: club, away: opponent, homeScore, awayScore, live: true }];
     for (let i = 0; i + 1 < others.length; i += 2) {
-      const [h, a] = live ? otherScore(others[i], others[i + 1], round, minute) : [0, 0];
+      const [h, a] = live ? otherScore(others[i], others[i + 1], round, minute, clubStrength(others[i]), clubStrength(others[i + 1])) : [0, 0];
       result.push({ stadium: "", attendance: 0, home: others[i], away: others[i + 1], homeScore: h, awayScore: a, live: false });
     }
     return result;
-  }, [divisionClubNames, club, opponent, homeScore, awayScore, page, round, minute]);
+  }, [divisionClubNames, club, opponent, homeScore, awayScore, page, round, minute, database]);
 
   useEffect(() => {
-    if (page !== "matchOverview" || !matchRunning || detailOpen || minute >= 90) return;
+    if (page !== "matchOverview" || !matchRunning || detailOpen || minute >= 90 || !matchPreparation) return;
     const timer = window.setTimeout(() => {
-      const nextMinute = Math.min(90, minute + 1);
+      const nextMinute = Math.min(matchPreparation.rules.durationMinutes, minute + 1);
       const previousEvent = [...events].reverse().find((item) => item.scene);
       const previous = previousEvent?.scene;
+      // Tactical positions remain an internal model input for passing and offside; no field is rendered.
       const visual = visualFormation({ starters: startersData, formation, manualPositions, scene: previous, minute: previousEvent?.minute ?? 0 });
       const snapshot = { home: visual.filter((player) => player.key.startsWith("home-")).map((player) => player.target), away: visual.filter((player) => player.key.startsWith("away-")).map((player) => player.target) };
-      const event = simulateAction({ minute: nextMinute, starters: startersData, formation, positions: manualPositions, opponent, opponentStarters, strength, previous, snapshot });
+      const event = simulateAction({
+        minute: nextMinute,
+        starters: startersData,
+        formation,
+        positions: manualPositions,
+        opponent,
+        opponentStarters,
+        opponentFormation: formation,
+        previous,
+        snapshot,
+        rules: matchPreparation.rules,
+        weather: matchPreparation.weather,
+        tactics: { style, marking, focus },
+        opponentTactics: { style: "Equilibrado", marking: "Normal", focus: "Pelo meio" },
+        motivationHome: matchPreparation.motivationHome,
+        motivationAway: matchPreparation.motivationAway,
+        sentOffHomeIds: events.filter((item) => item.card === "red" && item.scene?.team === "home" && item.actorId !== undefined).map((item) => item.actorId!),
+        sentOffAwayIds: events.filter((item) => item.card === "red" && item.scene?.team === "away" && item.actorId !== undefined).map((item) => item.actorId!),
+        yellowCardIds: events.filter((item) => item.card === "yellow" && item.actorId !== undefined).map((item) => item.actorId!),
+        random: createMinuteRandom(matchPreparation.matchKey, nextMinute),
+      });
       setMinute(nextMinute);
       setEvents((current) => [...current, event]);
       if (event.scene?.action === "goal") {
@@ -283,19 +333,27 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         setMatchRunning(false);
         setHalftimeWaiting(true);
       }
-      if (nextMinute === 90) {
+      if (nextMinute >= matchPreparation.rules.durationMinutes) {
         setMatchRunning(false);
         setBudget((value) => value + 151);
         const goals: Record<number, number> = {};
         for (const item of [...events, event]) if (item.scorerId !== undefined && item.scene?.team === "home") goals[item.scorerId] = (goals[item.scorerId] ?? 0) + 1;
         const home = homeScore + (event.scene?.action === "goal" && event.scene.team === "home" ? 1 : 0);
         const away = awayScore + (event.scene?.action === "goal" && event.scene.team === "away" ? 1 : 0);
-        const played = Object.keys(participation).length ? participation : Object.fromEntries(starters.map((id) => [id, { entered: 0 }]));
-        setPlayerCareers((current) => recordPlayerMatch(current, squad, club, played, { key: `${round}|${club}|${opponent}`, round, opponent, homeScore: home, awayScore: away }, goals));
+        const played: MatchParticipation = Object.keys(participation).length ? participation : Object.fromEntries(starters.map((id) => [id, { entered: 0 }]));
+        const finalParticipation: MatchParticipation = { ...played };
+        for (const item of [...events, event].filter((entry) => entry.card === "red" && entry.actorId !== undefined)) {
+          const playerId = item.actorId!;
+          const stint = finalParticipation[playerId] ?? { entered: 0 };
+          finalParticipation[playerId] = { ...stint, left: Math.min(stint.left ?? nextMinute, item.minute) };
+        }
+        const playedMinutes = Object.fromEntries(Object.entries(finalParticipation).map(([id, stint]) => [id, Math.max(0, (stint.left ?? 90) - stint.entered)]));
+        setCareerSquad(matchEnergyAfter(squad, playedMinutes, nextMinute, matchPreparation.weather, marking, matchPreparation.rules));
+        setPlayerCareers((current) => recordPlayerMatch(current, squad, club, finalParticipation, { key: `${round}|${club}|${opponent}`, round, opponent, homeScore: home, awayScore: away }, goals));
       }
     }, 700 / matchSpeed);
     return () => window.clearTimeout(timer);
-  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, opponentStarters, page, startersData, formation, manualPositions, strength, events, participation, starters, squad, club, round, homeScore, awayScore]);
+  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, opponentStarters, page, startersData, formation, manualPositions, style, marking, focus, matchPreparation, events, participation, starters, squad, club, round, homeScore, awayScore]);
 
   useEffect(() => {
     if (page !== "matchOverview" || minute !== 90 || detailOpen) return;
@@ -455,7 +513,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       manualPositions: {},
     };
     const initialStarters = buildStartingXI("4-3-3", baseSquad);
-    save.progress = { ...progressRef.current, page: "hub", activeSaveId: save.id, coach: coach.trim(),
+    save.progress = { ...progressRef.current, page: "hub", matchPreparation: undefined, activeSaveId: save.id, coach: coach.trim(),
       round: 1, budget: 12624, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
       careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
@@ -472,6 +530,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setAwayScore(0);
     setEvents([]);
     setMatchRunning(false);
+    setMatchPreparation(null);
+    setMatchRulesError(null);
     setHalftimeWaiting(false);
     setSubstitutionsLeft(5);
     setCareerLoaded(true);
@@ -503,6 +563,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setHomeScore(0);
     setAwayScore(0);
     setMatchRunning(false);
+    setMatchPreparation(null);
+    setMatchRulesError(null);
     setPage("hub");
     if (save.progress) {
       const state = save.progress;
@@ -522,8 +584,19 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       setSubstitutionsLeft(state.substitutionsLeft);
       setHalftimeWaiting(state.halftimeWaiting);
       setMatchSpeed(state.matchSpeed);
+      setMatchPreparation(state.matchPreparation ?? null);
+      setMatchRulesError(null);
       setDetailOpen(false);
       setPage(resumableCareerPage(state.page) as Page);
+      if (!state.matchPreparation && (state.page === "matchOverview" || state.page === "result")) {
+        const savedOpponent = database?.clubs.filter((item) => item.division === save.division).map((item) => item.name).find((name) => name !== save.clubName) ?? "Adversário";
+        const savedKey = `${save.id}|${save.round}|${save.clubName}|${savedOpponent}`;
+        void loadMatchRules().then((rules) => {
+          if (canApply()) setMatchPreparation({ matchKey: savedKey, rules, weather: createMatchWeather(savedKey, rules), motivationHome: 64, motivationAway: 64 });
+        }).catch((error: unknown) => {
+          if (canApply()) setMatchRulesError(error instanceof Error ? error.message : "Não foi possível ler as regras da partida.");
+        });
+      }
       setCareerLoaded(true);
       return true;
     }
@@ -722,7 +795,26 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     void persistCareerExtras(playerCareers, {});
   }
 
-  function startMatch() {
+  async function readMatchRules(): Promise<MatchRules | null> {
+    if (matchRulesLoadInProgress.current) return null;
+    matchRulesLoadInProgress.current = true;
+    setMatchRulesLoading(true);
+    setMatchRulesError(null);
+    try {
+      return await loadMatchRules();
+    } catch (error) {
+      setMatchRulesError(error instanceof Error ? error.message : "Não foi possível ler as regras da partida.");
+      return null;
+    } finally {
+      matchRulesLoadInProgress.current = false;
+      setMatchRulesLoading(false);
+    }
+  }
+
+  async function startMatch() {
+    const rules = await readMatchRules();
+    if (!rules) return;
+    setMatchPreparation(createPreparation(rules));
     setParticipation(Object.fromEntries(starters.map((id) => [id, { entered: 0 }])));
     setMinute(0);
     setHomeScore(0);
@@ -737,6 +829,27 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setPage("matchOverview");
   }
 
+  async function resumeMatch() {
+    // Always consult the canonical Markdown before resuming. An existing match keeps its
+    // serialized rules/weather snapshot so a mid-match deploy cannot reroll its conditions.
+    const canonicalRules = await readMatchRules();
+    if (!canonicalRules) return;
+    const preparation = matchPreparation?.matchKey === matchKey
+      ? matchPreparation
+      : createPreparation(canonicalRules);
+    setMatchPreparation(preparation);
+    setHalftimeWaiting(false);
+    setMatchRunning(true);
+  }
+
+  function toggleMatchRunning() {
+    if (matchRunning) {
+      setMatchRunning(false);
+      return;
+    }
+    void resumeMatch();
+  }
+
   const matchTacticsTrigger = useRef<HTMLElement | null>(null);
 
   function openMatchTactics() {
@@ -749,10 +862,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   function closeMatchTactics() {
     setDetailOpen(false);
-    if (minute < 90) {
-      setHalftimeWaiting(false);
-      setMatchRunning(true);
-    }
+    if (minute < 90) void resumeMatch();
   }
 
   function changeMatchFormation(next: string) {
@@ -951,6 +1061,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           onSelectPlayer={setSelectedPlayer}
           onPlacePlayer={placeLineupPlayer}
           onPlay={startMatch}
+          isStartingMatch={matchRulesLoading}
+          matchStartError={matchRulesError}
           onBack={() => setPage("hub")}
           manualPositions={manualPositions}
           onResetPositions={resetManualPositions}
@@ -965,9 +1077,11 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       <>
         <div inert={detailOpen}>
         <MatchOverviewScreen
-          formation={formation}
-          starters={startersData}
-          manualPositions={manualPositions}
+          weather={matchPreparation?.weather}
+          motivationHome={matchPreparation?.motivationHome}
+          motivationAway={matchPreparation?.motivationAway}
+          rulesLoading={matchRulesLoading}
+          rulesError={matchRulesError}
           competition="Campeonato Estadual"
           round={round}
           minute={minute}
@@ -986,10 +1100,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           running={matchRunning}
           speed={matchSpeed}
           halftimeWaiting={halftimeWaiting}
-          onToggleRunning={() => {
-            if (halftimeWaiting) setHalftimeWaiting(false);
-            setMatchRunning((running) => !running);
-          }}
+          onToggleRunning={toggleMatchRunning}
           onSpeedChange={setMatchSpeed}
           onOpenDetail={openMatchTactics}
           onRequestExit={() => leaveActiveCareer("menu")}
@@ -1020,6 +1131,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       </>
     );
 
+  const reportPlayers = squad.filter((player) => participation[player.id] || starters.includes(player.id));
+  const playerRatings = calculatePlayerRatings(reportPlayers, events, "home");
   return (
     <>
       <ResultScreen
@@ -1029,8 +1142,12 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       opponent={opponent}
       homeScore={homeScore}
       awayScore={awayScore}
-      startersData={startersData}
+      startersData={reportPlayers}
       events={events}
+      weather={matchPreparation?.weather}
+      motivationHome={matchPreparation?.motivationHome}
+      motivationAway={matchPreparation?.motivationAway}
+      playerRatings={playerRatings}
       possession={possession}
       shots={shots}
       onGoal={onGoalStat}
