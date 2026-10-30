@@ -37,7 +37,9 @@ type Props = {
   selectedPlayer: Player | null;
   onSelectPlayer: (id: number | null) => void;
   onPlacePlayer: (id: number, slot: number, point?: ManualPosition) => void;
-  onPlay: () => void;
+  onPlay: () => void | Promise<void>;
+  isStartingMatch?: boolean;
+  matchStartError?: string | null;
   onBack: () => void;
   manualPositions: Record<number, ManualPosition>;
   onResetPositions: () => void;
@@ -72,6 +74,8 @@ export function LineupScreen(props: Props) {
     onSelectPlayer,
     onPlacePlayer,
     onPlay,
+    isStartingMatch = false,
+    matchStartError = null,
     onBack,
     manualPositions,
     onResetPositions,
@@ -369,11 +373,12 @@ export function LineupScreen(props: Props) {
             {!match && <button onClick={onBack}>← Voltar ao clube</button>}
             <button
               className={styles.primary}
-              onClick={onPlay}
-              disabled={startersData.length !== 11}
+              onClick={() => { void onPlay(); }}
+              disabled={startersData.length !== 11 || isStartingMatch}
             >
-              {match ? "Voltar ao jogo →" : "Ir para a partida →"}
+              {isStartingMatch ? "Lendo regras da partida…" : match ? "Voltar ao jogo →" : "Ir para a partida →"}
             </button>
+            {matchStartError && <p role="alert" className={styles.errorMessage}>{matchStartError}</p>}
           </div>
         </header>
         <div className={styles.summary}>

@@ -1,9 +1,19 @@
 import type { DivisionKey, Player } from "./mock-data";
 import type { ManualPosition, PlayerCareerRecord, MatchParticipation } from "./career";
-import type { MatchEvent } from "@/components/screens/match-detail-screen";
+import type { MatchEvent, MatchWeather } from "@/lib/game/live-match";
+import type { MatchRules } from "@/lib/game/match-rules";
+
+export type MatchPreparation = {
+  matchKey: string;
+  rules: MatchRules;
+  weather: MatchWeather;
+  motivationHome: number;
+  motivationAway: number;
+};
 
 export type CareerProgress = {
   page: string;
+  matchPreparation?: MatchPreparation;
   activeSaveId: string | null;
   coach: string;
   club: string;

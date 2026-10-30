@@ -1,6 +1,6 @@
 # Referência de mecânicas: primeira exploração do Brasfoot
 
-Registro de referência para o FutManager. São princípios funcionais observados no uso do jogo; não reutilizar textos, imagens ou outros ativos do Brasfoot.
+Registro de referência funcional para o FutManager, não especificação de uma interface a copiar. Não reutilizar textos, imagens, layout ou outros ativos do Brasfoot.
 
 ## Loop principal da carreira
 
@@ -10,7 +10,7 @@ Registro de referência para o FutManager. São princípios funcionais observado
 4. Decidir no intervalo (substituições e ajustes táticos).
 5. Ler o relatório final, absorver eventos de mercado e avançar na agenda.
 
-## Partida
+## Partida no Brasfoot — observações funcionais da exploração
 
 - Preparação mostra condição do gramado e adversário, escalação em campo, banco e jogadores disponíveis.
 - A formação preenche os 11 titulares; sem eles, a partida não começa.
@@ -18,6 +18,8 @@ Registro de referência para o FutManager. São princípios funcionais observado
 - A tela ao vivo apresenta minuto, placar, autores dos gols/cartões, posse, finalizações, desarmes e erros de passe; também exibe os demais resultados da rodada.
 - O intervalo é uma tela decisória com notas/energia, substituições restantes, dados do rival e os mesmos controles táticos.
 - O relatório final consolida placar, escalações, notas, gols, cartões, substituições, público, renda e o panorama da rodada.
+
+Esses pontos registram o fluxo funcional observado; não autorizam copiar aparência, redação ou ativos, nem afirmam que a simulação do FutManager deve reproduzir fórmulas proprietárias.
 
 ## Gestão do clube
 
@@ -34,3 +36,11 @@ Registro de referência para o FutManager. São princípios funcionais observado
 - Tratar a partida como um fluxo em três atos: preparação, acompanhamento/intervalo e relatório final.
 - Tornar os dados acionáveis: cada tabela deve levar à ficha, comparação ou decisão, em vez de ser apenas informativa.
 - Manter o visual próprio do FutManager: usar estes padrões de produto, sem imitar a interface ou os ativos de terceiros.
+
+## Situação atual do FutManager (30/10/2026)
+
+- A visão gráfica de campo durante a partida está temporariamente removida. O acompanhamento apresenta placar, estatísticas comparativas dos dois times, taça e linha do tempo sem passes rotineiros. O pós-jogo tem abas de eventos, estatísticas e formações estáticas, com os demais jogos da rodada ao lado; não há animação de jogo.
+- A formação organiza o XI inicial. As posições funcionam como referências para adaptação e leitura tática, nunca como fronteiras rígidas de movimentação.
+- Antes de iniciar ou retomar uma partida, o jogo precisa carregar e validar as regras canônicas em [`../public/game-assets/match-engine-rules.md`](../public/game-assets/match-engine-rules.md). Falha de leitura/validação bloqueia a partida; a lógica de leitura está em `src/lib/game/match-rules.ts` e o resumo de implementação em [`match-engine.md`](match-engine.md).
+- O motor considera força e qualidades disponíveis dos atletas, energia, motivação estimada, tática, clima e aleatoriedade reproduzível. O favorito tem vantagem estatística, não vitória garantida. Motivação do adversário sem dados próprios é uma estimativa, não um atributo factual.
+- Eventos estruturados alimentam relato, placar, estatísticas e notas. Não inventar números de público/renda, atributos ou eventos que o modelo atual não calcula; a simulação é própria e simplificada, não uma reprodução do Brasfoot ou do futebol real.

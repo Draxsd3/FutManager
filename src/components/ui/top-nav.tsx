@@ -2,20 +2,18 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { ClassicIconName } from "./classic-icon";
-import { InterfaceIcon } from "./interface-icon";
-import styles from "./top-nav.module.css";
+import { ClassicIcon, type ClassicIconName } from "./classic-icon";
 
 export type NavItem = { icon: ClassicIconName; label: string; onClick: () => void; active?: boolean; children?: { label: string; description: string; onClick: () => void }[] };
 
 export function TopNav({ items, date }: { items: NavItem[]; date: string }) {
   return (
-    <header className={styles.header}>
-      <div className={styles.brand} aria-label="FutManager"><b>FM<span>·</span></b><small>CAREER<br/>CONTROL</small></div>
-      <nav aria-label="Navegação do clube" className={styles.nav}>
+    <header className="relative z-30 grid h-[90px] shrink-0 grid-cols-[minmax(0,980px)_1fr_auto] items-stretch border-b-2 border-[var(--team-accent)] bg-white px-3 text-[#243229] shadow-[0_3px_18px_rgba(23,43,31,.12)]">
+      <nav aria-label="Navegação do clube" className="grid min-w-0 grid-flow-col auto-cols-fr overflow-x-auto">
         {items.map((item) => <NavButton key={item.label} item={item} />)}
       </nav>
-      <div className={styles.date}><span className={styles.online}/><div><small>TEMPORADA 2026</small><b>{date}</b></div></div>
+      <div />
+      <div className="hidden min-w-[118px] items-center justify-end border-l border-[#d9e3da] px-4 md:flex"><div className="text-right"><small className="block text-[8px] uppercase tracking-[.18em] text-[#6d8073]">Temporada 2026</small><b className="mt-1 block text-[11px] font-bold">{date}</b></div></div>
     </header>
   );
 }
@@ -52,11 +50,10 @@ function NavButton({ item }: { item: NavItem }) {
   return <>
     <button ref={button} type="button" onClick={toggle} title={item.label} aria-haspopup={item.children ? "menu" : undefined} aria-expanded={item.children ? !!position : undefined} aria-controls={position ? id : undefined}
       onKeyDown={(event) => { if (item.children && (event.key === "ArrowDown" || event.key === "ArrowUp")) { event.preventDefault(); if (!position) toggle(); } }}
-      aria-current={item.active ? "page" : undefined}
-      className={`${styles.navButton} ${item.active || position ? `${styles.active} bg-[var(--team-accent)]` : ""}`}>
-      <InterfaceIcon name={item.icon} size={19} /><span>{item.label}{item.children && <span aria-hidden="true" className={styles.chevron}>⌄</span>}</span>
+      className={`group relative flex min-w-[82px] flex-col items-center justify-center border-x border-transparent px-1 text-center text-[11px] font-bold hover:bg-[#eef4ee] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#168249] ${item.active || position ? "bg-[var(--team-accent)] text-[var(--team-accent-text)]" : "text-[#425349]"}`}>
+      <ClassicIcon name={item.icon} size={38} /><span className="mt-2 leading-none">{item.label}{item.children && <span aria-hidden="true" className="ml-1 text-[9px]">⌄</span>}</span>
     </button>
-    {position && createPortal(<div ref={menu} id={id} role="menu" aria-label={item.label} style={{ position: "fixed", top: position.top, left: position.left, width: "min(284px, calc(100vw - 16px))", zIndex: 200 }} className={styles.menu}
+    {position && createPortal(<div ref={menu} id={id} role="menu" aria-label={item.label} style={{ position: "fixed", top: position.top, left: position.left, width: "min(284px, calc(100vw - 16px))", zIndex: 200 }} className="overflow-hidden rounded-xl border border-[#dce5df] bg-white p-1.5 text-[#243229] shadow-[0_16px_40px_#13291d30]"
       onKeyDown={(event) => {
         if (event.key === "Escape") { event.preventDefault(); setPosition(null); button.current?.focus(); }
         const options = Array.from(menu.current?.querySelectorAll<HTMLButtonElement>("button") ?? []);
@@ -68,8 +65,8 @@ function NavButton({ item }: { item: NavItem }) {
         }
         if (event.key === "Tab") setPosition(null);
       }}>
-      <p className={styles.menuTitle}>{item.label.toLocaleUpperCase("pt-BR")}</p>
-      {item.children?.map((child, index) => <button key={child.label} type="button" role="menuitem" onClick={() => { setPosition(null); button.current?.focus(); child.onClick(); }} className={styles.menuItem}><span aria-hidden="true" className="text-xs text-[#92a398]">0{index + 1}</span><span><strong className="block text-xs">{child.label}</strong><small className="mt-1 block text-[10px] text-[#9aa6a1]">{child.description}</small></span><span aria-hidden="true" className="ml-auto">›</span></button>)}
+      <p className="px-3 py-2 text-[9px] font-bold tracking-[.16em] text-[#7b8b80]">{item.label.toLocaleUpperCase("pt-BR")}</p>
+      {item.children?.map((child, index) => <button key={child.label} type="button" role="menuitem" onClick={() => { setPosition(null); button.current?.focus(); child.onClick(); }} className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left hover:bg-[#eff5f0] focus:bg-[#e7f2e9] focus:outline-none"><span aria-hidden="true" className="text-xs text-[#92a398]">0{index + 1}</span><span><strong className="block text-xs">{child.label}</strong><small className="mt-1 block text-[10px] text-[#718077]">{child.description}</small></span><span aria-hidden="true" className="ml-auto">›</span></button>)}
     </div>, document.body)}
   </>;
 }

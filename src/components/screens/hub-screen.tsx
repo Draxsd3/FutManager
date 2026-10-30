@@ -1,102 +1,56 @@
 "use client";
 
-import { useState } from "react";
 import type { Player } from "@/lib/game/mock-data";
+import { ClassicIcon } from "@/components/ui/classic-icon";
 import { ClubSidebar } from "@/components/ui/club-sidebar";
-import { InterfaceIcon } from "@/components/ui/interface-icon";
 import { fifaPosition, fifaPositionOrder } from "@/lib/game/fifa-position";
-import styles from "./hub-screen.module.css";
 
-type Props = {
+export function HubScreen({ club, coach, budget, opponent, round, competition, squad, starters, selectedPlayer, onSelectPlayer, onOpenPlayer, onEscalar, onQuickAction }: {
   club: string; coach: string; budget: number; opponent: string; round: number; competition: string;
   squad: Player[]; starters: number[]; selectedPlayer: Player | null;
   onSelectPlayer: (id: number) => void; onOpenPlayer: (id: number) => void; onEscalar: () => void;
   onQuickAction: (action: "roster" | "finances" | "trophies" | "training") => void;
-};
-export function HubScreen({ club, coach, budget, opponent, round, competition, squad, starters,
-  selectedPlayer, onSelectPlayer, onOpenPlayer, onEscalar, onQuickAction }: Props) {
-  const [query, setQuery] = useState("");
-  const [group, setGroup] = useState("all");
-  const [position, setPosition] = useState("all");
-  const [sort, setSort] = useState("position");
-  const [view, setView] = useState("overview");
-  const normalize = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
-  const visibleSquad = squad.filter((player) =>
-    (group === "all" || (group === "starters" ? starters.includes(player.id) : !starters.includes(player.id))) &&
-    (position === "all" || player.position === position) &&
-    normalize(`${player.name} ${fifaPosition(player)}`).includes(normalize(query.trim())),
-  ).sort((a,b) => {
-    const name = a.name.localeCompare(b.name, "pt-BR");
-    if (sort === "name") return name;
-    if (sort === "overall") return b.overall - a.overall || name;
-    if (sort === "energy") return b.energy - a.energy || name;
-    if (sort === "value") return b.marketValue - a.marketValue || name;
-    return fifaPositionOrder(a) - fifaPositionOrder(b) || b.overall - a.overall || name;
-  });
-  const totalMarketValue = squad.reduce((n,p) => n+p.marketValue,0);
-  const monthlyPayroll = squad.reduce((n,p) => n+p.salary,0);
-  const averageOverall = squad.length ? Math.round(squad.reduce((n,p) => n+p.overall,0)/squad.length) : 0;
-  const number = (n: number, digits = 1) => n.toLocaleString("pt-BR", { maximumFractionDigits: digits, minimumFractionDigits: digits });
+}) {
+  const visibleSquad = [...squad].sort((a, b) => fifaPositionOrder(a) - fifaPositionOrder(b) || b.overall - a.overall || a.name.localeCompare(b.name, "pt-BR"));
+  const totalMarketValue = squad.reduce((total, player) => total + player.marketValue, 0);
+  const monthlyPayroll = squad.reduce((total, player) => total + player.salary, 0);
+  const averageOverall = squad.length ? Math.round(squad.reduce((total, player) => total + player.overall, 0) / squad.length) : 0;
 
-  return <div className={styles.screen}>
-    <ClubSidebar club={club} coach={coach} budget={budget} directorTrust={95} fanTrust={85} opponent={opponent}
-      isHome round={round} competition={competition} selectedPlayer={selectedPlayer} ctaLabel="Escalar Time"
-      onCta={onEscalar} onQuickAction={onQuickAction} onOpenPlayer={onOpenPlayer}/>
-    <section className={styles.main} aria-label="Gestão do elenco">
-      <header className={styles.hero}>
-        <div className={styles.heroTop}><p className={styles.eyebrow}><span/>CENTRO DE COMANDO <i>/</i> SEU CLUBE, SUA HISTÓRIA</p><span className={styles.careerTag}><InterfaceIcon name="shield" size={13}/>MODO CARREIRA</span></div>
-        <div className={styles.heroHeading}><div><h2>Gestão de <em>elenco.</em></h2><p>O talento entra em campo. A estratégia começa aqui.</p></div><div className={styles.round}><small>{competition}</small><b>{String(round).padStart(2,"0")}<span> / RODADA</span></b></div></div>
-        <div className={styles.metrics}>
-          <Metric icon="group" label="ATLETAS NO ELENCO" value={String(squad.length)} detail={`${starters.length} no time titular`}/>
-          <Metric icon="activity" label="FORÇA MÉDIA" value={String(averageOverall)} detail="Média geral dos atletas"/>
-          <Metric icon="money" label="VALOR DO ELENCO" value={`R$ ${number(totalMarketValue)}`} unit="mi" detail="Valor de mercado total"/>
-          <Metric icon="chart_bar" label="FOLHA MENSAL" value={`R$ ${number(monthlyPayroll/1000,2)}`} unit="mi" detail="Salários do elenco"/>
+  return <div className="grid h-full min-h-0 grid-cols-[minmax(180px,260px)_minmax(0,1fr)] bg-transparent">
+    <ClubSidebar club={club} coach={coach} budget={budget} directorTrust={95} fanTrust={85} opponent={opponent} isHome round={round} competition={competition} selectedPlayer={selectedPlayer} ctaLabel="Escalar Time" onCta={onEscalar} onQuickAction={onQuickAction} />
+    <section className="flex min-h-0 flex-col overflow-hidden bg-[linear-gradient(rgba(255,255,255,.9),rgba(250,252,249,.94)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center text-[#22352a]">
+      <header className="border-b-2 border-[var(--team-accent)] bg-white/95 shadow-sm">
+        <div className="flex flex-wrap items-stretch gap-x-6 gap-y-2 px-4 py-2.5">
+          <div className="min-w-[130px]"><h2 className="text-lg font-black tracking-tight text-[var(--team-accent)]">ELENCO</h2><p className="text-[10px] text-[#64746a]">Gerencie atletas e opções táticas</p></div>
+          <SquadMetric icon="group" value={String(squad.length)} label="Jogadores" />
+          <SquadMetric icon="chart_bar" value={String(averageOverall)} label="Força média" />
+          <SquadMetric icon="money" value={`R$ ${totalMarketValue.toFixed(1)}M`} label="Valor do elenco" />
+          <SquadMetric icon="house" value={`R$ ${(monthlyPayroll / 1000).toFixed(2)}M`} label="Folha mensal" />
         </div>
+        <div className="border-t border-[#e2ebe3] bg-[#f4f8f4] px-4 py-2 text-[10px] font-bold text-[#5c6d61]">{visibleSquad.length} jogadores · ordenados de GK a atacante</div>
       </header>
-      <section className={styles.roster} aria-label="Lista de jogadores">
-        <div className={styles.sectionHeader}><div className={styles.sectionHeading}><InterfaceIcon name="group" size={18}/><h3>Central do elenco</h3><span>{squad.length}</span></div><div className={styles.views} aria-label="Visualização do elenco">
-          <button type="button" aria-pressed={view === "overview"} onClick={() => setView("overview")}>Visão geral</button>
-          <button type="button" aria-pressed={view === "performance"} onClick={() => setView("performance")}>Desempenho</button>
-        </div></div>
-        <div className={styles.toolbar}>
-          <div className={styles.tabs} aria-label="Grupo de jogadores">{([['all','Todos',squad.length],['starters','Titulares',starters.length],['bench','Reservas',squad.filter(p=>!starters.includes(p.id)).length]] as const).map(([value,label,count]) => <button key={value} type="button" aria-pressed={group===value} onClick={() => setGroup(value)}>{label}<span>{count}</span></button>)}</div>
-          <label className={styles.search}><InterfaceIcon name="search" size={16}/><input aria-label="Buscar jogador" type="search" placeholder="Buscar atleta ou posição" value={query} onChange={e=>setQuery(e.target.value)}/></label>
-          <label className={styles.filter}><span className={styles.srOnly}>Filtrar posição</span><select aria-label="Filtrar posição" value={position} onChange={e=>setPosition(e.target.value)}>{[['all','Todas as posições'],['G','Goleiros'],['L','Laterais'],['Z','Zagueiros'],['M','Meio-campistas'],['A','Atacantes']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
-          <label className={styles.sort}>Ordenar por<select aria-label="Ordenar jogadores" value={sort} onChange={e=>setSort(e.target.value)}>{[['position','Posição'],['overall','Força'],['name','Nome'],['energy','Energia'],['value','Valor']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
-        </div>
-        <div className={styles.tableViewport}>
-          <table className={styles.table}><caption className={styles.srOnly}>Elenco do {club} · {view === "overview" ? "Visão geral" : "Desempenho"}</caption>
-            <thead><tr><th scope="col">POS.</th><th scope="col" className={styles.nameHeading}>JOGADOR</th><th scope="col">GERAL</th><th scope="col">IDADE</th>
-              {view === "overview" ? <><th scope="col">PÉ</th><th scope="col">ENERGIA</th><th scope="col">VALOR DE MERCADO</th><th scope="col">SALÁRIO / MÊS</th><th scope="col">CONTRATO ATÉ</th></> : <><th scope="col">CARACTERÍSTICAS</th><th scope="col">GOLS</th><th scope="col">ASSISTÊNCIAS</th><th scope="col">NOTA MÉDIA</th></>}<th scope="col"><span className={styles.srOnly}>Perfil</span></th>
-            </tr></thead>
-            <tbody>{visibleSquad.map((player) => {
-              const starter = starters.includes(player.id), selected = selectedPlayer?.id === player.id;
-              return <tr key={player.id} tabIndex={0} aria-selected={selected} data-player-row={player.id} className={selected ? styles.selected : undefined}
-                onClick={()=>onSelectPlayer(player.id)} onDoubleClick={()=>onOpenPlayer(player.id)}
-                onKeyDown={event=>{if(event.target !== event.currentTarget)return;if(event.key === "Enter"){event.preventDefault();onOpenPlayer(player.id);}if(event.key === " "){event.preventDefault();onSelectPlayer(player.id);}}}>
-                <td><span className={`${styles.position} ${styles[`role${player.position}`]}`}>{fifaPosition(player)}</span></td>
-                <td className={styles.playerName}><div className={styles.identity}><span className={styles.number}>{String(player.shirtNumber ?? player.id).padStart(2,"0")}</span><div><button type="button" className={styles.nameButton} onClick={event=>{event.stopPropagation();onOpenPlayer(player.id);}}>{player.name}</button><small>{starter ? <><i/>TITULAR</> : "RESERVA"}</small></div></div></td>
-                <td><span className={`${styles.overall} ${player.overall>=80 ? styles.highOverall : ""}`}>{player.overall}</span></td><td>{player.age}</td>
-                {view === "overview" ? <><td className={styles.muted}>{player.foot === "D" ? "Direito" : "Esquerdo"}</td><td><Energy value={player.energy}/></td><td className={styles.money}>R$ {number(player.marketValue)} mi</td><td className={styles.muted}>R$ {number(player.salary,0)} mil</td><td className={styles.contract}>{formatDate(player.contractUntil)}</td></> : <><td className={styles.traits}>{player.traits || "—"}</td><td>{player.goals}</td><td>{player.assists}</td><td><span className={styles.rating}>{player.avgRating === null ? "—" : number(player.avgRating)}</span></td></>}
-                <td><button type="button" className={styles.openProfile} aria-label={`Abrir perfil de ${player.name}`} onClick={event=>{event.stopPropagation();onOpenPlayer(player.id);}}><InterfaceIcon name="arrow_up_right" size={16}/></button></td>
-              </tr>;
-            })}</tbody>
-          </table>
-          {!visibleSquad.length && <div className={styles.empty}><InterfaceIcon name="search" size={28}/><h4>Nenhum atleta encontrado</h4><p>Tente outro nome, posição ou grupo.</p><button type="button" onClick={()=>{setQuery("");setGroup("all");setPosition("all");}}>Limpar filtros</button></div>}
-        </div>
-        <footer className={styles.tableFooter}><span role="status"><b>{visibleSquad.length}</b> de {squad.length} atletas</span><p>Selecione para analisar <i>·</i> Enter ou duplo clique para abrir o perfil</p><span className={styles.live}><i/>ELENCO DA CARREIRA</span></footer>
-      </section>
-      <div className={styles.signature}><span>FUTMANAGER <b> / </b> CAREER EXPERIENCE</span><span>O próximo capítulo é seu.</span></div>
+      <div className="min-w-0 flex-1 overflow-auto px-3 pb-3 pt-2">
+        <table className="w-full border-separate border-spacing-y-1 text-left text-[11px]">
+          <thead className="sticky top-0 z-10 bg-[#f8fbf8] text-[9px] font-black uppercase tracking-wide text-[#607267]"><tr><Th>Pos.</Th><Th align="left">Nome</Th><Th>Pé</Th><Th>Idade</Th><Th>Força</Th><Th align="left">Características</Th><Th>Forma</Th><Th>Satisf.</Th><Th align="left">Energia</Th><Th align="right">Valor</Th><Th align="right">Salário</Th><Th>Final</Th><Th>J</Th><Th>G</Th><Th>A</Th><Th>Nota</Th></tr></thead>
+          <tbody>{visibleSquad.map((player) => {
+            const starter = starters.includes(player.id);
+            return <tr key={player.id} onClick={() => onSelectPlayer(player.id)} onDoubleClick={() => onOpenPlayer(player.id)} className={`cursor-pointer shadow-[0_1px_0_rgba(29,57,36,.04)] transition hover:bg-[#edf7ef] ${selectedPlayer?.id === player.id ? "bg-[#dff1e3] ring-1 ring-inset ring-[var(--team-accent)]" : "bg-white/90"}`}>
+              <td className="rounded-l px-2 py-2 text-center"><PositionBadge player={player} /></td>
+              <td className="px-2 py-2 font-bold"><span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--team-accent)] text-[8px] text-white">{club.slice(0, 1)}</span><span className="ml-2">{player.name}</span>{starter && <span className="ml-2 rounded bg-[#dff5e5] px-1 text-[8px] text-[#18783b]">XI</span>}</td>
+              <Td>{player.foot}</Td><Td>{player.age}</Td><Td className="font-black text-[var(--team-accent)]">{player.overall}</Td><td className="px-2 py-2 text-[#62736a]">{player.traits}</td><td className="px-2 py-2"><FormBars player={player} /></td><td className="px-2 py-2 text-center"><Satisfaction player={player} /></td><td className="px-2 py-2"><Energy value={player.energy} /></td><td className="px-2 py-2 text-right font-bold">R$ {player.marketValue.toFixed(1)}M</td><td className="px-2 py-2 text-right">{player.salary} mil</td><Td>{player.contractUntil}</Td><Td>{player.goals + player.assists}</Td><Td>{player.goals}</Td><Td>{player.assists}</Td><td className="rounded-r px-2 py-2 text-center font-black"><Rating value={player.avgRating} /></td>
+            </tr>;
+          })}</tbody>
+        </table>
+      </div>
     </section>
   </div>;
 }
-function Metric({icon,label,value,detail,unit}:{icon:Parameters<typeof InterfaceIcon>[0]['name'];label:string;value:string;detail:string;unit?:string}) {
-  return <div className={styles.metric}><div><span>{label}</span><InterfaceIcon name={icon} size={17}/></div><strong>{value}<small>{unit}</small></strong><p>{detail}</p></div>;
-}
-function Energy({value}:{value:number}) {
-  return <div className={styles.energy}><i><span style={{width:`${Math.max(0,Math.min(100,value))}%`,background:value>70?"#b7e776":value>40?"#e8c276":"#ed9181"}}/></i><span>{value}%</span></div>;
-}
-function formatDate(value:string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
-}
+
+function SquadMetric({ icon, value, label }: { icon: Parameters<typeof ClassicIcon>[0]["name"]; value: string; label: string }) { return <div className="flex items-center gap-2"><ClassicIcon name={icon} size={32} /><div><b className="block text-sm leading-none">{value}</b><span className="text-[9px] text-[#6d7e72]">{label}</span></div></div>; }
+function Th({ children, align = "center" }: { children: React.ReactNode; align?: "left" | "right" | "center" }) { return <th className={`border-b border-[#d4e1d6] px-2 py-2 ${align === "left" ? "text-left" : align === "right" ? "text-right" : "text-center"}`}>{children}</th>; }
+function Td({ children, className = "" }: { children: React.ReactNode; className?: string }) { return <td className={`px-2 py-2 text-center ${className}`}>{children}</td>; }
+function PositionBadge({ player }: { player: Player }) { const colors: Record<Player["position"], string> = { G: "bg-[#c59d24]", L: "bg-[#547eaf]", Z: "bg-[#557f99]", M: "bg-[#239557]", A: "bg-[#be584f]" }; return <span className={`inline-grid h-5 min-w-7 place-items-center rounded border border-black/15 px-1 text-[9px] font-black text-white ${colors[player.position]}`}>{fifaPosition(player)}</span>; }
+function FormBars({ player }: { player: Player }) { const levels = [player.overall - 10, player.overall - 3, player.overall + (player.id % 8), player.overall - 6, player.overall - 13]; return <span className="flex h-5 items-end justify-center gap-[2px]">{levels.map((level, index) => <i key={index} style={{ height: `${Math.max(20, Math.min(100, level))}%` }} className={level >= 78 ? "w-1.5 bg-[#1dbd63]" : level >= 65 ? "w-1.5 bg-[#f1b83b]" : "w-1.5 bg-[#e47b4d]"} />)}</span>; }
+function Satisfaction({ player }: { player: Player }) { const satisfied = player.energy >= 80; return <span title={satisfied ? "Satisfeito" : "Atenção"} className={`inline-grid h-5 w-5 place-items-center rounded-full text-[10px] text-white ${satisfied ? "bg-[#38a856]" : "bg-[#e5a62d]"}`}>{satisfied ? "●" : "!"}</span>; }
+function Energy({ value }: { value: number }) { const tone = value > 70 ? "bg-[#25b95e]" : value > 40 ? "bg-[#eab439]" : "bg-[#d75b4f]"; return <div className="flex items-center gap-1.5"><span className="h-2 w-14 overflow-hidden rounded-full bg-[#e1eae2]"><i style={{ width: `${value}%` }} className={`block h-full rounded-full ${tone}`} /></span><small>{value}%</small></div>; }
+function Rating({ value }: { value: number | null }) { if (value === null) return <span className="text-[#9aa8a0]">—</span>; return <span className={value >= 7 ? "text-[#15934f]" : value < 6 ? "text-[#cc4f49]" : "text-[#b77a18]"}>{value.toFixed(1)}</span>; }
