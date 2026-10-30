@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { buildStartingXI, squad } from "./mock-data";
-import { createMatchWeather, createMinuteRandom, matchEnergyAfter, otherScore, calculatePlayerRatings, simulateAction } from "./live-match";
+import { calculateMatchStatistics, createMatchWeather, createMinuteRandom, matchEnergyAfter, otherScore, calculatePlayerRatings, simulateAction } from "./live-match";
 import { parseMatchRules } from "./match-rules";
 
 const rules = parseMatchRules(readFileSync("public/game-assets/match-engine-rules.md", "utf8"));
@@ -33,6 +33,27 @@ function simulateMatch(key: string, homePlayers: typeof strong, awayPlayers: typ
 }
 
 describe("text-first match engine", () => {
+  it("derives two-sided possession, shooting, passing, discipline and defensive statistics from events", () => {
+    const point = { x: 50, y: 50 };
+    const events = [
+      { minute: 1, half: 1 as const, text: "Passe completo", outcome: "complete" as const, scene: { action: "pass" as const, team: "home" as const, actorIndex: 0, targetIndex: 1, from: point, to: point, possessionAfter: "home" as const } },
+      { minute: 2, half: 1 as const, text: "Passe interceptado", outcome: "intercepted" as const, scene: { action: "turnover" as const, team: "home" as const, actorIndex: 0, targetIndex: 1, from: point, to: point, possessionAfter: "away" as const } },
+      { minute: 3, half: 1 as const, text: "Gol", outcome: "goal" as const, scene: { action: "goal" as const, team: "away" as const, actorIndex: 0, targetIndex: 1, from: point, to: point, possessionAfter: "home" as const } },
+      { minute: 4, half: 1 as const, text: "Desarme", scene: { action: "tackle" as const, team: "home" as const, actorIndex: 0, targetIndex: 1, from: point, to: point, possessionAfter: "home" as const } },
+      { minute: 5, half: 1 as const, text: "Falta e amarelo", card: "yellow" as const, scene: { action: "foul" as const, team: "away" as const, actorIndex: 0, targetIndex: 1, from: point, to: point, possessionAfter: "home" as const } },
+    ];
+    const stats = calculateMatchStatistics(events);
+    expect(stats.home.possession).toBe(80);
+    expect(stats.away.possession).toBe(20);
+    expect(stats.home.passes).toBe(2);
+    expect(stats.home.passesCompleted).toBe(1);
+    expect(stats.away.shots).toBe(1);
+    expect(stats.away.shotsOnTarget).toBe(1);
+    expect(stats.home.tackles).toBe(1);
+    expect(stats.away.fouls).toBe(1);
+    expect(stats.away.yellowCards).toBe(1);
+  });
+
   it("uses the same seeded minute for the same match, lineup, weather, and rules", () => {
     const first = simulateMatch("save-1|round-1", strong, weak);
     const second = simulateMatch("save-1|round-1", strong, weak);

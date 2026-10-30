@@ -22,4 +22,4 @@ O save mantém uma fotografia das regras, clima, chave determinística e motiva�
 
 `src/lib/game/match-rules.test.ts` verifica parsing, leitura sem cache e falha fechada. `src/lib/game/live-match.test.ts` cobre reprodutibilidade, força relativa, surpresas, posse, autoria, clima, desgaste, notas e resultados de outros jogos.
 
-Ao alterar coeficientes, atualizar o arquivo canônico e rodar pelo menos esses testes mais a suíte geral. Não alterar coeficientes para que todo favorito vença: futebol continua probabilístico. A tela em jogo é somente textual até decisão futura do responsável; não renderizar minicampo, bolinhas ou animação de bola.
+Ao alterar coeficientes, atualizar o arquivo canônico e rodar pelo menos esses testes mais a suíte geral. Não alterar coeficientes para que todo favorito vença: futebol continua probabilístico. Durante o jogo, a tela é somente textual, com estatísticas dos dois times e momentos importantes (sem listar passes rotineiros); não renderizar minicampo, jogadores ou animação de bola. No pós-jogo, mostrar abas de eventos, estatísticas e formações estáticas dos dois times, além dos placares da rodada ao lado.

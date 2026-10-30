@@ -110,12 +110,12 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 
 ### 12. Partida textual e regras obrigatórias do motor
 
-- Pedido explícito de 30/10/2026: remover temporariamente o minicampo/visão gráfica durante a partida; acompanhar o jogo ao vivo por relato textual e usar um relatório textual no pós-jogo. Não copiar interface, textos ou ativos do Brasfoot; usar somente o fluxo funcional como referência.
+- Pedido explícito de 30/10/2026: remover temporariamente o minicampo/visão gráfica durante a partida; o acompanhamento ao vivo deve priorizar estatísticas dos dois times no topo, taça do campeonato e linha do tempo de momentos importantes (sem passes rotineiros). O pós-jogo segue estilo central de resultados com abas de eventos, estatísticas e formações estáticas dos dois times, mais todos os jogos da rodada ao lado. Não copiar interface, textos ou ativos do Brasfoot/Google; usar somente o padrão funcional como referência.
 - Antes de iniciar **ou retomar** uma partida, ler `public/game-assets/match-engine-rules.md` sem cache. Validar a configuração incorporada ao Markdown e impedir início/retomada se a leitura ou validação falhar. Regras de implementação ficam explicadas em `docs/match-engine.md`.
 - O motor deve usar força/overall, qualidades/habilidades disponíveis, energia/condição, motivação/vontade estimada, formação/posição como referência organizacional, estilo, marcação/pressão, foco de ataque, goleiro e clima simulado. Não inventar atributos numéricos ausentes. A equipe superior tem vantagem estatística consistente, sem eliminar surpresas plausíveis.
 - Passe, finalização, gol, defesa, desarme, falta, impedimento, posse, placar, comentário, estatísticas, cartões e notas devem derivar de eventos coerentes. O clima e a semente ficam fixos na partida e são salvos para uma retomada estável.
 - Aplicar o desgaste final à energia dos atletas conforme minutos, pressão e temperatura. Jogos secundários simulados também devem considerar força relativa e não antecipar gols futuros.
-- As posições escolhidas pelo treinador são organização inicial e contexto de adaptação; não são limites rígidos para o comportamento. Não mostrar campo, jogadores/bolinhas ou animações gráficas enquanto a visão estiver temporariamente removida.
+- As posições escolhidas pelo treinador são organização inicial e contexto de adaptação; não são limites rígidos para o comportamento. Durante a partida não mostrar campo, jogadores/bolinhas ou animações gráficas. No pós-jogo, a pedido de 30/10/2026, pode haver apenas uma prancheta estática com as formações dos dois times, sem simulação visual ao vivo.
 
 ### 13. Proporção profissional obrigatória das camisas
 
