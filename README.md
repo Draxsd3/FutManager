@@ -281,6 +281,6 @@ Os 22 jogadores da ilustração ajustam suas posições em relação à bola: a 
 
 A direção foi inspirada por [UT Austin Villa: formação e atribuição de papéis](https://www.cs.utexas.edu/~pstone/Papers/bib2html-links/LNAI12-MacAlpine.pdf) e [PhysicsFC: movimentação sem bola e formação](https://arxiv.org/html/2504.21216v1), sem reproduzir os sistemas completos descritos nesses trabalhos.
 
-### Central de elenco
+### Base visual e ícones
 
-A central de carreira usa uma identidade grafite/verde-lima e ícones vetoriais monoline consistentes. O elenco oferece busca por nome/posição, filtros de titulares/reservas e setor, ordenação por posição, força, nome, energia ou valor, além das abas **Visão geral** e **Desempenho**. Selecione uma linha para analisar o atleta; nome, seta, Enter ou duplo clique abrem o perfil completo. Métricas e desempenho vêm dos dados da carreira; os indicadores fixos de confiança são explicitamente ilustrativos. Dados não disponíveis de jogos disputados e estimativas artificiais de forma/satisfação não são apresentados como estatísticas reais.
+A central de elenco mantém a estrutura original: navegação clara, cores cadastradas do clube, painel lateral e tabela compacta. As demais telas conservam seus layouts e fluxos já existentes. Os ícones decorativos usam uma única família SVG monoline de 24 unidades, com traços, terminais e proporções consistentes e cor herdada de cada interface. `ClassicIcon` mantém compatibilidade com os nomes e tamanhos usados nas telas; `InterfaceIcon` fornece o mesmo desenho vetorial sem imagens externas.

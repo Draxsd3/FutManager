@@ -1,5 +1,6 @@
 "use client";
 
+import { InterfaceIcon } from "@/components/ui/interface-icon";
 import styles from "./start-menu-screen.module.css";
 
 export function StartMenuScreen({
@@ -50,7 +51,7 @@ export function StartMenuScreen({
             <Arrow />
           </button>
           <button type="button" className={styles.editor} onClick={onEdit}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 5h16v14H4zM12 5v14" /><circle cx="12" cy="12" r="3" /><path d="M4 9h3v6H4m16-6h-3v6h3" /></svg>
+            <InterfaceIcon name="book" />
             EDITOR DE CLUBES <span aria-hidden="true">↗</span>
           </button>
         </nav>
@@ -71,5 +72,5 @@ export function StartMenuScreen({
 }
 
 function Arrow() {
-  return <svg className={styles.arrow} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" /></svg>;
+  return <InterfaceIcon name="arrow_right" className={styles.arrow} />;
 }

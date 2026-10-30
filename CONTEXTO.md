@@ -183,3 +183,11 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Elenco: métricas calculadas do elenco real, busca por nome/posição sem diferenciar acentos, grupos Todos/Titulares/Reservas, filtro de setor, ordenação e abas Visão geral/Desempenho. Perfis abrem pelo nome, seta, duplo clique ou Enter na linha; Espaço seleciona para análise. Agenda continua abrindo submenu antes de navegar. Preservar Menu inicial, Principal, ações de gestão e Escalar Time.
 - Não apresentar gols+assistências como jogos disputados. Remover barras de forma e satisfação derivadas artificialmente de força/energia da tabela. Desempenho usa gols, assistências e nota já registrados. Indicadores fixos de confiança continuam identificados como ilustrativos, não como novos cálculos do motor.
 - A tabela permite rolagem própria e horizontal em telas estreitas; sidebar tem rolagem interna em desktop. No celular e em paisagem baixa, permitir rolagem da central para não esconder controles/atletas. Não alterar saves, regras de jogo, autenticação ou persistência por causa do redesign.
+
+
+### 24. Correção: preservar o design original e modernizar somente ícones
+
+- O responsável rejeitou a remodelação completa da seção 23: voltar à estrutura, cores, proporções, estética clara e organização anteriores da central de elenco, sidebar e navegação. A seção 23 deixa de ser diretriz visual vigente.
+- Alterar somente os ícones: usar uma família SVG monoline moderna, harmoniosa e consistente em todas as telas, herdando as cores da interface existente. Preservar os nomes, tamanhos e chamadas de `ClassicIcon` para aplicar a padronização sem redesenhar cada tela.
+- Manter os layouts existentes de agenda, estádio, editor, escalação, partida, perfis, mercado e menu inicial. Não propagar o tema grafite/verde-lima nem introduzir outra navegação, filtros ou cartões como parte desta correção.
+- Não reverter funcionalidades posteriores de perfis/negociações, progressos, autenticação, motor ou regras de jogo. Componentes específicos de campo e camisas não são ícones de interface e mantêm seus desenhos.
