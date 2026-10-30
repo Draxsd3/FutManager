@@ -6,6 +6,8 @@ export type EditorClub = {
   name: string;
   shortName: string;
   division: DivisionKey;
+  /** State used to register the club in the corresponding estadual tournament. */
+  state?: string;
   foundedYear: number;
   primaryColor: string;
   secondaryColor: string;
@@ -83,7 +85,24 @@ const stadiums: Record<string, [string, number]> = {
   Cruzeiro: ["Mineirão", 61846],
   Grêmio: ["Arena do Grêmio", 55662],
   Bahia: ["Arena Fonte Nova", 47907],
+  Remo: ["Mangueirão", 45500],
+  "Náutico": ["Aflitos", 19300],
+  Guarani: ["Brinco de Ouro", 29130],
+  CSA: ["Rei Pelé", 17500],
+  "Ferroviária": ["Fonte Luminosa", 20000],
+  Caxias: ["Centenário", 22132],
+  Brasiliense: ["Boca do Jacaré", 27000],
+  Anápolis: ["Jonas Duarte", 20000],
 };
+
+const clubStates: Record<string, string> = {
+  Flamengo: "Rio de Janeiro", Botafogo: "Rio de Janeiro",
+  Palmeiras: "São Paulo", Corinthians: "São Paulo", Santos: "São Paulo",
+  "Ferroviária": "São Paulo", Cruzeiro: "Minas Gerais", Grêmio: "Rio Grande do Sul",
+  Bahia: "Bahia", Remo: "Pará", "Náutico": "Pernambuco", Guarani: "São Paulo",
+  CSA: "Alagoas", Caxias: "Rio Grande do Sul", Brasiliense: "Distrito Federal", Anápolis: "Goiás",
+};
+
 
 const reserveNames = [
   "Caio Souza", "Murilo Alves", "Rafael Lima", "Bruno Santos", "João Vitor",
@@ -110,13 +129,14 @@ export function createDefaultDatabase(): EditorDatabase {
         name,
         shortName: theme?.short ?? name.slice(0, 3).toUpperCase(),
         division,
+        state: clubStates[name],
         foundedYear: 1900 + clubIndex * 3,
         primaryColor: theme?.primary ?? "#08783e",
         secondaryColor: theme?.secondary ?? "#ffffff",
         stadiumName: stadium[0],
         stadiumCapacity: stadium[1],
         country: "Brasil",
-        level: division === "Série A" ? 14 - clubIndex : 10 - clubIndex,
+        level: Math.max(1, 16 - Object.keys(clubs).indexOf(division) * 3 - clubIndex),
         coachName: "Técnico interino",
         kitStyle: clubIndex % 3 === 0 ? "listrada" : clubIndex % 3 === 1 ? "faixa" : "lisa",
       });
@@ -156,7 +176,8 @@ export function upgradeEditorDatabase(database: EditorDatabase): EditorDatabase 
     clubs: database.clubs.map((club, index) => ({
       ...club,
       country: club.country ?? "Brasil",
-      level: club.level ?? (club.division === "Série A" ? 14 - (index % 4) : 10 - (index % 4)),
+      state: club.state ?? clubStates[club.name],
+      level: club.level ?? Math.max(1, 16 - Object.keys(clubs).indexOf(club.division) * 3 - (index % 4)),
       coachName: club.coachName ?? "Técnico interino",
       kitStyle: club.kitStyle ?? "listrada",
     })),

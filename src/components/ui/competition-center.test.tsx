@@ -66,6 +66,45 @@ it("browses other divisions and categories without fabricating results or regist
   fireEvent.keyDown(document, { key: "Escape" });
   expect(close).toHaveBeenCalledOnce();
 });
+it("shows only persisted career results for an active knockout competition", () => {
+  const database = createDefaultDatabase();
+  render(
+    <CompetitionCenter
+      club="Flamengo"
+      competition="Série A"
+      activeCompetitionId="national:Copa do Brasil"
+      careerCompetitionData={{
+        "national:Copa do Brasil": {
+          type: "cup",
+          table: [],
+          fixtures: [
+            { home: "Flamengo", away: "Palmeiras", stadium: "Maracanã", attendance: 0, homeScore: 2, awayScore: 1, played: true, roundLabel: "Oitavas de final" },
+            { home: "Santos", away: "Bahia", stadium: "Vila Belmiro", attendance: 0, homeScore: 0, awayScore: 0, played: false, roundLabel: "Oitavas de final" },
+          ],
+          topScorers: [{ name: "Atacante", club: "Flamengo", goals: 2, played: 1 }],
+          topRatings: [],
+          matchesPlayed: 1,
+          goals: 3,
+        },
+      }}
+      database={database}
+      table={[]}
+      topScorers={[]}
+      topRatings={[]}
+      fixtures={[]}
+      round={1}
+      onClose={vi.fn()}
+    />,
+  );
+  expect(screen.getByText("Mata-mata sem tabela de pontos")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Rodadas" }));
+  expect(screen.getByText("2 × 1")).toBeTruthy();
+  expect(screen.getByText("—")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Estatísticas" }));
+  expect(screen.getByText("Artilharia")).toBeTruthy();
+  expect(screen.getAllByText("Atacante")).toHaveLength(2);
+});
+
 it("restores focus and body scrolling after closing", () => {
   const trigger = document.createElement("button");
   document.body.append(trigger);

@@ -69,6 +69,7 @@ function FormationCard({ club, players, formation, ratings }: { club: string; pl
 export function ResultScreen({
   competition,
   round,
+  roundLabel,
   fixtures,
   club,
   opponent,
@@ -78,7 +79,6 @@ export function ResultScreen({
   awayFormation,
   homeFormationPlayers,
   awayFormationPlayers,
-  ratingPlayers,
   events,
   weather,
   motivationHome,
@@ -90,6 +90,7 @@ export function ResultScreen({
 }: {
   competition: string;
   round: number;
+  roundLabel?: string;
   fixtures: RoundFixture[];
   club: string;
   opponent: string;
@@ -120,7 +121,7 @@ export function ResultScreen({
       <section className={styles.matchCard}>
         <header className={styles.header}>
           <span className={styles.trophy} role="img" aria-label="Troféu do campeonato"><InterfaceIcon name="trophy" size={26} /></span>
-          <div><span className={styles.eyebrow}>FIM DE JOGO · {round}ª RODADA</span><h1>{competition}</h1><span className={styles.dateLabel}>Resumo da partida</span></div>
+          <div><span className={styles.eyebrow}>FIM DE JOGO · {roundLabel ?? `${round}ª RODADA`}</span><h1>{competition}</h1><span className={styles.dateLabel}>Resumo da partida</span></div>
         </header>
         <section className={styles.scoreboard} aria-label={`Resultado final: ${club} ${homeScore}, ${opponent} ${awayScore}`}>
           <div className={styles.scoreTeam}><Crest club={club} size="md" /><b>{club}</b><small>MANDANTE</small></div>
@@ -161,10 +162,16 @@ export function ResultScreen({
             </div>
             <section className={styles.ratingsPanel} aria-label="Notas dos atletas">
               <h2>Notas dos atletas</h2>
-              <div className={styles.ratingsGrid}>{ratingPlayers.map((player) => {
-                const rating = homePlayerRatings.find((item) => item.playerId === player.id);
-                return <div className={styles.ratingRow} key={player.id}><span>{player.position} · {player.name}</span><b>{rating?.rating.toFixed(1) ?? "—"}</b></div>;
-              })}</div>
+              <div className={styles.ratingsGrid}>
+                {homeFormationPlayers.map((player) => {
+                  const rating = homePlayerRatings.find((item) => item.playerId === player.id);
+                  return <div className={styles.ratingRow} key={`home-${player.id}`}><span>{club} · {player.position} · {player.name}</span><b>{rating?.rating.toFixed(1) ?? "—"}</b></div>;
+                })}
+                {awayFormationPlayers.map((player) => {
+                  const rating = awayPlayerRatings.find((item) => item.playerId === player.id);
+                  return <div className={styles.ratingRow} key={`away-${player.id}`}><span>{opponent} · {player.position} · {player.name}</span><b>{rating?.rating.toFixed(1) ?? "—"}</b></div>;
+                })}
+              </div>
             </section>
           </section>}
         </div>
@@ -175,9 +182,9 @@ export function ResultScreen({
         <div className={styles.fixtureList}>{fixtures.map((fixture) => {
           const current = fixture.home === club && fixture.away === opponent;
           return <article key={`${fixture.home}-${fixture.away}`} className={`${styles.fixture} ${current ? styles.currentFixture : ""}`}>
-            <div className={styles.fixtureTeams}><span title={fixture.home}>{fixture.home}</span><b>{fixture.homeScore}</b></div>
-            <div className={styles.fixtureTeams}><span title={fixture.away}>{fixture.away}</span><b>{fixture.awayScore}</b></div>
-            <small>{current ? "Sua partida · finalizada" : "Placar simulado"}</small>
+            <div className={styles.fixtureTeams}><span title={fixture.home}>{fixture.home}</span><b>{fixture.played === false ? "—" : fixture.homeScore}</b></div>
+            <div className={styles.fixtureTeams}><span title={fixture.away}>{fixture.away}</span><b>{fixture.played === false ? "—" : fixture.awayScore}</b></div>
+            <small>{current ? "Sua partida · finalizada" : fixture.played === false ? "Agendada" : "Resultado simulado da rodada"}</small>
           </article>;
         })}{fixtures.length === 0 && <p className={styles.noFixtures}>Nenhum outro jogo cadastrado.</p>}</div>
       </aside>

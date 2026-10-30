@@ -3,18 +3,29 @@ import { createPlayerCareer, recordPlayerMatch } from "./career";
 import { squad } from "./mock-data";
 
 describe("registro de partidas", () => {
-  it("contabiliza titulares e substitutos, gols e minutos, sem duplicar ao retomar", () => {
+  it("contabiliza jogos, minutos, gols, assistências e nota sem duplicar ao retomar", () => {
     const [starter, substitute, unused] = squad;
-    const match = { key: "1|Clube|Rival", round: 1, opponent: "Rival", homeScore: 2, awayScore: 1 };
+    const match = { key: "2026:league:round1:fixture-1", round: 1, opponent: "Rival", homeScore: 2, awayScore: 1, season: 2026, competitionId: "league:Brasil:Série A", competition: "Brasileirão Série A", competitionRound: 1 };
     const participation = { [starter.id]: { entered: 0, left: 60 }, [substitute.id]: { entered: 60 }, [unused.id]: { entered: 90 } };
     const initial = { [starter.id]: createPlayerCareer(starter, "Clube") };
-    const result = recordPlayerMatch(initial, squad, "Clube", participation, match, { [substitute.id]: 2 });
-    expect(result[starter.id].matches?.[0]).toMatchObject({ minutes: 60, goals: 0 });
-    expect(result[substitute.id].matches?.[0]).toMatchObject({ minutes: 30, goals: 2 });
-    expect(result[substitute.id].seasons[0].games).toBe(1);
+    const performance = { [starter.id]: { goals: 0, assists: 1, rating: 7.4, passes: 21, tackles: 2 }, [substitute.id]: { goals: 2, assists: 0, rating: 8.2, yellowCards: 1, shots: 3 } };
+    const result = recordPlayerMatch(initial, squad, "Clube", participation, match, performance);
+    expect(result[starter.id].matches?.[0]).toMatchObject({ minutes: 60, goals: 0, assists: 1, rating: 7.4, competitionId: match.competitionId });
+    expect(result[substitute.id].matches?.[0]).toMatchObject({ minutes: 30, goals: 2, assists: 0, rating: 8.2, yellowCards: 1, shots: 3 });
+    expect(result[starter.id].seasons[0]).toMatchObject({ minutes: 60, passes: 21, tackles: 2 });
+    expect(result[substitute.id].seasons[0]).toMatchObject({ games: 1, goals: 2, assists: 0, average: 8.2 });
     expect(result[unused.id]).toBeUndefined();
-    expect(recordPlayerMatch(result, squad, "Clube", participation, match, { [substitute.id]: 2 })).toEqual(result);
+    expect(recordPlayerMatch(result, squad, "Clube", participation, match, performance)).toEqual(result);
     expect(initial[starter.id].matches).toBeUndefined();
+  });
+
+  it("ignora contagens e notas não finitas em dados antigos ou corrompidos", () => {
+    const player = squad[0];
+    const result = recordPlayerMatch({}, [player], "Clube", { [player.id]: { entered: 0 } }, {
+      key: "malformed-match", round: 1, opponent: "Rival", homeScore: 0, awayScore: 0, season: 2026,
+    }, { [player.id]: { goals: Number.POSITIVE_INFINITY, assists: Number.NaN, rating: Number.NaN } });
+    expect(result[player.id].matches?.[0]).toMatchObject({ minutes: 90, goals: 0, assists: 0, rating: null });
+    expect(result[player.id].seasons[0]).toMatchObject({ games: 1, goals: 0, assists: 0, ratedGames: 0, average: null });
   });
 });
 
