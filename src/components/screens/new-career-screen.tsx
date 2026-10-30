@@ -1,7 +1,7 @@
 "use client";
 
 import type { EditorClub } from "@/lib/game/editor-data";
-import type { DivisionKey } from "@/lib/game/mock-data";
+import { divisionKeys, type DivisionKey } from "@/lib/game/mock-data";
 
 export function NewCareerScreen({
   coach,
@@ -53,7 +53,7 @@ export function NewCareerScreen({
               }}
               className="mt-1 block w-full border border-black/20 bg-white p-2 text-black"
             >
-              {(["Série A", "Série B"] as DivisionKey[]).map((item) => (
+              {divisionKeys.map((item) => (
                 <option key={item}>{item}</option>
               ))}
             </select>
@@ -95,7 +95,7 @@ export function NewCareerScreen({
               Adicionar e incluir outro
             </button>
             <button
-              disabled={!coach.trim()}
+              disabled={!coach.trim() || !selectedClub}
               onClick={onStart}
               className="rounded border border-[#e7c84d] bg-[#e7c84d] py-3 font-black text-[#14391d] transition hover:bg-[#f1d457] disabled:opacity-40"
             >

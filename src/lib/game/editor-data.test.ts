@@ -4,7 +4,8 @@ import { createDefaultDatabase, buildSquadFromDatabase, enforceEditorSquadLimit,
 describe("editor database", () => {
   it("creates complete squads for all default clubs", () => {
     const database = createDefaultDatabase();
-    expect(database.clubs).toHaveLength(8);
+    expect(database.clubs).toHaveLength(16);
+    expect(new Set(database.clubs.map((club) => club.division))).toEqual(new Set(["Série A", "Série B", "Série C", "Série D"]));
     for (const club of database.clubs) {
       const players = database.players.filter((player) => player.clubId === club.id);
       expect(players.length).toBeGreaterThanOrEqual(18);

@@ -47,8 +47,8 @@ function TimelineCard({ event, home }: { event: MatchEvent; home: boolean }) {
   </div>;
 }
 
-export function MatchOverviewScreen({ competition, round, minute, half, club, opponent, homeScore, awayScore, statistics, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, onRequestExit, weather, motivationHome, motivationAway, rulesLoading, rulesError }: {
-  competition: string; round: number; minute: number; half: "1º tempo" | "2º tempo" | "fim";
+export function MatchOverviewScreen({ competition, round, roundLabel, minute, half, club, opponent, homeScore, awayScore, statistics, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, onRequestExit, weather, motivationHome, motivationAway, rulesLoading, rulesError }: {
+  competition: string; round: number; roundLabel?: string; minute: number; half: "1º tempo" | "2º tempo" | "fim";
   club: string; opponent: string; homeScore: number; awayScore: number; statistics: MatchStatistics; fixtures: RoundFixture[]; events: MatchEvent[];
   running: boolean; speed: 1 | 2 | 4; halftimeWaiting: boolean; onToggleRunning: () => void | Promise<void>;
   onSpeedChange: (speed: 1 | 2 | 4) => void; onOpenDetail: () => void; onRequestExit: () => void;
@@ -85,7 +85,7 @@ export function MatchOverviewScreen({ competition, round, minute, half, club, op
       <header className={styles.header}>
         <div className={styles.competitionTitle}>
           <span className={styles.trophy} aria-label={`Taça do ${competition}`}><InterfaceIcon name="trophy" size={30} /></span>
-          <div><span className={styles.eyebrow}>CENTRAL DA PARTIDA · RELATO TEXTUAL</span><h1>{competition}</h1><span className={styles.muted}>{round}ª rodada</span></div>
+          <div><span className={styles.eyebrow}>CENTRAL DA PARTIDA · RELATO TEXTUAL</span><h1>{competition}</h1><span className={styles.muted}>{roundLabel ?? `${round}ª rodada`}</span></div>
         </div>
         <div className={styles.status}><span className={running ? styles.liveDot : styles.dot} /><span>{status}</span><strong>{minute}&apos; <small>· {halftimeWaiting ? "Intervalo" : half}</small></strong></div>
       </header>
@@ -130,7 +130,7 @@ export function MatchOverviewScreen({ competition, round, minute, half, club, op
         </section>
         <aside className={styles.sidebar}>
           <section className={styles.panel}><div className={styles.sectionHeading}><div><span className={styles.eyebrow}>MESMA RODADA</span><h2>Todos os jogos</h2></div><span className={styles.badge}>{fixtures.length} partidas</span></div>
-            <div className={styles.fixtures}>{fixtures.map(fixture => <div className={styles.fixture} key={`${fixture.home}-${fixture.away}`}><div className={fixture.live ? styles.fixtureLive : ""}><span>{fixture.home}</span><b>{fixture.homeScore} - {fixture.awayScore}</b><span>{fixture.away}</span></div><small>{fixture.live ? "Sua partida · ao vivo" : "Placar simulado"}</small></div>)}</div>
+            <div className={styles.fixtures}>{fixtures.map(fixture => <div className={styles.fixture} key={`${fixture.home}-${fixture.away}`}><div className={fixture.live ? styles.fixtureLive : ""}><span>{fixture.home}</span><b>{fixture.played === false ? "—" : `${fixture.homeScore} - ${fixture.awayScore}`}</b><span>{fixture.away}</span></div><small>{fixture.live ? "Sua partida · ao vivo" : fixture.played === false ? "Agendada" : "Resultado registrado"}</small></div>)}</div>
           </section>
         </aside>
       </div>

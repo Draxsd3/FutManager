@@ -44,9 +44,12 @@ export const clubThemes: Record<string, ClubTheme> = {
 export const clubs = {
   "Série A": ["Flamengo", "Palmeiras", "Corinthians", "Botafogo"],
   "Série B": ["Santos", "Cruzeiro", "Grêmio", "Bahia"],
+  "Série C": ["Remo", "Náutico", "Guarani", "CSA"],
+  "Série D": ["Ferroviária", "Caxias", "Brasiliense", "Anápolis"],
 } as const;
 
 export type DivisionKey = keyof typeof clubs;
+export const divisionKeys = Object.keys(clubs) as DivisionKey[];
 
 type RawPlayer = {
   name: string;
@@ -133,6 +136,8 @@ export type RoundFixture = {
   homeScore: number;
   awayScore: number;
   live?: boolean;
+  played?: boolean;
+  roundLabel?: string;
 };
 
 const formationRoles: Record<string, PositionCode[]> = {
@@ -158,19 +163,4 @@ export function buildStartingXI(formation: string, players: Player[]): number[] 
     available.splice(available.findIndex((player) => player.id === selected.id), 1);
     return selected.id;
   }).filter((id) => id >= 0);
-}
-
-export function buildRoundFixtures(
-  division: DivisionKey,
-  club: string,
-  opponent: string,
-  homeScore: number,
-  awayScore: number,
-): RoundFixture[] {
-  const others = clubs[division === "Série A" ? "Série B" : "Série A"];
-  return [
-    { stadium: "Independência", attendance: 13567, home: club, away: opponent, homeScore, awayScore, live: true },
-    { stadium: "Arena Central", attendance: 24067, home: others[0], away: others[1], homeScore: 1, awayScore: 0 },
-    { stadium: "Estádio Municipal", attendance: 4979, home: others[2], away: others[3], homeScore: 2, awayScore: 1 },
-  ];
 }

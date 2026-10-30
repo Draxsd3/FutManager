@@ -2,6 +2,7 @@ import type { DivisionKey, Player } from "./mock-data";
 import type { ManualPosition, PlayerCareerRecord, MatchParticipation } from "./career";
 import type { MatchEvent, MatchWeather } from "@/lib/game/live-match";
 import type { MatchRules } from "@/lib/game/match-rules";
+import type { CareerSeason } from "./season";
 
 export type MatchPreparation = {
   matchKey: string;
@@ -39,5 +40,7 @@ export type CareerProgress = {
   matchSpeed: 1 | 2 | 4;
   defaultMatchSpeed?: 1 | 2 | 4;
   halftimeWaiting: boolean;
+  competitionSeason?: CareerSeason;
+  activeFixtureId?: string;
 };
 

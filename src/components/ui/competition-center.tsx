@@ -7,6 +7,16 @@ import type {
   TopRating,
   TopScorer,
 } from "@/lib/game/mock-data";
+
+export type CareerCompetitionView = {
+  type: "league" | "state" | "cup";
+  table: TableRow[];
+  fixtures: RoundFixture[];
+  topScorers: TopScorer[];
+  topRatings: TopRating[];
+  matchesPlayed: number;
+  goals: number;
+};
 import type { EditorDatabase } from "@/lib/game/editor-data";
 import {
   buildCompetitionCatalog,
@@ -20,6 +30,9 @@ import styles from "./competition-center.module.css";
 export function CompetitionCenter({
   club,
   competition,
+  activeCompetitionId,
+  roundLabel,
+  careerCompetitionData,
   database,
   table,
   topScorers,
@@ -30,6 +43,9 @@ export function CompetitionCenter({
 }: {
   club: string;
   competition: string;
+  activeCompetitionId?: string;
+  roundLabel?: string;
+  careerCompetitionData?: Record<string, CareerCompetitionView>;
   database: EditorDatabase;
   table: TableRow[];
   topScorers: TopScorer[];
@@ -41,8 +57,8 @@ export function CompetitionCenter({
   const catalog = useMemo(() => buildCompetitionCatalog(database), [database]);
   const country =
     database.clubs.find((item) => item.name === club)?.country ?? "Brasil";
-  const activeId = `league:${country}:${competition}`;
-  const [category, setCategory] = useState<CompetitionCategory>("national");
+  const activeId = activeCompetitionId ?? `league:${country}:${competition}`;
+  const [category, setCategory] = useState<CompetitionCategory>(activeId.startsWith("state:") ? "state" : "national");
   const [selectedId, setSelectedId] = useState(activeId);
   const [scope, setScope] = useState("table");
   const [location, setLocation] = useState("all");
@@ -95,16 +111,23 @@ export function CompetitionCenter({
         .includes(search.toLocaleLowerCase("pt-BR")),
   );
   const selected = options.find((item) => item.id === selectedId) ?? options[0];
-  const isActive = selected?.id === activeId;
+  const careerData = selected ? careerCompetitionData?.[selected.id] : undefined;
+  const isActive = !!careerData || selected?.id === activeId;
+  const effectiveTable = careerData?.table ?? table;
+  const effectiveFixtures = careerData?.fixtures ?? fixtures;
+  const effectiveScorers = careerData?.topScorers ?? topScorers;
+  const effectiveRatings = careerData?.topRatings ?? topRatings;
+  const isKnockout = careerData?.type === "cup" || selected?.id === "national:Copa do Brasil";
   const rows = selected
     ? [...selected.clubs]
         .map((name) => ({
           club: name,
-          result: isActive ? table.find((row) => row.club === name) : undefined,
+          result: isActive ? effectiveTable.find((row) => row.club === name) : undefined,
         }))
         .sort(
           (a, b) =>
             (b.result?.points ?? 0) - (a.result?.points ?? 0) ||
+            (b.result?.wins ?? 0) - (a.result?.wins ?? 0) ||
             (b.result?.goalsFor ?? 0) -
               (b.result?.goalsAgainst ?? 0) -
               ((a.result?.goalsFor ?? 0) - (a.result?.goalsAgainst ?? 0)) ||
@@ -112,16 +135,16 @@ export function CompetitionCenter({
         )
     : [];
   const goals = isActive
-    ? table.reduce((sum, row) => sum + row.goalsFor, 0)
+    ? careerData?.goals ?? (isKnockout ? effectiveFixtures.filter((fixture) => fixture.played !== false).reduce((sum, fixture) => sum + fixture.homeScore + fixture.awayScore, 0) : effectiveTable.reduce((sum, row) => sum + row.goalsFor, 0))
     : null;
   const games = isActive
-    ? table.reduce((sum, row) => sum + row.played, 0) / 2
+    ? careerData?.matchesPlayed ?? (isKnockout ? effectiveFixtures.filter((fixture) => fixture.played !== false).length : effectiveTable.reduce((sum, row) => sum + row.played, 0) / 2)
     : null;
   const scorers = isActive
-    ? topScorers.filter((player) => player.goals > 0 && player.played > 0)
+    ? effectiveScorers.filter((player) => player.goals > 0 && player.played > 0)
     : [];
   const ratings = isActive
-    ? topRatings.filter((player) => player.rating > 0 && player.played > 0)
+    ? effectiveRatings.filter((player) => player.rating > 0 && player.played > 0)
     : [];
 
   return (
@@ -299,7 +322,9 @@ export function CompetitionCenter({
                               : "Resultados não integrados"}
                           </span>
                         </div>
-                        {rows.length ? (
+                        {isActive && isKnockout ? (
+                          <Empty title="Mata-mata sem tabela de pontos" text="A Copa do Brasil usa chave eliminatória. Os resultados e a classificação por fase aparecem em Rodadas; nenhuma pontuação de liga é inventada." />
+                        ) : rows.length ? (
                           <div className={styles.tableWrap}>
                             <table>
                               <caption className={styles.srOnly}>
@@ -371,7 +396,7 @@ export function CompetitionCenter({
                         )}
                         <p className={styles.disclaimer}>
                           {isActive
-                            ? "Resumo atualmente disponível no motor da carreira. Histórico acumulado de temporadas ainda não integrado."
+                            ? "Classificação e estatísticas acumuladas somente a partir de partidas concluídas desta temporada."
                             : "Clubes de outras divisões podem ser consultados. Pontuação, grupos e resultados só aparecem quando registrados para a competição."}
                         </p>
                       </>
@@ -381,20 +406,20 @@ export function CompetitionCenter({
                         <div className={styles.sectionTitle}>
                           <h3>Jogos e rodadas</h3>
                           <span>
-                            {isActive ? `${round}ª rodada` : "Sem calendário"}
+                            {isActive ? roundLabel ?? `${round}ª rodada` : "Sem calendário"}
                           </span>
                         </div>
-                        {isActive && fixtures.length ? (
-                          fixtures.map((match, i) => (
+                        {isActive && effectiveFixtures.length ? (
+                          effectiveFixtures.map((match, i) => (
                             <article
                               className={styles.fixture}
                               key={`${match.home}-${i}`}
                             >
                               <span>
-                                {round}ª rodada <small>{match.stadium}</small>
+                                {match.roundLabel ?? roundLabel ?? `${round}ª rodada`} <small>{match.stadium}</small>
                               </span>
                               <strong>{match.home}</strong>
-                              <b>×</b>
+                              <b>{match.played === false ? "—" : `${match.homeScore} × ${match.awayScore}`}</b>
                               <strong>{match.away}</strong>
                             </article>
                           ))
@@ -405,8 +430,7 @@ export function CompetitionCenter({
                           />
                         )}
                         <p className={styles.disclaimer}>
-                          Confrontos disponíveis na rodada. Resultados passados
-                          não são presumidos.
+                          Confrontos e placares vêm do calendário persistido; jogos ainda não realizados permanecem sem resultado.
                         </p>
                       </>
                     )}
@@ -425,7 +449,7 @@ export function CompetitionCenter({
                             }))}
                           />
                           <Rank
-                            title="Melhores notas"
+                            title="Notas registradas"
                             rows={ratings.map((item) => ({
                               name: item.name,
                               club: item.club,
@@ -433,6 +457,7 @@ export function CompetitionCenter({
                             }))}
                           />
                         </div>
+                        <p className={styles.disclaimer}>Notas individuais são registradas nas partidas disputadas pelo seu clube; jogos paralelos não recebem notas de atleta inventadas.</p>
                       </>
                     )}
                   </div>
@@ -448,7 +473,7 @@ export function CompetitionCenter({
                         }))}
                     />
                     <Rank
-                      title="Melhores notas"
+                      title="Notas registradas"
                       rows={ratings
                         .slice(0, 5)
                         .map((item) => ({
