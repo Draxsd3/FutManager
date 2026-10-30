@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { competitionTrophyAsset } from "@/lib/game/competition-trophies";
 import type {
   RoundFixture,
   TableRow,
@@ -225,7 +227,7 @@ export function CompetitionCenter({
                   }}
                 >
                   <span className={styles.trophy} aria-hidden="true">
-                    <ClassicIcon name="medal_award_gold" size={24} />
+                    {competitionTrophyAsset(item) ? <Image src={competitionTrophyAsset(item)!} alt="" width={34} height={40} unoptimized className={styles.trophyImage} /> : <ClassicIcon name="medal_award_gold" size={24} />}
                   </span>
                   <span>
                     <strong>{item.name}</strong>
@@ -252,7 +254,8 @@ export function CompetitionCenter({
             {selected ? (
               <>
                 <header className={styles.competitionHeader}>
-                  <div>
+                  {competitionTrophyAsset(selected) && <Image src={competitionTrophyAsset(selected)!} alt={`Troféu ${selected.name}`} width={64} height={84} unoptimized className={styles.headerTrophy} />}
+                  <div className={styles.headerInfo}>
                     <p className={styles.eyebrow}>
                       {selected.location} / TEMPORADA 2026
                     </p>

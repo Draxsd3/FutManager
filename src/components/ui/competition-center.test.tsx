@@ -35,6 +35,7 @@ it("browses other divisions and categories without fabricating results or regist
     />,
   );
   expect(screen.getByRole("dialog")).toBeTruthy();
+  expect(screen.getByRole("img", { name: /Troféu Brasileirão · Série A/ }).getAttribute("src")).toContain("tr_nacional_BRA_d1.png");
   fireEvent.click(
     screen.getByRole("button", { name: /Brasileirão · Série B/ }),
   );
@@ -46,6 +47,7 @@ it("browses other divisions and categories without fabricating results or regist
   fireEvent.click(
     screen.getByRole("button", { name: /CONMEBOL Libertadores/ }),
   );
+  expect(screen.getByRole("img", { name: "Troféu CONMEBOL Libertadores" }).getAttribute("src")).toContain("tr_libertadores.png");
   expect(screen.getByText("Tabela ainda não disponível")).toBeTruthy();
   expect(screen.queryByRole("table")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Rodadas" }));
