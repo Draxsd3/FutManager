@@ -1,4 +1,5 @@
 import type { Player } from "@/lib/game/mock-data";
+import type { PlayerCareerRecord } from "@/lib/game/career";
 import Image from "next/image";
 import { clubThemes, positionLabel } from "@/lib/game/mock-data";
 import { clubCrestAsset } from "@/lib/game/assets";
@@ -51,6 +52,7 @@ export function ClubSidebar({
   round,
   competition,
   selectedPlayer,
+  selectedPlayerRecord,
   ctaLabel,
   onCta,
   onQuickAction,
@@ -65,10 +67,15 @@ export function ClubSidebar({
   round: number;
   competition: string;
   selectedPlayer: Player | null;
+  selectedPlayerRecord?: PlayerCareerRecord;
   ctaLabel: string;
   onCta: () => void;
   onQuickAction: (action: "roster" | "finances" | "trophies" | "training") => void;
 }) {
+  const recordedSeasons = selectedPlayerRecord?.seasons ?? [];
+  const recordedGames = recordedSeasons.reduce((sum, season) => sum + season.games, 0);
+  const recordedGoals = recordedSeasons.reduce((sum, season) => sum + season.goals, 0);
+  const recordedAssists = recordedSeasons.reduce((sum, season) => sum + season.assists, 0);
   return (
     <aside className="relative flex h-full min-h-0 flex-col overflow-hidden border-r border-[#c8d6ca] bg-[#fbfcf9] text-[#25362a] shadow-[2px_0_12px_rgba(26,49,34,.08)]">
       <div className="h-1.5 shrink-0 bg-[var(--team-accent)]" />
@@ -109,7 +116,7 @@ export function ClubSidebar({
         <ClassicIcon name="sport_soccer" size={32} />{ctaLabel}
       </button>
 
-      {selectedPlayer && <div className="mx-3 mt-3 rounded-lg border border-[#c9d9ca] bg-white p-3 text-[11px]"><div className="flex items-center justify-between border-b border-[#d9e5d9] pb-2"><b className="uppercase tracking-wide text-[var(--team-accent)]">Jogador selecionado</b><b>F:{selectedPlayer.overall}</b></div><p className="mt-2 text-[13px] font-bold">{selectedPlayer.name}</p><p className="mt-1 text-[#607267]">{positionLabel[selectedPlayer.position]} · {selectedPlayer.age} anos · R$ {selectedPlayer.marketValue}M</p><div className="mt-3 grid grid-cols-3 border-t border-[#d9e5d9] pt-2 text-center"><b>Energia<br />{selectedPlayer.energy}%</b><b>Gols<br />{selectedPlayer.goals}</b><b>Assist.<br />{selectedPlayer.assists}</b></div></div>}
+      {selectedPlayer && <div className="mx-3 mt-3 rounded-lg border border-[#c9d9ca] bg-white p-3 text-[11px]"><div className="flex items-center justify-between border-b border-[#d9e5d9] pb-2"><b className="uppercase tracking-wide text-[var(--team-accent)]">Jogador selecionado</b><b>F:{selectedPlayer.overall}</b></div><p className="mt-2 text-[13px] font-bold">{selectedPlayer.name}</p><p className="mt-1 text-[#607267]">{positionLabel[selectedPlayer.position]} · {selectedPlayer.age} anos · R$ {selectedPlayer.marketValue}M</p><div className="mt-3 grid grid-cols-3 border-t border-[#d9e5d9] pt-2 text-center"><b>Jogos<br />{recordedGames}</b><b>Gols<br />{recordedGoals}</b><b>Assist.<br />{recordedAssists}</b></div></div>}
 
       <div className="mt-auto border-t border-[#d5e0d6] bg-[#f0f5f0] p-3">
         <div className="mb-3 flex items-center justify-between text-[10px]"><b className="text-[var(--team-accent)]">GESTÃO DO CLUBE</b><span className="text-[#718278]">Acesso rápido</span></div>

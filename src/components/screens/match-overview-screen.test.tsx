@@ -14,7 +14,6 @@ function matchProps() {
   const onSpeedChange = vi.fn();
   const onOpenDetail = vi.fn();
   const onToggleRunning = vi.fn();
-  const onRequestExit = vi.fn();
   return {
     props: {
       competition: "Estadual", trophyAsset: "/game-assets/trophies/catalog/tr_estadual_RJ.png", round: 1, minute: 10, half: "1º tempo" as const,
@@ -24,9 +23,9 @@ function matchProps() {
       weather: { id: "chuva", label: "Chuva", temperatureC: 21, rainIntensity: .75, windKmh: 8 },
       motivationHome: 72, motivationAway: 65,
       rulesLoading: false, rulesError: null,
-      onToggleRunning, onSpeedChange, onOpenDetail, onRequestExit,
+      onToggleRunning, onSpeedChange, onOpenDetail,
     },
-    onSpeedChange, onOpenDetail, onToggleRunning, onRequestExit,
+    onSpeedChange, onOpenDetail, onToggleRunning,
   };
 }
 
@@ -55,7 +54,7 @@ it("shows both teams' live statistics, the championship cup and retains match co
 it("shows important text events as a two-sided timeline and keeps routine passes out of the feed", () => {
   const pass = { minute: 1, half: 1 as const, text: "Passe de rotina", scene: { action: "pass" as const, team: "home" as const, actorIndex: 0, targetIndex: 1, from: { x: 30, y: 40 }, to: { x: 40, y: 40 }, possessionAfter: "home" as const } };
   const goal = { minute: 2, half: 1 as const, text: "Gol importante", scene: { action: "goal" as const, team: "away" as const, actorIndex: 0, targetIndex: 1, from: { x: 60, y: 40 }, to: { x: 5, y: 50 }, possessionAfter: "home" as const } };
-  render(<MatchOverviewScreen competition="Liga" round={1} minute={2} half="1º tempo" club="A" opponent="B" homeScore={0} awayScore={1} statistics={stats} fixtures={[]} events={[pass, goal]} running={false} speed={1} halftimeWaiting={false} rulesLoading={false} rulesError={null} onToggleRunning={vi.fn()} onSpeedChange={vi.fn()} onOpenDetail={vi.fn()} onRequestExit={vi.fn()} />);
+  render(<MatchOverviewScreen competition="Liga" round={1} minute={2} half="1º tempo" club="A" opponent="B" homeScore={0} awayScore={1} statistics={stats} fixtures={[]} events={[pass, goal]} running={false} speed={1} halftimeWaiting={false} rulesLoading={false} rulesError={null} onToggleRunning={vi.fn()} onSpeedChange={vi.fn()} onOpenDetail={vi.fn()} />);
   expect(screen.getByRole("img", { name: "Troféu Liga" }).querySelector("svg")).toBeTruthy();
   expect(screen.getByText("Minuto a minuto")).toBeTruthy();
   expect(screen.queryByText("Passe de rotina")).toBeNull();
@@ -69,15 +68,8 @@ it("blocks match continuation with a visible error when canonical rules cannot b
   expect(screen.getByRole("alert").textContent).toContain("partida permanece pausada");
 });
 
-it("explains that leaving saves the minute and lets the user cancel or confirm", () => {
-  const { props, onRequestExit } = matchProps();
+it("does not expose a Menu inicial action during the match", () => {
+  const { props } = matchProps();
   render(<MatchOverviewScreen {...props} />);
-  fireEvent.click(screen.getByRole("button", { name: "Menu inicial" }));
-  expect(screen.getByRole("alertdialog", { name: "Sair da partida?" })).toBeTruthy();
-  expect(screen.getByText(/retomada pausada/)).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "Continuar partida" }));
-  expect(screen.queryByRole("alertdialog")).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Menu inicial" }));
-  fireEvent.click(screen.getByRole("button", { name: "Sair e salvar" }));
-  expect(onRequestExit).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole("button", { name: "Menu inicial" })).toBeNull();
 });
