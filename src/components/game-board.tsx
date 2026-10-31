@@ -345,6 +345,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       if (nextMinute === 45) {
         setMatchRunning(false);
         setHalftimeWaiting(true);
+        setDetailOpen(true);
       }
       if (nextMinute >= matchPreparation.rules.durationMinutes) {
         setMatchRunning(false);
@@ -1003,9 +1004,20 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setSubstitutionOut(null);
   }
 
+  function moveMatchPlayers(changes: Record<number, ManualPosition>) {
+    const nextPositions = { ...manualPositions, ...changes };
+    setManualPositions(nextPositions);
+    void persistCareerExtras(playerCareers, nextPositions);
+  }
+
   function closeMatchTactics() {
     setDetailOpen(false);
-    if (minute < 90) void resumeMatch();
+    if (minute < 90 && !halftimeWaiting) void resumeMatch();
+  }
+
+  function startSecondHalf() {
+    setDetailOpen(false);
+    void resumeMatch();
   }
 
   function changeMatchFormation(next: string) {
@@ -1127,6 +1139,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             competition={competitionName}
             squad={squad}
             starters={starters}
+            records={playerCareers}
             selectedPlayer={selectedPlayerData}
             onSelectPlayer={setSelectedPlayer}
             onOpenPlayer={openPlayerProfile}
@@ -1246,7 +1259,6 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           onToggleRunning={toggleMatchRunning}
           onSpeedChange={setMatchSpeed}
           onOpenDetail={openMatchTactics}
-          onRequestExit={() => leaveActiveCareer("menu")}
         />
         </div>
         {detailOpen && (
@@ -1259,6 +1271,15 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             minute={minute}
             formation={formation}
             setFormation={changeMatchFormation}
+            style={style}
+            setStyle={setStyle}
+            marking={marking}
+            setMarking={setMarking}
+            focus={focus}
+            setFocus={setFocus}
+            statistics={matchStats}
+            manualPositions={manualPositions}
+            onMovePlayers={moveMatchPlayers}
             startersData={startersData}
             bench={bench}
             substitutionsLeft={substitutionsLeft}
@@ -1267,6 +1288,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             onSelectPlayer={selectMatchPlayer}
             onSubstitute={substitute}
             onClose={closeMatchTactics}
+            onStartSecondHalf={startSecondHalf}
             returnFocusTo={matchTacticsTrigger.current}
             isHalftime={halftimeWaiting}
           />

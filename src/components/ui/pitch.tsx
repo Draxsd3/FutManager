@@ -1,5 +1,5 @@
 import type { Player } from "@/lib/game/mock-data";
-import { formationSlotRoles, formationSlots, nearestFormationSlot, playerFitAtPosition } from "@/lib/game/formations";
+import { formationSlotRoles, formationSlots, playerFitAtPosition } from "@/lib/game/formations";
 import type { ManualPosition } from "@/lib/game/career";
 import { Shirt } from "./shirt";
 import { PlayerJersey } from "./player-jersey";
@@ -30,9 +30,11 @@ export function Pitch({
   const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
   const roles = formationSlotRoles[formation] ?? formationSlotRoles["4-3-3"];
   const roleLabels = tacticalRoleLabels[formation] ?? tacticalRoleLabels["4-3-3"];
-  const effectivePositions = Object.fromEntries(starters.slice(0, 11).map((player, index) => [player.id, (tactical && onPlacePlayer ? slots[index] : manualPositions[player.id]) ?? slots[index] ?? { left: 50, top: 50 }]));
+  const effectivePositions = Object.fromEntries(starters.slice(0, 11).map((player, index) => [player.id, manualPositions[player.id] ?? slots[index] ?? { left: 50, top: 50 }]));
   return (
     <div
+      role="group"
+      aria-label="Campo tático"
       className={`relative ${tactical ? "min-h-0 flex-1" : "h-full min-h-[520px]"} w-full overflow-hidden rounded-lg border-2 border-[#cbd8c4] bg-[#102519] bg-[linear-gradient(rgba(5,19,9,.35),rgba(5,19,9,.5)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center shadow-xl`}
       onDragOver={(event) => { if (!onPlacePlayer) event.preventDefault(); }}
       onDrop={(event) => {
@@ -41,17 +43,20 @@ export function Pitch({
         const id = Number(event.dataTransfer.getData("text/player-id"));
         if (!id) return;
         const bounds = event.currentTarget.getBoundingClientRect();
+        if (bounds.width <= 0 || bounds.height <= 0) return;
         const player = starters.find((item) => item.id === id);
         if (!player) return;
         const requested = {
-          left: Math.min(93, Math.max(7, ((event.clientX - bounds.left) / bounds.width) * 100)),
-          top: Math.min(92, Math.max(8, ((event.clientY - bounds.top) / bounds.height) * 100)),
+          left: Math.min(100, Math.max(0, ((event.clientX - bounds.left) / bounds.width) * 100)),
+          top: Math.min(100, Math.max(0, ((event.clientY - bounds.top) / bounds.height) * 100)),
         };
-        const targetIndex = nearestFormationSlot(formation, requested, player.position === "G");
-        const target = slots[targetIndex];
         const origin = effectivePositions[id];
-        const occupant = starters.find((item) => item.id !== id && effectivePositions[item.id]?.left === target.left && effectivePositions[item.id]?.top === target.top);
-        const updates: Record<number, ManualPosition> = { [id]: target };
+        const occupant = starters.find((item) => {
+          if (item.id === id) return false;
+          const position = effectivePositions[item.id];
+          return position && Math.abs(position.left - requested.left) < 8 && Math.abs(position.top - requested.top) < 8;
+        });
+        const updates: Record<number, ManualPosition> = { [id]: requested };
         if (occupant && origin) updates[occupant.id] = origin;
         onMovePlayers(updates);
       }}
@@ -98,7 +103,7 @@ export function Pitch({
 function TacticPlayer({ player, role, selected, effectiveOverall, fitLabel, onClick, onDragStart }: { player: Player; role: string; selected: boolean; effectiveOverall: number; fitLabel: "Natural" | "Secundária" | "Improvisado"; onClick: () => void; onDragStart: (event: React.DragEvent<HTMLButtonElement>) => void }) {
   const fitTone = fitLabel === "Natural" ? "border-[#19d66d]" : fitLabel === "Secundária" ? "border-[#f1bf31]" : "border-[#e65e50]";
   const energyTone = player.energy >= 80 ? "bg-[#17d66d]" : player.energy >= 55 ? "bg-[#f1bd31]" : "bg-[#e65e50]";
-  return <button type="button" draggable onDragStart={onDragStart} onClick={onClick} className={`relative z-[1] flex w-[112px] flex-col items-center cursor-grab transition-all duration-200 active:cursor-grabbing ${selected ? "scale-110 rounded ring-2 ring-[#e6c137]" : "hover:scale-105"}`}>
+  return <button type="button" draggable data-starter={player.id} aria-label={`Sai: ${player.name}, camisa ${player.shirtNumber ?? player.id}, ${role}`} aria-pressed={selected} onDragStart={onDragStart} onClick={onClick} className={`relative z-[1] flex w-[96px] flex-col items-center cursor-grab transition-all duration-200 active:cursor-grabbing ${selected ? "scale-110 rounded ring-2 ring-[#e6c137]" : "hover:scale-105"}`}>
     <span className="relative grid h-16 w-16 place-items-end overflow-visible"><PlayerJersey player={player} /><b className={`absolute -right-4 -top-1 grid h-8 w-8 place-items-center rounded-full border-2 ${fitTone} bg-[#071009] text-[12px] text-white`}>{effectiveOverall}</b></span>
     <span className="mt-0.5 rounded bg-[#101610] px-1 text-[7px] font-black text-[#ffc73d]">{role}</span>
     <span className="-mt-px w-full truncate border-y border-[#0a0d0a] bg-black/95 px-1 py-0.5 text-center text-[10px] font-black uppercase text-white">{player.name}</span>

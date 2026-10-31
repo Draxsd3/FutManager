@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import type { RoundFixture } from "@/lib/game/mock-data";
 import { isHighlight, type MatchEvent, type MatchStatistics, type MatchWeather } from "@/lib/game/live-match";
@@ -48,33 +48,17 @@ function TimelineCard({ event, home }: { event: MatchEvent; home: boolean }) {
   </div>;
 }
 
-export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabel, minute, half, club, opponent, homeScore, awayScore, statistics, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, onRequestExit, weather, motivationHome, motivationAway, rulesLoading, rulesError }: {
+export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabel, minute, half, club, opponent, homeScore, awayScore, statistics, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, weather, motivationHome, motivationAway, rulesLoading, rulesError }: {
   competition: string; trophyAsset?: string | null; round: number; roundLabel?: string; minute: number; half: "1º tempo" | "2º tempo" | "fim";
   club: string; opponent: string; homeScore: number; awayScore: number; statistics: MatchStatistics; fixtures: RoundFixture[]; events: MatchEvent[];
   running: boolean; speed: 1 | 2 | 4; halftimeWaiting: boolean; onToggleRunning: () => void | Promise<void>;
-  onSpeedChange: (speed: 1 | 2 | 4) => void; onOpenDetail: () => void; onRequestExit: () => void;
+  onSpeedChange: (speed: 1 | 2 | 4) => void; onOpenDetail: () => void;
   weather?: MatchWeather; motivationHome?: number; motivationAway?: number; rulesLoading: boolean; rulesError: string | null;
 }) {
-  const [exitConfirmationOpen, setExitConfirmationOpen] = useState(false);
-  const exitTriggerRef = useRef<HTMLButtonElement>(null);
-  const continueButtonRef = useRef<HTMLButtonElement>(null);
   const logEnd = useRef<HTMLDivElement>(null);
   const status = running ? "AO VIVO" : halftimeWaiting ? "INTERVALO" : minute >= 90 ? "ENCERRADA" : "PARTIDA PAUSADA";
   const keyMoments = events.filter(isHighlight).slice(-24);
 
-  useEffect(() => {
-    if (!exitConfirmationOpen) return;
-    const exitTrigger = exitTriggerRef.current;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setExitConfirmationOpen(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    continueButtonRef.current?.focus();
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      exitTrigger?.focus();
-    };
-  }, [exitConfirmationOpen]);
   useEffect(() => {
     if (typeof logEnd.current?.scrollIntoView === "function") logEnd.current.scrollIntoView({ block: "nearest" });
   }, [keyMoments.length]);
@@ -99,10 +83,10 @@ export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabe
       <MatchStatisticsTable homeTeam={club} awayTeam={opponent} statistics={statistics} compact />
       <div className={styles.controls}>
         <div className={styles.speeds}><span>VELOCIDADE</span>{([1, 2, 4] as const).map(value => <button key={value} aria-pressed={speed === value} onClick={() => onSpeedChange(value)}>{value}x</button>)}</div>
-        <div className={styles.actions}>{minute < 90 && <button className={styles.primary} onClick={onToggleRunning} disabled={rulesLoading}>{rulesLoading ? "Lendo regras…" : running ? "❚❚  Pausar" : halftimeWaiting ? "▶  Iniciar 2º tempo" : "▶  Continuar"}</button>}<button className={styles.secondary} onClick={onOpenDetail}>Escalação e táticas ↗</button><button ref={exitTriggerRef} className={styles.exitButton} onClick={() => setExitConfirmationOpen(true)}>Menu inicial</button></div>
+        <div className={styles.actions}>{minute < 90 && <button className={styles.primary} onClick={onToggleRunning} disabled={rulesLoading}>{rulesLoading ? "Lendo regras…" : running ? "❚❚  Pausar" : halftimeWaiting ? "▶  Iniciar 2º tempo" : "▶  Continuar"}</button>}<button className={styles.secondary} onClick={onOpenDetail}>Escalação e táticas ↗</button></div>
       </div>
       {rulesError && <p role="alert" className={styles.rulesError}>{rulesError} A partida permanece pausada.</p>}
-      {exitConfirmationOpen && <div className={styles.dialogBackdrop}><section className={styles.exitDialog} role="alertdialog" aria-modal="true" aria-labelledby="exit-match-title" aria-describedby="exit-match-description"><span className={styles.eyebrow}>{minute < 90 ? "PARTIDA EM ANDAMENTO" : "PARTIDA FINALIZADA"}</span><h2 id="exit-match-title">{minute < 90 ? "Sair da partida?" : "Voltar ao menu inicial?"}</h2><p id="exit-match-description">{minute < 90 ? "Seu progresso será salvo neste minuto. Ao continuar esta carreira, a partida será retomada pausada." : "O resultado foi preservado. Você poderá continuar esta carreira quando quiser."}</p><div className={styles.dialogActions}><button ref={continueButtonRef} onClick={() => setExitConfirmationOpen(false)}>Continuar partida</button><button className={styles.confirmExit} onClick={onRequestExit}>Sair e salvar</button></div></section></div>}
+
       <div className={styles.content}>
         <section className={styles.reportCard} aria-label="Relato textual da partida">
           <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>ACONTECIMENTOS-CHAVE</span><h2>Minuto a minuto</h2></div><span className={styles.badge}>{keyMoments.length} momentos</span></div>
