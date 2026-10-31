@@ -43,17 +43,23 @@ it("browses other divisions and categories without fabricating results or regist
   expect(
     screen.getByRole("table").querySelector("tbody tr td")?.textContent,
   ).toBe("—");
-  fireEvent.click(screen.getByRole("button", { name: "Internacional" }));
-  fireEvent.click(
-    screen.getByRole("button", { name: /CONMEBOL Libertadores/ }),
-  );
-  expect(screen.getByRole("img", { name: "Troféu CONMEBOL Libertadores" }).getAttribute("src")).toContain("tr_libertadores.png");
+
+  expect(screen.queryByRole("button", { name: "Internacional" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Seleções" })).toBeNull();
+  for (const division of ["C", "D"]) {
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(`Brasileirão · Série ${division}`) }));
+    expect(screen.getByRole("table")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Rodadas" }));
+    expect(screen.getByText("Calendário não cadastrado")).toBeTruthy();
+  }
+  fireEvent.click(screen.getByRole("button", { name: /Copa do Brasil/ }));
+  expect(screen.getByRole("img", { name: "Troféu Copa do Brasil" }).getAttribute("src")).toContain("tr_copa_BRA.png");
+
+  expect(screen.getByRole("table")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Regional" }));
   expect(screen.getByText("Tabela ainda não disponível")).toBeTruthy();
-  expect(screen.queryByRole("table")).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Rodadas" }));
-  expect(screen.getByText("Calendário não cadastrado")).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "Seleções" }));
-  expect(screen.getByRole("button", { name: /Copa do Mundo/ })).toBeTruthy();
+  expect(screen.getByRole("button", { name: /Copa do Nordeste/ })).toBeTruthy();
+  expect(screen.getByRole("button", { name: /Copa Verde/ })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Estadual" }));
   fireEvent.change(screen.getByLabelText("Buscar campeonato"), {
     target: { value: "Paulista" },
