@@ -204,6 +204,7 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Manter os layouts existentes de agenda, estádio, editor, escalação, partida, perfis, mercado e menu inicial. Não propagar o tema grafite/verde-lima nem introduzir outra navegação, filtros ou cartões como parte desta correção.
 - Não reverter funcionalidades posteriores de perfis/negociações, progressos, autenticação, motor ou regras de jogo. Componentes específicos de campo e camisas não são ícones de interface e mantêm seus desenhos.
 
+
 ### Registro de manutenção — 30/10/2026: contabilização e calendário
 
 - A gravação por atleta ocorre só quando uma partida termina. A chave persistida é o ID único da partida agendada (inclui temporada/competição/mandos), então retomar não registra novamente o mesmo resultado. O registro contém jogos (participações com minutos > 0), minutos, gols, assistências identificadas nos eventos, nota e estatísticas de jogo disponíveis (finalizações, passes, desarmes, defesas e cartões). Temporadas agregam partidas por ano/clube, sem reaproveitar números soltos do cadastro do editor como produção da temporada atual.
@@ -227,3 +228,13 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - A tela Times segue a referência enviada: navegação/filtros de clubes à esquerda, identidade do clube selecionado, resumo do plantel e tabela de jogadores com posição, camisa, força, idade, salário mensal, valor de mercado e disponibilidade. Layout responsivo com rolagem própria para listas/tabelas.
 - Selecionar um atleta abre detalhes de cadastro e, para o elenco do próprio clube, apenas estatísticas reais registradas na carreira. Atletas listados podem receber proposta diretamente do perfil; a negociação continua sujeita à resposta/contraproposta e confirmação no Mercado, sem contratação instantânea. A tela também apresenta saldo, folha mensal estimada e contagem de jogadores disponíveis.
 - Regressão da tela cobre navegação entre clubes, visualização de elenco e envio de uma proposta. Validação local desta revisão: `npm test` (41 arquivos, 162 testes), `npm run lint`, `npx tsc --noEmit` e `npm run build` aprovados.
+
+
+
+### 27. Catálogo limitado ao futebol brasileiro
+
+- Pedido: adicionar somente Brasileirão Séries A, B, C e D, estaduais brasileiros, regionais e Copa do Brasil. Não incluir campeonatos internacionais, seleções, ligas estrangeiras ou Supercopa do Brasil no catálogo.
+- A Central de Competições mantém somente Nacional, Estadual e Regional. As quatro séries nacionais existem no catálogo mesmo sem clubes cadastrados; estaduais contemplam as 26 unidades estaduais e o Distrito Federal. Regionais disponíveis: Copa do Nordeste e Copa Verde.
+- Escopo desta etapa é apenas cadastro/consulta das competições, sem importação de clubes, escudos, camisas ou jogadores. Preservar as inscrições e o motor de temporadas A–D/estadual/Copa já adicionados à main em outras entregas. Não importar novas inscrições ou inventar resultados nesta alteração.
+- Preservar design, saves, clubes existentes e fluxos de carreira. A base importada de arquivos não é executada nem alterada nesta etapa.
+
