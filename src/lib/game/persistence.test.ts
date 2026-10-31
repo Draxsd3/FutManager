@@ -62,3 +62,28 @@ describe("career persistence", () => {
     expect(writeLocalSaves([save()], "alice")).toBe(false);
   });
 });
+
+it("reads every cloud page and uploads imported players in bounded batches", async () => {
+  const { createDefaultDatabase } = await import("./editor-data");
+  const { readCloudDatabase, writeCloudDatabase } = await import("./persistence");
+  const database=createDefaultDatabase();
+  const template=database.players[0];
+  database.clubs=database.clubs.slice(0,1);
+  database.players=Array.from({length:35},(_,i)=>({...template,id:`p-${i}`,clubId:database.clubs[0].id,shirtNumber:i+1}));
+  const fullRemote=Array.from({length:1001},(_,i)=>({id:`remote-${i}`,name:`Jogador ${i}`,club_id:"remote-club",average_rating:null}));
+  const ranges: number[]=[];
+  client.from.mockImplementation((table:string)=>({
+    select:()=>({order:()=>({range:(start:number,end:number)=>{
+      if(table==="editor_players") ranges.push(start);
+      return Promise.resolve({data: table==="editor_players" ? fullRemote.slice(start,end+1) : [{id:"remote-club",name:"Clube",country:"Brasil"}],error:null});
+    }})}),
+    delete:()=>({in:vi.fn().mockResolvedValue({error:null})}),
+    upsert:client.upsert,
+  }));
+  const loaded=await readCloudDatabase("alice");
+  expect(loaded?.players).toHaveLength(1001);
+  expect(ranges).toEqual([0,500,1000]);
+  await writeCloudDatabase(database,"alice");
+  expect(client.upsert.mock.calls.every(([rows])=>rows.length<=250)).toBe(true);
+  expect(client.upsert.mock.calls.flatMap(([rows])=>rows).every(row=>row.owner_id==="alice")).toBe(true);
+});

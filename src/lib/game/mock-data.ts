@@ -51,7 +51,7 @@ export const clubs = {
   "Série D": ["Ferroviária", "Caxias", "Brasiliense", "Anápolis"],
 } as const;
 
-export type DivisionKey = keyof typeof clubs;
+export type DivisionKey = keyof typeof clubs | "Sem divisão nacional";
 export const divisionKeys = Object.keys(clubs) as DivisionKey[];
 
 type RawPlayer = {

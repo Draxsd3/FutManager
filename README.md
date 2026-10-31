@@ -289,3 +289,9 @@ A central de elenco mantém a estrutura original: navegação clara, cores cadas
 ### Competições brasileiras
 
 O catálogo da Central de Competições inclui apenas Brasileirão Séries A, B, C e D, Copa do Brasil, Copa do Nordeste, Copa Verde e os 27 estaduais (incluindo o Distrito Federal). Não exibe competições internacionais, de seleções, ligas estrangeiras ou Supercopa. As quatro séries aparecem mesmo em bases vazias. Esta alteração preserva a simulação A–D/estadual/Copa já existente, sem importar novos participantes, jogadores ou uniformes. Inscrições, calendários e resultados não cadastrados permanecem explicitamente indisponíveis.
+
+### Base brasileira importada (divisões de 2026)
+
+706 clubes brasileiros, 15.992 atletas ativos (máximo de 35 por clube), 704 escudos e 637 imagens de uniformes foram extraídos dos arquivos fornecidos. A/B/C têm 20 clubes cada; a D tem 88 encontrados e oito participantes ausentes. Os demais ficam como **Sem divisão nacional**. Elencos/imagens são os da origem, não uma atualização factual de 2026; campos financeiros e força individual usam padrões explícitos da simulação.
+
+Contas novas recebem a base automaticamente. Em contas existentes: **Editor de clubes → Importar base brasileira 2026**, confirmando a substituição dos cadastros/elencos reconhecidos. Saves e clubes personalizados são preservados; inicie nova carreira para usar os novos elencos. Aplicar `supabase/migrations/20261031100000_allow_state_only_clubs.sql` no Supabase para sincronizar clubes sem divisão nacional; até lá os dados ficam no dispositivo e a sincronização aparece como pendente. [Detalhes, reprodução, fontes e limitações](docs/import-brazil-2026.md).
