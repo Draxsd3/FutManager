@@ -257,7 +257,7 @@ function cupRoundLabel(participantCount: number, round: number) {
 
 function buildCupGroups(database: EditorDatabase, managerClubId: string, season: number): FixtureGroup[] {
   const clubs = database.clubs
-    .filter((club) => club.country.toLocaleLowerCase("pt-BR") === "brasil")
+    .filter((club) => club.division !== "Sem divisão nacional" && club.country.toLocaleLowerCase("pt-BR") === "brasil")
     .sort((a, b) => b.level - a.level || a.name.localeCompare(b.name, "pt-BR"));
   if (clubs.length < 2) return [];
   const cupId = "national:Copa do Brasil";
@@ -315,11 +315,11 @@ function buildCupGroups(database: EditorDatabase, managerClubId: string, season:
 
 export function createCareerSeason(database: EditorDatabase, clubId: string, season: number): CareerSeason | null {
   const managedClub = database.clubs.find((club) => club.id === clubId);
-  if (!managedClub) return null;
+  if (!managedClub || managedClub.division === "Sem divisão nacional") return null;
   const state = resolveClubState(managedClub);
   const leagueId = `league:${managedClub.country}:${managedClub.division}`;
   const leagueGroups = buildRoundRobinGroups({
-    clubs: database.clubs.filter((club) => club.country.toLocaleLowerCase("pt-BR") === "brasil" && club.division === managedClub.division).map(({ id, name }) => ({ id, name })),
+    clubs: database.clubs.filter((club) => club.division !== "Sem divisão nacional" && club.country.toLocaleLowerCase("pt-BR") === "brasil" && club.division === managedClub.division).map(({ id, name }) => ({ id, name })),
     season,
     competitionId: leagueId,
     competitionName: `Brasileirão ${managedClub.division}`,
@@ -327,7 +327,7 @@ export function createCareerSeason(database: EditorDatabase, clubId: string, sea
     division: managedClub.division,
     doubleRoundRobin: true,
   });
-  const stateClubs = state ? database.clubs.filter((club) => club.country.toLocaleLowerCase("pt-BR") === "brasil" && resolveClubState(club) === state).map(({ id, name }) => ({ id, name })) : [];
+  const stateClubs = state ? database.clubs.filter((club) => club.division !== "Sem divisão nacional" && club.country.toLocaleLowerCase("pt-BR") === "brasil" && resolveClubState(club) === state).map(({ id, name }) => ({ id, name })) : [];
   const stateId = state ? `state:${state}` : "";
   const stateGroups = state && stateClubs.length > 1 ? buildRoundRobinGroups({
     clubs: stateClubs,

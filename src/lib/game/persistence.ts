@@ -1,5 +1,6 @@
+import { cacheCareerSaves } from "@/lib/importer/database-cache";
 import { accountStorageKey } from "./save-utils";
-import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { createBrowserSupabaseClient, type ClubRow, type PlayerRow } from "@/lib/supabase/client";
 import { enforceEditorSquadLimit, type CareerSave, type EditorClub, type EditorDatabase, type EditorPlayer } from "./editor-data";
 import type { Player } from "./mock-data";
 import { createPlayerCareer, type ManualPosition, type PlayerCareerRecord } from "./career";
@@ -41,6 +42,7 @@ export function readLocalSaves(userId: string): CareerSave[] {
 }
 
 export function writeLocalSaves(saves: CareerSave[], userId: string) {
+  void cacheCareerSaves(saves, userId).catch(() => undefined);
   try {
     localStorage.setItem(accountStorageKey(SAVES_KEY, userId), JSON.stringify(saves));
     return true;
@@ -56,14 +58,26 @@ async function authenticatedClient(expectedUserId: string) {
   return { client, userId: userData.user.id };
 }
 
+/** Supabase returns at most one page by default; never silently truncate imported rosters. */
+async function readAllEditorRows<T extends "editor_clubs" | "editor_players">(client: ReturnType<typeof createBrowserSupabaseClient>, table: T): Promise<(T extends "editor_clubs" ? ClubRow : PlayerRow)[]> {
+  let offset = 0;
+  const load = () => client.from(table).select("*").order("id").range(offset, offset + 499);
+  const rows: NonNullable<Awaited<ReturnType<typeof load>>["data"]> = [];
+  for (;;) {
+    const { data, error } = await load();
+    if (error) throw error;
+    rows.push(...(data ?? []));
+    if (!data || data.length < 500) return rows as unknown as (T extends "editor_clubs" ? ClubRow : PlayerRow)[];
+    offset += 500;
+  }
+}
+function chunks<T>(items: T[], size = 250): T[][] {
+  return Array.from({length: Math.ceil(items.length / size)}, (_, i) => items.slice(i * size, (i + 1) * size));
+}
+
 export async function readCloudDatabase(userId: string): Promise<EditorDatabase | null> {
   const { client } = await authenticatedClient(userId);
-  const [{ data: clubRows, error: clubError }, { data: playerRows, error: playerError }] = await Promise.all([
-    client.from("editor_clubs").select("*").order("name"),
-    client.from("editor_players").select("*").order("shirt_number"),
-  ]);
-  if (clubError) throw clubError;
-  if (playerError) throw playerError;
+  const [clubRows, playerRows] = await Promise.all([readAllEditorRows(client, "editor_clubs"), readAllEditorRows(client, "editor_players")]);
   if (!clubRows?.length) return null;
   return {
     clubs: clubRows.map((row) => ({
@@ -72,7 +86,7 @@ export async function readCloudDatabase(userId: string): Promise<EditorDatabase 
       shortName: row.short_name,
       division: row.division,
       state: row.state ?? undefined,
-      foundedYear: row.founded_year ?? 1900,
+      foundedYear: row.founded_year ?? 0,
       primaryColor: row.primary_color,
       secondaryColor: row.secondary_color,
       stadiumName: row.stadium_name,
@@ -108,27 +122,35 @@ export async function readCloudDatabase(userId: string): Promise<EditorDatabase 
   };
 }
 
-export async function writeCloudDatabase(database: EditorDatabase, expectedUserId: string) {
+const databaseWrites = new Map<string, Promise<void>>();
+export function writeCloudDatabase(database: EditorDatabase, expectedUserId: string): Promise<void> {
+  const write = (databaseWrites.get(expectedUserId) ?? Promise.resolve()).catch(() => undefined)
+    .then(() => performCloudDatabaseWrite(database, expectedUserId));
+  databaseWrites.set(expectedUserId, write);
+  void write.finally(() => { if (databaseWrites.get(expectedUserId) === write) databaseWrites.delete(expectedUserId); }).catch(() => undefined);
+  return write;
+}
+
+async function performCloudDatabaseWrite(database: EditorDatabase, expectedUserId: string) {
   const { client, userId } = await authenticatedClient(expectedUserId);
   const limitedPlayers = enforceEditorSquadLimit(database.players);
-  const { data: remoteClubs, error: listError } = await client.from("editor_clubs").select("id");
-  if (listError) throw listError;
+  const remoteClubs = await readAllEditorRows(client, "editor_clubs");
   const localClubIds = new Set(database.clubs.map((club) => club.id));
   const removedClubIds = (remoteClubs ?? []).map((club) => club.id).filter((clubId) => !localClubIds.has(clubId));
-  if (removedClubIds.length) {
-    const { error } = await client.from("editor_clubs").delete().in("id", removedClubIds);
+  for (const ids of chunks(removedClubIds, 100)) {
+    const { error } = await client.from("editor_clubs").delete().in("id", ids);
     if (error) throw error;
   }
 
   if (database.clubs.length) {
-    const { error } = await client.from("editor_clubs").upsert(database.clubs.map((club) => ({
+    const rows = database.clubs.map((club) => ({
       id: club.id,
       owner_id: userId,
       name: club.name,
       short_name: club.shortName,
       division: club.division,
       state: club.state ?? null,
-      founded_year: club.foundedYear,
+      founded_year: club.foundedYear || null,
       primary_color: club.primaryColor,
       secondary_color: club.secondaryColor,
       stadium_name: club.stadiumName,
@@ -138,20 +160,22 @@ export async function writeCloudDatabase(database: EditorDatabase, expectedUserI
       coach_name: club.coachName,
       kit_style: club.kitStyle,
       updated_at: new Date().toISOString(),
-    })));
-    if (error) throw error;
+    }));
+    for (const batch of chunks(rows)) {
+      const { error } = await client.from("editor_clubs").upsert(batch);
+      if (error) throw error;
+    }
   }
 
-  const { data: remotePlayers, error: playerListError } = await client.from("editor_players").select("id");
-  if (playerListError) throw playerListError;
+  const remotePlayers = await readAllEditorRows(client, "editor_players");
   const localPlayerIds = new Set(limitedPlayers.map((player) => player.id));
   const removedPlayerIds = (remotePlayers ?? []).map((player) => player.id).filter((playerId) => !localPlayerIds.has(playerId));
-  if (removedPlayerIds.length) {
-    const { error } = await client.from("editor_players").delete().in("id", removedPlayerIds);
+  for (const ids of chunks(removedPlayerIds, 100)) {
+    const { error } = await client.from("editor_players").delete().in("id", ids);
     if (error) throw error;
   }
   if (limitedPlayers.length) {
-    const { error } = await client.from("editor_players").upsert(limitedPlayers.map((player) => ({
+    const rows = limitedPlayers.map((player) => ({
       id: player.id,
       owner_id: userId,
       club_id: player.clubId,
@@ -175,8 +199,11 @@ export async function writeCloudDatabase(database: EditorDatabase, expectedUserI
       contract_ends_on: player.contractEndsOn,
       market_status: player.marketStatus ?? "normal",
       updated_at: new Date().toISOString(),
-    })));
-    if (error) throw error;
+    }));
+    for (const batch of chunks(rows)) {
+      const { error } = await client.from("editor_players").upsert(batch);
+      if (error) throw error;
+    }
   }
 }
 

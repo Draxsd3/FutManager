@@ -1,5 +1,8 @@
 "use client";
 
+import { importBrazilDatabase } from "@/lib/importer/brazil-database";
+import { readCachedDatabase, cacheDatabase, hasPendingDatabaseSync, readCachedCareerSaves } from "@/lib/importer/database-cache";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/ui/app-shell";
 import { CompetitionCenter, type CareerCompetitionView } from "@/components/ui/competition-center";
@@ -31,7 +34,7 @@ import {
   type TopScorer,
   type TopRating,
 } from "@/lib/game/mock-data";
-import { buildSquadFromDatabase, createDefaultDatabase, upgradeEditorDatabase, type CareerSave, type EditorDatabase } from "@/lib/game/editor-data";
+import { buildSquadFromDatabase, upgradeEditorDatabase, type CareerSave, type EditorDatabase } from "@/lib/game/editor-data";
 import { createPlayerCareer, recordPlayerMatch, applyNegotiation, type MarketAction, type MatchParticipation, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
 import { deployLineupPlayer } from "@/lib/game/lineup";
 import { mergeCareerSaves } from "@/lib/game/save-utils";
@@ -92,6 +95,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [coach, setCoach] = useState("");
   const [division, setDivision] = useState<DivisionKey>("Série A");
   const [club, setClub] = useState<string>("Flamengo");
+  const databaseRevision = useRef(0);
   const [round, setRound] = useState(1);
   const [budget, setBudget] = useState(12624);
   const [careerSquad, setCareerSquad] = useState<typeof initialSquad | null>(null);
@@ -106,23 +110,31 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     async function hydrate() {
       await Promise.resolve();
       if (cancelled) return;
-      const localDatabase = upgradeEditorDatabase(readLocalDatabase(userId) ?? createDefaultDatabase());
-      const localSaves = readLocalSaves(userId);
+      const pendingDatabaseSync = await hasPendingDatabaseSync(userId).catch(() => false);
+      const localDatabase = upgradeEditorDatabase(await readCachedDatabase(userId).catch(() => null) ?? readLocalDatabase(userId) ?? await importBrazilDatabase());
+      if (cancelled) return;
+      const localSaves = await readCachedCareerSaves(userId).catch(() => null) ?? readLocalSaves(userId);
+      if (cancelled) return;
       savesRef.current = localSaves;
       setDatabase(localDatabase);
       setSaves(localSaves);
       writeLocalDatabase(localDatabase, userId);
+      await cacheDatabase(localDatabase, userId).catch(() => undefined);
       setSyncLabel("Dados locais carregados");
 
       try {
         const [cloudDatabase, cloudSaves] = await Promise.all([readCloudDatabase(userId), readCloudSaves(userId)]);
         if (cancelled) return;
-        if (cloudDatabase) {
+        if (databaseRevision.current > 0) {
+          // A deliberate editor import/edit supersedes the hydration snapshot. Its own write is queued.
+        } else if (cloudDatabase && !pendingDatabaseSync) {
           const upgradedCloudDatabase = upgradeEditorDatabase(cloudDatabase);
           setDatabase(upgradedCloudDatabase);
           writeLocalDatabase(upgradedCloudDatabase, userId);
+          await cacheDatabase(upgradedCloudDatabase, userId, false).catch(() => undefined);
         } else {
           await writeCloudDatabase(localDatabase, userId);
+          await cacheDatabase(localDatabase, userId, false).catch(() => undefined);
         }
         const merged = mergeCareerSaves(localSaves, cloudSaves);
         if (cancelled) return;
@@ -576,13 +588,24 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   function changeDatabase(next: EditorDatabase) {
+    const revision = ++databaseRevision.current;
     const limited = upgradeEditorDatabase(next);
     setDatabase(limited);
-    writeLocalDatabase(limited, userId);
+    const smallCacheSaved = writeLocalDatabase(limited, userId);
+    const largeCache = cacheDatabase(limited, userId);
     setSyncLabel("Salvando alterações...");
+    void largeCache.catch(() => { if (!smallCacheSaved) setSyncLabel("Falha no armazenamento local — não feche a página"); });
     writeCloudDatabase(limited, userId)
-      .then(() => setSyncLabel("Alterações salvas no Supabase"))
-      .catch(() => setSyncLabel("Salvo localmente — sincronização pendente"));
+      .then(async () => {
+        if (revision !== databaseRevision.current) return;
+        await cacheDatabase(limited, userId, false).catch(() => undefined);
+        setSyncLabel("Alterações salvas no Supabase");
+      })
+      .catch(async () => {
+        if (revision !== databaseRevision.current) return;
+        try { await largeCache; setSyncLabel("Salvo localmente — sincronização pendente"); }
+        catch { setSyncLabel(smallCacheSaved ? "Salvo localmente — sincronização pendente" : "Falha ao salvar — mantenha a página aberta"); }
+      });
   }
 
   function persistSave(nextSave: CareerSave): Promise<void> {
