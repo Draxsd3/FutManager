@@ -191,3 +191,11 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Alterar somente os ícones: usar uma família SVG monoline moderna, harmoniosa e consistente em todas as telas, herdando as cores da interface existente. Preservar os nomes, tamanhos e chamadas de `ClassicIcon` para aplicar a padronização sem redesenhar cada tela.
 - Manter os layouts existentes de agenda, estádio, editor, escalação, partida, perfis, mercado e menu inicial. Não propagar o tema grafite/verde-lima nem introduzir outra navegação, filtros ou cartões como parte desta correção.
 - Não reverter funcionalidades posteriores de perfis/negociações, progressos, autenticação, motor ou regras de jogo. Componentes específicos de campo e camisas não são ícones de interface e mantêm seus desenhos.
+
+
+### 25. Catálogo limitado ao futebol brasileiro
+
+- Pedido: adicionar somente Brasileirão Séries A, B, C e D, estaduais brasileiros, regionais e Copa do Brasil. Não incluir campeonatos internacionais, seleções, ligas estrangeiras ou Supercopa do Brasil no catálogo.
+- A Central de Competições mantém somente Nacional, Estadual e Regional. As quatro séries nacionais existem no catálogo mesmo sem clubes cadastrados; estaduais contemplam as 26 unidades estaduais e o Distrito Federal. Regionais disponíveis: Copa do Nordeste e Copa Verde.
+- Escopo desta etapa é apenas cadastro/consulta das competições, sem importação de clubes, escudos, camisas ou jogadores. Não atribuir participantes a estaduais/copa/regionais sem dados de inscrição nem inventar resultados/calendários. Séries C/D são entradas do catálogo, não novas carreiras simuláveis; formato, participantes e motor dessas divisões ficam pendentes.
+- Preservar design, saves, clubes existentes e fluxos de carreira. A base importada de arquivos não é executada nem alterada nesta etapa.

@@ -1,7 +1,7 @@
 import type { EditorDatabase } from "./editor-data";
 
 export type CompetitionCategory =
-  "national" | "international" | "selections" | "state" | "regional";
+  "national" | "state" | "regional";
 export type CompetitionEntry = {
   id: string;
   name: string;
@@ -16,8 +16,6 @@ export const competitionCategories: {
   label: string;
 }[] = [
   { id: "national", label: "Nacional" },
-  { id: "international", label: "Internacional" },
-  { id: "selections", label: "Seleções" },
   { id: "state", label: "Estadual" },
   { id: "regional", label: "Regional" },
 ];
@@ -51,6 +49,25 @@ const states = [
   "Tocantins",
 ];
 const stateNames: Record<string, string> = {
+  Acre: "Campeonato Acreano",
+  Alagoas: "Campeonato Alagoano",
+  Amapá: "Campeonato Amapaense",
+  Amazonas: "Campeonato Amazonense",
+  "Distrito Federal": "Campeonato Brasiliense",
+  "Espírito Santo": "Campeonato Capixaba",
+  Goiás: "Campeonato Goiano",
+  Maranhão: "Campeonato Maranhense",
+  "Mato Grosso": "Campeonato Mato-Grossense",
+  "Mato Grosso do Sul": "Campeonato Sul-Mato-Grossense",
+  Pará: "Campeonato Paraense",
+  Paraíba: "Campeonato Paraibano",
+  Piauí: "Campeonato Piauiense",
+  "Rio Grande do Norte": "Campeonato Potiguar",
+  Rondônia: "Campeonato Rondoniense",
+  Roraima: "Campeonato Roraimense",
+  Sergipe: "Campeonato Sergipano",
+  Tocantins: "Campeonato Tocantinense",
+
   "São Paulo": "Campeonato Paulista",
   "Rio de Janeiro": "Campeonato Carioca",
   "Minas Gerais": "Campeonato Mineiro",
@@ -66,48 +83,24 @@ const stateNames: Record<string, string> = {
 export function buildCompetitionCatalog(
   database: EditorDatabase,
 ): CompetitionEntry[] {
-  const national = new Map<string, CompetitionEntry>();
-  for (const club of database.clubs) {
-    const id = `league:${club.country}:${club.division}`;
-    if (!national.has(id))
-      national.set(id, {
-        id,
-        name: `${club.country === "Brasil" ? "Brasileirão" : "Liga nacional"} · ${club.division}`,
-        category: "national",
-        location: club.country,
-        division: club.division,
-        format: "Liga",
-        clubs: [],
-      });
-    national.get(id)!.clubs.push(club.name);
-  }
+  const national: CompetitionEntry[] = ["Série A", "Série B", "Série C", "Série D"].map((division) => ({
+    id: `league:Brasil:${division}`,
+    name: `Brasileirão · ${division}`,
+    category: "national",
+    location: "Brasil",
+    division,
+    format: division === "Série A" || division === "Série B" ? "Liga" : "Fases e grupos a cadastrar",
+    clubs: database.clubs
+      .filter((club) => club.country === "Brasil" && club.division === division)
+      .map((club) => club.name),
+  }));
   const extra: [CompetitionCategory, string, string, string][] = [
     ["national", "Copa do Brasil", "Brasil", "Mata-mata"],
-    ["national", "Supercopa do Brasil", "Brasil", "Final"],
-    [
-      "international",
-      "CONMEBOL Libertadores",
-      "América do Sul",
-      "Grupos e mata-mata",
-    ],
-    [
-      "international",
-      "CONMEBOL Sul-Americana",
-      "América do Sul",
-      "Grupos e mata-mata",
-    ],
-    ["international", "UEFA Champions League", "Europa", "Liga e mata-mata"],
-    ["international", "UEFA Europa League", "Europa", "Liga e mata-mata"],
-    ["international", "Mundial de Clubes", "Mundo", "Formato a cadastrar"],
-    ["international", "Recopa Sul-Americana", "América do Sul", "Final"],
-    ["selections", "Copa do Mundo", "Mundo", "Grupos e mata-mata"],
-    ["selections", "Copa América", "América do Sul", "Grupos e mata-mata"],
-    ["selections", "Eurocopa", "Europa", "Grupos e mata-mata"],
     ["regional", "Copa do Nordeste", "Nordeste", "Formato a cadastrar"],
     ["regional", "Copa Verde", "Brasil", "Formato a cadastrar"],
   ];
   return [
-    ...national.values(),
+    ...national,
     ...extra.map(([category, name, location, format]) => ({
       id: `${category}:${name}`,
       name,
