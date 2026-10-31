@@ -1,5 +1,6 @@
 import type { Player } from "@/lib/game/mock-data";
 import type { PlayerCareerRecord } from "@/lib/game/career";
+import styles from "./club-sidebar.module.css";
 import Image from "next/image";
 import { clubThemes, positionLabel } from "@/lib/game/mock-data";
 import { clubCrestAsset } from "@/lib/game/assets";
@@ -26,112 +27,21 @@ export function Crest({ club, size = "md" }: { club: string; size?: "sm" | "md" 
   );
 }
 
-function Meter({ title, value }: { title: string; value: number }) {
-  return (
-    <div>
-      <p className="text-[11px] font-bold text-[#425349]">{title}</p>
-      <div className="relative mt-1 h-[12px] overflow-hidden rounded-full bg-[#041108]">
-        <div
-          className="h-full bg-[#16c864]"
-          style={{ width: `${value}%` }}
-        />
-        <b className="absolute inset-0 text-center text-[9px] leading-3 text-white">{value}%</b>
-      </div>
-    </div>
-  );
-}
-
-export function ClubSidebar({
-  club,
-  coach,
-  budget,
-  directorTrust,
-  fanTrust,
-  opponent,
-  isHome,
-  round,
-  competition,
-  selectedPlayer,
-  selectedPlayerRecord,
-  ctaLabel,
-  onCta,
-  onQuickAction,
-}: {
-  club: string;
-  coach: string;
-  budget: number;
-  directorTrust: number;
-  fanTrust: number;
-  opponent: string;
-  isHome: boolean;
-  round: number;
-  competition: string;
-  selectedPlayer: Player | null;
-  selectedPlayerRecord?: PlayerCareerRecord;
-  ctaLabel: string;
-  onCta: () => void;
+export function ClubSidebar({ club, coach, budget, opponent, isHome, hasNextMatch, round, roundLabel, competition, selectedPlayer, record, season, squadSize, ctaLabel, onCta, onQuickAction }: {
+  club: string; coach: string; budget: number; opponent: string; isHome: boolean; hasNextMatch: boolean; round: number; roundLabel?: string; competition: string;
+  selectedPlayer: Player | null; record?: PlayerCareerRecord; season: number; squadSize: number; ctaLabel: string; onCta: () => void;
   onQuickAction: (action: "roster" | "finances" | "trophies" | "training") => void;
 }) {
-  const recordedSeasons = selectedPlayerRecord?.seasons ?? [];
-  const recordedGames = recordedSeasons.reduce((sum, season) => sum + season.games, 0);
-  const recordedGoals = recordedSeasons.reduce((sum, season) => sum + season.goals, 0);
-  const recordedAssists = recordedSeasons.reduce((sum, season) => sum + season.assists, 0);
-  return (
-    <aside className="relative flex h-full min-h-0 flex-col overflow-hidden border-r border-[#c8d6ca] bg-[#fbfcf9] text-[#25362a] shadow-[2px_0_12px_rgba(26,49,34,.08)]">
-      <div className="h-1.5 shrink-0 bg-[var(--team-accent)]" />
-      <div className="flex items-center gap-3 border-b border-[#d5e0d6] bg-white px-4 py-4">
-        <Crest club={club} />
-        <div className="min-w-0">
-          <p className="text-[9px] font-bold uppercase tracking-[.13em] text-[var(--team-accent)]">Seu clube</p>
-          <h1 className="mt-1 truncate text-[17px] font-black leading-tight">{club}</h1>
-          <p className="mt-1 truncate text-[11px] text-[#607267]">Técnico: <b className="text-[#25362a]">{coach}</b></p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-px border-b border-[#d5e0d6] bg-[#d5e0d6]">
-        <div className="bg-[#f2f6f1] px-4 py-3"><p className="text-[9px] font-bold uppercase tracking-wide text-[#718278]">Caixa disponível</p><p className="mt-1 text-[14px] font-black text-[#25362a]">R$ {(budget / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}M</p></div>
-        <div className="bg-[#f2f6f1] px-4 py-3"><p className="text-[9px] font-bold uppercase tracking-wide text-[#718278]">Temporada</p><p className="mt-1 text-[14px] font-black text-[#25362a]">{round}ª rodada</p></div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 border-b border-[#d5e0d6] bg-white px-4 py-3">
-        <Meter title="Confiança diretoria" value={directorTrust} />
-        <Meter title="Confiança torcida" value={fanTrust} />
-      </div>
-
-      <div className="mx-3 mt-4 rounded-lg border border-[#b8ceb9] bg-[#f2f7f0] p-3 text-[#25362a]">
-        <div className="flex items-center justify-between"><b className="text-[10px] uppercase tracking-wide text-[var(--team-accent)]">Próximo jogo</b><span className="rounded bg-white px-2 py-0.5 text-[9px] font-bold text-[#607267]">{isHome ? "CASA" : "FORA"}</span></div>
-        <div className="mt-3 flex items-center gap-3">
-          <Crest club={opponent} size="sm" />
-          <div><p className="text-[14px] font-bold">{opponent}</p>
-          <p className="mt-0.5 text-[10px] text-[#607267]">
-          {competition} · {round}ª rodada
-          </p></div>
-        </div>
-      </div>
-
-      <button
-        onClick={onCta}
-        className="mx-3 mt-3 flex w-[calc(100%-1.5rem)] items-center justify-center gap-2 rounded-lg border border-[var(--team-accent)] bg-[var(--team-accent)] py-3 text-[13px] font-bold text-[var(--team-accent-text)] hover:brightness-110"
-      >
-        <ClassicIcon name="sport_soccer" size={32} />{ctaLabel}
-      </button>
-
-      {selectedPlayer && <div className="mx-3 mt-3 rounded-lg border border-[#c9d9ca] bg-white p-3 text-[11px]"><div className="flex items-center justify-between border-b border-[#d9e5d9] pb-2"><b className="uppercase tracking-wide text-[var(--team-accent)]">Jogador selecionado</b><b>F:{selectedPlayer.overall}</b></div><p className="mt-2 text-[13px] font-bold">{selectedPlayer.name}</p><p className="mt-1 text-[#607267]">{positionLabel[selectedPlayer.position]} · {selectedPlayer.age} anos · R$ {selectedPlayer.marketValue}M</p><div className="mt-3 grid grid-cols-3 border-t border-[#d9e5d9] pt-2 text-center"><b>Jogos<br />{recordedGames}</b><b>Gols<br />{recordedGoals}</b><b>Assist.<br />{recordedAssists}</b></div></div>}
-
-      <div className="mt-auto border-t border-[#d5e0d6] bg-[#f0f5f0] p-3">
-        <div className="mb-3 flex items-center justify-between text-[10px]"><b className="text-[var(--team-accent)]">GESTÃO DO CLUBE</b><span className="text-[#718278]">Acesso rápido</span></div>
-        <div className="grid grid-cols-2 gap-2">
-          <Quick icon="group" label="Elenco" onClick={() => onQuickAction("roster")} />
-          <Quick icon="money" label="Finanças" onClick={() => onQuickAction("finances")} />
-          <Quick icon="medal_award_gold" label="Troféus" onClick={() => onQuickAction("trophies")} />
-          <Quick icon="chart_bar" label="Treino" onClick={() => onQuickAction("training")} />
-        </div>
-      </div>
-      <div className="h-2 shrink-0 bg-[var(--team-accent)]" />
-    </aside>
-  );
+  const current = record?.seasons.find((item) => item.season === season && item.club === club);
+  const totals = (record?.seasons ?? []).reduce((sum, item) => ({ games: sum.games + item.games, goals: sum.goals + item.goals, assists: sum.assists + item.assists }), { games: 0, goals: 0, assists: 0 });
+  return <aside className={styles.sidebar}>
+    <div className={styles.club}><Crest club={club} size="sm"/><div><h1>{club}</h1><p>{coach}</p></div></div>
+    <div className={styles.balance}><ClassicIcon name="money" size={18}/><b>R$ {(budget / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} milhões</b></div>
+    <div className={styles.trust}><span>Confiança diretoria <b>—</b></span><span>Confiança torcida <b>—</b></span></div>
+    <section className={styles.next}><h2>Próximo jogo · {hasNextMatch ? (isHome ? "Casa" : "Fora") : "—"}</h2>{hasNextMatch ? <div className={styles.opponent}><Crest club={opponent} size="sm"/><div><b>{opponent}</b><p>{competition} · {roundLabel ?? `${round}ª rodada`}</p></div></div> : <p className={styles.noMatch}>Nenhum jogo agendado.</p>}</section>
+    <button type="button" onClick={onCta} className={styles.cta}><ClassicIcon name="sport_soccer" size={20}/>{ctaLabel}</button>
+    <section className={styles.player}><h2>{selectedPlayer ? <>{selectedPlayer.name} <span>F: {selectedPlayer.overall}</span></> : "Jogador selecionado"}</h2>{selectedPlayer ? <div className={styles.playerBody}><p>{positionLabel[selectedPlayer.position]} · {selectedPlayer.foot === "D" ? "Direito" : "Esquerdo"} · {selectedPlayer.age} anos</p><p>Contrato até: {record?.contractUntil ?? selectedPlayer.contractUntil}</p><p><b>Valor:</b> R$ {selectedPlayer.marketValue.toFixed(1)} mi &nbsp; <b>Salário:</b> {record?.salary ?? selectedPlayer.salary} mil</p><table><thead><tr><th></th><th>Temporada {season}</th><th>Carreira</th></tr></thead><tbody><tr><th>Jogos</th><td>{current?.games ?? 0}</td><td>{totals.games}</td></tr><tr><th>Gols</th><td>{current?.goals ?? 0}</td><td>{totals.goals}</td></tr><tr><th>Assistências</th><td>{current?.assists ?? 0}</td><td>{totals.assists}</td></tr><tr><th>Nota média</th><td>{current?.average?.toFixed(2).replace(".", ",") ?? "—"}</td><td>—</td></tr></tbody></table></div> : <p className={styles.noMatch}>Selecione um jogador na tabela.</p>}</section>
+    <div className={styles.quick} aria-label="Ações do clube"><Quick icon="group" label="Elenco" onClick={() => onQuickAction("roster")} /><Quick icon="money" label="Finanças" onClick={() => onQuickAction("finances")} /><Quick icon="medal_award_gold" label="Troféus" onClick={() => onQuickAction("trophies")} /><Quick icon="chart_bar" label="Treino" onClick={() => onQuickAction("training")} /><span>{squadSize}/35</span></div>
+  </aside>;
 }
-
-function Quick({ icon, label, onClick }: { icon: ClassicIconName; label: string; onClick: () => void }) {
-  return <button type="button" onClick={onClick} className="flex min-h-16 items-center gap-2 rounded-lg border border-[#bfd0c0] bg-white px-3 py-2 text-left hover:bg-[#e9f1e9]"><ClassicIcon name={icon} size={32} className="text-[var(--team-accent)]" /><span className="text-[10px] font-bold">{label}</span></button>;
-}
+function Quick({ icon, label, onClick }: { icon: ClassicIconName; label: string; onClick: () => void }) { return <button type="button" title={label} aria-label={label} onClick={onClick}><ClassicIcon name={icon} size={23}/></button>; }

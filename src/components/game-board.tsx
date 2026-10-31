@@ -1129,7 +1129,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   if (page === "hub")
     return (
       <>
-        <AppShell nav={nav} teamName={club} clubColors={database.clubs.find((item) => item.name === club)} date="22/01/2026">
+        <AppShell nav={nav} teamName={club} clubColors={database.clubs.find((item) => item.name === club)} date="22/01/2026" classicNav>
           <HubScreen
             club={club}
             coach={coach}
@@ -1137,9 +1137,13 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             opponent={opponent}
             round={competitionRound}
             competition={competitionName}
+            playerCareers={playerCareers}
+            season={competitionSeason?.season ?? 2026}
+            isHome={userIsHome}
+            hasNextMatch={!!scheduledFixture}
+            roundLabel={competitionRoundLabel}
             squad={squad}
             starters={starters}
-            records={playerCareers}
             selectedPlayer={selectedPlayerData}
             onSelectPlayer={setSelectedPlayer}
             onOpenPlayer={openPlayerProfile}

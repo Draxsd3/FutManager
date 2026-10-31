@@ -203,7 +203,7 @@ it("keeps club navigation internal and the top Menu inicial button returns to th
   }
   fireEvent.click(screen.getByRole("button", { name: "Principal" }));
   expect(screen.queryByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeNull();
-  expect(screen.getByRole("button", { name: "Principal" }).className).toContain("bg-[var(--team-accent)]");
+  expect(screen.getByRole("button", { name: "Principal" }).getAttribute("aria-current")).toBe("page");
   expect(screen.getAllByRole("table").length).toBeGreaterThan(0);
   fireEvent.click(screen.getByRole("button", { name: "Configurações" }));
   fireEvent.click(screen.getByRole("button", { name: "Voltar ao menu inicial" }));
