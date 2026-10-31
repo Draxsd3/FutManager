@@ -10,7 +10,7 @@ it("preserves the original compact roster and its player and management actions"
   const { container } = render(<HubScreen club="Corinthians" coach="Teste" budget={12620} opponent="Flamengo" round={1} competition="Estadual" squad={squad} starters={squad.slice(0,11).map(p=>p.id)} selectedPlayer={squad[0]} onSelectPlayer={select} onOpenPlayer={open} onEscalar={lineup} onQuickAction={quick}/>);
   expect(screen.getByRole("heading", {name:"ELENCO"})).toBeTruthy();
   const roster = screen.getByRole("region", { name: "ELENCO" });
-  expect(within(roster).getAllByRole("columnheader")).toHaveLength(13);
+  expect(within(roster).getAllByRole("columnheader")).toHaveLength(14);
   expect(within(roster).getAllByRole("row")).toHaveLength(squad.length + 1);
   expect(screen.queryByRole("button",{name:"Desempenho"})).toBeNull();
   const row = screen.getByRole("cell",{name:new RegExp(squad[0].name)}).closest("tr")!;
@@ -24,11 +24,12 @@ it("preserves the original compact roster and its player and management actions"
 });
 it("shows recorded season statistics and the actual next-match venue", () => {
   const player = squad[0];
-  const records = { [player.id]: { marketStatus: "normal" as const, contractUntil: "2030-12-31", salary: 125, retirementYear: null, seasons: [{ season: 2026, club: "Corinthians", games: 8, goals: 3, assists: 2, average: 7.4 }] } };
+  const records = { [player.id]: { marketStatus: "sale" as const, contractUntil: "2030-12-31", salary: 125, retirementYear: null, seasons: [{ season: 2026, club: "Corinthians", games: 8, goals: 3, assists: 2, average: 7.4 }] } };
   render(<HubScreen club="Corinthians" coach="Teste" budget={12000} opponent="Flamengo" round={2} competition="Paulista" isHome={false} roundLabel="2ª rodada" playerCareers={records} squad={[player]} starters={[]} selectedPlayer={player} onSelectPlayer={vi.fn()} onOpenPlayer={vi.fn()} onEscalar={vi.fn()} onQuickAction={vi.fn()}/>);
   const roster = screen.getByRole("region", { name: "ELENCO" });
   const cells = within(roster).getAllByRole("row")[1].querySelectorAll("td");
   expect(cells[7].textContent).toBe("8"); expect(cells[8].textContent).toBe("3"); expect(cells[11].textContent).toBe("2"); expect(cells[12].textContent).toBe("7,40");
+  expect(cells[13].textContent).toBe("À venda");
   expect(screen.getByText("Próximo jogo · Fora")).toBeTruthy();
   expect(screen.getByText(/Contrato até: 2030-12-31/)).toBeTruthy();
   fireEvent.keyDown(screen.getByRole("button", { name: player.name }), { key: "Enter" });

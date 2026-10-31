@@ -284,3 +284,8 @@ A direção foi inspirada por [UT Austin Villa: formação e atribuição de pap
 ### Base visual e ícones
 
 A central de elenco mantém a estrutura original: navegação clara, cores cadastradas do clube, painel lateral e tabela compacta. As demais telas conservam seus layouts e fluxos já existentes. Os ícones decorativos usam uma única família SVG monoline de 24 unidades, com traços, terminais e proporções consistentes e cor herdada de cada interface. `ClassicIcon` mantém compatibilidade com os nomes e tamanhos usados nas telas; `InterfaceIcon` fornece o mesmo desenho vetorial sem imagens externas.
+
+
+### Competições brasileiras
+
+O catálogo da Central de Competições inclui apenas Brasileirão Séries A, B, C e D, Copa do Brasil, Copa do Nordeste, Copa Verde e os 27 estaduais (incluindo o Distrito Federal). Não exibe competições internacionais, de seleções, ligas estrangeiras ou Supercopa. As quatro séries aparecem mesmo em bases vazias. Esta alteração preserva a simulação A–D/estadual/Copa já existente, sem importar novos participantes, jogadores ou uniformes. Inscrições, calendários e resultados não cadastrados permanecem explicitamente indisponíveis.

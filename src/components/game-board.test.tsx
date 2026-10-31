@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { GameBoard } from "./game-board";
 import { readLocalSaves } from "@/lib/game/persistence";
 
@@ -104,6 +104,37 @@ it("autosaves a match without a floating exit button and resumes paused after re
   expect(readLocalSaves("alice")[0].progress?.minute).toBe(saved.progress?.minute);
 });
 
+
+it("pauses at minute 45 and automatically opens tactics before the second half", async () => {
+  const view = render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Intervalo automático" } });
+  fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /Escalar Time/i }));
+  fireEvent.click(await screen.findByRole("button", { name: /Ir para a partida/ }));
+  await screen.findByText("AO VIVO");
+  fireEvent.click(screen.getByRole("button", { name: "4x" }));
+  const dialog = await screen.findByRole("dialog", { name: "Táticas" }, { timeout: 20_000 });
+  expect(within(dialog).getByText(/Ajuste a equipe antes do segundo tempo/)).toBeTruthy();
+  expect(within(dialog).getByRole("button", { name: "Iniciar 2º tempo →" })).toBeTruthy();
+  await waitFor(() => {
+    const progress = readLocalSaves("alice")[0].progress;
+    expect(progress?.minute).toBe(45);
+    expect(progress?.halftimeWaiting).toBe(true);
+    expect(progress?.detailOpen).toBe(true);
+    expect(progress?.matchRunning).toBe(false);
+  }, { timeout: 3000 });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Fechar táticas" }));
+  expect(await screen.findByText("INTERVALO")).toBeTruthy();
+  expect(screen.getByRole("button", { name: /Iniciar 2º tempo/ })).toBeTruthy();
+  await waitFor(() => {
+    const progress = readLocalSaves("alice")[0].progress;
+    expect(progress?.halftimeWaiting).toBe(true);
+    expect(progress?.detailOpen).toBe(false);
+    expect(progress?.matchRunning).toBe(false);
+  });
+  view.unmount();
+}, 30_000);
 
 it("warns before a browser exit during a match and saves the resumable state", async () => {
   render(game());
@@ -242,11 +273,11 @@ it("uses the compact in-match modal, confirms substitutions once and transfers c
   const tacticsTrigger = await screen.findByRole("button", { name: /Escalação e táticas/ });
   tacticsTrigger.focus();
   fireEvent.click(tacticsTrigger);
-  await screen.findByRole("dialog", { name: "Táticas da partida" });
+  await screen.findByRole("dialog", { name: "Táticas" });
   await waitFor(() => expect(readLocalSaves("alice")[0].progress?.detailOpen).toBe(true));
   const before = readLocalSaves("alice")[0].progress!;
   const id = before.starters[0];
-  expect(screen.queryByLabelText("Campo de escalação")).toBeNull();
+  expect(screen.getByRole("group", { name: "Campo tático" })).toBeTruthy();
   expect(document.querySelector('[inert]')).toBeTruthy();
   const shirt = () => document.querySelector<HTMLButtonElement>(`button[data-starter="${id}"]`)!;
   const reserve = document.querySelector<HTMLButtonElement>('button[data-reserve]')!;

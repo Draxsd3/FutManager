@@ -115,7 +115,7 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - O motor deve usar força/overall, qualidades/habilidades disponíveis, energia/condição, motivação/vontade estimada, formação/posição como referência organizacional, estilo, marcação/pressão, foco de ataque, goleiro e clima simulado. Não inventar atributos numéricos ausentes. A equipe superior tem vantagem estatística consistente, sem eliminar surpresas plausíveis.
 - Passe, finalização, gol, defesa, desarme, falta, impedimento, posse, placar, comentário, estatísticas, cartões e notas devem derivar de eventos coerentes. O clima e a semente ficam fixos na partida e são salvos para uma retomada estável.
 - Aplicar o desgaste final à energia dos atletas conforme minutos, pressão e temperatura. Jogos secundários simulados também devem considerar força relativa e não antecipar gols futuros.
-- As posições escolhidas pelo treinador são organização inicial e contexto de adaptação; não são limites rígidos para o comportamento. Durante a partida não mostrar campo, jogadores/bolinhas ou animações gráficas. No pós-jogo, a pedido de 30/10/2026, pode haver apenas uma prancheta estática com as formações dos dois times, sem simulação visual ao vivo.
+- As posições escolhidas pelo treinador são organização inicial e contexto de adaptação; não são limites rígidos para o comportamento. No acompanhamento ao vivo da partida não mostrar campo, jogadores/bolinhas ou animações gráficas. Exceção vigente: o modal de ajustes táticos aberto pelo usuário pode mostrar a prancheta para editar a organização, sem apresentar movimento ou simulação ao vivo; consultar a seção 28. No pós-jogo pode haver apenas uma prancheta estática com as formações dos dois times, sem simulação visual ao vivo.
 
 ### 13. Proporção profissional obrigatória das camisas
 
@@ -181,9 +181,9 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Interpolar todos os jogadores suavemente em um único ciclo; pausa e intervalo congelam a posição atual, velocidade acelera o movimento e a preferência de movimento reduzido é respeitada. As posições escolhidas não são regravadas durante a visualização. As coordenadas dinâmicas também informam seleção de ator/alvo e impedimento simplificado; o modelo continua heurístico, não é física completa.
 - Referências de formação relacionada à bola e movimento sem bola incluem UT Austin Villa (https://www.cs.utexas.edu/~pstone/Papers/bib2html-links/LNAI12-MacAlpine.pdf) e PhysicsFC (https://arxiv.org/html/2504.21216v1). Top Eleven inspira a apresentação de uma forma coletiva fluida; suas fórmulas proprietárias não são públicas e não são copiadas.
 
-### 23. Táticas rápidas em modal durante a partida
+### 23. Táticas rápidas em modal durante a partida (histórico, revisado pela seção 28)
 
-- Correção do responsável: as táticas durante o jogo devem ser um modal, não outra tela completa, pois servem apenas para alterar formação e fazer substituições. Esta decisão substitui a apresentação da seção 20; a escalação pré-jogo continua completa e inalterada.
+- Correção anterior do responsável: as táticas durante o jogo devem ser um modal, não outra tela completa, pois servem para alterar formação e fazer substituições. O formato modal continua vigente; a composição descrita abaixo foi atualizada pela seção 28.
 - Usar cartão central com dimensões limitadas, fundo da partida visível e escurecido, cabeçalho compacto com placar/minuto e apenas formação, titulares e reservas. Não reproduzir campo, plano tático avançado, indicadores e estatísticas dentro do modal.
 - A formação é aplicada ao selecionar; substituições exigem seleção de quem sai/entra e confirmação. Fechar, Escape ou clicar fora descarta a troca ainda não confirmada, sem consumir substituições. Preservar limite, posições já salvas, pausa/retomada e autosave do controlador real.
 - Manter foco dentro do modal, fundo inerte, restauração do foco ao botão de origem e bloqueio temporário da rolagem da página. Listas têm rolagem própria quando necessário em telas pequenas.
@@ -204,6 +204,7 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Manter os layouts existentes de agenda, estádio, editor, escalação, partida, perfis, mercado e menu inicial. Não propagar o tema grafite/verde-lima nem introduzir outra navegação, filtros ou cartões como parte desta correção.
 - Não reverter funcionalidades posteriores de perfis/negociações, progressos, autenticação, motor ou regras de jogo. Componentes específicos de campo e camisas não são ícones de interface e mantêm seus desenhos.
 
+
 ### Registro de manutenção — 30/10/2026: contabilização e calendário
 
 - A gravação por atleta ocorre só quando uma partida termina. A chave persistida é o ID único da partida agendada (inclui temporada/competição/mandos), então retomar não registra novamente o mesmo resultado. O registro contém jogos (participações com minutos > 0), minutos, gols, assistências identificadas nos eventos, nota e estatísticas de jogo disponíveis (finalizações, passes, desarmes, defesas e cartões). Temporadas agregam partidas por ano/clube, sem reaproveitar números soltos do cadastro do editor como produção da temporada atual.
@@ -221,3 +222,26 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - O orçamento é contabilizado em milhares de reais; valores de oferta e salário vêm do cadastro em reais. Compra definitiva debita a taxa mais uma reserva equivalente a 12 salários mensais; empréstimo debita a taxa e a parte salarial acordada por seis meses. O atleta é adicionado ao elenco e, no universo simulado daquela carreira, movido do clube vendedor para o comprador; a base global do editor permanece inalterada. O perfil identifica vínculo definitivo ou data prevista para fim do empréstimo.
 - Limitação conhecida: o calendário geral da carreira ainda não avança a data do save, portanto a data de retorno do empréstimo é registrada e exibida, mas não existe devolução automática por passagem de tempo nesta versão.
 - Testes cobrem migração de disponibilidade em saves antigos, busca, filtro por empréstimo, contraproposta, aceite, conclusão, atualização do clube de origem no universo da carreira, custo salarial e persistência. Validação local: `npm test` (39 arquivos, 159 testes), `npm run lint`, `npx tsc --noEmit`, `git diff --check` e `npm run build` aprovados.
+
+### 26. Diretório moderno de times e elencos — 30/10/2026
+
+- A tela Times segue a referência enviada: navegação/filtros de clubes à esquerda, identidade do clube selecionado, resumo do plantel e tabela de jogadores com posição, camisa, força, idade, salário mensal, valor de mercado e disponibilidade. Layout responsivo com rolagem própria para listas/tabelas.
+- Selecionar um atleta abre detalhes de cadastro e, para o elenco do próprio clube, apenas estatísticas reais registradas na carreira. Atletas listados podem receber proposta diretamente do perfil; a negociação continua sujeita à resposta/contraproposta e confirmação no Mercado, sem contratação instantânea. A tela também apresenta saldo, folha mensal estimada e contagem de jogadores disponíveis.
+- Regressão da tela cobre navegação entre clubes, visualização de elenco e envio de uma proposta. Validação local desta revisão: `npm test` (41 arquivos, 162 testes), `npm run lint`, `npx tsc --noEmit` e `npm run build` aprovados.
+
+
+
+### 27. Catálogo limitado ao futebol brasileiro
+
+- Pedido: adicionar somente Brasileirão Séries A, B, C e D, estaduais brasileiros, regionais e Copa do Brasil. Não incluir campeonatos internacionais, seleções, ligas estrangeiras ou Supercopa do Brasil no catálogo.
+- A Central de Competições mantém somente Nacional, Estadual e Regional. As quatro séries nacionais existem no catálogo mesmo sem clubes cadastrados; estaduais contemplam as 26 unidades estaduais e o Distrito Federal. Regionais disponíveis: Copa do Nordeste e Copa Verde.
+- Escopo desta etapa é apenas cadastro/consulta das competições, sem importação de clubes, escudos, camisas ou jogadores. Preservar as inscrições e o motor de temporadas A–D/estadual/Copa já adicionados à main em outras entregas. Não importar novas inscrições ou inventar resultados nesta alteração.
+- Preservar design, saves, clubes existentes e fluxos de carreira. A base importada de arquivos não é executada nem alterada nesta etapa.
+
+### 28. Intervalo automático, táticas em campo e central de clube — 30/10/2026
+
+- Pedido atual: remover o botão/ação “Menu inicial” somente da visualização da partida; a navegação de carreira fora dela permanece. Manter autosave, compatibilidade dos saves e a confirmação/retomada segura ao sair do navegador.
+- Ao atingir o minuto 45, pausar a simulação e abrir automaticamente o modal tático, sem iniciar o segundo tempo. A pausa e o estado de intervalo devem persistir; dispensar o modal não retoma a partida, e o usuário inicia a segunda etapa por um controle explícito do modal ou da tela de partida. Antes de iniciar ou retomar uma partida, validar sempre as regras canônicas do motor.
+- O modal tático pode conter campo estilizado original de FutManager, titulares posicionáveis, banco, controles de formação/estilo/marcação/foco e estatísticas ao vivo derivadas dos mesmos eventos da partida. O campo é uma prancheta de organização: não mostra animação de jogo e não restringe movimentos reais a zonas ou posições rígidas. Preservar confirmação de substituição, limite, coordenadas manuais, foco, pausa e autosave. A solicitação atual substitui a proibição de campo dentro do modal na seção 23; continua proibido o minicampo na tela de acompanhamento ao vivo. A seção 12 continua determinando que os eventos, placar e estatísticas sejam coerentes e que clima/semente sejam persistentes.
+- A tela Principal pode se aproximar em composição da referência enviada (identidade/navegação lateral e tabela de elenco), preservando FutManager, os ícones já padronizados, ações, funcionalidades e estética clara. Não copiar literalmente Brasfoot, EA ou outros produtos; não usar logotipos/assets proprietários.
+- Exibir jogos, gols, assistências e média somente a partir dos registros de carreira disponíveis (`playerCareers`/temporadas), nunca como inferência a partir do cadastro do editor. Ausência de registro deve aparecer como zero ou traço conforme a métrica, sem fabricar forma recente ou satisfação.
