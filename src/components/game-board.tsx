@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/ui/app-shell";
-import { CompetitionCenter } from "@/components/ui/competition-center";
+import { CompetitionCenter, type CareerCompetitionView } from "@/components/ui/competition-center";
+import { buildCompetitionCatalog } from "@/lib/game/competitions";
+import { competitionTrophyAsset } from "@/lib/game/competition-trophies";
 import { CareerPlayerProfile } from "@/components/ui/career-player-profile";
 import type { NavItem } from "@/components/ui/top-nav";
 import { NewCareerScreen } from "@/components/screens/new-career-screen";
@@ -17,6 +19,9 @@ import { ResultScreen } from "@/components/screens/result-screen";
 import { StartMenuScreen } from "@/components/screens/start-menu-screen";
 import { SavesScreen } from "@/components/screens/saves-screen";
 import { EditorScreen } from "@/components/screens/editor-screen";
+import { WorldScreens, historyOptions, type HistoryView } from "@/components/screens/world-screens";
+import { recruitPlayer } from "@/lib/game/recruitment";
+import { databaseWithCompletedTransfers, proposeTransfer, respondToTransferNegotiation, type TransferNegotiation, type TransferNegotiationAction } from "@/lib/game/transfers";
 import { ClubSectionScreen, type ClubSection } from "@/components/screens/club-section-screen";
 import {
   squad as initialSquad,
@@ -29,7 +34,6 @@ import {
 import { buildSquadFromDatabase, createDefaultDatabase, upgradeEditorDatabase, type CareerSave, type EditorDatabase } from "@/lib/game/editor-data";
 import { createPlayerCareer, recordPlayerMatch, applyNegotiation, type MarketAction, type MatchParticipation, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
 import { deployLineupPlayer } from "@/lib/game/lineup";
-import { formationSlots, playerFitAtPosition } from "@/lib/game/formations";
 import { mergeCareerSaves } from "@/lib/game/save-utils";
 import {
   isMenuPage,
@@ -38,8 +42,10 @@ import {
   writeActiveCareerSession,
 } from "@/lib/game/session";
 import { agendaOptions, type AgendaView } from "@/components/screens/agenda-screen";
-import type { CareerProgress } from "@/lib/game/progress";
-import { otherScore, simulateAction } from "@/lib/game/live-match";
+import type { CareerProgress, MatchPreparation } from "@/lib/game/progress";
+import { calculateMatchStatistics, calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, seededRandom, simulateAction } from "@/lib/game/live-match";
+import { completeCareerFixture, createCareerSeason, getCompetitionPlayerStats, getCompetitionStandings, nextCareerFixture, playerContributionsFromMatch, type CareerSeason } from "@/lib/game/season";
+import { loadMatchRules, type MatchRules } from "@/lib/game/match-rules";
 import { visualFormation } from "@/lib/game/live-positioning";
 import {
   deleteCloudSave,
@@ -54,7 +60,7 @@ import {
   writeLocalSaves,
 } from "@/lib/game/persistence";
 
-type Page = "menu" | "new" | "saves" | "editor" | "hub" | "lineup" | "matchOverview" | "result" | "agenda" | "stadium" | "juniors" | "teams" | "search" | "coaches" | "history" | "finances" | "trophies" | "training";
+type Page = "menu" | "new" | "saves" | "editor" | "hub" | "lineup" | "matchOverview" | "result" | "agenda" | "stadium" | "juniors" | "teams" | "search" | "coaches" | "history" | "finances" | "trophies" | "training" | "settings";
 
 const sectionByPage: Partial<Record<Page, ClubSection>> = {
   agenda: "agenda",
@@ -159,6 +165,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [profilePlayer, setProfilePlayer] = useState<number | null>(null);
   const [playerCareers, setPlayerCareers] = useState<Record<number, PlayerCareerRecord>>({});
   const [manualPositions, setManualPositions] = useState<Record<number, ManualPosition>>({});
+  const [competitionSeason, setCompetitionSeason] = useState<CareerSeason | undefined>();
+  const [activeFixtureId, setActiveFixtureId] = useState<string>();
+  const [transferNegotiations, setTransferNegotiations] = useState<TransferNegotiation[]>([]);
+  const careerDatabase = useMemo(() => database ? databaseWithCompletedTransfers(database, transferNegotiations) : null, [database, transferNegotiations]);
 
   const [minute, setMinute] = useState(0);
   const [homeScore, setHomeScore] = useState(0);
@@ -168,15 +178,22 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [substitutionsLeft, setSubstitutionsLeft] = useState(5);
   const [detailOpen, setDetailOpen] = useState(false);
   const [matchRunning, setMatchRunning] = useState(false);
+  const [defaultMatchSpeed, setDefaultMatchSpeed] = useState<1 | 2 | 4>(1);
+  const [historyView, setHistoryView] = useState<HistoryView>("players");
   const [matchSpeed, setMatchSpeed] = useState<1 | 2 | 4>(1);
   const [halftimeWaiting, setHalftimeWaiting] = useState(false);
+  const [matchPreparation, setMatchPreparation] = useState<MatchPreparation | null>(null);
+  const [matchRulesLoading, setMatchRulesLoading] = useState(false);
+  const [matchRulesError, setMatchRulesError] = useState<string | null>(null);
+  const matchRulesLoadInProgress = useRef(false);
   const [substitutionOut, setSubstitutionOut] = useState<number | null>(null);
   const [standingsOpen, setStandingsOpen] = useState(false);
 
   const progress: CareerProgress = {
-    page, activeSaveId, coach, club, division, round, budget, formation, style, marking, focus,
+    page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, manualPositions, minute, homeScore, awayScore,
-    events, participation, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, halftimeWaiting,
+    events, participation, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
+    competitionSeason, activeFixtureId, transferNegotiations,
   };
   const progressRef = useRef(progress);
   useEffect(() => { progressRef.current = progress; });
@@ -195,7 +212,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     pendingCloudSave.current = next;
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, formation, style, marking, focus,
     starters, careerSquad, playerCareers, manualPositions, minute, homeScore, awayScore, events,
-    participation, substitutionsLeft, detailOpen, matchSpeed, halftimeWaiting, userId]);
+    participation, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, activeFixtureId, transferNegotiations, userId]);
 
   useEffect(() => {
     if (!hydrationDone) return;
@@ -220,14 +237,23 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return () => window.clearInterval(timer);
   }, [userId]);
 
-  const divisionClubNames = useMemo(() => database?.clubs.filter((item) => item.division === division).map((item) => item.name) ?? [], [database, division]);
-  const opponent = divisionClubNames.find((name) => name !== club) ?? divisionClubNames[1] ?? "Adversário";
-  const opponentStarters = useMemo(() => {
-    if (!database) return undefined;
-    const opponents = buildSquadFromDatabase(database, opponent);
-    if (!opponents) return undefined;
-    return buildStartingXI(formation, opponents).map((id) => opponents.find((player) => player.id === id)!).filter(Boolean);
-  }, [database, opponent, formation]);
+  const divisionClubNames = useMemo(() => database?.clubs.filter((item) => item.country.toLocaleLowerCase("pt-BR") === "brasil" && item.division === division).map((item) => item.name) ?? [], [database, division]);
+  const managedClubRecord = database?.clubs.find((item) => item.name === club);
+  const scheduledFixture = nextCareerFixture(competitionSeason);
+  const activeFixture = competitionSeason?.fixtures.find((item) => item.id === activeFixtureId) ?? scheduledFixture;
+  const userIsHome = !activeFixture || activeFixture.homeClubId === managedClubRecord?.id;
+  const homeTeamName = activeFixture?.home ?? club;
+  const awayTeamName = activeFixture?.away ?? (divisionClubNames.find((name) => name !== club) ?? "Adversário");
+  const opponent = activeFixture ? (userIsHome ? activeFixture.away : activeFixture.home) : awayTeamName;
+  const opponentFormation = "4-3-3";
+  const opponentSquad = useMemo(
+    () => (careerDatabase ? buildSquadFromDatabase(careerDatabase, opponent) : null) ?? initialSquad,
+    [careerDatabase, opponent],
+  );
+  const opponentStarters = useMemo(
+    () => buildStartingXI(opponentFormation, opponentSquad).map((id) => opponentSquad.find((player) => player.id === id)!).filter(Boolean),
+    [opponentSquad, opponentFormation],
+  );
   const startersData = useMemo(
     () => starters.map((id) => squad.find((p) => p.id === id)!).filter(Boolean),
     [starters, squad],
@@ -238,41 +264,78 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   );
   const selectedPlayerData = squad.find((p) => p.id === selectedPlayer) ?? null;
 
-  const strength = Math.round(
-    startersData.reduce((sum, p, index) => {
-      const position = manualPositions[p.id] ?? formationSlots[formation]?.[index] ?? { left: 50, top: 50 };
-      const fit = playerFitAtPosition(p, formation, position, index);
-      return sum + Math.max(1, p.overall - fit.penalty) * (p.energy / 100);
-    }, 0) /
-      (startersData.length || 1),
-  );
-  const actionEvents = events.filter((event) => event.scene);
-  const possession = actionEvents.length ? Math.round(100 * actionEvents.filter((event) => event.scene?.team === "home").length / actionEvents.length) : 50;
-  const shots = events.filter((event) => event.scene?.team === "home" && (event.scene.action === "shot" || event.scene.action === "goal")).length;
-  const onGoalStat = `${events.filter((event) => event.scene?.team === "home" && event.scene.action === "goal").length}/${events.filter((event) => event.scene?.team === "home" && event.scene.action === "shot").length}`;
-  const tackles = events.filter((event) => event.scene?.action === "tackle" && event.scene.team === "home").length;
-  const passErrors = 0; // The current action model does not yet simulate misplaced passes.
-
+  const matchKey = `${activeSaveId ?? "career"}|${activeFixture?.id ?? `${round}|${club}|${opponent}`}`;
+  const recentForm = [...new Map(Object.values(playerCareers)
+    .flatMap((record) => record.matches ?? [])
+    .filter((match) => match.minutes > 0)
+    .map((match) => [match.key, match] as const)).values()]
+    .sort((a, b) => b.round - a.round).slice(0, 5);
+  const pointsPerMatch = recentForm.length
+    ? recentForm.reduce((sum, match) => sum + (match.homeScore > match.awayScore ? 3 : match.homeScore === match.awayScore ? 1 : 0), 0) / recentForm.length
+    : 1.2;
+  const averageEnergy = startersData.length ? startersData.reduce((sum, player) => sum + player.energy, 0) / startersData.length : 70;
+  const homeMotivation = Math.max(40, Math.min(92, Math.round(64 + (pointsPerMatch - 1.2) * 6 + (averageEnergy - 70) * .08)));
+  const awayMotivation = Math.round(58 + (seededRandom(`${matchKey}|away-motivation`)() - .5) * 16);
+  const createPreparation = (rules: MatchRules, key = matchKey): MatchPreparation => ({
+    matchKey: key,
+    rules,
+    weather: createMatchWeather(key, rules),
+    motivationHome: homeMotivation,
+    motivationAway: awayMotivation,
+  });
+  const matchStats = calculateMatchStatistics(events);
   const fixtures = useMemo(() => {
-    const others = divisionClubNames.filter((name) => name !== club && name !== opponent);
-    const live = page === "matchOverview" || page === "result";
-    const result = [{ stadium: "", attendance: 0, home: club, away: opponent, homeScore, awayScore, live: true }];
-    for (let i = 0; i + 1 < others.length; i += 2) {
-      const [h, a] = live ? otherScore(others[i], others[i + 1], round, minute) : [0, 0];
-      result.push({ stadium: "", attendance: 0, home: others[i], away: others[i + 1], homeScore: h, awayScore: a, live: false });
-    }
-    return result;
-  }, [divisionClubNames, club, opponent, homeScore, awayScore, page, round, minute]);
+    if (!competitionSeason || !activeFixture) return [];
+    return competitionSeason.fixtures
+      .filter((fixture) => fixture.competitionId === activeFixture.competitionId && fixture.competitionRound === activeFixture.competitionRound && fixture.status !== "cancelled")
+      .map((fixture) => {
+        const current = fixture.id === activeFixture.id;
+        const live = current && page === "matchOverview";
+        const hasLiveScore = current && (page === "matchOverview" || page === "result");
+        const homeTeam = database?.clubs.find((item) => item.id === fixture.homeClubId);
+        return {
+          stadium: homeTeam?.stadiumName ?? "",
+          attendance: 0,
+          home: fixture.home,
+          away: fixture.away,
+          homeScore: hasLiveScore ? (userIsHome ? homeScore : awayScore) : fixture.homeScore ?? 0,
+          awayScore: hasLiveScore ? (userIsHome ? awayScore : homeScore) : fixture.awayScore ?? 0,
+          live,
+          played: fixture.status === "played" || hasLiveScore,
+        };
+      });
+  }, [competitionSeason, activeFixture, database, page, userIsHome, homeScore, awayScore]);
 
   useEffect(() => {
-    if (page !== "matchOverview" || !matchRunning || detailOpen || minute >= 90) return;
+    if (page !== "matchOverview" || !matchRunning || detailOpen || minute >= 90 || !matchPreparation) return;
     const timer = window.setTimeout(() => {
-      const nextMinute = Math.min(90, minute + 1);
+      const nextMinute = Math.min(matchPreparation.rules.durationMinutes, minute + 1);
       const previousEvent = [...events].reverse().find((item) => item.scene);
       const previous = previousEvent?.scene;
-      const visual = visualFormation({ starters: startersData, formation, manualPositions, scene: previous, minute: previousEvent?.minute ?? 0 });
+      // Tactical positions remain an internal model input for passing and offside; no field is rendered.
+      const visual = visualFormation({ starters: startersData, formation, opponentFormation, manualPositions, scene: previous, minute: previousEvent?.minute ?? 0 });
       const snapshot = { home: visual.filter((player) => player.key.startsWith("home-")).map((player) => player.target), away: visual.filter((player) => player.key.startsWith("away-")).map((player) => player.target) };
-      const event = simulateAction({ minute: nextMinute, starters: startersData, formation, positions: manualPositions, opponent, opponentStarters, strength, previous, snapshot });
+      const event = simulateAction({
+        minute: nextMinute,
+        starters: startersData,
+        formation,
+        positions: manualPositions,
+        opponent,
+        opponentStarters,
+        opponentFormation,
+        previous,
+        snapshot,
+        rules: matchPreparation.rules,
+        weather: matchPreparation.weather,
+        tactics: { style, marking, focus },
+        opponentTactics: { style: "Equilibrado", marking: "Normal", focus: "Pelo meio" },
+        motivationHome: matchPreparation.motivationHome,
+        motivationAway: matchPreparation.motivationAway,
+        sentOffHomeIds: events.filter((item) => item.card === "red" && item.scene?.team === "home" && item.actorId !== undefined).map((item) => item.actorId!),
+        sentOffAwayIds: events.filter((item) => item.card === "red" && item.scene?.team === "away" && item.actorId !== undefined).map((item) => item.actorId!),
+        yellowCardIds: events.filter((item) => item.card === "yellow" && item.actorId !== undefined).map((item) => item.actorId!),
+        random: createMinuteRandom(matchPreparation.matchKey, nextMinute),
+      });
       setMinute(nextMinute);
       setEvents((current) => [...current, event]);
       if (event.scene?.action === "goal") {
@@ -283,19 +346,72 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         setMatchRunning(false);
         setHalftimeWaiting(true);
       }
-      if (nextMinute === 90) {
+      if (nextMinute >= matchPreparation.rules.durationMinutes) {
         setMatchRunning(false);
         setBudget((value) => value + 151);
+        const finalEvents = [...events, event];
         const goals: Record<number, number> = {};
-        for (const item of [...events, event]) if (item.scorerId !== undefined && item.scene?.team === "home") goals[item.scorerId] = (goals[item.scorerId] ?? 0) + 1;
+        const assists: Record<number, number> = {};
+        const yellowCards: Record<number, number> = {};
+        const redCards: Record<number, number> = {};
+        for (const item of finalEvents) {
+          if (item.scene?.team !== "home") continue;
+          if (item.scene.action === "goal" && item.scorerId !== undefined) goals[item.scorerId] = (goals[item.scorerId] ?? 0) + 1;
+          if (item.scene.action === "goal" && item.assistId !== undefined) assists[item.assistId] = (assists[item.assistId] ?? 0) + 1;
+          if (item.actorId !== undefined && item.card === "yellow") yellowCards[item.actorId] = (yellowCards[item.actorId] ?? 0) + 1;
+          if (item.actorId !== undefined && item.card === "red") redCards[item.actorId] = (redCards[item.actorId] ?? 0) + 1;
+        }
         const home = homeScore + (event.scene?.action === "goal" && event.scene.team === "home" ? 1 : 0);
         const away = awayScore + (event.scene?.action === "goal" && event.scene.team === "away" ? 1 : 0);
-        const played = Object.keys(participation).length ? participation : Object.fromEntries(starters.map((id) => [id, { entered: 0 }]));
-        setPlayerCareers((current) => recordPlayerMatch(current, squad, club, played, { key: `${round}|${club}|${opponent}`, round, opponent, homeScore: home, awayScore: away }, goals));
+        const played: MatchParticipation = Object.keys(participation).length ? participation : Object.fromEntries(starters.map((id) => [id, { entered: 0 }]));
+        const finalParticipation: MatchParticipation = { ...played };
+        for (const item of finalEvents.filter((entry) => entry.card === "red" && entry.actorId !== undefined)) {
+          const playerId = item.actorId!;
+          const stint = finalParticipation[playerId] ?? { entered: 0 };
+          finalParticipation[playerId] = { ...stint, left: Math.min(stint.left ?? nextMinute, item.minute) };
+        }
+        const playedMinutes = Object.fromEntries(Object.entries(finalParticipation).map(([id, stint]) => [id, Math.max(0, (stint.left ?? 90) - stint.entered)]));
+        setCareerSquad(matchEnergyAfter(squad, playedMinutes, nextMinute, matchPreparation.weather, marking, matchPreparation.rules));
+        const reportPlayers = squad.filter((player) => finalParticipation[player.id]);
+        const ratings = calculatePlayerRatings(reportPlayers, finalEvents, "home");
+        const ratingById = Object.fromEntries(ratings.map((item) => [item.playerId, item.rating]));
+        const performance = Object.fromEntries(reportPlayers.map((player) => [player.id, {
+          goals: goals[player.id] ?? 0,
+          assists: assists[player.id] ?? 0,
+          rating: ratingById[player.id] ?? null,
+          yellowCards: yellowCards[player.id] ?? 0,
+          redCards: redCards[player.id] ?? 0,
+          shots: ratings.find((item) => item.playerId === player.id)?.shots ?? 0,
+          tackles: ratings.find((item) => item.playerId === player.id)?.tackles ?? 0,
+          passes: ratings.find((item) => item.playerId === player.id)?.passes ?? 0,
+          saves: ratings.find((item) => item.playerId === player.id)?.saves ?? 0,
+          errors: ratings.find((item) => item.playerId === player.id)?.errors ?? 0,
+        }]));
+        const actualHome = userIsHome ? home : away;
+        const actualAway = userIsHome ? away : home;
+        const contributions = careerDatabase && managedClubRecord ? playerContributionsFromMatch({ database: careerDatabase, clubId: managedClubRecord.id, squad, events: finalEvents, participation: finalParticipation, ratings: ratingById }) : [];
+        if (competitionSeason && activeFixture) {
+          const winnerClubId = activeFixture.type === "cup" && actualHome === actualAway
+            ? (seededRandom(`${activeFixture.id}|penalties`)() < 0.5 ? activeFixture.homeClubId : activeFixture.awayClubId)
+            : undefined;
+          setCompetitionSeason((current) => current ? completeCareerFixture(current, activeFixture.id, { home: actualHome, away: actualAway, winnerClubId, playerContributions: contributions }, careerDatabase!) : current);
+        }
+        setPlayerCareers((current) => recordPlayerMatch(current, squad, club, finalParticipation, {
+          key: activeFixture?.id ?? matchPreparation.matchKey,
+          round,
+          opponent,
+          homeScore: home,
+          awayScore: away,
+          season: activeFixture?.season ?? 2026,
+          competitionId: activeFixture?.competitionId,
+          competition: activeFixture?.competitionName,
+          competitionRound: activeFixture?.competitionRound,
+          isHome: userIsHome,
+        }, performance));
       }
     }, 700 / matchSpeed);
     return () => window.clearTimeout(timer);
-  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, opponentStarters, page, startersData, formation, manualPositions, strength, events, participation, starters, squad, club, round, homeScore, awayScore]);
+  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, opponentFormation, opponentStarters, page, startersData, formation, manualPositions, style, marking, focus, matchPreparation, events, participation, starters, squad, club, round, homeScore, awayScore, userIsHome, activeFixture, competitionSeason, database, careerDatabase, managedClubRecord, matchKey]);
 
   useEffect(() => {
     if (page !== "matchOverview" || minute !== 90 || detailOpen) return;
@@ -304,38 +420,62 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return () => window.clearTimeout(timer);
   }, [detailOpen, minute, page, events]);
 
-  const table: TableRow[] = useMemo(() => {
-    const played = page === "result" ? 1 : 0;
-    return divisionClubNames
-      .map((name) => {
-        const isClub = name === club;
-        const won = isClub ? homeScore > awayScore : name === opponent ? awayScore > homeScore : false;
-        const draw = isClub ? homeScore === awayScore && played === 1 : false;
-        return {
-          club: name,
-          played,
-          wins: won ? played : 0,
-          draws: draw ? played : 0,
-          losses: played && !won && !draw ? played : 0,
-          goalsFor: isClub ? homeScore : name === opponent ? awayScore : 0,
-          goalsAgainst: isClub ? awayScore : name === opponent ? homeScore : 0,
-          points: won ? 3 : draw ? 1 : 0,
-        };
-      })
-      .sort((a, b) => b.points - a.points || a.club.localeCompare(b.club));
-  }, [divisionClubNames, club, opponent, homeScore, awayScore, page]);
-
-  const divisionClubIds = new Set(database?.clubs.filter((item) => item.division === division).map((item) => item.id) ?? []);
-  const clubNamesById = Object.fromEntries(database?.clubs.map((item) => [item.id, item.name]) ?? []);
-  const divisionPlayers = database?.players.filter((player) => divisionClubIds.has(player.clubId)) ?? [];
-  const topScorers: TopScorer[] = [...divisionPlayers]
-    .sort((a, b) => b.goals - a.goals || b.overall - a.overall)
-    .slice(0, 5)
-    .map((player) => ({ name: player.name, club: clubNamesById[player.clubId] ?? "-", goals: player.goals, played: round - 1 }));
-  const topRatings: TopRating[] = [...divisionPlayers]
-    .sort((a, b) => (b.averageRating ?? 0) - (a.averageRating ?? 0) || b.overall - a.overall)
-    .slice(0, 5)
-    .map((player) => ({ name: player.name, club: clubNamesById[player.clubId] ?? "-", rating: player.averageRating ?? 0, played: round - 1, role: player.primaryPosition }));
+  const activeLeagueId = `league:${managedClubRecord?.country ?? "Brasil"}:${division}`;
+  const competitionName = activeFixture?.competitionName ?? "Temporada encerrada";
+  const trophyEntry = database && activeFixture ? buildCompetitionCatalog(database).find((entry) => entry.id === activeFixture.competitionId) : undefined;
+  const matchTrophy = trophyEntry ? competitionTrophyAsset(trophyEntry) : null;
+  const competitionRoundLabel = activeFixture?.roundLabel ?? `${round}ª rodada`;
+  const competitionRound = activeFixture?.competitionRound ?? round;
+  const displayedHomeScore = userIsHome ? homeScore : awayScore;
+  const displayedAwayScore = userIsHome ? awayScore : homeScore;
+  const displayedStatistics = userIsHome ? matchStats : { home: matchStats.away, away: matchStats.home };
+  const displaySide = (side: "home" | "away") => userIsHome ? side : side === "home" ? "away" : "home";
+  const displayedEvents = userIsHome ? events : events.map((item) => ({
+    ...item,
+    ...(item.team ? { team: displaySide(item.team) } : {}),
+    ...(item.scene ? { scene: { ...item.scene, team: displaySide(item.scene.team), ...(item.scene.possessionAfter ? { possessionAfter: displaySide(item.scene.possessionAfter) } : {}) } } : {}),
+  }));
+  const centerCompetitionId = activeFixture?.competitionId ?? activeLeagueId;
+  const centerCompetitionType = activeFixture?.type ?? "league";
+  const centerTable: TableRow[] = centerCompetitionType === "cup" ? [] : getCompetitionStandings(competitionSeason?.fixtures ?? [], centerCompetitionId)
+    .map(({ club, played, wins, draws, losses, goalsFor, goalsAgainst, points }) => ({ club, played, wins, draws, losses, goalsFor, goalsAgainst, points }));
+  const centerPlayerStats = getCompetitionPlayerStats(competitionSeason?.fixtures ?? [], centerCompetitionId);
+  const centerTopScorers: TopScorer[] = centerPlayerStats.filter((player) => player.goals > 0 && player.played > 0).slice(0, 5)
+    .map((player) => ({ name: player.playerName, club: player.club, goals: player.goals, played: player.played }));
+  const centerTopRatings: TopRating[] = centerPlayerStats.filter((player) => player.rating !== null && player.played > 0)
+    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 5)
+    .map((player) => ({ name: player.playerName, club: player.club, rating: player.rating ?? 0, played: player.played, role: careerDatabase?.players.find((item) => item.id === player.playerId)?.primaryPosition ?? "M" }));
+  const careerCompetitionData: Record<string, CareerCompetitionView> = {};
+  for (const competitionId of new Set((competitionSeason?.fixtures ?? []).map((fixture) => fixture.competitionId))) {
+    const competitionFixtures = (competitionSeason?.fixtures ?? []).filter((fixture) => fixture.competitionId === competitionId && fixture.status !== "cancelled");
+    const metadata = competitionFixtures[0];
+    if (!metadata) continue;
+    const standings = metadata.type === "cup" ? [] : getCompetitionStandings(competitionSeason?.fixtures ?? [], competitionId)
+      .map(({ club, played, wins, draws, losses, goalsFor, goalsAgainst, points }) => ({ club, played, wins, draws, losses, goalsFor, goalsAgainst, points }));
+    const playerStats = getCompetitionPlayerStats(competitionSeason?.fixtures ?? [], competitionId);
+    const scored = competitionFixtures.filter((fixture) => fixture.status === "played");
+    careerCompetitionData[competitionId] = {
+      type: metadata.type,
+      table: standings,
+      fixtures: competitionFixtures.map((fixture) => ({
+        stadium: database?.clubs.find((item) => item.id === fixture.homeClubId)?.stadiumName ?? "",
+        attendance: 0,
+        home: fixture.home,
+        away: fixture.away,
+        homeScore: fixture.homeScore ?? 0,
+        awayScore: fixture.awayScore ?? 0,
+        played: fixture.status === "played",
+        roundLabel: fixture.roundLabel,
+      })),
+      topScorers: playerStats.filter((player) => player.goals > 0 && player.played > 0).slice(0, 5)
+        .map((player) => ({ name: player.playerName, club: player.club, goals: player.goals, played: player.played })),
+      topRatings: playerStats.filter((player) => player.rating !== null && player.played > 0)
+        .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 5)
+        .map((player) => ({ name: player.playerName, club: player.club, rating: player.rating ?? 0, played: player.played, role: careerDatabase?.players.find((item) => item.id === player.playerId)?.primaryPosition ?? "M" })),
+      matchesPlayed: scored.length,
+      goals: scored.reduce((sum, fixture) => sum + (fixture.homeScore ?? 0) + (fixture.awayScore ?? 0), 0),
+    };
+  }
 
   const nav: NavItem[] = [
     { icon: "house", label: "Principal", active: page === "hub", onClick: () => navigate("hub") },
@@ -344,10 +484,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     { icon: "sport", label: "Estádio", active: page === "stadium", onClick: () => navigate("stadium") },
     { icon: "user_green", label: "Juniores", active: page === "juniors", onClick: () => navigate("juniors") },
     { icon: "t_shirt_print", label: "Times", active: page === "teams", onClick: () => navigate("teams") },
-    { icon: "magnifier", label: "Procura", active: page === "search", onClick: () => navigate("search") },
+    { icon: "magnifier", label: "Mercado", active: page === "search", onClick: () => navigate("search") },
     { icon: "user_suit", label: "Técnicos", active: page === "coaches", onClick: () => navigate("coaches") },
-    { icon: "clock_history_frame", label: "História", active: page === "history", onClick: () => navigate("history") },
-    { icon: "door_out", label: "Menu inicial", onClick: () => { leaveActiveCareer("menu"); } },
+    { icon: "clock_history_frame", label: "História", active: page === "history", onClick: () => navigate("history"), children: historyOptions.map((option) => ({ label: option.label, description: option.description, onClick: () => { setHistoryView(option.id); navigate("history"); } })) },
+    { icon: "door_out", label: "Configurações", active: page === "settings", onClick: () => navigate("settings") },
   ];
 
   function navigate(next: Page) {
@@ -370,6 +510,50 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setPage(nextPage);
   }
 
+
+  function makeTransferOffer(playerId: string, feeBrl: number, wageSharePercent: number): string {
+    if (!database) return "Banco de dados indisponível.";
+    const buyer = database.clubs.find((item) => item.name === club);
+    if (!buyer) return "Clube comprador não encontrado.";
+    const result = proposeTransfer(database, transferNegotiations, {
+      id: crypto.randomUUID(), playerId, buyerClubId: buyer.id, feeBrl, wageSharePercent,
+    });
+    if (!result.negotiation) return result.message;
+    setTransferNegotiations((current) => [result.negotiation!, ...current]);
+    return result.message;
+  }
+
+  function handleTransferAction(id: string, action: TransferNegotiationAction): string {
+    const negotiation = transferNegotiations.find((item) => item.id === id);
+    if (!negotiation) return "Negociação não encontrada.";
+    if (action.type !== "complete") {
+      const result = respondToTransferNegotiation(negotiation, action);
+      setTransferNegotiations((current) => current.map((item) => item.id === id ? result.negotiation : item));
+      return result.message;
+    }
+    if (!database || negotiation.status !== "agreed" || negotiation.agreedFeeBrl === undefined) return "A proposta ainda não foi acordada.";
+    const gameDate = saves.find((save) => save.id === activeSaveId)?.inGameDate ?? new Date().toISOString().slice(0, 10);
+    const result = recruitPlayer(database, squad, club, budget, negotiation.playerId, Object.keys(playerCareers).map(Number), {
+      feeBrl: negotiation.agreedFeeBrl,
+      kind: negotiation.kind,
+      wageSharePercent: negotiation.agreedWageSharePercent ?? 0,
+      loanMonths: 6,
+      gameDate,
+    });
+    if (result.squad === squad) return result.message;
+    const completed = respondToTransferNegotiation(negotiation, action);
+    const nextNegotiations = transferNegotiations.map((item) => item.id === id ? completed.negotiation : item);
+    setCareerSquad(result.squad);
+    setBudget(result.budget);
+    setTransferNegotiations(nextNegotiations);
+    if (activeSaveId) {
+      const current = saves.find((save) => save.id === activeSaveId);
+      if (current) void persistSave({ ...current, budget: result.budget, updatedAt: new Date().toISOString(), playerCareers, manualPositions,
+        progress: { ...progressRef.current, careerSquad: result.squad, budget: result.budget, transferNegotiations: nextNegotiations, playerCareers, manualPositions } });
+    }
+    return `${result.message} ${completed.message}`;
+  }
+
   function openQuickAction(action: "roster" | "finances" | "trophies" | "training") {
     navigate(action === "roster" ? "hub" : action);
   }
@@ -387,7 +571,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   function renderStandings() {
     if (!standingsOpen || !database) return null;
-    return <CompetitionCenter database={database} fixtures={fixtures} club={club} competition={division} table={table} topScorers={topScorers} topRatings={topRatings} round={round} onClose={() => setStandingsOpen(false)} />;
+    return <CompetitionCenter database={database} fixtures={fixtures} club={club} competition={division} activeCompetitionId={centerCompetitionId} roundLabel={competitionRoundLabel} careerCompetitionData={careerCompetitionData} table={centerTable} topScorers={centerTopScorers} topRatings={centerTopRatings} round={competitionRound} onClose={() => setStandingsOpen(false)} />;
   }
 
   function changeDatabase(next: EditorDatabase) {
@@ -439,6 +623,13 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   function beginCareer() {
     if (!coach.trim()) return;
     const selectedClub = database?.clubs.find((item) => item.name === club);
+    if (!selectedClub || !database) return;
+    const newSeason = createCareerSeason(database, selectedClub.id, new Date().getFullYear()) ?? undefined;
+    const firstFixture = nextCareerFixture(newSeason);
+    if (!newSeason || !firstFixture) {
+      setSyncLabel("Cadastre ao menos dois clubes na divisão, Copa ou estadual para iniciar uma temporada jogável.");
+      return;
+    }
     const now = new Date().toISOString();
     const save: CareerSave = {
       id: crypto.randomUUID(),
@@ -455,13 +646,17 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       manualPositions: {},
     };
     const initialStarters = buildStartingXI("4-3-3", baseSquad);
-    save.progress = { ...progressRef.current, page: "hub", activeSaveId: save.id, coach: coach.trim(),
+    save.progress = { ...progressRef.current, page: "hub", matchPreparation: undefined, activeSaveId: save.id, coach: coach.trim(),
       round: 1, budget: 12624, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
       careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
-      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1 };
+      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, activeFixtureId: firstFixture?.id, transferNegotiations: [] };
     setActiveSaveId(save.id);
+    setCompetitionSeason(newSeason);
+    setActiveFixtureId(firstFixture?.id);
+    setTransferNegotiations([]);
     setRound(1);
+    setDefaultMatchSpeed(1);
     setBudget(12624);
     setFormation("4-3-3");
     setStyle("Equilibrado");
@@ -472,6 +667,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setAwayScore(0);
     setEvents([]);
     setMatchRunning(false);
+    setMatchPreparation(null);
+    setMatchRulesError(null);
     setHalftimeWaiting(false);
     setSubstitutionsLeft(5);
     setCareerLoaded(true);
@@ -500,9 +697,16 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setBudget(save.budget);
     setPlayerCareers(save.playerCareers ?? {});
     setManualPositions(save.manualPositions ?? {});
+    setTransferNegotiations(save.progress?.transferNegotiations ?? []);
     setHomeScore(0);
     setAwayScore(0);
     setMatchRunning(false);
+    setMatchPreparation(null);
+    setMatchRulesError(null);
+    const clubId = database?.clubs.find((item) => item.name === save.clubName)?.id ?? save.clubId;
+    const restoredSeason = save.progress?.competitionSeason ?? (database && clubId ? createCareerSeason(database, clubId, Number(save.inGameDate.slice(0, 4)) || 2026) ?? undefined : undefined);
+    setCompetitionSeason(restoredSeason);
+    setActiveFixtureId(save.progress?.activeFixtureId ?? nextCareerFixture(restoredSeason)?.id);
     setPage("hub");
     if (save.progress) {
       const state = save.progress;
@@ -522,8 +726,20 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       setSubstitutionsLeft(state.substitutionsLeft);
       setHalftimeWaiting(state.halftimeWaiting);
       setMatchSpeed(state.matchSpeed);
+      setDefaultMatchSpeed(state.defaultMatchSpeed ?? 1);
+      setMatchPreparation(state.matchPreparation ?? null);
+      setMatchRulesError(null);
       setDetailOpen(false);
       setPage(resumableCareerPage(state.page) as Page);
+      if (!state.matchPreparation && (state.page === "matchOverview" || state.page === "result")) {
+        const savedOpponent = database?.clubs.filter((item) => item.division === save.division).map((item) => item.name).find((name) => name !== save.clubName) ?? "Adversário";
+        const savedKey = `${save.id}|${save.round}|${save.clubName}|${savedOpponent}`;
+        void loadMatchRules().then((rules) => {
+          if (canApply()) setMatchPreparation({ matchKey: savedKey, rules, weather: createMatchWeather(savedKey, rules), motivationHome: 64, motivationAway: 64 });
+        }).catch((error: unknown) => {
+          if (canApply()) setMatchRulesError(error instanceof Error ? error.message : "Não foi possível ler as regras da partida.");
+        });
+      }
       setCareerLoaded(true);
       return true;
     }
@@ -531,6 +747,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setStyle("Equilibrado");
     setMarking("Leve");
     setFocus("Pelo meio");
+    setDefaultMatchSpeed(1);
     setMinute(0);
     setEvents([]);
     setHalftimeWaiting(false);
@@ -580,7 +797,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     }
   }
 
-  function saveCurrentCareer(nextRound = round) {
+  function saveCurrentCareer(nextRound = round, progressPatch: Partial<CareerProgress> = {}) {
     if (!activeSaveId) return;
     const current = saves.find((save) => save.id === activeSaveId);
     const selectedClub = database?.clubs.find((item) => item.name === club);
@@ -597,7 +814,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       updatedAt: new Date().toISOString(),
       playerCareers,
       manualPositions,
-      progress: { ...progressRef.current, round: nextRound, page: page === "result" && nextRound !== round ? "hub" : page },
+      progress: { ...progressRef.current, ...progressPatch, round: nextRound, page: page === "result" && nextRound !== round ? "hub" : page },
     });
   }
 
@@ -647,6 +864,11 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   function openLineup() {
+    if (!scheduledFixture) {
+      setSyncLabel("Temporada encerrada — não há partidas pendentes nesta carreira.");
+      return;
+    }
+    setActiveFixtureId(scheduledFixture.id);
     // Revisiting tactics must not discard the user's XI or manually placed players.
     if (starters.length !== 11) {
       const arranged = buildStartingXI(formation, squad);
@@ -711,7 +933,31 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     void persistCareerExtras(playerCareers, {});
   }
 
-  function startMatch() {
+  async function readMatchRules(): Promise<MatchRules | null> {
+    if (matchRulesLoadInProgress.current) return null;
+    matchRulesLoadInProgress.current = true;
+    setMatchRulesLoading(true);
+    setMatchRulesError(null);
+    try {
+      return await loadMatchRules();
+    } catch (error) {
+      setMatchRulesError(error instanceof Error ? error.message : "Não foi possível ler as regras da partida.");
+      return null;
+    } finally {
+      matchRulesLoadInProgress.current = false;
+      setMatchRulesLoading(false);
+    }
+  }
+
+  async function startMatch() {
+    if (!scheduledFixture) {
+      setMatchRulesError("A temporada não possui partidas pendentes.");
+      return;
+    }
+    setActiveFixtureId(scheduledFixture.id);
+    const rules = await readMatchRules();
+    if (!rules) return;
+    setMatchPreparation(createPreparation(rules));
     setParticipation(Object.fromEntries(starters.map((id) => [id, { entered: 0 }])));
     setMinute(0);
     setHomeScore(0);
@@ -721,9 +967,30 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setSubstitutionOut(null);
     setDetailOpen(false);
     setHalftimeWaiting(false);
-    setMatchSpeed(1);
+    setMatchSpeed(defaultMatchSpeed);
     setMatchRunning(true);
     setPage("matchOverview");
+  }
+
+  async function resumeMatch() {
+    // Always consult the canonical Markdown before resuming. An existing match keeps its
+    // serialized rules/weather snapshot so a mid-match deploy cannot reroll its conditions.
+    const canonicalRules = await readMatchRules();
+    if (!canonicalRules) return;
+    const preparation = matchPreparation?.matchKey === matchKey
+      ? matchPreparation
+      : createPreparation(canonicalRules);
+    setMatchPreparation(preparation);
+    setHalftimeWaiting(false);
+    setMatchRunning(true);
+  }
+
+  function toggleMatchRunning() {
+    if (matchRunning) {
+      setMatchRunning(false);
+      return;
+    }
+    void resumeMatch();
   }
 
   const matchTacticsTrigger = useRef<HTMLElement | null>(null);
@@ -738,10 +1005,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   function closeMatchTactics() {
     setDetailOpen(false);
-    if (minute < 90) {
-      setHalftimeWaiting(false);
-      setMatchRunning(true);
-    }
+    if (minute < 90) void resumeMatch();
   }
 
   function changeMatchFormation(next: string) {
@@ -753,7 +1017,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setSubstitutionOut(null);
     setEvents((current) => [
       ...current,
-      { minute, half: minute <= 45 ? 1 : 2, text: `Formação alterada para ${next}` },
+      { minute, half: minute <= 45 ? 1 : 2, team: "home", text: `Formação alterada para ${next}` },
     ]);
     void persistCareerExtras(playerCareers, {}, arranged);
   }
@@ -784,7 +1048,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setSubstitutionsLeft((value) => value - 1);
     setEvents((current) => [
       ...current,
-      { minute, half: minute <= 45 ? 1 : 2, text: `${incoming} entrou no lugar de ${outgoing}` },
+      { minute, half: minute <= 45 ? 1 : 2, team: "home", text: `${incoming} entrou no lugar de ${outgoing}` },
     ]);
     setSelectedPlayer(null);
     setSubstitutionOut(null);
@@ -859,8 +1123,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             coach={coach}
             budget={budget}
             opponent={opponent}
-            round={round}
-            competition="Campeonato Estadual"
+            round={competitionRound}
+            competition={competitionName}
             squad={squad}
             starters={starters}
             selectedPlayer={selectedPlayerData}
@@ -880,12 +1144,14 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       </>
     );
 
+  if (page === "settings") return <AppShell nav={nav} teamName={club} clubColors={database.clubs.find((item) => item.name === club)} date="22/01/2026"><section className="h-full overflow-auto bg-[#f1f5f2] p-6 text-[#263a2c]"><div className="mx-auto max-w-3xl space-y-4"><header className="rounded-2xl bg-[#173428] p-6 text-white"><p className="text-xs uppercase tracking-widest text-[#9bc9a8]">Carreira / Preferências</p><h1 className="mt-2 text-2xl font-black">Configurações</h1><p className="mt-1 text-sm text-[#c1d5c6]">Personalize sua experiência ou volte ao menu inicial.</p></header><div className="rounded-2xl border border-[#dfe9e1] bg-white p-6"><h2 className="text-lg font-black">Partida</h2><label className="mt-4 block text-sm font-bold">Velocidade padrão para novas partidas <select value={defaultMatchSpeed} onChange={(e) => setDefaultMatchSpeed(Number(e.target.value) as 1 | 2 | 4)} className="ml-3 rounded-lg border border-[#d5e0d8] bg-white p-2"><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><p className="mt-2 text-xs text-[#718477]">Salva na carreira; pode ser alterada durante cada jogo.</p></div><div className="rounded-2xl border border-[#dfe9e1] bg-white p-6"><h2 className="text-lg font-black">Sessão</h2><p className="mt-1 text-sm text-[#718477]">A carreira é salva antes de voltar ao menu inicial.</p><button onClick={() => leaveActiveCareer("menu")} className="mt-4 rounded-lg bg-[#246e43] px-4 py-2 text-xs font-bold text-white">Voltar ao menu inicial</button></div></div></section></AppShell>;
+
   const managementSection = sectionByPage[page];
   if (managementSection)
     return (
       <>
         <AppShell nav={nav} teamName={club} clubColors={database.clubs.find((item) => item.name === club)} date="22/01/2026">
-          <ClubSectionScreen
+          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
             section={managementSection}
             agendaView={agendaView}
             onAgendaViewChange={setAgendaView}
@@ -894,16 +1160,16 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             database={database}
             club={club}
             coach={coach}
-            round={round}
+            round={competitionRound}
             budget={budget}
             squad={squad}
             fixtures={fixtures}
-            competition="Campeonato Estadual"
+            competition={competitionName}
             inGameDate={saves.find((save) => save.id === activeSaveId)?.inGameDate ?? "2026-01-22"}
             onBack={() => navigate("hub")}
             onOpenPlayer={openPlayerProfile}
             onTrainPlayer={trainPlayer}
-          />
+          />}
         </AppShell>
         {renderStandings()}
         {profilePlayer !== null && (() => {
@@ -923,8 +1189,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           club={club}
           coach={coach}
           opponent={opponent}
-          round={round}
-          competition="Campeonato Estadual"
+          round={competitionRound}
+          competition={competitionName}
           formation={formation}
           setFormation={changeFormation}
           style={style}
@@ -940,6 +1206,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           onSelectPlayer={setSelectedPlayer}
           onPlacePlayer={placeLineupPlayer}
           onPlay={startMatch}
+          isStartingMatch={matchRulesLoading}
+          matchStartError={matchRulesError}
           onBack={() => setPage("hub")}
           manualPositions={manualPositions}
           onResetPositions={resetManualPositions}
@@ -954,31 +1222,28 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       <>
         <div inert={detailOpen}>
         <MatchOverviewScreen
-          formation={formation}
-          starters={startersData}
-          manualPositions={manualPositions}
-          competition="Campeonato Estadual"
-          round={round}
+          weather={matchPreparation?.weather}
+          motivationHome={userIsHome ? matchPreparation?.motivationHome : matchPreparation?.motivationAway}
+          motivationAway={userIsHome ? matchPreparation?.motivationAway : matchPreparation?.motivationHome}
+          rulesLoading={matchRulesLoading}
+          rulesError={matchRulesError}
+          competition={competitionName}
+          trophyAsset={matchTrophy}
+          round={competitionRound}
+          roundLabel={competitionRoundLabel}
           minute={minute}
           half={minute <= 45 ? "1º tempo" : minute < 90 ? "2º tempo" : "fim"}
-          club={club}
-          opponent={opponent}
-          homeScore={homeScore}
-          awayScore={awayScore}
-          possession={possession}
-          shots={shots}
-          onGoal={onGoalStat}
-          tackles={tackles}
-          passErrors={passErrors}
+          club={homeTeamName}
+          opponent={awayTeamName}
+          homeScore={displayedHomeScore}
+          awayScore={displayedAwayScore}
+          statistics={displayedStatistics}
           fixtures={fixtures}
-          events={events}
+          events={displayedEvents}
           running={matchRunning}
           speed={matchSpeed}
           halftimeWaiting={halftimeWaiting}
-          onToggleRunning={() => {
-            if (halftimeWaiting) setHalftimeWaiting(false);
-            setMatchRunning((running) => !running);
-          }}
+          onToggleRunning={toggleMatchRunning}
           onSpeedChange={setMatchSpeed}
           onOpenDetail={openMatchTactics}
           onRequestExit={() => leaveActiveCareer("menu")}
@@ -1009,26 +1274,39 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       </>
     );
 
+  const reportPlayers = squad.filter((player) => participation[player.id] || starters.includes(player.id));
+  const playerRatings = calculatePlayerRatings(reportPlayers, events, "home");
+  const opponentRatings = calculatePlayerRatings(opponentStarters, events, "away");
   return (
     <>
       <ResultScreen
-      round={round}
+      trophyAsset={matchTrophy}
+      competition={competitionName}
+      round={competitionRound}
+      roundLabel={competitionRoundLabel}
       fixtures={fixtures}
-      club={club}
-      opponent={opponent}
-      homeScore={homeScore}
-      awayScore={awayScore}
-      startersData={startersData}
-      events={events}
-      possession={possession}
-      shots={shots}
-      onGoal={onGoalStat}
-      tackles={tackles}
-      passErrors={passErrors}
+      club={homeTeamName}
+      opponent={awayTeamName}
+      homeScore={displayedHomeScore}
+      awayScore={displayedAwayScore}
+      homeFormation={userIsHome ? formation : opponentFormation}
+      awayFormation={userIsHome ? opponentFormation : formation}
+      homeFormationPlayers={userIsHome ? startersData : opponentStarters}
+      awayFormationPlayers={userIsHome ? opponentStarters : startersData}
+      ratingPlayers={reportPlayers}
+      events={displayedEvents}
+      weather={matchPreparation?.weather}
+      motivationHome={userIsHome ? matchPreparation?.motivationHome : matchPreparation?.motivationAway}
+      motivationAway={userIsHome ? matchPreparation?.motivationAway : matchPreparation?.motivationHome}
+      homePlayerRatings={userIsHome ? playerRatings : opponentRatings}
+      awayPlayerRatings={userIsHome ? opponentRatings : playerRatings}
+      statistics={displayedStatistics}
       onContinue={() => {
         const nextRound = round + 1;
+        const nextFixture = nextCareerFixture(competitionSeason);
         setRound(nextRound);
-        saveCurrentCareer(nextRound);
+        setActiveFixtureId(nextFixture?.id);
+        saveCurrentCareer(nextRound, { activeFixtureId: nextFixture?.id });
         setPage("hub");
       }}
     />

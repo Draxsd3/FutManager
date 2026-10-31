@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { ManualPosition, PlayerCareerRecord } from "@/lib/game/career";
 
 type ClubRow = {
-  id: string; owner_id: string; name: string; short_name: string; division: string;
+  id: string; owner_id: string; name: string; short_name: string; division: string; state: string | null;
   founded_year: number | null; primary_color: string; secondary_color: string;
   stadium_name: string; stadium_capacity: number; created_at: string; updated_at: string;
   country: string; level: number; coach_name: string; kit_style: string;
@@ -16,6 +16,7 @@ type PlayerRow = {
   energy: number; salary_monthly_brl: number; market_value_brl: number;
   goals: number; assists: number; own_goals: number; average_rating: number | null;
   contract_ends_on: string;
+  market_status: "normal" | "sale" | "loan";
 };
 
 export type CareerPlayerRow = {

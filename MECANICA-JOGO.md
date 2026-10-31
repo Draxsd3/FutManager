@@ -10,7 +10,7 @@
 2. **Não apresentar uma simplificação como regra oficial.** Ex.: cinco substituições são permitidas quando adotadas pelo regulamento aplicável; não se deve presumir a mesma quantidade, janelas ou procedimentos para todo torneio.
 3. **Decisões do jogador devem ter consequências legíveis e equilibradas.** Tática, escalação, condição física e substituições precisam influenciar a partida por mecanismos consistentes, com vantagens e custos — não por bônus ocultos sem explicação.
 4. **Uma partida tem várias soluções táticas válidas.** Não há uma formação ou estilo universalmente vencedor. O resultado deve emergir da interação entre equipes, contexto e acaso controlado.
-5. **Dados e narrativa precisam concordar.** O mesmo evento deve explicar placar, estatísticas, comentário, minicampo e relatório final. Não criar estatísticas ou fatos de jogo que não vieram do motor.
+5. **Dados e narrativa precisam concordar.** O mesmo evento deve explicar placar, estatísticas, comentário e relatório final; uma visualização gráfica só pode aparecer se estiver habilitada. Não criar estatísticas ou fatos de jogo que não vieram do motor.
 6. **Preservar as decisões próprias do FutManager.** O centro tático mantém posicionamento livre, sem bloqueio por posição ou encaixe obrigatório. A função mais próxima do esquema pode informar a adaptação do atleta, mas não restringe onde o jogador pode ser colocado.
 
 ## 2. Regras oficiais que afetam uma partida
@@ -86,19 +86,29 @@ A adaptação à posição serve para estimar o impacto esportivo, não para pro
 - Não inventar calendário, participantes, inscrições, fases, prorrogação ou disputa por pênaltis quando os dados/regulamento não os definirem.
 - O relatório deve ser uma síntese dos eventos que realmente ocorreram: gols, cartões, substituições, estatísticas e resultado. Público, renda, lesões ou notas só devem aparecer como simulação identificada quando houver um modelo para calculá-los.
 
-## 5. Estado observado do motor do FutManager
+## 5. Estado observado do motor do FutManager (30/10/2026)
 
-Esta seção descreve o código consultado em 29/10/2026, não uma regra de futebol nem uma promessa de funcionalidades futuras.
+Esta seção descreve a implementação atual, não regras oficiais da IFAB.
 
-- `src/lib/game/live-match.ts` gera ações ao longo do relógio e define as categorias pass, shot, goal, tackle, foul, discussion e offside. A escolha de ação é probabilística; uma finalização tem probabilidade de gol influenciada pela força da equipe.
-- `src/components/game-board.tsx` calcula a força a partir de overall, energia e adaptação à posição. Essa força influencia a probabilidade de qual equipe recebe o próximo evento e a conversão de finalizações.
-- `src/lib/game/live-positioning.ts` trata formação e posições personalizadas como organização inicial: a estrutura acompanha bola e posse, com movimentos de apoio, avanço e cobertura, sem raio rígido que prenda os jogadores. O snapshot posicional é compartilhado com a ação seguinte e com o impedimento simplificado; o adversário continua genérico e o movimento é heurístico, não física contínua.
-- Os eventos alimentam o placar, estatísticas e visualização; resultados de outros jogos são calculados separadamente de modo determinístico por rodada/minuto.
-- A tela salva e apresenta estilo, marcação e foco tático, mas esses parâmetros ainda não são argumentos de `simulateAction`. Portanto, não afirmar que já alteram os eventos da partida.
-- O conjunto de ações atual não representa integralmente regras de impedimento, reinícios, faltas/cartões, expulsões e inferioridade numérica; também não implementa tempo adicional oficial ou limites completos de janelas de substituição.
-- Essas são limitações do motor atual. Não são motivo para inventar eventos ou dados nas telas: novas mecânicas devem ter regra, efeito no jogo, persistência e testes definidos.
+- `public/game-assets/match-engine-rules.md` é a fonte canônica da mecânica/configuração. O runtime lê o Markdown sem cache antes de iniciar ou retomar uma partida e falha fechado se o documento/configuração não puder ser lido.
+- `src/lib/game/match-rules.ts` valida a configuração executável incorporada ao Markdown. Saves ativos mantêm a fotografia do documento, clima e motivação usados para que uma retomada preserve o contexto original.
+- `src/lib/game/live-match.ts` calcula perfis técnicos/por setor a partir do overall, qualidades categóricas, energia e adaptação à função mais próxima; simula posse, passe, interceptação, desarme, falta, impedimento simplificado e finalização contra goleiro. Uma semente estável por carreira/rodada/minuto reproduz os lances ao retomar.
+- Estilo, marcação/pressão e foco alteram probabilidades. Motivação é uma estimativa: forma recente e energia do clube controlado; valor neutro com variação reproduzível para rival sem histórico de moral. Não há atributo explícito de moral no modelo de atletas.
+- Clima é cenário reproduzível gerado da configuração no Markdown, não previsão real. Chuva e vento afetam ações de bola; calor e pressão contribuem para desgaste. O relatório identifica temperatura, vento e condição.
+- O acompanhamento ao vivo é textual, com estatísticas comparativas, taça do campeonato e momentos importantes; não mostra campo/bolinhas, animação ou a caixa genérica de plano de jogo. No pós-jogo, há abas de eventos, estatísticas e formações estáticas dos dois times, com os placares da rodada ao lado. Um snapshot posicional heurístico continua sendo usado internamente na avaliação de passe/impedimento, sem renderização gráfica ao vivo.
+- Eventos alimentam narrativa, placar, posse, finalizações, interceptações, desarmes, faltas, cartões e notas. Energia dos atletas é reduzida no encerramento conforme minutos jogados, pressão e clima.
+- Partidas secundárias continuam sem relato individual, mas seu placar é determinístico até o minuto atual e incorpora a força cadastrada dos clubes quando disponível.
+- Permanecem simplificações: impedimento, distância/ângulo, disciplina, distribuição tática e adversário não substituem uma simulação física ou aplicação integral das Leis IFAB. Não afirmar que a forma reproduz exatamente o futebol real.
 
-## 6. Invariantes e critérios para mudanças futuras
+## 6. Requisitos atuais do fluxo textual
+
+- Não renderizar campo, posições de atletas, bola ou comemorações gráficas até o responsável solicitar o retorno da visão de jogo.
+- O acompanhamento mostra comentário por minuto, placar, posse, finalizações, clima simulado, cartões e resultados da rodada. A pausa/intervalo/retomada continua sob controle do usuário.
+- O relatório pós-jogo usa os mesmos eventos e inclui gols/melhores momentos, estatísticas, condição climática e notas individuais calculadas pelos eventos, não uma nota fixa derivada apenas do overall.
+- O documento canônico é de consulta obrigatória antes de todo início/retomada de jogo. Alterações de coeficientes exigem testes de leitura, coerência e equilíbrio; a equipe superior deve ter vantagem na expectativa, sem remover vitórias de azarões.
+- A formação/posição é organização e adaptação, não fronteira de movimento; a remoção da tela gráfica não transforma posições em limites rígidos.
+
+## 7. Invariantes e critérios para mudanças futuras
 
 - No máximo 11 atletas de cada equipe em campo; a composição segue o regulamento da competição.
 - Resultado, eventos, estatísticas, classificação e relatório não podem divergir.
@@ -110,7 +120,7 @@ Esta seção descreve o código consultado em 29/10/2026, não uma regra de fute
 - A formação e as coordenadas manuais descrevem a organização inicial; não impor raio fixo de deslocamento aos atletas nem regravar essas coordenadas com o movimento da partida. A função do goleiro pode modular seu comportamento sem congelá-lo.
 - Não remover liberdade de posição definida pelo projeto para simular futebol real: usar a posição como contexto informativo e de cálculo, não como bloqueio de interface.
 
-## 7. Fontes
+## 8. Fontes
 
 ### Regras oficiais
 

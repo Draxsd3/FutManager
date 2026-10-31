@@ -65,7 +65,7 @@ function NavButton({ item }: { item: NavItem }) {
         }
         if (event.key === "Tab") setPosition(null);
       }}>
-      <p className="px-3 py-2 text-[9px] font-bold tracking-[.16em] text-[#7b8b80]">AGENDA DO CLUBE</p>
+      <p className="px-3 py-2 text-[9px] font-bold tracking-[.16em] text-[#7b8b80]">{item.label.toLocaleUpperCase("pt-BR")}</p>
       {item.children?.map((child, index) => <button key={child.label} type="button" role="menuitem" onClick={() => { setPosition(null); button.current?.focus(); child.onClick(); }} className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left hover:bg-[#eff5f0] focus:bg-[#e7f2e9] focus:outline-none"><span aria-hidden="true" className="text-xs text-[#92a398]">0{index + 1}</span><span><strong className="block text-xs">{child.label}</strong><small className="mt-1 block text-[10px] text-[#718077]">{child.description}</small></span><span aria-hidden="true" className="ml-auto">›</span></button>)}
     </div>, document.body)}
   </>;

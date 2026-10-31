@@ -1,14 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { createDefaultDatabase, buildSquadFromDatabase, enforceEditorSquadLimit, MAX_CLUB_SQUAD_SIZE } from "./editor-data";
+import { createDefaultDatabase, buildSquadFromDatabase, enforceEditorSquadLimit, MAX_CLUB_SQUAD_SIZE, upgradeEditorDatabase, type EditorDatabase } from "./editor-data";
 
 describe("editor database", () => {
   it("creates complete squads for all default clubs", () => {
     const database = createDefaultDatabase();
-    expect(database.clubs).toHaveLength(8);
+    expect(database.clubs).toHaveLength(16);
+    expect(new Set(database.clubs.map((club) => club.division))).toEqual(new Set(["Série A", "Série B", "Série C", "Série D"]));
     for (const club of database.clubs) {
       const players = database.players.filter((player) => player.clubId === club.id);
       expect(players.length).toBeGreaterThanOrEqual(18);
       expect(new Set(players.map((player) => player.shirtNumber)).size).toBe(players.length);
+      expect(players.some((player) => player.marketStatus === "sale")).toBe(true);
+      expect(players.some((player) => player.marketStatus === "loan")).toBe(true);
+    }
+  });
+
+  it("seeds sale and loan listings while upgrading a legacy editor save", () => {
+    const database = createDefaultDatabase();
+    const legacy = {
+      ...database,
+      players: database.players.map((player) => Object.fromEntries(Object.entries(player).filter(([key]) => key !== "marketStatus"))),
+    } as unknown as EditorDatabase;
+    const upgraded = upgradeEditorDatabase(legacy);
+    for (const club of upgraded.clubs) {
+      const market = upgraded.players.filter((player) => player.clubId === club.id).map((player) => player.marketStatus);
+      expect(market).toContain("sale");
+      expect(market).toContain("loan");
     }
   });
 

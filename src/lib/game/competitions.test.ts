@@ -22,7 +22,11 @@ it("includes only registered Brazilian clubs in their own division and does not 
  const catalog=buildCompetitionCatalog(db);
  expect(catalog.some(c=>c.location==="Portugal" || c.clubs.includes("Clube estrangeiro"))).toBe(false);
  for (const competition of catalog) {
-  expect(competition.clubs).toEqual(competition.division ? db.clubs.filter(c=>c.country==="Brasil" && c.division===competition.division).map(c=>c.name) : []);
+  if (competition.division) {
+   expect(competition.clubs).toEqual(db.clubs.filter(c=>c.country==="Brasil" && c.division===competition.division).map(c=>c.name));
+  } else {
+   expect(competition.clubs.every(name=>db.clubs.some(c=>c.country==="Brasil" && c.name===name))).toBe(true);
+  }
  }
  expect(db).toEqual(original);
 });

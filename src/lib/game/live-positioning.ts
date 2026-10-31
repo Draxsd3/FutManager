@@ -9,6 +9,7 @@ export type VisualPlayer = { key: string; base: Point; target: Point; goalkeeper
 type PositioningInput = {
   starters: Player[];
   formation: string;
+  opponentFormation?: string;
   manualPositions: Record<number, ManualPosition>;
   scene?: MatchScene;
   minute: number;
@@ -21,13 +22,14 @@ const clamp = (value: number, min: number, max: number) => Math.max(min, Math.mi
  * Players adapt to the ball, possession and their line without rewriting the saved lineup; this
  * shared position snapshot also informs the next simplified action and offside check.
  */
-export function visualFormation({ starters, formation, manualPositions, scene, minute }: PositioningInput): VisualPlayer[] {
-  const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
-  const roles = formationSlotRoles[formation] ?? formationSlotRoles["4-3-3"];
+export function visualFormation({ starters, formation, opponentFormation = formation, manualPositions, scene, minute }: PositioningInput): VisualPlayer[] {
   const ball = scene?.to ?? { x: 50, y: 50 };
 
   const teamPlayers = (away: boolean): VisualPlayer[] => {
     const team = away ? "away" : "home";
+    const teamFormation = away ? opponentFormation : formation;
+    const slots = formationSlots[teamFormation] ?? formationSlots["4-3-3"];
+    const roles = formationSlotRoles[teamFormation] ?? formationSlotRoles["4-3-3"];
     const direction = away ? -1 : 1;
     const bases = away
       ? slots.map((slot) => fieldPoint(slot, true))

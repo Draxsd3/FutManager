@@ -71,6 +71,7 @@ export async function readCloudDatabase(userId: string): Promise<EditorDatabase 
       name: row.name,
       shortName: row.short_name,
       division: row.division,
+      state: row.state ?? undefined,
       foundedYear: row.founded_year ?? 1900,
       primaryColor: row.primary_color,
       secondaryColor: row.secondary_color,
@@ -102,6 +103,7 @@ export async function readCloudDatabase(userId: string): Promise<EditorDatabase 
       ownGoals: row.own_goals,
       averageRating: row.average_rating === null ? null : Number(row.average_rating),
       contractEndsOn: row.contract_ends_on,
+      marketStatus: row.market_status ?? "normal",
     })) as EditorPlayer[],
   };
 }
@@ -125,6 +127,7 @@ export async function writeCloudDatabase(database: EditorDatabase, expectedUserI
       name: club.name,
       short_name: club.shortName,
       division: club.division,
+      state: club.state ?? null,
       founded_year: club.foundedYear,
       primary_color: club.primaryColor,
       secondary_color: club.secondaryColor,
@@ -170,6 +173,7 @@ export async function writeCloudDatabase(database: EditorDatabase, expectedUserI
       own_goals: player.ownGoals,
       average_rating: player.averageRating,
       contract_ends_on: player.contractEndsOn,
+      market_status: player.marketStatus ?? "normal",
       updated_at: new Date().toISOString(),
     })));
     if (error) throw error;

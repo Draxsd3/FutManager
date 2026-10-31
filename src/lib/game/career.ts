@@ -9,6 +9,14 @@ export type SeasonStats = {
   goals: number;
   assists: number;
   average: number | null;
+  ratedGames?: number;
+  minutes?: number;
+  shots?: number;
+  tackles?: number;
+  passes?: number;
+  saves?: number;
+  yellowCards?: number;
+  redCards?: number;
 };
 
 export type PlayerCareerRecord = {
@@ -24,38 +32,115 @@ export type PlayerCareerRecord = {
 
 export type ManualPosition = { left: number; top: number };
 
-export function createPlayerCareer(player: Player, club: string): PlayerCareerRecord {
+export function createPlayerCareer(player: Player, club: string, season = 2026): PlayerCareerRecord {
   return {
-    marketStatus: "normal",
+    marketStatus: player.marketAvailability === "sale" || player.marketAvailability === "loan" ? player.marketAvailability : "normal",
     contractUntil: player.contractUntil,
     salary: player.salary,
     retirementYear: null,
-    seasons: [{ season: 2026, club, games: 0, goals: player.goals, assists: player.assists, average: player.avgRating }],
+    // Editor totals have no match/season provenance; never present them as current-season results.
+    seasons: [{ season, club, games: 0, goals: 0, assists: 0, average: null, ratedGames: 0, minutes: 0, shots: 0, tackles: 0, passes: 0, saves: 0, yellowCards: 0, redCards: 0 }],
   };
 }
 
 export type PlayerMatchRecord = {
-  key: string; round: number; opponent: string; homeScore: number; awayScore: number;
-  minutes: number; goals: number;
+  key: string;
+  round: number;
+  opponent: string;
+  homeScore: number;
+  awayScore: number;
+  minutes: number;
+  goals: number;
+  assists?: number;
+  rating?: number | null;
+  season?: number;
+  competitionId?: string;
+  competition?: string;
+  competitionRound?: number;
+  isHome?: boolean;
+  yellowCards?: number;
+  redCards?: number;
+  shots?: number;
+  tackles?: number;
+  passes?: number;
+  saves?: number;
+  errors?: number;
 };
 export type MatchParticipation = Record<number, { entered: number; left?: number }>;
+export type PlayerMatchPerformance = { goals?: number; assists?: number; rating?: number | null; yellowCards?: number; redCards?: number; shots?: number; tackles?: number; passes?: number; saves?: number; errors?: number };
 
-/** Register only completed matches; the key makes retries and resumed saves idempotent. */
-export function recordPlayerMatch(records: Record<number, PlayerCareerRecord>, squad: Player[], club: string, participation: MatchParticipation, match: Omit<PlayerMatchRecord, "minutes" | "goals">, goals: Record<number, number>): Record<number, PlayerCareerRecord> {
+/** Register only completed matches; the fixture key makes retries and resumed saves idempotent. */
+export function recordPlayerMatch(
+  records: Record<number, PlayerCareerRecord>,
+  squad: Player[],
+  club: string,
+  participation: MatchParticipation,
+  match: Omit<PlayerMatchRecord, "minutes" | "goals" | "assists" | "rating" | "yellowCards" | "redCards" | "shots" | "tackles" | "passes" | "saves" | "errors">,
+  performance: Record<number, PlayerMatchPerformance | number>,
+): Record<number, PlayerCareerRecord> {
   const next = { ...records };
+  const seasonYear = match.season ?? 2026;
   for (const [idText, stint] of Object.entries(participation)) {
     const id = Number(idText);
     const player = squad.find((item) => item.id === id);
-    const minutes = Math.max(0, (stint.left ?? 90) - stint.entered);
+    const rawMinutes = (stint.left ?? 90) - stint.entered;
+    const minutes = Number.isFinite(rawMinutes) ? Math.max(0, rawMinutes) : 0;
     if (!player || minutes === 0) continue;
-    const current = next[id] ?? createPlayerCareer(player, club);
+    const current = next[id] ?? createPlayerCareer(player, club, seasonYear);
     if (current.matches?.some((item) => item.key === match.key)) continue;
-    const playerGoals = goals[id] ?? 0;
+    const entry = performance[id];
+    const stats: PlayerMatchPerformance = typeof entry === "number" ? { goals: entry } : entry ?? {};
+    const count = (value: number | undefined) => Number.isFinite(value) ? Math.max(0, Math.floor(value!)) : 0;
+    const goals = count(stats.goals);
+    const assists = count(stats.assists);
+    const rating = stats.rating === null || stats.rating === undefined || !Number.isFinite(stats.rating) ? null : Math.max(0, Math.min(10, stats.rating));
+    const yellowCards = count(stats.yellowCards), redCards = count(stats.redCards);
+    const shots = count(stats.shots), tackles = count(stats.tackles), passes = count(stats.passes), saves = count(stats.saves);
     const seasons = [...current.seasons];
-    const index = seasons.findIndex((item) => item.season === 2026 && item.club === club);
-    if (index < 0) seasons.push({ season: 2026, club, games: 1, goals: playerGoals, assists: 0, average: null });
-    else seasons[index] = { ...seasons[index], games: seasons[index].games + 1, goals: seasons[index].goals + playerGoals };
-    next[id] = { ...current, seasons, matches: [...(current.matches ?? []), { ...match, minutes, goals: playerGoals }] };
+    const index = seasons.findIndex((item) => item.season === seasonYear && item.club === club);
+    if (index < 0) {
+      seasons.push({ season: seasonYear, club, games: 1, goals, assists, average: rating, ratedGames: rating === null ? 0 : 1, minutes, shots, tackles, passes, saves, yellowCards, redCards });
+    } else {
+      const previous = seasons[index];
+      const ratedGames = previous.ratedGames ?? (previous.average === null ? 0 : previous.games);
+      const average = rating === null ? previous.average : previous.average === null
+        ? rating
+        : (previous.average * ratedGames + rating) / (ratedGames + 1);
+      seasons[index] = {
+        ...previous,
+        games: previous.games + 1,
+        goals: previous.goals + goals,
+        assists: previous.assists + assists,
+        average,
+        ratedGames: ratedGames + (rating === null ? 0 : 1),
+        minutes: (previous.minutes ?? 0) + minutes,
+        shots: (previous.shots ?? 0) + shots,
+        tackles: (previous.tackles ?? 0) + tackles,
+        passes: (previous.passes ?? 0) + passes,
+        saves: (previous.saves ?? 0) + saves,
+        yellowCards: (previous.yellowCards ?? 0) + yellowCards,
+        redCards: (previous.redCards ?? 0) + redCards,
+      };
+    }
+    next[id] = {
+      ...current,
+      seasons,
+      matches: [...(current.matches ?? []), {
+        ...match,
+        season: seasonYear,
+        minutes,
+        goals,
+        assists,
+        rating,
+        yellowCards,
+        redCards,
+        shots,
+        tackles,
+        passes,
+        saves,
+        errors: count(stats.errors),
+      }],
+    };
   }
   return next;
 }
@@ -65,6 +150,7 @@ export type ContractOffer = { salary: number; years: number; releaseClause: numb
 export type TransferOffer = { id: string; club: string; fee: number; status: "pending" | "rejected" | "accepted" };
 export type MarketAction =
   | { type: "list" }
+  | { type: "loan" }
   | { type: "unlist" }
   | { type: "contract"; offer: ContractOffer }
   | { type: "offer"; club: string; fee: number; id: string }
@@ -84,7 +170,8 @@ export function offerEligibility(record: PlayerCareerRecord, fee: number): boole
 }
 
 export function applyNegotiation(record: PlayerCareerRecord, action: MarketAction, gameDate: string, ownClub: string): { record: PlayerCareerRecord; message: string; transfer?: TransferOffer } {
-  if (action.type === "list") return { record: { ...record, marketStatus: "sale" }, message: "Atleta disponível no mercado." };
+  if (action.type === "list") return { record: { ...record, marketStatus: "sale" }, message: "Atleta listado para venda." };
+  if (action.type === "loan") return { record: { ...record, marketStatus: "loan" }, message: "Atleta listado para empréstimo." };
   if (action.type === "unlist") return { record: { ...record, marketStatus: "normal" }, message: "Atleta retirado do mercado." };
   if (action.type === "contract") {
     const error = validateContractOffer(action.offer);

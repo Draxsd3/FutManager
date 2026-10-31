@@ -1,9 +1,21 @@
 import type { DivisionKey, Player } from "./mock-data";
 import type { ManualPosition, PlayerCareerRecord, MatchParticipation } from "./career";
-import type { MatchEvent } from "@/components/screens/match-detail-screen";
+import type { MatchEvent, MatchWeather } from "@/lib/game/live-match";
+import type { MatchRules } from "@/lib/game/match-rules";
+import type { CareerSeason } from "./season";
+import type { TransferNegotiation } from "./transfers";
+
+export type MatchPreparation = {
+  matchKey: string;
+  rules: MatchRules;
+  weather: MatchWeather;
+  motivationHome: number;
+  motivationAway: number;
+};
 
 export type CareerProgress = {
   page: string;
+  matchPreparation?: MatchPreparation;
   activeSaveId: string | null;
   coach: string;
   club: string;
@@ -27,6 +39,10 @@ export type CareerProgress = {
   detailOpen: boolean;
   matchRunning: boolean;
   matchSpeed: 1 | 2 | 4;
+  defaultMatchSpeed?: 1 | 2 | 4;
   halftimeWaiting: boolean;
+  competitionSeason?: CareerSeason;
+  activeFixtureId?: string;
+  transferNegotiations?: TransferNegotiation[];
 };
 

@@ -19,7 +19,7 @@ export const competitionCategories: {
   { id: "state", label: "Estadual" },
   { id: "regional", label: "Regional" },
 ];
-const states = [
+export const brazilianStates = [
   "Acre",
   "Alagoas",
   "Amapá",
@@ -99,6 +99,14 @@ export function buildCompetitionCatalog(
     ["regional", "Copa do Nordeste", "Nordeste", "Formato a cadastrar"],
     ["regional", "Copa Verde", "Brasil", "Formato a cadastrar"],
   ];
+  const brazilianClubs = database.clubs.filter((club) => club.country.toLocaleLowerCase("pt-BR") === "brasil");
+  const stateByName: Record<string, string> = {
+    Flamengo: "Rio de Janeiro", Botafogo: "Rio de Janeiro",
+    Palmeiras: "São Paulo", Corinthians: "São Paulo", Santos: "São Paulo",
+    "Ferroviária": "São Paulo", Cruzeiro: "Minas Gerais", Grêmio: "Rio Grande do Sul",
+    Bahia: "Bahia", Remo: "Pará", "Náutico": "Pernambuco", Guarani: "São Paulo",
+    CSA: "Alagoas", Caxias: "Rio Grande do Sul", Brasiliense: "Distrito Federal", Anápolis: "Goiás",
+  };
   return [
     ...national,
     ...extra.map(([category, name, location, format]) => ({
@@ -106,16 +114,19 @@ export function buildCompetitionCatalog(
       name,
       category,
       location,
-      format,
-      clubs: [],
+      format: name === "Copa do Brasil" ? `Mata-mata · ${brazilianClubs.length} clubes cadastrados` : format,
+      clubs: name === "Copa do Brasil" ? brazilianClubs.map((club) => club.name) : [],
     })),
-    ...states.map((state) => ({
-      id: `state:${state}`,
-      name: stateNames[state] ?? `Estadual · ${state}`,
-      category: "state" as const,
-      location: state,
-      format: "Formato a cadastrar",
-      clubs: [],
-    })),
+    ...brazilianStates.map((state) => {
+      const participants = brazilianClubs.filter((club) => (club.state ?? stateByName[club.name]) === state);
+      return {
+        id: `state:${state}`,
+        name: stateNames[state] ?? `Campeonato Estadual · ${state}`,
+        category: "state" as const,
+        location: state,
+        format: participants.length >= 2 ? `Grupo único · ${participants.length} clubes cadastrados` : "Sem participantes suficientes cadastrados",
+        clubs: participants.map((club) => club.name),
+      };
+    }),
   ];
 }

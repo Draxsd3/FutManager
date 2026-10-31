@@ -163,6 +163,9 @@
   font-size: 24px;
   color: #a6b78f;
 }
+.trophyImage { width: 34px; height: 40px; object-fit: contain; }
+.headerTrophy { width: 64px; height: 84px; object-fit: contain; flex: none; }
+.headerInfo { flex: 1; min-width: 0; }
 .catalogNote {
   font-size: 9px;
   color: #a0ad92;
@@ -492,7 +495,10 @@
     border-right: 0;
   }
   .browser > .eyebrow,
-  .catalogNote {
+  .trophyImage { width: 34px; height: 40px; object-fit: contain; }
+.headerTrophy { width: 64px; height: 84px; object-fit: contain; flex: none; }
+.headerInfo { flex: 1; min-width: 0; }
+.catalogNote {
     display: none;
   }
   .browser label {
