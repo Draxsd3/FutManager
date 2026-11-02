@@ -34,3 +34,16 @@ it("shows recorded season statistics and the actual next-match venue", () => {
   expect(screen.getByText(/Contrato até: 2030-12-31/)).toBeTruthy();
   fireEvent.keyDown(screen.getByRole("button", { name: player.name }), { key: "Enter" });
 });
+
+it("filters, sorts and opens the selected player without fabricating summary data", () => {
+  const open = vi.fn();
+  const players = squad.slice(0, 5);
+  render(<HubScreen club="Corinthians" coach="Teste" budget={12000} opponent="Flamengo" round={2} competition="Paulista" squad={players} starters={[players[0].id]} selectedPlayer={players[0]} onSelectPlayer={vi.fn()} onOpenPlayer={open} onEscalar={vi.fn()} onQuickAction={vi.fn()} />);
+  fireEvent.change(screen.getByLabelText("Filtrar elenco"), { target: { value: "starters" } });
+  expect(within(screen.getByRole("region", { name: "ELENCO" })).getAllByRole("row")).toHaveLength(2);
+  fireEvent.change(screen.getByLabelText("Buscar atleta"), { target: { value: "inexistente" } });
+  expect(screen.getByText("Nenhum atleta encontrado para os filtros.")).toBeTruthy();
+  fireEvent.change(screen.getByLabelText("Buscar atleta"), { target: { value: "" } });
+  fireEvent.click(screen.getByRole("button", { name: /Ver ficha completa/ }));
+  expect(open).toHaveBeenCalledWith(players[0].id);
+});
