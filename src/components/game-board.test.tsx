@@ -49,7 +49,7 @@ it("creates independent careers, preserves the lineup on returning home and open
   render(game());
   expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
   expect(screen.queryByRole("button", { name: /Salvar e voltar ao início/ })).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: /CARREGAR CARREIRA/ }));
+  fireEvent.click(screen.getByRole("button", { name: /CONTINUAR JOGANDO/ }));
   const continueButtons = await screen.findAllByRole("button", { name: "CONTINUAR" });
   expect(continueButtons).toHaveLength(2);
   fireEvent.click(continueButtons[1]);
@@ -62,7 +62,7 @@ it("creates independent careers, preserves the lineup on returning home and open
 it("does not expose another account's careers on the same browser", async () => {
   localStorage.setItem("futmanager.saves.v1.alice", JSON.stringify([{ id: "private", name: "Carreira privada" }]));
   render(game("bob"));
-  fireEvent.click(await screen.findByRole("button", { name: /CARREGAR CARREIRA/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /CONTINUAR JOGANDO/ }));
   expect(await screen.findByText("Nenhuma carreira encontrada")).toBeTruthy();
   expect(screen.queryByText("Carreira privada")).toBeNull();
   expect(readLocalSaves("alice")).toHaveLength(1);
@@ -102,7 +102,7 @@ it("autosaves a match without a floating exit button and resumes paused after re
   render(game());
   expect(await screen.findByText("PARTIDA PAUSADA")).toBeTruthy();
   expect(screen.getByText(new RegExp(`${savedWeather?.label} · ${savedWeather?.temperatureC} °C · vento ${savedWeather?.windKmh} km/h`))).toBeTruthy();
-  expect(screen.queryByRole("button", { name: /CARREGAR CARREIRA/ })).toBeNull();
+  expect(screen.queryByRole("button", { name: /CONTINUAR JOGANDO/ })).toBeNull();
   expect(readLocalSaves("alice")[0].progress?.minute).toBe(saved.progress?.minute);
 });
 
@@ -165,27 +165,27 @@ it("reloads directly into the last career screen without going through the start
 
   render(game());
   expect(await screen.findByRole("heading", { name: "Escalação & Tática" })).toBeTruthy();
-  expect(screen.queryByRole("button", { name: /CARREGAR CARREIRA/ })).toBeNull();
+  expect(screen.queryByRole("button", { name: /CONTINUAR JOGANDO/ })).toBeNull();
 });
 
 it("returns to the redesigned menu from new career, saves and both editor exit buttons", async () => {
   render(game());
   const assertCurrentMenu = async () => {
     const title = await screen.findByRole("heading", { level: 1 });
-    expect(title.textContent).toBe("SEU CLUBE.SUAS REGRAS.SUA HISTÓRIA.");
-    expect(document.querySelector('[data-menu-version="minimal-v1"]')).toBeTruthy();
+    expect(title.textContent).toBe("90 MINUTOS.UM CLUBE.UMA VIDA.");
+    expect(document.querySelector('[data-menu-version="field-v2"]')).toBeTruthy();
     expect(screen.queryByRole("button", { name: "OPÇÕES" })).toBeNull();
     expect(screen.getByRole("link", { name: /menu principal/ }).getAttribute("href")).toBe("#menu-principal");
   };
   await assertCurrentMenu();
   fireEvent.click(screen.getByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
-  fireEvent.click(await screen.findByRole("button", { name: /Voltar ao menu/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /Voltar ao início/ }));
   await assertCurrentMenu();
-  fireEvent.click(screen.getByRole("button", { name: /CARREGAR CARREIRA/ }));
+  fireEvent.click(screen.getByRole("button", { name: /CONTINUAR JOGANDO/ }));
   fireEvent.click(await screen.findByRole("button", { name: "Voltar ao menu" }));
   await assertCurrentMenu();
   for (const exit of ["início", "sair editor"]) {
-    fireEvent.click(screen.getByRole("button", { name: /EDITOR DE CLUBES/ }));
+    fireEvent.click(screen.getByRole("button", { name: /EDITAR O UNIVERSO/ }));
     fireEvent.click(await screen.findByRole("button", { name: exit }));
     await assertCurrentMenu();
   }
@@ -215,7 +215,7 @@ it("keeps club navigation internal and the top Menu inicial button returns to th
   fireEvent.click(screen.getByRole("button", { name: "Configurações" }));
   fireEvent.click(screen.getByRole("button", { name: "Voltar ao menu inicial" }));
   expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
-  expect(document.querySelector('[data-menu-version="minimal-v1"]')).toBeTruthy();
+  expect(document.querySelector('[data-menu-version="field-v2"]')).toBeTruthy();
   expect(readLocalSaves("alice")[0].managerName).toBe("Teste Navegação");
 }, 15000);
 

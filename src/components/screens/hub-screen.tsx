@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Player } from "@/lib/game/mock-data";
 import type { PlayerCareerRecord } from "@/lib/game/career";
-import { ClubSidebar } from "@/components/ui/club-sidebar";
+import { ClubSidebar, Crest } from "@/components/ui/club-sidebar";
 import { fifaPosition, fifaPositionOrder } from "@/lib/game/fifa-position";
 import styles from "./hub-screen.module.css";
 
@@ -25,12 +25,13 @@ export function HubScreen({ club, coach, budget, opponent, round, competition, s
   const payroll = squad.reduce((sum, player) => sum + (playerCareers[player.id]?.salary ?? player.salary), 0);
   const listed = squad.filter((player) => ["sale", "loan"].includes(playerCareers[player.id]?.marketStatus ?? player.marketAvailability ?? "normal")).length;
   return <div className={styles.workspace}>
-    <ClubSidebar club={club} coach={coach} budget={budget} opponent={opponent} isHome={isHome} hasNextMatch={hasNextMatch} round={round} roundLabel={roundLabel} competition={competition} selectedPlayer={selectedPlayer} record={selectedPlayer ? playerCareers[selectedPlayer.id] : undefined} season={season} squadSize={squad.length} onOpenPlayer={onOpenPlayer} ctaLabel="Escalar Time" onCta={onEscalar} onQuickAction={onQuickAction} />
+    <ClubSidebar club={club} coach={coach} budget={budget} selectedPlayer={selectedPlayer} record={selectedPlayer ? playerCareers[selectedPlayer.id] : undefined} season={season} squadSize={squad.length} onOpenPlayer={onOpenPlayer} ctaLabel="Escalar Time" onCta={onEscalar} onQuickAction={onQuickAction} />
     <section className={styles.roster} aria-labelledby="roster-heading">
       <header className={styles.rosterHeader}>
         <div><p className={styles.eyebrow}>CENTRAL DO CLUBE / TEMPORADA {season}</p><h2 id="roster-heading" aria-label="ELENCO">ELENCO <span>profissional</span></h2><p className={styles.subtitle}>Sua equipe, pronta para o próximo desafio.</p></div>
         <div className={styles.headerActions}><button type="button" onClick={() => onQuickAction("training")}>Treinamento</button><button type="button" className={styles.primaryAction} onClick={onEscalar}>Táticas <span aria-hidden="true">→</span></button></div>
       </header>
+      <MatchBanner club={club} opponent={opponent} competition={competition} roundLabel={roundLabel ?? `${round}ª rodada`} isHome={isHome} hasNextMatch={hasNextMatch} />
       <div className={styles.metrics} aria-label="Resumo do elenco"><div><span>Jogadores</span><strong>{squad.length}<small> / 35</small></strong></div><div><span>Força média</span><strong>{average || "—"}</strong></div><div><span>Energia abaixo de 60%</span><strong>{lowEnergy}</strong></div><div><span>Folha mensal</span><strong>R$ {(payroll / 1000).toFixed(2).replace(".", ",")} <small>mi</small></strong></div><div><span>No mercado</span><strong>{listed}</strong></div></div>
       <div className={styles.toolbar}><div className={styles.rosterTitle}><b>Plantel</b><span>{visibleSquad.length} de {squad.length} atletas</span></div><div className={styles.filters}>
         <label className={styles.search}><span className={styles.visuallyHidden}>Buscar atleta</span><input aria-label="Buscar atleta" placeholder="Buscar atleta..." value={query} onChange={(event) => setQuery(event.target.value)}/></label>
@@ -62,6 +63,18 @@ export function HubScreen({ club, coach, budget, opponent, round, competition, s
   </div>;
 }
 
+
+function MatchBanner({ club, opponent, competition, roundLabel, isHome, hasNextMatch }: { club: string; opponent: string; competition: string; roundLabel: string; isHome: boolean; hasNextMatch: boolean }) {
+  return <section className={styles.matchBanner} aria-label="Próximo jogo">
+    <div className={styles.matchContext}><span className={styles.liveKicker}><i /> PRÓXIMO APITO</span><b>{competition}</b><span>{roundLabel}</span></div>
+    {hasNextMatch ? <div className={styles.matchTeams}>
+      <div className={styles.matchTeam}><Crest club={isHome ? club : opponent} size="sm"/><span>{isHome ? club : opponent}<small>{isHome ? "EM CASA" : "MANDANTE"}</small></span></div>
+      <b className={styles.versus}>VS</b>
+      <div className={`${styles.matchTeam} ${styles.matchAway}`}><Crest club={isHome ? opponent : club} size="sm"/><span>{isHome ? opponent : club}<small>{isHome ? "FORA DE CASA" : "VOCÊ · VISITANTE"}</small></span></div>
+    </div> : <p className={styles.noFixture}>Sem partida agendada. O próximo capítulo começa quando a tabela chamar.</p>}
+    <div className={styles.pitchGlyph} aria-hidden="true"><i/><b/><span/></div>
+  </section>;
+}
 
 function SquadInsights({ squad, starters, playerCareers }: { squad: Player[]; starters: number[]; playerCareers: Record<number, PlayerCareerRecord> }) {
   const defenders = squad.filter((player) => player.position === "L" || player.position === "Z").length;

@@ -2,7 +2,7 @@
   min-height: 100svh;
   color: #edf4e9;
   background:
-    linear-gradient(110deg, #0a130ff5, #101e17ed),
+    linear-gradient(110deg, #080d0bf5, #0d1510ed),
     url("/game-assets/backgrounds/stadium.jpg") center/cover fixed;
   font-family: var(--font-geist-sans), Arial, sans-serif;
 }
@@ -17,12 +17,12 @@
   justify-content: space-between;
   gap: 16px;
   padding: 27px 0;
-  border-bottom: 1px solid #ffffff18;
+  border-bottom: 1px solid #ffffff14;
 }
 .brand {
   font-size: 20px;
   font-weight: 850;
-  color: #c2f45b;
+  color: #c4f06a;
 }
 .brand > span {
   font-size: 10px;
@@ -61,7 +61,7 @@
   margin: 0;
 }
 .heading h1 > span {
-  color: #c2f45b;
+  color: #c4f06a;
 }
 .heading p:not(.eyebrow) {
   color: #95a68e;
@@ -77,7 +77,7 @@
 .counter strong {
   font-size: 36px;
   font-weight: 500;
-  color: #c2f45b;
+  color: #c4f06a;
 }
 .counter span {
   font-size: 10px;
@@ -95,7 +95,7 @@
   align-items: center;
   gap: 12px;
   background: #ffffff06;
-  border: 1px solid #ffffff20;
+  border: 1px solid #ffffff18;
   border-radius: 6px;
   padding: 0 14px;
   max-width: 430px;
@@ -126,8 +126,8 @@
 }
 .sort select {
   padding: 10px;
-  background: #1b2a20;
-  border: 1px solid #ffffff20;
+  background: #121b15;
+  border: 1px solid #ffffff18;
   border-radius: 5px;
   color: #c1d2b8;
   font-size: 11px;
@@ -138,14 +138,14 @@
   gap: 20px;
 }
 .card {
-  border: 1px solid #ffffff18;
+  border: 1px solid #ffffff14;
   border-radius: 12px;
-  background: #1b2a2170;
+  background: #111915c9;
   overflow: hidden;
 }
 .latest {
-  border-color: #87a85180;
-  background: linear-gradient(135deg, #2b402575, #17271d);
+  border-color: #c4f06a55;
+  background: linear-gradient(135deg, #1a261d75, #121a15);
 }
 .cardTop {
   display: flex;
@@ -162,8 +162,8 @@
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: #c2f45b;
-  background: #c2f45b10;
+  color: #c4f06a;
+  background: #c4f06a10;
   padding: 6px 9px;
   border-radius: 3px;
 }
@@ -243,7 +243,7 @@
   justify-content: space-between;
   border: 0;
   border-radius: 5px;
-  background: #c2f45b;
+  background: #c4f06a;
   color: #1a2b0f;
   padding: 12px 17px;
   font-size: 10px;
@@ -259,7 +259,7 @@
 }
 .screen button:focus-visible,
 .screen select:focus-visible {
-  outline: 2px solid #c2f45b;
+  outline: 2px solid #c4f06a;
   outline-offset: 4px;
 }
 .empty {

@@ -1091,9 +1091,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   if (!database || !hydrationDone) {
     return (
-      <div className="grid h-dvh overflow-hidden place-items-center bg-[#f7f7f2] bg-[linear-gradient(rgba(247,247,242,.88),rgba(247,247,242,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center font-[Arial] text-sm text-[#29402f]">
-        <div className="flex items-center gap-3 rounded-lg border border-[#c8d8ca] bg-white/90 px-5 py-4 shadow-lg">
-          <span className="h-3 w-3 animate-pulse rounded-full bg-[#16c864]" aria-hidden="true" />
+      <div className="grid h-dvh overflow-hidden place-items-center bg-[#080d0b] bg-[radial-gradient(ellipse_at_top,#18231a,#080d0b_70%)] font-[Arial] text-sm text-[#eef3e8]">
+        <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#111915] px-5 py-4 text-[#eef3e8] shadow-2xl">
+          <span className="h-3 w-3 animate-pulse rounded-full bg-[#c4f06a] shadow-[0_0_14px_#c4f06a80]" aria-hidden="true" />
           Carregando suas carreiras...
         </div>
       </div>

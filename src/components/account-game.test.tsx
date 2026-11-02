@@ -23,7 +23,7 @@ describe("account entry", () => {
   it("shows the public menu and requires login before continuing a career", async () => {
     render(<AccountGame />);
     await screen.findByText("Entre para salvar e continuar suas carreiras");
-    fireEvent.click(screen.getByRole("button", { name: /CARREGAR CARREIRA/ }));
+    fireEvent.click(screen.getByRole("button", { name: /CONTINUAR JOGANDO/ }));
     expect(screen.getByLabelText("Email")).toBeTruthy();
     expect(screen.getByLabelText("Senha")).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "treinador@example.com" } });
@@ -70,18 +70,18 @@ describe("account entry", () => {
 });
 
 
-it.each([/INICIAR NOVA CARREIRA/, /CARREGAR CARREIRA/, /EDITOR DE CLUBES/, /Entrar \/ Criar conta/])("returns from account entry to the same redesigned public menu: %s", async (action) => {
+it.each([/INICIAR NOVA CARREIRA/, /CONTINUAR JOGANDO/, /EDITAR O UNIVERSO/, /Entrar \/ Criar conta/])("returns from account entry to the same redesigned public menu: %s", async (action) => {
   render(<AccountGame />);
   await screen.findByText("Entre para salvar e continuar suas carreiras");
   fireEvent.click(screen.getByRole("button", { name: action }));
   fireEvent.click(screen.getByRole("button", { name: /Voltar ao início/ }));
-  expect(document.querySelector('[data-menu-version="minimal-v1"]')).toBeTruthy();
+  expect(document.querySelector('[data-menu-version="field-v2"]')).toBeTruthy();
   expect(screen.getByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
   expect(screen.queryByLabelText("Email")).toBeNull();
 });
 
 
-it.each([/INICIAR NOVA CARREIRA/, /CARREGAR CARREIRA/, /EDITOR DE CLUBES/, /Entrar \/ Criar conta/])("always lands on the home menu after login, regardless of entry action: %s", async (action) => {
+it.each([/INICIAR NOVA CARREIRA/, /CONTINUAR JOGANDO/, /EDITAR O UNIVERSO/, /Entrar \/ Criar conta/])("always lands on the home menu after login, regardless of entry action: %s", async (action) => {
   render(<AccountGame />);
   await screen.findByText("Entre para salvar e continuar suas carreiras");
   fireEvent.click(screen.getByRole("button", { name: action }));
