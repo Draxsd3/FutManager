@@ -19,6 +19,17 @@ export function AppShell({
   classicNav?: boolean;
   children: React.ReactNode;
 }) {
+  const style = clubThemeStyle(teamName, clubColors);
+  return (
+    <div style={style} className="flex h-dvh flex-col overflow-hidden bg-[#f7f7f2] bg-[linear-gradient(rgba(247,247,242,.91),rgba(247,247,242,.95)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-fixed font-[Arial] text-[12px] text-[#243229]">
+      {!hideNav && <TopNav items={nav} date={date} classic={classicNav} />}
+      <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
+    </div>
+  );
+}
+
+/** Shared with portaled career windows, which do not inherit the shell DOM styles. */
+export function clubThemeStyle(teamName: string, clubColors?: { primaryColor: string; secondaryColor: string }): CSSProperties {
   const fallback = clubThemes[teamName] ?? clubThemes.Palmeiras;
   const primary = clubColors?.primaryColor ?? fallback.primary;
   const rgb = [1, 3, 5].map((offset) => parseInt(primary.slice(offset, offset + 2), 16));
@@ -35,17 +46,11 @@ export function AppShell({
     Bahia: { color: "#3565b3", text: "#ffffff" },
   };
   const accent = safeAccentByClub[teamName] ?? { color: theme.primary, text: theme.text };
-  const style = {
+  return {
     "--team-primary": theme.primary,
     "--team-secondary": theme.secondary,
     "--team-text": theme.text,
     "--team-accent": accent.color,
     "--team-accent-text": accent.text,
   } as CSSProperties;
-  return (
-    <div style={style} className="flex h-dvh flex-col overflow-hidden bg-[#f7f7f2] bg-[linear-gradient(rgba(247,247,242,.91),rgba(247,247,242,.95)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-fixed font-[Arial] text-[12px] text-[#243229]">
-      {!hideNav && <TopNav items={nav} date={date} classic={classicNav} />}
-      <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
-    </div>
-  );
 }

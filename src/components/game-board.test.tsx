@@ -53,6 +53,8 @@ it("creates independent careers, preserves the lineup on returning home and open
   const continueButtons = await screen.findAllByRole("button", { name: "CONTINUAR" });
   expect(continueButtons).toHaveLength(2);
   fireEvent.click(continueButtons[1]);
+  await screen.findByRole("dialog", { name: "Configurações" });
+  fireEvent.click(screen.getByRole("button", { name: "Fechar Configurações" }));
   await screen.findByRole("button", { name: "Configurações" });
   await waitFor(() => expect(readLocalSaves("alice").find((save) => save.id === first.id)?.progress?.coach).toBe("Técnico Alice"));
 });
@@ -199,6 +201,11 @@ it("keeps club navigation internal and the top Menu inicial button returns to th
     if (destination === "Agenda") fireEvent.click(screen.getByRole("menuitem", { name: /Jogos do seu time/ }));
     if (destination === "História") fireEvent.click(screen.getByRole("menuitem", { name: /História dos jogadores/ }));
     expect(screen.queryByRole("button", { name: /Salvar e voltar ao início/ })).toBeNull();
+    const dialog = screen.getByRole("dialog", { name: destination });
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+    expect(screen.queryByRole("button", { name: "Configurações" })).toBeNull();
+    fireEvent.click(within(dialog).getByRole("button", { name: `Fechar ${destination}` }));
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("button", { name: "Configurações" })).toBeTruthy();
   }
   fireEvent.click(screen.getByRole("button", { name: "Principal" }));
@@ -210,7 +217,7 @@ it("keeps club navigation internal and the top Menu inicial button returns to th
   expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
   expect(document.querySelector('[data-menu-version="minimal-v1"]')).toBeTruthy();
   expect(readLocalSaves("alice")[0].managerName).toBe("Teste Navegação");
-});
+}, 15000);
 
 
 it("opens Agenda choices before navigating and routes each choice to its own section", async () => {
@@ -224,9 +231,11 @@ it("opens Agenda choices before navigating and routes each choice to its own sec
   fireEvent.click(screen.getByRole("menuitem", { name: /Jogos amistosos/ }));
   expect(await screen.findByRole("heading", { name: "Nenhum amistoso agendado" })).toBeTruthy();
   expect(screen.queryByRole("menu")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Fechar Agenda" }));
   fireEvent.click(screen.getByRole("button", { name: "Agenda" }));
   fireEvent.click(screen.getByRole("menuitem", { name: /Central de empregos/ }));
   expect(await screen.findByRole("heading", { name: "Nenhuma proposta de trabalho" })).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Fechar Agenda" }));
   fireEvent.click(screen.getByRole("button", { name: "Agenda" }));
   fireEvent.click(screen.getByRole("menuitem", { name: /Jogos do seu time/ }));
   expect(await screen.findByRole("heading", { name: "Jogos do seu time" })).toBeTruthy();
@@ -301,4 +310,20 @@ it("uses the compact in-match modal, confirms substitutions once and transfers c
   fireEvent.click(screen.getByRole("button", { name: /Escalação e táticas/ }));
   expect(document.querySelector(`button[data-starter="${incoming}"]`)).toBeTruthy();
   expect(readLocalSaves("alice")[0].progress?.manualPositions[incoming]).toEqual({ left: 38, top: 9 });
+});
+
+
+it("opens finances, trophies and training as modal shortcuts without losing the career", async () => {
+  render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Janelas do clube" } });
+  fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+  for (const title of ["Finanças", "Troféus", "Treino"]) {
+    fireEvent.click(await screen.findByRole("button", { name: title }));
+    const dialog = screen.getByRole("dialog", { name: title });
+    fireEvent.keyDown(within(dialog).getByRole("button", { name: `Fechar ${title}` }), { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("button", { name: "Principal" }).getAttribute("aria-current")).toBe("page");
+  }
+  expect(readLocalSaves("alice")[0].managerName).toBe("Janelas do clube");
 });
