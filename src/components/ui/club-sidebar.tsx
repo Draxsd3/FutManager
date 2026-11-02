@@ -27,8 +27,8 @@ export function Crest({ club, size = "md" }: { club: string; size?: "sm" | "md" 
   );
 }
 
-export function ClubSidebar({ club, coach, budget, opponent, isHome, hasNextMatch, round, roundLabel, competition, selectedPlayer, record, season, squadSize, ctaLabel, onCta, onOpenPlayer, onQuickAction }: {
-  club: string; coach: string; budget: number; opponent: string; isHome: boolean; hasNextMatch: boolean; round: number; roundLabel?: string; competition: string;
+export function ClubSidebar({ club, coach, budget, selectedPlayer, record, season, squadSize, ctaLabel, onCta, onOpenPlayer, onQuickAction }: {
+  club: string; coach: string; budget: number;
   selectedPlayer: Player | null; record?: PlayerCareerRecord; season: number; squadSize: number; ctaLabel: string; onCta: () => void; onOpenPlayer: (id: number) => void;
   onQuickAction: (action: "roster" | "finances" | "trophies" | "training") => void;
 }) {
@@ -38,7 +38,6 @@ export function ClubSidebar({ club, coach, budget, opponent, isHome, hasNextMatc
     <div className={styles.club}><Crest club={club} size="sm"/><div><small>SEU CLUBE</small><h1>{club}</h1><p>Treinador · {coach}</p></div></div>
     <div className={styles.balance}><span>CAIXA DISPONÍVEL</span><b>R$ {(budget / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <small>mi</small></b></div>
     <div className={styles.trust}><span>Confiança diretoria <b>—</b></span><span>Confiança torcida <b>—</b></span></div>
-    <section className={styles.next}><h2>Próximo jogo · {hasNextMatch ? (isHome ? "Casa" : "Fora") : "—"}</h2>{hasNextMatch ? <div className={styles.opponent}><Crest club={opponent} size="sm"/><div><b>{opponent}</b><p>{competition} · {roundLabel ?? `${round}ª rodada`}</p></div></div> : <p className={styles.noMatch}>Nenhum jogo agendado.</p>}</section>
     <button type="button" onClick={onCta} className={styles.cta}><ClassicIcon name="sport_soccer" size={20}/>{ctaLabel}</button>
     <section className={styles.player}><h2>{selectedPlayer ? <>{selectedPlayer.name} <span>F: {selectedPlayer.overall}</span></> : "Jogador selecionado"}</h2>{selectedPlayer ? <div className={styles.playerBody}><p>{positionLabel[selectedPlayer.position]} · {selectedPlayer.foot === "D" ? "Direito" : "Esquerdo"} · {selectedPlayer.age} anos</p><p>Contrato até: {record?.contractUntil ?? selectedPlayer.contractUntil}</p><p><b>Valor:</b> R$ {selectedPlayer.marketValue.toFixed(1)} mi &nbsp; <b>Salário:</b> {record?.salary ?? selectedPlayer.salary} mil</p><table><thead><tr><th></th><th>Temporada {season}</th><th>Carreira</th></tr></thead><tbody><tr><th>Jogos</th><td>{current?.games ?? 0}</td><td>{totals.games}</td></tr><tr><th>Gols</th><td>{current?.goals ?? 0}</td><td>{totals.goals}</td></tr><tr><th>Assistências</th><td>{current?.assists ?? 0}</td><td>{totals.assists}</td></tr><tr><th>Nota média</th><td>{current?.average?.toFixed(2).replace(".", ",") ?? "—"}</td><td>—</td></tr></tbody></table><button type="button" className={styles.profileButton} onClick={() => onOpenPlayer(selectedPlayer.id)}>Ver ficha completa <span aria-hidden="true">→</span></button></div> : <p className={styles.noMatch}>Selecione um jogador na tabela.</p>}</section>
     <div className={styles.quick} aria-label="Ações do clube"><Quick icon="group" label="Elenco" onClick={() => onQuickAction("roster")} /><Quick icon="money" label="Finanças" onClick={() => onQuickAction("finances")} /><Quick icon="medal_award_gold" label="Troféus" onClick={() => onQuickAction("trophies")} /><Quick icon="chart_bar" label="Treino" onClick={() => onQuickAction("training")} /><span>{squadSize}/35</span></div>

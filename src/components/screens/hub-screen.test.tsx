@@ -37,7 +37,8 @@ it("shows recorded season statistics and the actual next-match venue", () => {
   expect(cells[13].textContent).toBe("À venda");
   expect(screen.getByText("À venda · 1")).toBeTruthy();
   expect(screen.getByText("Empréstimo · 0")).toBeTruthy();
-  expect(screen.getByText("Próximo jogo · Fora")).toBeTruthy();
+  expect(screen.getByRole("region", { name: "Próximo jogo" })).toBeTruthy();
+  expect(screen.getByText("VOCÊ · VISITANTE")).toBeTruthy();
   expect(screen.getByText(/Contrato até: 2030-12-31/)).toBeTruthy();
   fireEvent.keyDown(screen.getByRole("button", { name: player.name }), { key: "Enter" });
 });
