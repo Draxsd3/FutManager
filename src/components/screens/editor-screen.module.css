@@ -639,3 +639,6 @@
     text-align: left;
   }
 }
+
+.importBase { grid-column: 1 / -1; border: 1px solid #bfd0c0; border-radius: 5px; padding: 8px; background: #f5f8ee; color: #426435; font-size: 10px; cursor: pointer; }.importBase:disabled { opacity: .6; cursor: wait; }
+.importNote { margin: 0 0 10px; flex-shrink: 0; border-bottom: 1px solid #dce5d2; padding-bottom: 8px; font-size: 10px; color: #617451; line-height: 1.5; }

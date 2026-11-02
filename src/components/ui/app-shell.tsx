@@ -8,6 +8,7 @@ export function AppShell({
   clubColors,
   date,
   hideNav = false,
+  classicNav = false,
   children,
 }: {
   nav: NavItem[];
@@ -15,6 +16,7 @@ export function AppShell({
   clubColors?: { primaryColor: string; secondaryColor: string };
   date: string;
   hideNav?: boolean;
+  classicNav?: boolean;
   children: React.ReactNode;
 }) {
   const fallback = clubThemes[teamName] ?? clubThemes.Palmeiras;
@@ -42,7 +44,7 @@ export function AppShell({
   } as CSSProperties;
   return (
     <div style={style} className="flex h-dvh flex-col overflow-hidden bg-[#f7f7f2] bg-[linear-gradient(rgba(247,247,242,.91),rgba(247,247,242,.95)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-fixed font-[Arial] text-[12px] text-[#243229]">
-      {!hideNav && <TopNav items={nav} date={date} />}
+      {!hideNav && <TopNav items={nav} date={date} classic={classicNav} />}
       <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
     </div>
   );

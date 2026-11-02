@@ -1,14 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
 import type { ManualPosition, PlayerCareerRecord } from "@/lib/game/career";
 
-type ClubRow = {
+export type ClubRow = {
   id: string; owner_id: string; name: string; short_name: string; division: string; state: string | null;
   founded_year: number | null; primary_color: string; secondary_color: string;
   stadium_name: string; stadium_capacity: number; created_at: string; updated_at: string;
   country: string; level: number; coach_name: string; kit_style: string;
 };
 
-type PlayerRow = {
+export type PlayerRow = {
   id: string; owner_id: string; club_id: string; name: string; shirt_number: number;
   primary_position: string; secondary_position: string | null; overall: number; age: number;
   preferred_foot: string; created_at: string; updated_at: string;

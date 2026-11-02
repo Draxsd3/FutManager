@@ -85,3 +85,16 @@ describe("calendário persistente de competições", () => {
     expect(contributions.find((item) => item.playerId === assister.sourceId)).toMatchObject({ goals: 0, assists: 1, minutes: 60, rating: 7.6 });
   });
 });
+
+it("does not manufacture a national league or cup entry for imported state-only clubs", async () => {
+  const database = createDefaultDatabase();
+  const extra = {...database.clubs[0],id:"state-only",name:"Clube só estadual",division:"Sem divisão nacional" as const};
+  database.clubs.push(extra);
+  const season = createCareerSeason(database,database.clubs[0].id,2026)!;
+  expect(season.fixtures.some(f=>f.homeClubId===extra.id || f.awayClubId===extra.id)).toBe(false);
+});
+it("does not start an artificial 558-club national league for a state-only import",()=>{
+ const database=createDefaultDatabase();
+ database.clubs[0].division="Sem divisão nacional";
+ expect(createCareerSeason(database,database.clubs[0].id,2026)).toBeNull();
+});
