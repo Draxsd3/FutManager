@@ -38,7 +38,8 @@ export function HubScreen({ club, coach, budget, opponent, round, competition, s
         <label><span className={styles.visuallyHidden}>Filtrar elenco</span><select aria-label="Filtrar elenco" value={group} onChange={(event) => setGroup(event.target.value)}><option value="all">Todo o elenco</option><option value="starters">Titulares</option><option value="reserves">Reservas</option></select></label>
         <label><span className={styles.visuallyHidden}>Ordenar elenco</span><select aria-label="Ordenar elenco" value={sort} onChange={(event) => setSort(event.target.value)}><option value="position">Por posição</option><option value="overall">Por força</option><option value="energy">Por energia</option><option value="name">Por nome</option></select></label>
       </div></div>
-      <div className={styles.tableScroll}>
+      <div className={styles.rosterBody}>
+        <div className={styles.tableScroll}>
         <table className={styles.table}>
           <thead><tr><th scope="col" title="Posição">P</th><th scope="col">Nome</th><th scope="col" title="Pé dominante">Pé</th><th scope="col" title="Força">F</th><th scope="col">Energia</th><th scope="col">Salário</th><th scope="col">Valor</th><th scope="col" title="Jogos na temporada">J</th><th scope="col" title="Gols na temporada">G</th><th scope="col">Car.</th><th scope="col">Idade</th><th scope="col" title="Assistências na temporada">A</th><th scope="col" title="Nota média na temporada">NM</th><th scope="col">Mercado</th></tr></thead>
           <tbody>{visibleSquad.map((player) => {
@@ -53,8 +54,49 @@ export function HubScreen({ club, coach, budget, opponent, round, competition, s
           })}</tbody>
         </table>
         {visibleSquad.length === 0 && <p className={styles.empty}>{squad.length ? "Nenhum atleta encontrado para os filtros." : "Nenhum atleta no elenco."}</p>}
+        </div>
+        <SquadInsights squad={squad} starters={starters} playerCareers={playerCareers} />
       </div>
       <footer className={styles.statusbar}><span>{visibleSquad.length} exibidos · {squad.length} / 35 jogadores</span><span>Selecione um atleta · duplo clique ou Enter abre a ficha</span></footer>
     </section>
   </div>;
+}
+
+
+function SquadInsights({ squad, starters, playerCareers }: { squad: Player[]; starters: number[]; playerCareers: Record<number, PlayerCareerRecord> }) {
+  const defenders = squad.filter((player) => player.position === "L" || player.position === "Z").length;
+  const sectors = [
+    { label: "Goleiros", count: squad.filter((player) => player.position === "G").length, color: "#c59d24" },
+    { label: "Defesa", count: defenders, color: "#547eaf" },
+    { label: "Meio-campo", count: squad.filter((player) => player.position === "M").length, color: "#239557" },
+    { label: "Ataque", count: squad.filter((player) => player.position === "A").length, color: "#be584f" },
+  ];
+  const averageEnergy = squad.length ? Math.round(squad.reduce((sum, player) => sum + player.energy, 0) / squad.length) : 0;
+  const lowEnergy = [...squad].filter((player) => player.energy < 60).sort((a, b) => a.energy - b.energy);
+  const starterCount = squad.filter((player) => starters.includes(player.id)).length;
+  const forSale = squad.filter((player) => (playerCareers[player.id]?.marketStatus ?? player.marketAvailability) === "sale").length;
+  const forLoan = squad.filter((player) => (playerCareers[player.id]?.marketStatus ?? player.marketAvailability) === "loan").length;
+
+  return <aside aria-label="Resumo do elenco" className={styles.insights}>
+    <section className={styles.insightCard}>
+      <div className={styles.insightHeading}><div><span className={styles.insightLabel}>COMPOSIÇÃO</span><h3>Profundidade por setor</h3></div><span className={styles.insightPill}>{squad.length} atletas</span></div>
+      <div className={styles.insightStats}><div><b>{starterCount}</b><span>Titulares</span></div><div><b>{squad.length - starterCount}</b><span>Reservas</span></div></div>
+      <div className={styles.sectorList}>{sectors.map((sector) => <div className={styles.sectorRow} key={sector.label}>
+        <div><span>{sector.label}</span><b>{sector.count}</b></div>
+        <div className={styles.sectorBar} role="img" aria-label={`${sector.label}: ${sector.count} de ${squad.length}`}><i style={{ width: `${squad.length ? sector.count / squad.length * 100 : 0}%`, backgroundColor: sector.color }} /></div>
+      </div>)}</div>
+    </section>
+
+    <section className={styles.insightCard}>
+      <div className={styles.insightHeading}><div><span className={styles.insightLabel}>CONDIÇÃO</span><h3>Energia do plantel</h3></div><b className={styles.averageEnergy}>{averageEnergy}%</b></div>
+      <div className={styles.energyBar} role="img" aria-label={`Energia média do elenco: ${averageEnergy}%`}><i style={{ width: `${averageEnergy}%` }} /></div>
+      <p className={styles.lowEnergyCaption}>{lowEnergy.length ? "Atletas que pedem atenção" : "Nenhum atleta abaixo de 60% de energia"}</p>
+      {lowEnergy.length > 0 && <ul className={styles.lowEnergyList}>{lowEnergy.slice(0, 3).map((player) => <li key={player.id}><span>{player.name}</span><b>{player.energy}%</b></li>)}</ul>}
+    </section>
+
+    <section className={styles.insightCard}>
+      <div className={styles.insightHeading}><div><span className={styles.insightLabel}>MERCADO</span><h3>Disponibilidade</h3></div></div>
+      <div className={styles.marketPills}><span>À venda · {forSale}</span><span>Empréstimo · {forLoan}</span></div>
+    </section>
+  </aside>;
 }

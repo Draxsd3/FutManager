@@ -13,6 +13,11 @@ it("preserves the original compact roster and its player and management actions"
   expect(within(roster).getAllByRole("columnheader")).toHaveLength(14);
   expect(within(roster).getAllByRole("row")).toHaveLength(squad.length + 1);
   expect(screen.queryByRole("button",{name:"Desempenho"})).toBeNull();
+  expect(screen.getByRole("complementary", { name: "Resumo do elenco" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Profundidade por setor" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Energia do plantel" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Disponibilidade" })).toBeTruthy();
+  expect(screen.getByRole("img", { name: /^Energia média do elenco:/ })).toBeTruthy();
   const row = screen.getByRole("cell",{name:new RegExp(squad[0].name)}).closest("tr")!;
   fireEvent.click(row); expect(select).toHaveBeenCalledWith(squad[0].id);
   fireEvent.doubleClick(row); expect(open).toHaveBeenCalledWith(squad[0].id);
@@ -30,6 +35,8 @@ it("shows recorded season statistics and the actual next-match venue", () => {
   const cells = within(roster).getAllByRole("row")[1].querySelectorAll("td");
   expect(cells[7].textContent).toBe("8"); expect(cells[8].textContent).toBe("3"); expect(cells[11].textContent).toBe("2"); expect(cells[12].textContent).toBe("7,40");
   expect(cells[13].textContent).toBe("À venda");
+  expect(screen.getByText("À venda · 1")).toBeTruthy();
+  expect(screen.getByText("Empréstimo · 0")).toBeTruthy();
   expect(screen.getByText("Próximo jogo · Fora")).toBeTruthy();
   expect(screen.getByText(/Contrato até: 2030-12-31/)).toBeTruthy();
   fireEvent.keyDown(screen.getByRole("button", { name: player.name }), { key: "Enter" });
