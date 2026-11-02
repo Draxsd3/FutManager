@@ -17,6 +17,10 @@ it("preserves roster management actions while showing authentic career records",
   expect(screen.getAllByRole("columnheader")).toHaveLength(16);
   expect(screen.getAllByRole("row")).toHaveLength(squad.length + 1);
   expect(screen.getByText("Valores registrados na carreira")).toBeTruthy();
+  expect(screen.getByRole("complementary", { name: "Resumo do elenco" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Profundidade por setor" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Energia do plantel" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Disponibilidade" })).toBeTruthy();
   expect(screen.getByRole("columnheader", { name: "J" })).toBeTruthy();
   expect(screen.queryByText("Satisfação")).toBeNull();
   expect(screen.queryByText("Forma recente")).toBeNull();

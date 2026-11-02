@@ -35,23 +35,71 @@ export function HubScreen({ club, coach, budget, opponent, round, competition, s
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#e2ebe3] bg-[#f4f8f4] px-4 py-2 text-[10px] font-bold text-[#5c6d61]"><span>{visibleSquad.length} jogadores · clique para selecionar · duplo clique para abrir a ficha</span><span>Valores registrados na carreira</span></div>
       </header>
-      <div className="min-w-0 flex-1 overflow-auto px-3 pb-3 pt-2">
-        <table className="w-full min-w-[1050px] border-separate border-spacing-y-1 text-left text-[11px]">
-          <thead className="sticky top-0 z-10 bg-[#f8fbf8] text-[9px] font-black uppercase tracking-wide text-[#607267]"><tr><Th>Pos.</Th><Th>#</Th><Th align="left">Nome</Th><Th>Pé</Th><Th>Idade</Th><Th>Força</Th><Th align="left">Pontos fortes</Th><Th align="left">Energia</Th><Th align="right">Valor</Th><Th align="right">Salário/mês</Th><Th>Contrato</Th><Th>J</Th><Th>G</Th><Th>A</Th><Th>Nota</Th><Th align="left">Mercado</Th></tr></thead>
-          <tbody>{visibleSquad.map((player) => {
-            const starter = starters.includes(player.id);
-            const stats = careerTotals(records[player.id]);
-            return <tr key={player.id} onClick={() => onSelectPlayer(player.id)} onDoubleClick={() => onOpenPlayer(player.id)} className={`cursor-pointer shadow-[0_1px_0_rgba(29,57,36,.04)] transition hover:bg-[#edf7ef] ${selectedPlayer?.id === player.id ? "bg-[#dff1e3] ring-1 ring-inset ring-[var(--team-accent)]" : "bg-white/95"}`}>
-              <td className="rounded-l px-2 py-2 text-center"><PositionBadge player={player} /></td>
-              <td className="px-2 py-2 text-center text-[#718177]">{player.shirtNumber ?? player.id}</td>
-              <td className="px-2 py-2 font-bold"><span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--team-accent)] text-[8px] text-white">{club.slice(0, 1)}</span><span className="ml-2">{player.name}</span>{starter && <span className="ml-2 rounded bg-[#dff5e5] px-1 text-[8px] text-[#18783b]">XI</span>}</td>
-              <Td>{player.foot}</Td><Td>{player.age}</Td><Td className="font-black text-[var(--team-accent)]">{player.overall}</Td><td className="px-2 py-2 text-[#62736a]">{player.traits}</td><td className="px-2 py-2"><Energy value={player.energy} /></td><td className="px-2 py-2 text-right font-bold">R$ {player.marketValue.toFixed(1)}M</td><td className="px-2 py-2 text-right whitespace-nowrap">R$ {records[player.id]?.salary ?? player.salary} mil</td><td className="px-2 py-2 text-center text-[10px]">{records[player.id]?.contractUntil ?? player.contractUntil}</td><Td>{stats.games}</Td><Td>{stats.goals}</Td><Td>{stats.assists}</Td><td className="px-2 py-2 text-center font-black"><Rating value={stats.rating} /></td><td className="rounded-r px-2 py-2">{marketStatus(records[player.id]?.marketStatus ?? player.marketAvailability)}</td>
-            </tr>;
-          })}</tbody>
-        </table>
+      <div className="min-h-0 flex-1 overflow-auto p-3">
+        <div className="grid min-h-full grid-cols-[minmax(0,1fr)_minmax(245px,290px)] items-start gap-3 max-[1180px]:grid-cols-1">
+          <div className="min-w-0 overflow-auto rounded-xl border border-[#d5e1d6] bg-white/75 shadow-sm">
+            <table className="w-full min-w-[980px] border-separate border-spacing-y-1 text-left text-[11px]">
+              <thead className="sticky top-0 z-10 bg-[#f8fbf8] text-[9px] font-black uppercase tracking-wide text-[#607267]"><tr><Th>Pos.</Th><Th>#</Th><Th align="left">Nome</Th><Th>Pé</Th><Th>Idade</Th><Th>Força</Th><Th align="left">Pontos fortes</Th><Th align="left">Energia</Th><Th align="right">Valor</Th><Th align="right">Salário/mês</Th><Th>Contrato</Th><Th>J</Th><Th>G</Th><Th>A</Th><Th>Nota</Th><Th align="left">Mercado</Th></tr></thead>
+              <tbody>{visibleSquad.map((player) => {
+                const starter = starters.includes(player.id);
+                const stats = careerTotals(records[player.id]);
+                return <tr key={player.id} onClick={() => onSelectPlayer(player.id)} onDoubleClick={() => onOpenPlayer(player.id)} className={`cursor-pointer shadow-[0_1px_0_rgba(29,57,36,.04)] transition hover:bg-[#edf7ef] ${selectedPlayer?.id === player.id ? "bg-[#dff1e3] ring-1 ring-inset ring-[var(--team-accent)]" : "bg-white/95"}`}>
+                  <td className="rounded-l px-2 py-2 text-center"><PositionBadge player={player} /></td>
+                  <td className="px-2 py-2 text-center text-[#718177]">{player.shirtNumber ?? player.id}</td>
+                  <td className="px-2 py-2 font-bold"><span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--team-accent)] text-[8px] text-white">{club.slice(0, 1)}</span><span className="ml-2">{player.name}</span>{starter && <span className="ml-2 rounded bg-[#dff5e5] px-1 text-[8px] text-[#18783b]">XI</span>}</td>
+                  <Td>{player.foot}</Td><Td>{player.age}</Td><Td className="font-black text-[var(--team-accent)]">{player.overall}</Td><td className="px-2 py-2 text-[#62736a]">{player.traits}</td><td className="px-2 py-2"><Energy value={player.energy} /></td><td className="px-2 py-2 text-right font-bold">R$ {player.marketValue.toFixed(1)}M</td><td className="px-2 py-2 text-right whitespace-nowrap">R$ {records[player.id]?.salary ?? player.salary} mil</td><td className="px-2 py-2 text-center text-[10px]">{records[player.id]?.contractUntil ?? player.contractUntil}</td><Td>{stats.games}</Td><Td>{stats.goals}</Td><Td>{stats.assists}</Td><td className="px-2 py-2 text-center font-black"><Rating value={stats.rating} /></td><td className="rounded-r px-2 py-2">{marketStatus(records[player.id]?.marketStatus ?? player.marketAvailability)}</td>
+                </tr>;
+              })}</tbody>
+            </table>
+          </div>
+          <SquadInsights squad={squad} starters={starters} records={records} availableCount={availableCount} />
+        </div>
       </div>
     </section>
   </div>;
+}
+
+function SquadInsights({ squad, starters, records, availableCount }: { squad: Player[]; starters: number[]; records: Record<number, PlayerCareerRecord>; availableCount: number }) {
+  const defenders = squad.filter((player) => player.position === "L" || player.position === "Z").length;
+  const sectors = [
+    { label: "Goleiros", count: squad.filter((player) => player.position === "G").length, color: "bg-[#c59d24]" },
+    { label: "Defesa", count: defenders, color: "bg-[#547eaf]" },
+    { label: "Meio-campo", count: squad.filter((player) => player.position === "M").length, color: "bg-[#239557]" },
+    { label: "Ataque", count: squad.filter((player) => player.position === "A").length, color: "bg-[#be584f]" },
+  ];
+  const averageEnergy = squad.length ? Math.round(squad.reduce((sum, player) => sum + player.energy, 0) / squad.length) : 0;
+  const lowEnergy = [...squad].filter((player) => player.energy < 60).sort((a, b) => a.energy - b.energy);
+  const forSale = squad.filter((player) => (records[player.id]?.marketStatus ?? player.marketAvailability) === "sale").length;
+  const forLoan = squad.filter((player) => (records[player.id]?.marketStatus ?? player.marketAvailability) === "loan").length;
+
+  return <aside aria-label="Resumo do elenco" className="grid content-start gap-3">
+    <section className="rounded-xl border border-[#d5e1d6] bg-white/95 p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div><span className="text-[9px] font-black uppercase tracking-[.12em] text-[var(--team-accent)]">Composição</span><h3 className="mt-1 text-sm font-black text-[#273b2e]">Profundidade por setor</h3></div>
+        <span className="rounded-full bg-[#eff5ef] px-2 py-1 text-[9px] font-bold text-[#607267]">{squad.length} atletas</span>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="rounded-lg bg-[#f2f7f2] px-3 py-2"><b className="block text-lg leading-none text-[#263b2d]">{starters.length}</b><span className="mt-1 block text-[9px] font-bold text-[#68796d]">Titulares</span></div>
+        <div className="rounded-lg bg-[#f2f7f2] px-3 py-2"><b className="block text-lg leading-none text-[#263b2d]">{Math.max(0, squad.length - starters.length)}</b><span className="mt-1 block text-[9px] font-bold text-[#68796d]">Reservas</span></div>
+      </div>
+      <div className="mt-4 space-y-3">{sectors.map((sector) => <div key={sector.label}>
+        <div className="mb-1 flex items-center justify-between text-[10px]"><span className="font-semibold text-[#586a5e]">{sector.label}</span><b className="text-[#34483a]">{sector.count}</b></div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-[#e8eee8]" role="img" aria-label={`${sector.label}: ${sector.count} de ${squad.length}`}><i className={`block h-full rounded-full ${sector.color}`} style={{ width: `${squad.length ? sector.count / squad.length * 100 : 0}%` }} /></div>
+      </div>)}</div>
+    </section>
+
+    <section className="rounded-xl border border-[#d5e1d6] bg-white/95 p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-2"><div><span className="text-[9px] font-black uppercase tracking-[.12em] text-[var(--team-accent)]">Condição</span><h3 className="mt-1 text-sm font-black text-[#273b2e]">Energia do plantel</h3></div><b className="text-lg text-[#263b2d]">{averageEnergy}%</b></div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#e7eee7]" role="img" aria-label={`Energia média do elenco: ${averageEnergy}%`}><i className={`block h-full rounded-full ${averageEnergy > 70 ? "bg-[#25b95e]" : averageEnergy > 40 ? "bg-[#eab439]" : "bg-[#d75b4f]"}`} style={{ width: `${averageEnergy}%` }} /></div>
+      <p className="mt-3 text-[10px] font-bold text-[#64756a]">{lowEnergy.length} atletas abaixo de 60% de energia</p>
+      {lowEnergy.length > 0 && <ul className="mt-2 divide-y divide-[#edf1ed]">{lowEnergy.slice(0, 3).map((player) => <li key={player.id} className="flex items-center justify-between gap-2 py-1.5 text-[10px]"><span className="truncate text-[#405346]">{player.name}</span><b className="shrink-0 text-[#a56e19]">{player.energy}%</b></li>)}</ul>}
+    </section>
+
+    <section className="rounded-xl border border-[#d5e1d6] bg-white/95 p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-2"><div><span className="text-[9px] font-black uppercase tracking-[.12em] text-[var(--team-accent)]">Mercado</span><h3 className="mt-1 text-sm font-black text-[#273b2e]">Disponibilidade</h3></div><b className="text-lg text-[#263b2d]">{availableCount}</b></div>
+      <div className="mt-3 flex flex-wrap gap-2"><span className="rounded-full bg-[#e7f4e9] px-2.5 py-1 text-[9px] font-bold text-[#2d7147]">À venda · {forSale}</span><span className="rounded-full bg-[#e9efff] px-2.5 py-1 text-[9px] font-bold text-[#354e93]">Empréstimo · {forLoan}</span></div>
+    </section>
+  </aside>;
 }
 
 function careerTotals(record?: PlayerCareerRecord) {
