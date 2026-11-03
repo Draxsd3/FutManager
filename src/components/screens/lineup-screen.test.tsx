@@ -61,6 +61,8 @@ const starterButton = (index: number) =>
 it("uses numbered shirts, not photos, and exposes every sector", () => {
   setup();
   expect(screen.queryByText("Adicionar foto")).toBeNull();
+  expect(starterButton(0).getAttribute("title")).toContain(starters[0].name);
+  expect(starterButton(0).getAttribute("aria-label")).toContain(starters[0].name);
   expect(document.querySelector('input[type="file"]')).toBeNull();
   expect(document.querySelector('img[alt^="Foto"]')).toBeNull();
   expect(starterButton(0).querySelector("svg text")?.textContent).toBe(

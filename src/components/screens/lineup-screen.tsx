@@ -456,6 +456,7 @@ export function LineupScreen(props: Props) {
                   key={player.id}
                   data-player={player.id}
                   data-slot={index}
+                  title={`${player.name} · ${fifaPosition(player)} · Energia ${player.energy}%`}
                   aria-label={`${player.name}, camisa ${player.shirtNumber ?? player.id}, titular, ${fits[index].label}`}
                   aria-pressed={selectedPlayer?.id === player.id}
                   className={`${styles.player} ${selectedPlayer?.id === player.id ? styles.selected : ""} ${dragId === player.id ? styles.source : ""} ${hoverSlot === index ? styles.hovered : ""}`}
