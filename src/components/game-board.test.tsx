@@ -349,4 +349,7 @@ it("applies a manageable training session and persists its weekly summary", asyn
   expect(saved.trainingSessions?.[0]).toMatchObject({ week: 1, day: "Segunda", drill: "passe", intensity: "Moderada" });
   expect(saved.trainingSessions?.[0].energySpent).toBe(22);
   expect(saved.careerSquad!.find((player) => player.id === selectedId)!.energy).toBe(energyBefore - 2);
+  fireEvent.click(within(dialog).getByRole("button", { name: "Fechar Treino" }));
+  expect(screen.getByText("1/6 sessões")).toBeTruthy();
+  expect(screen.getByLabelText("Segunda: treino concluído — Passe e posse")).toBeTruthy();
 });

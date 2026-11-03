@@ -1172,6 +1172,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             competition={competitionName}
             playerCareers={playerCareers}
             trainingSessions={trainingSessions}
+            trainingWeek={round}
             season={competitionSeason?.season ?? 2026}
             isHome={userIsHome}
             hasNextMatch={!!scheduledFixture}

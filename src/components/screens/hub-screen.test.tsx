@@ -75,3 +75,21 @@ it("keeps the entire roster visible without filters and retains the player profi
   fireEvent.click(screen.getByRole("button", { name: /Ver ficha/ }));
   expect(open).toHaveBeenCalledWith(players[0].id);
 });
+
+it("shows every completed day using the training week, not the competition round", () => {
+  const days = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"] as const;
+  const sessions = days.map((day, index) => ({ id: `training-${index}`, season: 2026, week: 3, day,
+    drill: "passe" as const, intensity: "Moderada" as const, playerIds: [squad[0].id], energySpent: 2, energyRecovered: 0, overallImprovements: 0 }));
+  const props = { club: "Corinthians", coach: "Teste", budget: 1000, opponent: "Flamengo", round: 1, competition: "Paulista", trainingWeek: 3, season: 2026,
+    squad: squad.slice(0, 2), starters: [], selectedPlayer: null, onSelectPlayer: vi.fn(), onOpenPlayer: vi.fn(), onEscalar: vi.fn(), onQuickAction: vi.fn() };
+  const view = render(<HubScreen {...props} trainingSessions={[]} />);
+  expect(screen.getByText("0/6 sessões")).toBeTruthy();
+  view.rerender(<HubScreen {...props} trainingSessions={sessions} />);
+  expect(screen.getByText("6/6 sessões")).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Semana 3" })).toBeTruthy();
+  for (const day of days) expect(screen.getByLabelText(`${day}: treino concluído — Passe e posse`)).toBeTruthy();
+  expect(screen.getAllByText("Passe e posse")).toHaveLength(6);
+  view.rerender(<HubScreen {...props} trainingWeek={4} trainingSessions={sessions} />);
+  expect(screen.getByText("0/6 sessões")).toBeTruthy();
+  expect(screen.queryByLabelText(/treino concluído/)).toBeNull();
+});

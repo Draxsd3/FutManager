@@ -8,10 +8,10 @@ import { PlayerJersey } from "@/components/ui/player-jersey";
 import { TRAINING_DAYS, trainingDrillLabel, trainingWeekSessions, type TrainingSessionRecord } from "@/lib/game/training";
 import styles from "./hub-screen.module.css";
 
-export function HubScreen({ club, coach, budget, opponent, round, competition, squad, starters, selectedPlayer, playerCareers = {}, trainingSessions = [], season = 2026, isHome = true, hasNextMatch = true, roundLabel, onSelectPlayer, onOpenPlayer, onEscalar, onQuickAction }: {
+export function HubScreen({ club, coach, budget, opponent, round, competition, squad, starters, selectedPlayer, playerCareers = {}, trainingSessions = [], trainingWeek = round, season = 2026, isHome = true, hasNextMatch = true, roundLabel, onSelectPlayer, onOpenPlayer, onEscalar, onQuickAction }: {
   club: string; coach: string; budget: number; opponent: string; round: number; competition: string;
   squad: Player[]; starters: number[]; selectedPlayer: Player | null; playerCareers?: Record<number, PlayerCareerRecord>; trainingSessions?: TrainingSessionRecord[];
-  season?: number; isHome?: boolean; hasNextMatch?: boolean; roundLabel?: string;
+  trainingWeek?: number; season?: number; isHome?: boolean; hasNextMatch?: boolean; roundLabel?: string;
   onSelectPlayer: (id: number) => void; onOpenPlayer: (id: number) => void; onEscalar: () => void;
   onQuickAction: (action: "roster" | "finances" | "trophies" | "training") => void;
 }) {
@@ -21,7 +21,7 @@ export function HubScreen({ club, coach, budget, opponent, round, competition, s
   return <div className={styles.workspace}>
     <ClubSidebar club={club} coach={coach} budget={budget} opponent={opponent} competition={competition} roundLabel={roundLabel ?? `${round}ª rodada`} isHome={isHome} hasNextMatch={hasNextMatch} squadSize={squad.length} ctaLabel="Escalar Time" onCta={onEscalar} onQuickAction={onQuickAction} />
     <section className={styles.roster} aria-label="Elenco do clube">
-      <div className={styles.toolbar}><div className={styles.rosterTitle}><b>Plantel</b><span>{squad.length} atletas · temporada {season}</span></div><span className={styles.weekBadge}>SEMANA {round}</span></div>
+      <div className={styles.toolbar}><div className={styles.rosterTitle}><b>Plantel</b><span>{squad.length} atletas · temporada {season}</span></div><span className={styles.weekBadge}>SEMANA {trainingWeek}</span></div>
       <div className={styles.rosterBody}>
         <div className={styles.tableScroll}>
           <table className={styles.table}>
@@ -39,7 +39,7 @@ export function HubScreen({ club, coach, budget, opponent, round, competition, s
           </table>
           {squad.length === 0 && <p className={styles.empty}>Nenhum atleta no elenco.</p>}
         </div>
-        <SquadInsights squad={squad} season={season} week={round} trainingSessions={trainingSessions} onOpenTraining={() => onQuickAction("training")} />
+        <SquadInsights squad={squad} season={season} week={trainingWeek} trainingSessions={trainingSessions} onOpenTraining={() => onQuickAction("training")} />
       </div>
       {selectedPlayer && <PlayerPreview player={selectedPlayer} record={selectedRecord} season={season} current={selectedSeason} onOpen={() => onOpenPlayer(selectedPlayer.id)} />}
       <footer className={styles.statusbar}><span>{squad.length} exibidos · {squad.length} / 35 jogadores</span><span>Selecione um atleta · duplo clique ou Enter abre a ficha</span></footer>
@@ -75,13 +75,13 @@ function SquadInsights({ squad, season, week, trainingSessions, onOpenTraining }
       <div className={styles.trainingWeek} aria-label={`Semana ${week}: ${weeklySessions.length} de 6 sessões concluídas`}>
         {TRAINING_DAYS.map((day) => {
           const session = weeklySessions.find((item) => item.day === day);
-          return <span key={day} className={session ? styles.trainingDayDone : styles.trainingDay} title={session ? `${day}: ${trainingDrillLabel(session.drill)}` : `${day}: sem treino`}>{day.slice(0, 3).toLocaleUpperCase("pt-BR")}</span>;
+          return <span key={day} className={session ? styles.trainingDayDone : styles.trainingDay} aria-label={session ? `${day}: treino concluído — ${trainingDrillLabel(session.drill)}` : `${day}: sem treino`} title={session ? `${day}: ${trainingDrillLabel(session.drill)}` : `${day}: sem treino`}>{day.slice(0, 3).toLocaleUpperCase("pt-BR")}{session ? " ✓" : ""}</span>;
         })}
       </div>
       {weeklySessions.length ? <>
         <div className={styles.trainingSummary}><b>{trainedIds.size}</b><span>atletas treinados</span><i>·</i><b>{weeklySessions.reduce((sum, session) => sum + session.overallImprovements, 0)}</b><span>evoluções</span></div>
         <p className={styles.trainingLoad}>{totalEnergySpent ? `−${totalEnergySpent} pts de energia` : "Sem desgaste"}{totalEnergyRecovered ? ` · +${totalEnergyRecovered} pts recuperados` : ""}</p>
-        <ul className={styles.trainingLog}>{weeklySessions.slice(-2).reverse().map((session) => <li key={session.id}><span><b>{session.day.slice(0, 3)}</b> {trainingDrillLabel(session.drill)}</span><small>{session.playerIds.length} atletas</small></li>)}</ul>
+        <ul className={styles.trainingLog}>{[...weeklySessions].reverse().map((session) => <li key={session.id}><span><b>{session.day.slice(0, 3)}</b> {trainingDrillLabel(session.drill)}</span><small>{session.playerIds.length} atletas</small></li>)}</ul>
       </> : <p className={styles.trainingEmpty}>Monte a semana e acompanhe aqui a carga e a evolução do elenco.</p>}
       <button type="button" className={styles.trainingButton} onClick={onOpenTraining}>Abrir centro de treino <span aria-hidden="true">↗</span></button>
     </section>

@@ -278,3 +278,8 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Pedido: refinar levemente a tela de treino da referência, usar mais ícones coerentes e remover cards/botões desnecessários. Preservar o tema escuro, a janela modal e a mecânica semanal; não redesenhar o restante do game.
 - Removida somente no treino a barra interna repetida de título/Voltar ao clube; o X do modal continua sendo a saída. Semana/temporada ficam em texto com calendário, sem card. Resumo lateral e métricas permanecem, mas sem caixas aninhadas/nota redundante.
 - Atividades viraram opções compactas com ícones SVG da família existente; descrição somente da atividade escolhida. Intensidade usa um seletor em vez de três botões. Selecionar aptos/Limpar ficam em um checkbox de seleção geral; seleção inicial de titulares e checkboxes individuais continuam. Mantidos filtros, seis dias, seis atividades, resumo/diário, aplicação, validações e salvamento.
+
+### 33. Dias de treino concluídos no resumo da Principal — 03/11/2026
+
+- Ao concluir uma sessão, o card semanal da Principal deve marcar o dia e exibir a sessão/contagem atualizada. Usar a mesma semana de treino do centro e do save (`round` de progresso), não a rodada específica da competição: campeonatos intercalados podem ter rodadas diferentes da semana da carreira.
+- `HubScreen.trainingWeek` recebe a semana da carreira separada da rodada do confronto; badge e resumo usam esse valor. Exibir todos os até seis dias concluídos, não apenas os dois últimos, preservando a separação por semana/temporada e o estilo existente.
