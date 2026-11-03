@@ -75,3 +75,19 @@
 .center button:focus-visible,.center input:focus-visible,.center select:focus-visible { outline:2px solid var(--game-accent,#a2dfb2); outline-offset:2px; }
 @media(max-width:1000px) { .layout { grid-template-columns:1fr; } .weekPanel { position:static; border-left:0; border-top:1px solid #ffffff16; padding:12px 0 0; } }
 @media(max-width:600px) { .center { padding:14px; } .heading { align-items:flex-start; flex-direction:column; gap:10px; } .heading h2 { font-size:18px; } .heading p { line-height:1.5; } .drills { grid-template-columns:repeat(2,minmax(0,1fr)); } .rosterTools { grid-template-columns:1fr; } .loadRow { flex-wrap:wrap; } .applyRow { flex-direction:column; align-items:stretch; } .applyRow button { min-height:40px; } }
+
+/* Only the player list needs its own scroll; session choices stay compact. */
+.center { padding: 14px; }
+.heading { margin-bottom: 12px; }
+.layout { gap: 14px; }
+.builder { gap: 7px; }
+.sectionHead { margin-top: 3px; }
+.day, .dayActive { padding-block: 5px; }
+.drill, .drillActive { min-height: 42px; padding: 6px; }
+.loadRow { padding: 6px 0; }
+.playerList { max-height: 150px; }
+.playerRow, .playerUnavailable { min-height: 34px; }
+.applyRow { position: sticky; bottom: 0; z-index: 2; background: #101116; padding: 8px 0; }
+.weekStats { margin: 10px 0 12px; }
+.sessionLog li { padding: 6px 0; }
+@media (max-width: 600px) { .center { padding: 10px; } .applyRow button { min-height: 40px; } }
