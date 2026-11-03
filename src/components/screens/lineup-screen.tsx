@@ -98,6 +98,7 @@ export function LineupScreen(props: Props) {
   }, [detailPlayer]);
   useEffect(() => () => { if (holdTimer.current) clearTimeout(holdTimer.current); }, []);
   const [dragId, setDragId] = useState<number | null>(null);
+  const [holdingId, setHoldingId] = useState<number | null>(null);
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
   const field = useRef<HTMLDivElement>(null),
     ghost = useRef<HTMLDivElement>(null);
@@ -215,6 +216,7 @@ export function LineupScreen(props: Props) {
     );
     if (!button) return;
     const bounds = button.getBoundingClientRect();
+    const isReserve = bench.some((player) => player.id === Number(button.dataset.player));
     suppressClick.current = false;
     if (holdTimer.current) clearTimeout(holdTimer.current);
     gesture.current = {
@@ -223,15 +225,17 @@ export function LineupScreen(props: Props) {
       x: event.clientX,
       y: event.clientY,
       moved: false,
-      dx: bounds.width ? bounds.left + bounds.width / 2 - event.clientX : 0,
-      dy: bounds.height ? bounds.top + bounds.height / 2 - event.clientY : 0,
+      dx: !isReserve && bounds.width ? bounds.left + bounds.width / 2 - event.clientX : 0,
+      dy: !isReserve && bounds.height ? bounds.top + bounds.height / 2 - event.clientY : 0,
     };
-    if (bench.some((player) => player.id === Number(button.dataset.player))) {
+    if (isReserve) {
+      setHoldingId(Number(button.dataset.player));
       const host = event.currentTarget;
       holdTimer.current = setTimeout(() => {
         const current = gesture.current;
         if (!current || current.moved) return;
         current.moved = true;
+        setHoldingId(null);
         host.setPointerCapture?.(current.pointer);
         setDragId(current.id);
         if (ghost.current) ghost.current.style.transform = `translate3d(${current.x + current.dx}px,${current.y + current.dy}px,0) translate(-50%, -50%)`;
@@ -249,6 +253,7 @@ export function LineupScreen(props: Props) {
       return;
     if (!current.moved) {
       if (holdTimer.current) clearTimeout(holdTimer.current);
+      setHoldingId(null);
       current.moved = true;
       event.currentTarget.setPointerCapture?.(event.pointerId);
       setDragId(current.id);
@@ -265,6 +270,7 @@ export function LineupScreen(props: Props) {
     if (!current || current.pointer !== event.pointerId) return;
     gesture.current = null;
     if (holdTimer.current) clearTimeout(holdTimer.current);
+    setHoldingId(null);
     event.currentTarget.releasePointerCapture?.(event.pointerId);
     setDragId(null);
     setHoverSlot(null);
@@ -343,6 +349,7 @@ export function LineupScreen(props: Props) {
           if (current?.moved) e.currentTarget.releasePointerCapture?.(current.pointer);
           onSelectPlayer(null);
           setDragId(null);
+          setHoldingId(null);
           setHoverSlot(null);
           setMessage("Movimento cancelado.");
         }
@@ -456,6 +463,7 @@ export function LineupScreen(props: Props) {
                   key={player.id}
                   data-player={player.id}
                   data-slot={index}
+                  data-name-align={positions[index].left < 15 ? "left" : positions[index].left > 85 ? "right" : "center"}
                   title={`${player.name} · ${fifaPosition(player)} · Energia ${player.energy}%`}
                   aria-label={`${player.name}, camisa ${player.shirtNumber ?? player.id}, titular, ${fits[index].label}`}
                   aria-pressed={selectedPlayer?.id === player.id}
@@ -498,7 +506,7 @@ export function LineupScreen(props: Props) {
                   title="Dois cliques para detalhes; segure e arraste para mover"
                   aria-label={`${player.name}, ${fifaPosition(player)}, força ${player.overall}. Dois cliques ou tecla I para detalhes`}
                   aria-pressed={selectedPlayer?.id === player.id}
-                  className={`${styles.reserve} ${selectedPlayer?.id === player.id ? styles.reserveSelected : ""}`}
+                  className={`${styles.reserve} ${selectedPlayer?.id === player.id ? styles.reserveSelected : ""} ${holdingId === player.id ? styles.reserveHolding : ""} ${dragId === player.id ? styles.reserveDragging : ""}`}
                 >
                   <span data-player={player.id} className={styles.handle} title="Arrastar jogador"><PlayerJersey player={player} /></span>
                   <span className={styles.reserveInfo}><b>{player.name}</b><small>{fifaPosition(player)} · ENERGIA {player.energy}%</small></span>
