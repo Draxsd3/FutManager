@@ -2,9 +2,9 @@
 @media(max-width:900px){.screen{padding-inline:24px}.layout{grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:26px}.clubCard{min-height:430px;padding:15px}.crestStage{min-height:190px}}
 @media(max-width:680px){.screen{min-height:100dvh;overflow:auto;padding-inline:16px}.topbar{min-height:60px}.brand{font-size:8px}.topbar button{padding:7px 9px}.layout{grid-template-columns:1fr;gap:22px;padding:28px 0 35px}.formPanel{max-width:none}.formPanel h1{font-size:clamp(36px,10vw,54px)}.intro{margin:12px 0 21px}.clubCard{min-height:390px}.crestStage{min-height:165px}}
 @media(max-width:380px){.fields{grid-template-columns:1fr}.coachField{grid-column:auto}.formFooter{align-items:flex-start;flex-direction:column}.start{width:100%}}
-.brand span,.step>span,.formPanel h1 em,.clubIdentity p span{color:var(--team-accent,var(--club-color,#d4ad64))}
-.brand span,.step>span{border-color:color-mix(in srgb,var(--team-accent,var(--club-color,#d4ad64)) 55%,transparent)}
-.step>i{background:var(--team-accent,var(--club-color,#d4ad64))}
-.field input:focus,.field select:focus{border-color:color-mix(in srgb,var(--team-accent,var(--club-color,#d4ad64)) 65%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--team-accent,var(--club-color,#d4ad64)) 13%,transparent)}
-.start{border-color:var(--team-accent,var(--club-color,#d4ad64));background:var(--team-accent,var(--club-color,#d4ad64));color:var(--team-accent-text,#15161b)}
-.start:hover:not(:disabled){background:color-mix(in srgb,var(--team-accent,var(--club-color,#d4ad64)) 86%,white)}
+.brand span,.step>span,.formPanel h1 em,.clubIdentity p span{color:var(--game-accent,#a2dfb2)}
+.brand span,.step>span{border-color:color-mix(in srgb,var(--game-accent,#a2dfb2) 55%,transparent)}
+.step>i{background:var(--game-accent,#a2dfb2)}
+.field input:focus,.field select:focus{border-color:color-mix(in srgb,var(--game-accent,#a2dfb2) 65%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--game-accent,#a2dfb2) 13%,transparent)}
+.start{border-color:var(--game-accent,#a2dfb2);background:var(--game-accent,#a2dfb2);color:var(--game-accent-text,#10291a)}
+.start:hover:not(:disabled){background:color-mix(in srgb,var(--game-accent,#a2dfb2) 86%,white)}

@@ -2,13 +2,15 @@
 
 :root {
   color-scheme: dark;
-  --background: #090a0f;
+  --background: #0d2418;
   --foreground: #eef0f4;
-  --accent: #d4ad64;
-  --accent-soft: #33291c;
-  --surface: #121319;
-  --surface-raised: #191a21;
-  --surface-high: #24252d;
+  --accent: #a2dfb2;
+  --game-accent: #a2dfb2;
+  --game-accent-text: #10291a;
+  --accent-soft: #1d4230;
+  --surface: #10291d;
+  --surface-raised: #1a3828;
+  --surface-high: #294d39;
   --stroke: #ffffff16;
   --muted: #9aa0ac;
   --muted-strong: #c3c7d0;
@@ -38,10 +40,10 @@ body {
 button, input, select, textarea { font: inherit; }
 button { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-  outline: 2px solid var(--team-accent, var(--accent));
+  outline: 2px solid var(--game-accent, var(--accent));
   outline-offset: 3px;
 }
-::selection { color: #101116; background: var(--team-accent, var(--accent)); }
+::selection { color: #101116; background: var(--game-accent, var(--accent)); }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: #090a0f; }
 ::-webkit-scrollbar-thumb { background: #ffffff25; border: 2px solid #090a0f; border-radius: 99px; }

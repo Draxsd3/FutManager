@@ -43,7 +43,8 @@ export function clubThemeStyle(teamName: string, clubColors?: { primaryColor: st
     "--team-text": theme.text,
     "--team-accent": accent.color,
     "--team-accent-text": accent.text,
-    "--game-accent": accent.color,
+    "--game-accent": "#a2dfb2",
+    "--game-accent-text": "#10291a",
   } as CSSProperties;
 }
 

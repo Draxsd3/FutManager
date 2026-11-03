@@ -22,7 +22,7 @@
 .brand {
   font-size: 20px;
   font-weight: 850;
-  color: var(--team-accent, #d4ad64);
+  color: var(--game-accent, #a2dfb2);
 }
 .brand > span {
   font-size: 10px;
@@ -61,7 +61,7 @@
   margin: 0;
 }
 .heading h1 > span {
-  color: var(--team-accent, #d4ad64);
+  color: var(--game-accent, #a2dfb2);
 }
 .heading p:not(.eyebrow) {
   color: #95a68e;
@@ -77,7 +77,7 @@
 .counter strong {
   font-size: 36px;
   font-weight: 500;
-  color: var(--team-accent, #d4ad64);
+  color: var(--game-accent, #a2dfb2);
 }
 .counter span {
   font-size: 10px;
@@ -144,7 +144,7 @@
   overflow: hidden;
 }
 .latest {
-  border-color: color-mix(in srgb, var(--team-accent, #d4ad64) 33.3%, transparent);
+  border-color: color-mix(in srgb, var(--game-accent, #a2dfb2) 33.3%, transparent);
   background: linear-gradient(135deg, #1a261d75, #191a21);
 }
 .cardTop {
@@ -162,8 +162,8 @@
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: var(--team-accent, #d4ad64);
-  background: color-mix(in srgb, var(--team-accent, #d4ad64) 6.3%, transparent);
+  color: var(--game-accent, #a2dfb2);
+  background: color-mix(in srgb, var(--game-accent, #a2dfb2) 6.3%, transparent);
   padding: 6px 9px;
   border-radius: 3px;
 }
@@ -243,7 +243,7 @@
   justify-content: space-between;
   border: 0;
   border-radius: 5px;
-  background: var(--team-accent, #d4ad64);
+  background: var(--game-accent, #a2dfb2);
   color: #1a2b0f;
   padding: 12px 17px;
   font-size: 10px;
@@ -259,7 +259,7 @@
 }
 .screen button:focus-visible,
 .screen select:focus-visible {
-  outline: 2px solid var(--team-accent, #d4ad64);
+  outline: 2px solid var(--game-accent, #a2dfb2);
   outline-offset: 4px;
 }
 .empty {

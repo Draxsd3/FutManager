@@ -40,7 +40,7 @@
 .matchState { text-align: right; }
 .eyebrow { display: block; color: #b9bec7; font-size: 8px; font-weight: 850; letter-spacing: .16em; }
 .matchState h1 { margin: 3px 0; font-size: 18px; font-weight: 900; }
-.matchState strong { color: var(--team-accent, #d4ad64); font-size: 10px; letter-spacing: .08em; }
+.matchState strong { color: var(--game-accent, #a2dfb2); font-size: 10px; letter-spacing: .08em; }
 .close { width: 36px; height: 36px; border: 1px solid #656975; border-radius: 10px; background: #17462f; color: #fff; font-size: 24px; line-height: 1; cursor: pointer; }
 .toolbar { display: grid; grid-template-columns: repeat(4, minmax(110px, 1fr)) auto; align-items: end; gap: 9px; padding: 10px 16px; background: #17181f; border-bottom: 1px solid #373941; }
 .tacticControl { display: grid; gap: 5px; min-width: 0; }
@@ -58,14 +58,14 @@
 .panelHeading>strong { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #2a2b33; font-size: 11px; }
 .benchList { display: grid; align-content: start; gap: 5px; overflow: auto; min-height: 0; padding: 7px; overscroll-behavior: contain; scrollbar-width: thin; }
 .player { display: grid; grid-template-columns: 24px minmax(0,1fr) 24px; align-items: center; gap: 7px; min-width: 0; min-height: 47px; padding: 5px 7px; border: 1px solid #373941; border-radius: 8px; background: #191a21; color: #f3f8ee; text-align: left; cursor: pointer; }
-.player:hover:not(:disabled) { border-color: var(--team-accent, #d4ad64); background: #24252d; }
-.player.selected { border-color: var(--team-accent, #d4ad64); background: #292a31; box-shadow: 0 0 0 1px var(--team-accent, #d4ad64); }
+.player:hover:not(:disabled) { border-color: var(--game-accent, #a2dfb2); background: #24252d; }
+.player.selected { border-color: var(--game-accent, #a2dfb2); background: #292a31; box-shadow: 0 0 0 1px var(--game-accent, #a2dfb2); }
 .player:disabled { opacity: .52; cursor: not-allowed; }
-.position { display: grid; place-items: center; height: 22px; border-radius: 6px; background: #343740; color: var(--team-accent, #d4ad64); font-size: 9px; font-weight: 900; }
+.position { display: grid; place-items: center; height: 22px; border-radius: 6px; background: #343740; color: var(--game-accent, #a2dfb2); font-size: 9px; font-weight: 900; }
 .playerIdentity { display: grid; gap: 3px; min-width: 0; }
 .playerIdentity b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
 .playerIdentity small { color: #aac4ad; font-size: 8px; }
-.player>strong { text-align: center; color: var(--team-accent, #d4ad64); font-size: 12px; }
+.player>strong { text-align: center; color: var(--game-accent, #a2dfb2); font-size: 12px; }
 .empty { padding: 16px 8px; color: #b9bdc6; font-size: 11px; text-align: center; }
 .pitchPanel { padding-bottom: 6px; }
 .pitchLegend { display: flex !important; align-items: center; gap: 5px !important; color: #c1c4cc; font-size: 8px; white-space: nowrap; }
@@ -74,7 +74,7 @@
 .pitchFrame>div { width: min(100%, 485px); height: 100%; min-height: 0; aspect-ratio: .76; }
 .pitchHint { margin: 0; padding: 0 9px 2px; color: #aab0ba; font-size: 8px; text-align: center; }
 .statsPanel { background: linear-gradient(180deg,#191a21,#111218); }
-.liveTag { border-radius: 20px; padding: 4px 7px; background: #2b2c34; color: var(--team-accent, #d4ad64); font-size: 8px; font-weight: 850; white-space: nowrap; }
+.liveTag { border-radius: 20px; padding: 4px 7px; background: #2b2c34; color: var(--game-accent, #a2dfb2); font-size: 8px; font-weight: 850; white-space: nowrap; }
 .miniScore { display: grid; gap: 6px; padding: 10px; background: #191a21; border-bottom: 1px solid #373941; }
 .miniScore>div { display: grid; grid-template-columns: 32px minmax(0,1fr) 28px; align-items: center; gap: 7px; min-width: 0; }
 .miniScore b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
@@ -86,7 +86,7 @@
 .statValues b:last-child { text-align: right; }
 .statValues span { overflow: hidden; color: #bfc3cc; font-size: 8px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 .statBar { display: flex; height: 4px; overflow: hidden; border-radius: 8px; background: #30313a; }
-.statBar i:first-child { background: var(--team-accent, #d4ad64); }
+.statBar i:first-child { background: var(--game-accent, #a2dfb2); }
 .statBar i:last-child { background: #8fa9c5; }
 .statFootnote { margin: auto 10px 9px; color: #9297a2; font-size: 8px; }
 .footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; padding: 10px 15px; border-top: 1px solid #373941; background: #17181f; }
@@ -96,9 +96,9 @@
 .actions button { padding: 8px 11px; border: 1px solid #70946c; border-radius: 8px; font-size: 10px; font-weight: 800; cursor: pointer; }
 .confirm { background: #24252d; color: #f3f8ee; }
 .confirm:disabled { opacity: .4; cursor: not-allowed; }
-.return { border-color: var(--team-accent, #d4ad64) !important; background: var(--team-accent, #d4ad64); color: #17291b; }
+.return { border-color: var(--game-accent, #a2dfb2) !important; background: var(--game-accent, #a2dfb2); color: #17291b; }
 .cancel { margin-right: auto; background: transparent; color: #d9e7d8; }
-.modal button:focus-visible,.modal select:focus-visible { outline: 2px solid var(--team-accent, #d4ad64); outline-offset: 2px; }
+.modal button:focus-visible,.modal select:focus-visible { outline: 2px solid var(--game-accent, #a2dfb2); outline-offset: 2px; }
 @media (max-width: 1050px) {
   .content { grid-template-columns: minmax(160px, 195px) minmax(300px,1fr); }
   .statsPanel { grid-column: 1 / -1; min-height: 120px; }
@@ -140,9 +140,9 @@
 @media (prefers-reduced-motion: reduce) { .player { transition: none; } }
 
 /* Night-match palette: the club crest supplies the color, not a permanent grass-green UI. */
-.modal{--surface:#14151b;background:radial-gradient(ellipse at 50% -30%,color-mix(in srgb,var(--team-primary,#59616e) 18%,#202129),#111218 68%);border-color:#ffffff20}
-.header{background:linear-gradient(110deg,color-mix(in srgb,var(--team-primary,#59616e) 20%,#1d1e26),#14151b 72%);border-color:#ffffff18}
-.score{border-color:color-mix(in srgb,var(--team-accent,#d4ad64) 28%,#343640);background:#0f1015}
+.modal{--surface:#14151b;background:radial-gradient(ellipse at 50% -30%,color-mix(in srgb,#267048 18%,#202129),#111218 68%);border-color:#ffffff20}
+.header{background:linear-gradient(110deg,color-mix(in srgb,#267048 20%,#1d1e26),#14151b 72%);border-color:#ffffff18}
+.score{border-color:color-mix(in srgb,var(--game-accent,#a2dfb2) 28%,#343640);background:#0f1015}
 .score i,.panelHeading small,.pitchHeading small,.description,.pending{color:#aeb2bc}
 .eyebrow,.tacticControl span,.subCount span{color:#aeb3be}
 .close{border-color:#ffffff24;background:#202129}
@@ -153,13 +153,13 @@
 .panelHeading,.pitchHeading{border-color:#ffffff14;background:#1c1d25}
 .panelHeading>strong{background:#30313a}
 .player{border-color:#353741;background:#1b1c24}
-.player:hover:not(:disabled){border-color:var(--team-accent,#d4ad64);background:color-mix(in srgb,var(--team-accent,#d4ad64) 12%,#1b1c24)}
-.player.selected{border-color:var(--team-accent,#d4ad64);background:color-mix(in srgb,var(--team-accent,#d4ad64) 17%,#1b1c24)}
-.position{background:color-mix(in srgb,var(--team-accent,#d4ad64) 24%,#17181f);color:var(--team-accent,#d4ad64)}
+.player:hover:not(:disabled){border-color:var(--game-accent,#a2dfb2);background:color-mix(in srgb,var(--game-accent,#a2dfb2) 12%,#1b1c24)}
+.player.selected{border-color:var(--game-accent,#a2dfb2);background:color-mix(in srgb,var(--game-accent,#a2dfb2) 17%,#1b1c24)}
+.position{background:color-mix(in srgb,var(--game-accent,#a2dfb2) 24%,#17181f);color:var(--game-accent,#a2dfb2)}
 .playerIdentity small,.empty,.pitchHint,.statFootnote,.pending b{color:#aeb3bd}
-.player>strong,.matchState strong{color:var(--team-accent,#d4ad64)}
+.player>strong,.matchState strong{color:var(--game-accent,#a2dfb2)}
 .statsPanel{background:linear-gradient(180deg,#191a21,#111218)}
-.liveTag{background:color-mix(in srgb,var(--team-accent,#d4ad64) 12%,#1c1d25)}
+.liveTag{background:color-mix(in srgb,var(--game-accent,#a2dfb2) 12%,#1c1d25)}
 .miniScore{background:#191a21;border-color:#ffffff14}
 .miniScore strong{background:#0f1015}
 .statValues span{color:#a7abb5}
@@ -168,7 +168,7 @@
 .statFootnote{color:#969ba7}
 .footer{border-color:#ffffff14;background:#121319}
 .actions button{border-color:#393b46;background:#1b1c24;color:#e7e8ec}
-.confirm{border-color:var(--team-accent,#d4ad64)!important;background:var(--team-accent,#d4ad64);color:var(--team-accent-text,#15161b)}
-.return{color:var(--team-accent-text,#15161b)}
+.confirm{border-color:var(--game-accent,#a2dfb2)!important;background:var(--game-accent,#a2dfb2);color:var(--game-accent-text,#10291a)}
+.return{color:var(--game-accent-text,#10291a)}
 .cancel{color:#d9dbe1}
-.modal button:focus-visible,.modal select:focus-visible{outline-color:var(--team-accent,#d4ad64)}
+.modal button:focus-visible,.modal select:focus-visible{outline-color:var(--game-accent,#a2dfb2)}

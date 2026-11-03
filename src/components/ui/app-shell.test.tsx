@@ -20,7 +20,8 @@ it("uses the editor's club colors for custom clubs instead of silently defaultin
   expect(shell.style.getPropertyValue("--team-secondary")).toBe("#000000");
   expect(shell.style.getPropertyValue("--team-text")).toBe("#ffffff");
   expect(shell.style.getPropertyValue("--team-accent")).not.toBe("#c4f06a");
-  expect(shell.style.getPropertyValue("--game-accent")).toBe(shell.style.getPropertyValue("--team-accent"));
+  expect(shell.style.getPropertyValue("--game-accent")).toBe("#a2dfb2");
+  expect(shell.style.getPropertyValue("--game-accent-text")).toBe("#10291a");
 });
 
 it("uses a neutral silver accent for monochrome clubs and still honors their official kit colors", () => {
