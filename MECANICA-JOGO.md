@@ -136,3 +136,9 @@ Esta seção descreve a implementação atual, não regras oficiais da IFAB.
 - FIFA, [relatório técnico da Copa do Mundo de 2026](https://inside.fifa.com/talent-development/technical-study-group/media-releases/comprehensive-post-tournament-report-fifa-world-cup-2026) — análise dos 104 jogos, transições, contrapressão, blocos defensivos, construção e goleiro.
 - FIFA Training Centre, [Transição para o ataque](https://www.fifatrainingcentre.com/en/practice/elite-sessions/transition-to-attacking/transition-into-attack.php) — progressão rápida depois da recuperação, apoio, compactação e exploração de espaço.
 - FIFA Training Centre, [Contrapressão](https://www.fifatrainingcentre.com/en/practice/elite-sessions/transition-to-defending/counter-pressing.php) — reação coordenada à perda, pressão do atleta mais próximo e proteção do centro.
+
+## 9. Evolução local de decisões — 03/11/2026
+
+A camada `football-decisions.ts` complementa o motor ao vivo sem LLM/API paga: conserva bola/portador, pondera opções de passe e condução, usa geometria/pressão na qualidade das chances e adapta o rival ao placar/tempo/inferioridade. O mesmo evento continua sendo a fonte para autoria, placar, estatísticas e texto. Minutos de entrada dos substitutos são enviados pelo controlador; posições manuais continuam livres. A saída de cada tempo é reproduzível e alternada.
+
+Esta é uma aproximação probabilística, não IA treinada nem validação empírica de futebol profissional. Estado novo é opcional para aceitar saves antigos; lances registrados não são reescritos, mas minutos futuros usam a atualização. A cadência continua de um lance representativo/minuto e partidas das demais equipes continuam com placares simplificados. Relatório técnico, teste de 1.000 partidas e limitações: `docs/football-decision-engine.md`.

@@ -1,10 +1,11 @@
+import { attackingProgress, chanceQuality, localPressure, opponentPlan, passUtility } from "./football-decisions";
 import type { Player, PositionCode } from "./mock-data";
 import type { ManualPosition } from "./career";
 import { formationSlotRoles, formationSlots, playerFitAtPosition } from "./formations";
 import type { MatchRules } from "./match-rules";
 
 export type MatchSide = "home" | "away";
-export type LiveAction = "pass" | "shot" | "goal" | "tackle" | "foul" | "discussion" | "offside" | "turnover";
+export type LiveAction = "carry" | "pass" | "shot" | "goal" | "tackle" | "foul" | "discussion" | "offside" | "turnover";
 export type MatchTactics = { style: string; marking: string; focus: string };
 export type MatchWeather = {
   id: string;
@@ -23,6 +24,10 @@ export type MatchScene = {
   to: { x: number; y: number };
   /** Team in possession after this event. Optional for saves created by older versions. */
   possessionAfter?: MatchSide;
+  /** Optional state permits resuming saves from before the decision engine upgrade. */
+  carrierId?: number;
+  targetId?: number;
+  ballAfter?: { x: number; y: number };
 };
 export type MatchEvent = {
   minute: number;
@@ -38,6 +43,8 @@ export type MatchEvent = {
   assistId?: number;
   interceptorId?: number;
   keeperId?: number;
+  /** Simulated chance quality before individual finishing/keeper adjustments; not factual xG. */
+  chanceQuality?: number;
   outcome?: "goal" | "saved" | "missed" | "complete" | "intercepted";
 };
 
@@ -50,6 +57,8 @@ export type MatchTeamInput = {
   tactics: MatchTactics;
   motivation: number;
   sentOffIds?: number[];
+  minutesPlayed?: Record<number, number>;
+  rules?: MatchRules;
 };
 
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
@@ -111,6 +120,7 @@ const skillAliases: Record<string, string[]> = {
   finishing: ["fin", "cab", "vel", "dri", "finalização", "cabeceio", "drible"],
   defending: ["des", "mar", "cab", "pos", "defesa", "desarme", "marcação"],
   goalkeeping: ["ref", "col", "sgo", "dpe", "goleiro", "reflexo", "colocação"],
+  dribbling: ["dri", "vel", "tec", "drible", "técnica"],
   physical: ["for", "vel", "res", "físico", "força", "velocidade"],
 };
 
@@ -132,8 +142,13 @@ function athleteSkill(player: Player, index: number, team: MatchTeamInput, skill
   const tagged = traitHas(player, tags);
   const secondary = traitHas(player, ["secundária", "secondary"]);
   const bonus = tagged ? (secondary ? 3 : 6) : 0;
-  const fatigue = Math.max(0, 70 - player.energy) * 0.08 + Math.max(0, weather.temperatureC - 28) * 0.22 + minute / 90 * 5;
-  return clamp(player.overall - fitPenalty(player, index, team) + bonus + (player.energy - 70) * 0.06 - fatigue, 1, 100);
+  const played = team.minutesPlayed?.[player.id] ?? minute;
+  const fatigueRate = team.rules ? team.rules.baseFatiguePerMinute
+    + (team.tactics.marking === "Pesada" ? team.rules.heavyPressFatiguePerMinute : team.tactics.marking === "Normal" ? team.rules.heavyPressFatiguePerMinute * .45 : 0)
+    + Math.max(0, weather.temperatureC - 24) * team.rules.heatFatiguePerDegree : .24;
+  const effectiveEnergy = Math.max(15, player.energy - played * fatigueRate);
+  const fatigue = Math.max(0, 70 - effectiveEnergy) * .16 + played / 90 * 4;
+  return clamp(player.overall - fitPenalty(player, index, team) + bonus + (team.motivation - 65) * .12 + (effectiveEnergy - 70) * 0.06 - fatigue, 1, 100);
 }
 
 type TeamProfile = {
@@ -200,14 +215,16 @@ function choosePlayer(team: MatchTeamInput, minute: number, weather: MatchWeathe
   return rows.find((row) => (selection -= row.weight) < 0)?.index ?? rows.at(-1)!.index;
 }
 
-function chooseTarget(team: MatchTeamInput, fromIndex: number, snapshot: KickSnapshot | undefined, side: MatchSide, random: () => number) {
-  const candidates = activePlayers(team).map((entry) => entry.index).filter((index) => index !== fromIndex);
+function chooseTarget(team: MatchTeamInput, fromIndex: number, from: Point, snapshot: KickSnapshot | undefined, side: MatchSide, defenders: Point[], random: () => number) {
+  const candidates = activePlayers(team).filter(({ index }) => index !== fromIndex);
   if (!candidates.length) return fromIndex;
-  const points = snapshot?.[side];
-  if (!points?.[fromIndex]) return candidates[Math.floor(random() * candidates.length)] ?? fromIndex;
-  const nearest = candidates.sort((a, b) => Math.hypot(points[a].x - points[fromIndex].x, points[a].y - points[fromIndex].y)
-    - Math.hypot(points[b].x - points[fromIndex].x, points[b].y - points[fromIndex].y)).slice(0, 4);
-  return nearest[Math.floor(random() * nearest.length)] ?? fromIndex;
+  const rows = candidates.map(({ index }) => {
+    const target = simulatedPoint(index, team, side, snapshot);
+    return { index, weight: passUtility(from, target, side, localPressure(target, defenders), team.tactics)
+      * (team.positions[team.players[index].id] && isOffsideAtPass(side, target, from, defenders) ? .08 : 1) };
+  });
+  let selection = random() * rows.reduce((sum, row) => sum + row.weight, 0);
+  return rows.find((row) => (selection -= row.weight) < 0)?.index ?? rows.at(-1)!.index;
 }
 
 function playerName(team: MatchTeamInput, index: number, opponent: string) {
@@ -235,8 +252,13 @@ function tacticalFocusBonus(team: MatchTeamInput, index: number) {
 
 /** Simulates one coherent minute: actor, commentary, event type, possession, score and stats share one outcome. */
 export function simulateAction({ minute, starters, formation, positions, opponent, opponentStarters, opponentFormation,
-  previous, snapshot, rules, weather, tactics, opponentTactics, motivationHome, motivationAway, sentOffHomeIds = [], sentOffAwayIds = [], yellowCardIds = [], random }: {
+  previous, snapshot, rules, weather, tactics, opponentTactics, score = { home: 0, away: 0 }, managedIsHome = true, kickoffSide = "home", minutesPlayedHome, minutesPlayedAway, motivationHome, motivationAway, sentOffHomeIds = [], sentOffAwayIds = [], yellowCardIds = [], random }: {
   minute: number;
+  score?: { home: number; away: number };
+  managedIsHome?: boolean;
+  kickoffSide?: MatchSide;
+  minutesPlayedHome?: Record<number, number>;
+  minutesPlayedAway?: Record<number, number>;
   starters: Player[];
   formation: string;
   positions: Record<number, ManualPosition>;
@@ -256,10 +278,10 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   yellowCardIds?: number[];
   random: () => number;
 }): MatchEvent {
-  const home: MatchTeamInput = { players: starters, formation, positions, tactics, motivation: motivationHome, sentOffIds: sentOffHomeIds };
+  const home: MatchTeamInput = { players: starters, formation, positions, tactics, motivation: motivationHome, sentOffIds: sentOffHomeIds, minutesPlayed: minutesPlayedHome, rules };
   const away: MatchTeamInput = {
     players: opponentStarters ?? [], formation: opponentFormation ?? formation, positions: {},
-    tactics: opponentTactics ?? { style: "Equilibrado", marking: "Normal", focus: "Pelo meio" }, motivation: motivationAway, sentOffIds: sentOffAwayIds,
+    tactics: opponentPlan(opponentTactics ?? { style: "Equilibrado", marking: "Normal", focus: "Pelo meio" }, minute, score.away - score.home, sentOffAwayIds.length), motivation: motivationAway, sentOffIds: sentOffAwayIds, minutesPlayed: minutesPlayedAway, rules,
   };
   const teams = { home, away };
   const homeProfile = profile(home, minute, weather);
@@ -270,14 +292,8 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   const previousPossession = previous?.possessionAfter
     ?? (previous?.action === "goal" || previous?.action === "offside" ? opposite(previous.team)
       : previous?.action === "pass" || previous?.action === "foul" || previous?.action === "turnover" ? previous.team : undefined);
-  const previousTeam = previousPossession ? profiles[previousPossession] : undefined;
-  const otherTeam = previousPossession ? profiles[opposite(previousPossession)] : undefined;
-  const previousMotivation = previousPossession === "home" ? motivationHome : motivationAway;
-  const otherMotivation = previousPossession === "home" ? motivationAway : motivationHome;
-  const retentionChance = previousTeam && otherTeam
-    ? clamp(.64 + (previousTeam.midfield - otherTeam.midfield) * .002 + (previousMotivation - otherMotivation) * .001, .48, .84)
-    : 0;
-  const possession = previousPossession && random() < retentionChance ? previousPossession : sideAtRandom;
+  // Possession only changes through recorded events, never a silent minute-level reroll.
+  const possession = minute === 1 ? kickoffSide : minute === 46 ? opposite(kickoffSide) : previousPossession ?? sideAtRandom;
   const defenseSide = opposite(possession);
   const attackTeam = teams[possession];
   const defenseTeam = teams[defenseSide];
@@ -293,18 +309,34 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   const windPassEffect = longWind * rules.windPassPenaltyPerKmh;
   const weatherShotEffect = weather.rainIntensity * rules.rainShotPenalty + longWind * rules.windShotPenaltyPerKmh;
 
-  const basePoint = previous?.action === "goal" ? { x: 50, y: 50 } : previous?.to;
-  const actorIndex = choosePlayer(attackTeam, minute, weather, random, "passing", ["M", "A"]);
+  const continuing = minute !== 46 && previousPossession === possession;
+  const previousCarrier = continuing ? activePlayers(attackTeam).find(({ player }) => player.id === previous?.carrierId) : undefined;
+  const actorIndex = previousCarrier?.index ?? choosePlayer(attackTeam, minute, weather, random, "passing", ["M", "A"]);
   const actor = attackTeam.players[actorIndex];
   const passerName = playerName(attackTeam, actorIndex, possession === "away" ? opponent : "");
-  const baseFrom = basePoint ?? simulatedPoint(actorIndex, attackTeam, possession, snapshot);
-  const targetIndex = chooseTarget(attackTeam, actorIndex, snapshot, possession, random);
+  const baseFrom = continuing ? previous?.action === "goal" ? { x: 50, y: 50 } : previous?.ballAfter ?? previous?.to : undefined;
+  const from = baseFrom ?? (previous?.action === "goal" || minute === 46 ? { x: 50, y: 50 } : simulatedPoint(actorIndex, attackTeam, possession, snapshot));
+  const defenders = activePlayers(defenseTeam).map(({ player, index }) => {
+    const point = simulatedPoint(index, defenseTeam, defenseSide, snapshot);
+    const line = player.position === "G" ? 0 : (defenseTeam.tactics.marking === "Pesada" ? 7 : 0)
+      + (defenseTeam.tactics.style === "Ofensivo" ? 4 : defenseTeam.tactics.style === "Defensivo" ? -5 : 0);
+    return { x: clamp(point.x + (defenseSide === "home" ? line : -line), 5, 95), y: point.y };
+  });
+  const pressure = localPressure(from, defenders);
+  const progress = attackingProgress(from, possession);
+  const targetIndex = chooseTarget(attackTeam, actorIndex, from, snapshot, possession, defenders, random);
   const targetName = playerName(attackTeam, targetIndex, possession === "away" ? opponent : "");
-  const targetPoint = simulatedPoint(targetIndex, attackTeam, possession, snapshot);
-  const from = { x: clamp(baseFrom.x, 5, 95), y: clamp(baseFrom.y, 5, 95) };
+  const targetPoint = { ...simulatedPoint(targetIndex, attackTeam, possession, snapshot) };
+  // Automatic runs try to stay level with the second-last defender; mistimed runs remain possible.
+  // Manual tactical coordinates are never clamped to a role or overwritten.
+  if (!attackTeam.positions[attackTeam.players[targetIndex]?.id] && defenders.length >= 2
+    && isOffsideAtPass(possession, targetPoint, from, defenders) && random() < .90) {
+    const line = defenders.map((point) => point.x).sort((a, b) => possession === "home" ? b - a : a - b)[1];
+    targetPoint.x = clamp(line + (possession === "home" ? -1 : 1) * (1 + random() * 3), 5, 95);
+  }
   const to = { x: clamp(targetPoint.x, 5, 95), y: clamp(targetPoint.y, 5, 95) };
 
-  const shotRate = clamp(
+  const shotRate = progress < 45 ? 0 : clamp(clamp(
     rules.shotBaseRate
       + (attackProfile.attack - 70) * rules.shotAttackWeight
       - (defenseProfile.defense - 70) * rules.shotDefenseWeight
@@ -312,7 +344,7 @@ export function simulateAction({ minute, starters, formation, positions, opponen
       - (isDefenseStyle ? rules.defensiveStyleShotPenalty : 0)
       - weatherShotEffect,
     .06, .30,
-  );
+  ) * clamp((progress - 40) / 30, .05, 1.8) * 2.2, 0, .55);
   const actionRoll = random();
   let action: LiveAction;
   let team = possession;
@@ -325,6 +357,7 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   let assistId: number | undefined;
   let interceptorId: number | undefined;
   let keeperId: number | undefined;
+  let quality: number | undefined;
   let outcome: MatchEvent["outcome"];
   let card: MatchEvent["card"];
   let possessionAfter: MatchSide = possession;
@@ -333,25 +366,26 @@ export function simulateAction({ minute, starters, formation, positions, opponen
 
   if (actionRoll < shotRate) {
     action = "shot";
-    const shooterIndex = choosePlayer(attackTeam, minute, weather, random, "finishing", ["A", "M"]);
+    const shooterIndex = actorIndex;
     const shooter = attackTeam.players[shooterIndex];
     const shooterName = playerName(attackTeam, shooterIndex, possession === "away" ? opponent : "");
-    const keeperIndex = choosePlayer(defenseTeam, minute, weather, random, "goalkeeping", ["G"]);
+    const keeperIndex = defenseProfile.keeperIndex;
     const keeper = defenseTeam.players[keeperIndex];
     const finish = athleteSkill(shooter, shooterIndex, attackTeam, "finishing", minute, weather);
     const keeperSkill = keeper ? athleteSkill(keeper, keeperIndex, defenseTeam, "goalkeeping", minute, weather) : defenseProfile.keeper;
-    const homeEdge = possession === "home" ? rules.homeAdvantage * .001 : 0;
+    const homeEdge = (possession === "home") === managedIsHome ? rules.homeAdvantage * .001 : 0;
+    quality = chanceQuality(from, possession, pressure);
     const goalChance = clamp(
-      rules.goalBaseChance
+      quality * (rules.goalBaseChance / .115)
         + (finish - 70) * rules.finishingWeight
         + (attackProfile.attack - defenseProfile.defense) * .0012
         - (keeperSkill - 70) * rules.keeperWeight
         + (attackMotivation - defenseMotivation) * rules.motivationWeight
         + homeEdge - weatherShotEffect,
-      rules.goalMinChance, rules.goalMaxChance,
+      Math.min(rules.goalMinChance, quality * .35), rules.goalMaxChance,
     );
     const shotRoll = random();
-    eventFrom = simulatedPoint(shooterIndex, attackTeam, possession, snapshot);
+    eventFrom = from;
     eventTo = { x: possession === "home" ? 95 : 5, y: clamp(48 + (random() - .5) * 22, 28, 72) };
     actingIndex = shooterIndex;
     actedAgainstIndex = keeperIndex;
@@ -361,7 +395,7 @@ export function simulateAction({ minute, starters, formation, positions, opponen
       outcome = "goal";
       scorer = shooterName;
       scorerId = shooter?.id;
-      if (previous?.action === "pass" && previous.team === possession) assistId = previous.actorId ?? teams[possession].players[previous.actorIndex]?.id;
+      if (previous?.action === "pass" && previous.team === possession && previous.targetId === shooter?.id && previous.actorId !== shooter?.id) assistId = previous.actorId;
       text = `GOL! ${shooterName} coloca a bola no fundo da rede para ${possession === "home" ? "o time da casa" : opponent}.`;
       possessionAfter = defenseSide;
     } else if (random() < .43) {
@@ -377,9 +411,30 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   } else {
     const turnoverRate = clamp(.075 + (isHeavyPress ? rules.heavyPressTurnoverBonus : 0) + (defenseProfile.defense - 70) * .0008, .04, .22);
     const foulRate = clamp(.045 + (isHeavyPress ? rules.heavyPressFoulBonus : 0), .025, .16);
-    const tackleRate = clamp(.09 + (defenseProfile.defense - 70) * .001, .04, .20);
+    const tackleRate = clamp(.09 + (defenseProfile.defense - attackProfile.midfield) * .0015
+      - (attackMotivation - defenseMotivation) * .001, .025, .20);
     const choice = (actionRoll - shotRate) / (1 - shotRate);
-    if (choice < turnoverRate) {
+    const carryRate = clamp(.20 + (isAttackStyle ? .09 : 0) - pressure * .10, .08, .32);
+    if (choice > turnoverRate + tackleRate + foulRate && choice < turnoverRate + tackleRate + foulRate + carryRate) {
+      const defenderIndex = choosePlayer(defenseTeam, minute, weather, random, "defending", ["Z", "L", "M"]);
+      const dribble = athleteSkill(actor, actorIndex, attackTeam, "dribbling", minute, weather);
+      const defending = defenseTeam.players[defenderIndex] ? athleteSkill(defenseTeam.players[defenderIndex], defenderIndex, defenseTeam, "defending", minute, weather) : 65;
+      const success = clamp(.88 + (dribble - defending) * .004 - pressure * .20, .35, .96);
+      if (random() < success) {
+        action = "carry";
+        eventTo = { x: clamp(from.x + (possession === "home" ? 1 : -1) * (10 + random() * 12), 5, 95), y: clamp(from.y + (random() - .5) * 12, 5, 95) };
+        text = `${passerName} conduz a bola e avança pelo ${Math.abs(eventTo.y - 50) > 22 ? "lado do campo" : "meio"}.`;
+      } else {
+        action = "tackle";
+        team = defenseSide;
+        actingIndex = defenderIndex;
+        actorId = defenseTeam.players[defenderIndex]?.id;
+        actedAgainstIndex = actorIndex;
+        eventFrom = from;
+        text = `${playerName(defenseTeam, defenderIndex, defenseSide === "away" ? opponent : "o time da casa")} desarma ${passerName} na tentativa de avanço.`;
+        possessionAfter = defenseSide;
+      }
+    } else if (choice < turnoverRate) {
       const interceptorIndex = choosePlayer(defenseTeam, minute, weather, random, "defending", ["Z", "L", "M"]);
       const interceptor = defenseTeam.players[interceptorIndex];
       const interceptorName = playerName(defenseTeam, interceptorIndex, defenseSide === "away" ? opponent : "o time da casa");
@@ -387,7 +442,8 @@ export function simulateAction({ minute, starters, formation, positions, opponen
       const passingBonus = tacticalFocusBonus(attackTeam, actorIndex);
       const accuracy = clamp(rules.passBaseAccuracy + (passerSkill - 70) * rules.passSkillWeight
         - (defenseProfile.marking - 70) * rules.markingWeight + passingBonus * .003
-        - rainPassEffect - windPassEffect, .52, .97);
+        - rainPassEffect - windPassEffect - pressure * .06
+          - Math.max(0, Math.hypot(to.x - from.x, to.y - from.y) - 25) * .0015, .45, .97);
       if (random() < accuracy) {
         action = "pass";
         outcome = "complete";
@@ -411,7 +467,7 @@ export function simulateAction({ minute, starters, formation, positions, opponen
       actedAgainstIndex = actorIndex;
       text = `${defenderName} desarma ${passerName} e recupera a posse.`;
       possessionAfter = defenseSide;
-      eventFrom = simulatedPoint(defenderIndex, defenseTeam, defenseSide, snapshot);
+      eventFrom = from;
     } else if (choice < turnoverRate + tackleRate + foulRate) {
       action = "foul";
       team = defenseSide;
@@ -429,14 +485,10 @@ export function simulateAction({ minute, starters, formation, positions, opponen
       else if (!alreadyBooked && cardRoll < cardChance + .008 && minute > 10) card = "red";
       text = `Falta de ${defenderName} em ${passerName}${card === "yellow" ? " — cartão amarelo." : card === "red" ? alreadyBooked ? " — segundo amarelo, expulso." : " — cartão vermelho, expulso." : "."}`;
       possessionAfter = possession;
-      eventFrom = simulatedPoint(defenderIndex, defenseTeam, defenseSide, snapshot);
+      eventFrom = from;
     } else {
       action = "pass";
-      const receiver = snapshot?.[possession]?.[targetIndex];
-      const defenders = snapshot?.[defenseSide];
-      const attackingRole = playerRole(attackTeam.players[targetIndex], targetIndex, attackTeam);
-      const hasOffsideRisk = attackingRole === "A" && random() < .13;
-      if (receiver && defenders && hasOffsideRisk && isOffsideAtPass(possession, receiver, from, defenders)) {
+      if (isOffsideAtPass(possession, to, from, defenders)) {
         action = "offside";
         text = `Impedimento de ${targetName}. Tiro livre indireto para ${defenseSide === "home" ? "o time da casa" : opponent}.`;
         possessionAfter = defenseSide;
@@ -444,7 +496,8 @@ export function simulateAction({ minute, starters, formation, positions, opponen
         const passerSkill = athleteSkill(actor, actorIndex, attackTeam, "passing", minute, weather);
         const accuracy = clamp(rules.passBaseAccuracy + (passerSkill - 70) * rules.passSkillWeight
           - (defenseProfile.marking - 70) * rules.markingWeight + tacticalFocusBonus(attackTeam, actorIndex) * .003
-          - rainPassEffect - windPassEffect, .52, .97);
+          - rainPassEffect - windPassEffect - pressure * .06
+          - Math.max(0, Math.hypot(to.x - from.x, to.y - from.y) - 25) * .0015, .45, .97);
         if (random() < accuracy) {
           outcome = "complete";
           text = `${passerName} toca para ${targetName}.`;
@@ -463,10 +516,31 @@ export function simulateAction({ minute, starters, formation, positions, opponen
     }
   }
 
+  if (action === "pass" && isOffsideAtPass(possession, to, from, defenders)) {
+    action = "offside";
+    outcome = undefined;
+    text = `Impedimento de ${targetName}. Tiro livre indireto para ${defenseSide === "home" ? "o time da casa" : opponent}.`;
+    possessionAfter = defenseSide;
+  }
+  const nextCarrierId = action === "pass" ? attackTeam.players[targetIndex]?.id
+    : action === "carry" || action === "foul" ? actor?.id
+    : action === "tackle" ? actorId : action === "turnover" ? interceptorId
+    : action === "shot" ? defenseTeam.players[defenseProfile.keeperIndex]?.id : undefined;
+  const nextCarrierTeam = teams[possessionAfter];
+  const nextCarrierIndex = nextCarrierTeam.players.findIndex((player) => player.id === nextCarrierId);
+  const ballAfter = action === "goal" ? { x: 50, y: 50 }
+    : action === "pass" || action === "carry" ? eventTo
+    : action === "offside" ? to
+    : action === "foul" || action === "tackle" ? from
+    : action === "turnover" ? { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 }
+    : nextCarrierIndex >= 0 ? simulatedPoint(nextCarrierIndex, nextCarrierTeam, possessionAfter, snapshot)
+    : { x: possessionAfter === "home" ? 12 : 88, y: 50 };
+
   return {
     minute,
     half: minute <= 45 ? 1 : 2,
     text,
+    ...(quality !== undefined ? { chanceQuality: quality } : {}),
     ...(card ? { card } : {}),
     ...(scorer ? { scorer, scorerId } : {}),
     ...(actorId !== undefined ? { actorId } : {}),
@@ -483,6 +557,9 @@ export function simulateAction({ minute, starters, formation, positions, opponen
       from: eventFrom,
       to: eventTo,
       possessionAfter,
+      ...(nextCarrierId !== undefined ? { carrierId: nextCarrierId } : {}),
+      ...(action === "pass" ? { targetId: attackTeam.players[targetIndex]?.id } : {}),
+      ballAfter,
     },
   };
 }
@@ -574,7 +651,7 @@ export function calculatePlayerRatings(players: Player[], events: MatchEvent[], 
 
 /** Routine actions stay in the model; match recaps can show only decisive moments. */
 export function isHighlight(event: MatchEvent): boolean {
-  return !!event.card || !event.scene || !["pass", "tackle"].includes(event.scene.action);
+  return !!event.card || !event.scene || !["pass", "carry", "tackle"].includes(event.scene.action);
 }
 
 /** Stable background results; relative club strength changes the long-run scoring edge. */
