@@ -404,10 +404,14 @@ it("lifts a held reserve and cancels safely without a drop", () => {
   vi.useFakeTimers();
   try {
     fireEvent.pointerDown(player, { isPrimary: true, pointerId: 1, button: 0, clientX: 10, clientY: 10 });
+    expect(player.className).toContain("reserveHolding");
     act(() => vi.advanceTimersByTime(350));
+    expect(player.className).toContain("reserveDragging");
+    expect(player.className).not.toContain("reserveHolding");
     expect(screen.getByRole("status").textContent).toContain("Arraste para o campo");
     fireEvent.pointerCancel(player, { isPrimary: true, pointerId: 1, clientX: 10, clientY: 10 });
     expect(reorder).not.toHaveBeenCalled();
     expect(place).not.toHaveBeenCalled();
+    expect(player.className).not.toContain("reserveDragging");
   } finally { vi.useRealTimers(); }
 });
