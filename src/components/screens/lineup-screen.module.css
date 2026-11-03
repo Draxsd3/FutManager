@@ -432,3 +432,41 @@
   .screen[data-mode="prematch"] .board { width: min(100%, 500px); }
   .screen[data-mode="prematch"] .field { aspect-ratio: .68; }
 }
+
+/* Classic arrangement: the pitch starts at the top, with the controls alongside it. */
+.screen[data-mode="prematch"] .container {
+  grid-template-columns: minmax(0, min(42%, 500px, max(270px, calc((100dvh - 210px) * .68)))) minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "board header"
+    "board summary"
+    "board tactics"
+    "board sidebar"
+    "footer footer";
+  align-items: start;
+  column-gap: 14px;
+}
+.screen[data-mode="prematch"] .header { grid-area: header; }
+.screen[data-mode="prematch"] .summary { grid-area: summary; }
+.screen[data-mode="prematch"] .tacticsBar { grid-area: tactics; }
+.screen[data-mode="prematch"] .layout { display: contents; }
+.screen[data-mode="prematch"] .board {
+  grid-area: board;
+  display: grid;
+  grid-template-areas: "pitch" "tools" "feedback";
+  grid-template-rows: auto auto auto;
+  width: 100%;
+}
+.screen[data-mode="prematch"] .fieldViewport { grid-area: pitch; }
+.screen[data-mode="prematch"] .boardHeader { grid-area: tools; }
+.screen[data-mode="prematch"] .boardFooter { grid-area: feedback; }
+.screen[data-mode="prematch"] .sidebar { grid-area: sidebar; width: 100%; }
+.screen[data-mode="prematch"] .footer { grid-area: footer; }
+@media (max-width: 800px) {
+  .screen[data-mode="prematch"] .container {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto auto auto;
+    grid-template-areas: "header" "board" "summary" "tactics" "sidebar" "footer";
+  }
+  .screen[data-mode="prematch"] .board { width: min(100%, 500px); }
+}
