@@ -470,3 +470,43 @@
   }
   .screen[data-mode="prematch"] .board { width: min(100%, 500px); }
 }
+
+/* Keep the pitch clear while retaining a full-sized, keyboard-accessible target. */
+.screen[data-mode="prematch"] .player {
+  width: 48px;
+  max-width: 20%;
+  min-height: 48px;
+  padding: 2px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.screen[data-mode="prematch"] .player > b,
+.screen[data-mode="prematch"] .player > small,
+.screen[data-mode="prematch"] .player > .energy { display: none; }
+.screen[data-mode="prematch"] .player > svg { width: 40px; height: 40px; }
+.screen[data-mode="prematch"] .player:hover,
+.screen[data-mode="prematch"] .player.selected,
+.screen[data-mode="prematch"] .player.hovered { background: transparent; box-shadow: none; }
+.screen[data-mode="prematch"] .player:hover > svg,
+.screen[data-mode="prematch"] .player.selected > svg,
+.screen[data-mode="prematch"] .player.hovered > svg { filter: drop-shadow(0 0 4px #d4ffb5) drop-shadow(0 2px 2px #000b); }
+.screen[data-mode="prematch"] .player:focus-visible { outline: 2px solid #efffd9; outline-offset: 2px; }
+
+/* The entire available bench flows across columns rather than a narrow scroll list. */
+.screen[data-mode="prematch"] .bench {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 155px), 1fr));
+  align-content: start;
+  max-height: none;
+  overflow: visible;
+  padding: 1px 0;
+}
+.screen[data-mode="prematch"] .reserve { min-width: 0; }
+@media (max-width: 560px) {
+  .screen[data-mode="prematch"] .bench { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .screen[data-mode="prematch"] .reserve { grid-template-columns: 30px minmax(0, 1fr) 24px; gap: 4px; padding: 3px; }
+  .screen[data-mode="prematch"] .handle { width: 30px; }
+  .screen[data-mode="prematch"] .player > svg { width: 36px; height: 36px; }
+}
