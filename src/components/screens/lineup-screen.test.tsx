@@ -102,7 +102,7 @@ it("supports click/keyboard-compatible selection, sector movement and unrestrict
   );
   place.mockClear();
   fireEvent.keyDown(
-    screen.getByRole("heading", { name: "Escalação & Tática" }),
+    screen.getByRole("heading", { name: /ESCALAR TIME ·/ }),
     { key: "Escape" },
   );
   fireEvent.click(starterButton(10));

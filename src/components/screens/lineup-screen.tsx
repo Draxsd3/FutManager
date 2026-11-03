@@ -352,7 +352,7 @@ export function LineupScreen(props: Props) {
         <header className={styles.header}>
           <div className={styles.titleBlock}>
             <p className={styles.eyebrow}>FUTMANAGER <span>/</span> {competition} · {round}ª RODADA</p>
-            <h1>{match ? "Táticas da partida" : "Escalação & Tática"}</h1>
+            <h1>{match ? "Táticas da partida" : `ESCALAR TIME · ${formation}`}</h1>
             <div className={styles.fixture}>
               <span><Crest club={club} size="sm" />{club}</span>
               <b>VS</b>
