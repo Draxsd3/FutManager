@@ -8,3 +8,6 @@
 .content { background: #edf4ee; color: #203b2a; color-scheme: light; }
 
 .classicContent { background: #90a08e; color: #1c281c; }
+
+/* Use the available viewport for controls before falling back to scrolling. */
+.window { height: min(980px, 100%); }

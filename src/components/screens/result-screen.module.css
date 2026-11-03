@@ -27,3 +27,5 @@
 .fixture{border-color:#30323b}
 .currentFixture{border-left-color:var(--game-accent,#a2dfb2);background:linear-gradient(90deg,color-mix(in srgb,var(--game-accent,#a2dfb2) 8%,transparent),transparent)}
 .footer button,.continueButton{background:var(--game-accent,#a2dfb2);color:var(--game-accent-text,#10291a)}
+/* The continue action remains available while reviewing long match reports. */
+.footer { position: sticky; bottom: 0; z-index: 3; }

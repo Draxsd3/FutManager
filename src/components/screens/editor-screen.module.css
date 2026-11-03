@@ -648,3 +648,5 @@
 @media(max-width:760px){.screen{grid-template-columns:1fr;padding:16px}.pageHeader{grid-column:1}.teamPanel{max-height:420px}.pageHeader h1{font-size:28px}}
 
 .screen{background:radial-gradient(ellipse at 80% -20%,color-mix(in srgb,var(--team-primary,#68707f) 14%,#1c1d25) 0%,#111218 48%,#090a0f 100%)}
+/* Keep editor actions available when the list of clubs is long. */
+.footerButtons { position: sticky; bottom: 0; z-index: 2; }

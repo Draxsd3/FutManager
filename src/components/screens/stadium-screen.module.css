@@ -459,3 +459,36 @@
   }
 }
 .screen { color-scheme: light; }
+
+/* Main stadium actions and their context share one view on wider screens. */
+.container { padding-top: 14px; padding-bottom: 12px; }
+.header { margin-bottom: 12px; }
+.header p:not(.eyebrow) { margin-top: 4px; }
+.hero { min-height: 170px; }
+.heroContent { padding: 18px 22px; }
+.heroClub h2 { font-size: 25px; }
+.heroFacts { margin-top: 15px; }
+.tabs { margin: 10px 0 14px; flex-wrap: wrap; overflow: visible; }
+.tabs button { padding: 9px 0; }
+.metrics { gap: 10px; margin-bottom: 12px; }
+.metrics article { padding: 12px; }
+.metrics strong { margin-top: 5px; font-size: 20px; }
+.metrics span { margin-top: 4px; }
+.twoColumns { gap: 12px; }
+.panel { padding: 15px; }
+.panel h2 { font-size: 18px; margin-bottom: 10px; }
+.facts > div { padding: 7px 0; }
+.note { margin-top: 10px; line-height: 1.5; }
+.structures { gap: 8px; }
+.structures article { padding: 12px; }
+.structures h3 { margin: 8px 0; }
+.footer { margin-top: 10px; }
+@media (max-width: 600px) {
+  .hero { min-height: 150px; }
+  .heroContent { padding: 15px; }
+  .heroClub h2 { font-size: 22px; }
+  .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .metrics article { padding: 9px; }
+  .metrics strong { font-size: 16px; overflow-wrap: anywhere; }
+  .structures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
