@@ -8,6 +8,7 @@ import { formationSlotRoles, formationSlots } from "@/lib/game/formations";
 import { Crest } from "@/components/ui/club-sidebar";
 import { InterfaceIcon } from "@/components/ui/interface-icon";
 import { MatchStatisticsTable } from "@/components/ui/match-statistics-table";
+import { clubThemeStyle } from "@/components/ui/app-shell";
 import styles from "./result-screen.module.css";
 
 type ResultTab = "events" | "statistics" | "formations";
@@ -75,6 +76,7 @@ export function ResultScreen({
   fixtures,
   club,
   opponent,
+  clubColors,
   homeScore,
   awayScore,
   homeFormation,
@@ -97,6 +99,7 @@ export function ResultScreen({
   fixtures: RoundFixture[];
   club: string;
   opponent: string;
+  clubColors?: { primaryColor: string; secondaryColor: string };
   homeScore: number;
   awayScore: number;
   homeFormation: string;
@@ -119,7 +122,7 @@ export function ResultScreen({
   const homeScorers = events.filter((event) => event.scene?.team === "home" && event.scene.action === "goal").map((event) => `${event.minute}′ ${event.scorer ?? event.text}`);
   const awayScorers = events.filter((event) => event.scene?.team === "away" && event.scene.action === "goal").map((event) => `${event.minute}′ ${event.scorer ?? event.text}`);
 
-  return <main className={styles.page}>
+  return <main className={styles.page} style={clubThemeStyle(club, clubColors)}>
     <div className={styles.layout}>
       <section className={styles.matchCard}>
         <header className={styles.header}>
