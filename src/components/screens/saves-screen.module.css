@@ -2,7 +2,7 @@
   min-height: 100svh;
   color: #edf4e9;
   background:
-    linear-gradient(110deg, #080d0bf5, #0d1510ed),
+    linear-gradient(110deg, #090a0ff5, #111218ed),
     url("/game-assets/backgrounds/stadium.jpg") center/cover fixed;
   font-family: var(--font-geist-sans), Arial, sans-serif;
 }
@@ -22,7 +22,7 @@
 .brand {
   font-size: 20px;
   font-weight: 850;
-  color: #c4f06a;
+  color: var(--team-accent, #d4ad64);
 }
 .brand > span {
   font-size: 10px;
@@ -61,7 +61,7 @@
   margin: 0;
 }
 .heading h1 > span {
-  color: #c4f06a;
+  color: var(--team-accent, #d4ad64);
 }
 .heading p:not(.eyebrow) {
   color: #95a68e;
@@ -77,7 +77,7 @@
 .counter strong {
   font-size: 36px;
   font-weight: 500;
-  color: #c4f06a;
+  color: var(--team-accent, #d4ad64);
 }
 .counter span {
   font-size: 10px;
@@ -126,7 +126,7 @@
 }
 .sort select {
   padding: 10px;
-  background: #121b15;
+  background: #191a21;
   border: 1px solid #ffffff18;
   border-radius: 5px;
   color: #c1d2b8;
@@ -140,12 +140,12 @@
 .card {
   border: 1px solid #ffffff14;
   border-radius: 12px;
-  background: #111915c9;
+  background: #15161dc9;
   overflow: hidden;
 }
 .latest {
-  border-color: #c4f06a55;
-  background: linear-gradient(135deg, #1a261d75, #121a15);
+  border-color: color-mix(in srgb, var(--team-accent, #d4ad64) 33.3%, transparent);
+  background: linear-gradient(135deg, #1a261d75, #191a21);
 }
 .cardTop {
   display: flex;
@@ -162,8 +162,8 @@
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: #c4f06a;
-  background: #c4f06a10;
+  color: var(--team-accent, #d4ad64);
+  background: color-mix(in srgb, var(--team-accent, #d4ad64) 6.3%, transparent);
   padding: 6px 9px;
   border-radius: 3px;
 }
@@ -243,7 +243,7 @@
   justify-content: space-between;
   border: 0;
   border-radius: 5px;
-  background: #c4f06a;
+  background: var(--team-accent, #d4ad64);
   color: #1a2b0f;
   padding: 12px 17px;
   font-size: 10px;
@@ -259,7 +259,7 @@
 }
 .screen button:focus-visible,
 .screen select:focus-visible {
-  outline: 2px solid #c4f06a;
+  outline: 2px solid var(--team-accent, #d4ad64);
   outline-offset: 4px;
 }
 .empty {

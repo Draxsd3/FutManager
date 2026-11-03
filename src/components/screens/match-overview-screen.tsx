@@ -7,6 +7,7 @@ import { isHighlight, type MatchEvent, type MatchStatistics, type MatchWeather }
 import { Crest } from "@/components/ui/club-sidebar";
 import { InterfaceIcon } from "@/components/ui/interface-icon";
 import { MatchStatisticsTable } from "@/components/ui/match-statistics-table";
+import { clubThemeStyle } from "@/components/ui/app-shell";
 import styles from "./match-overview-screen.module.css";
 
 function eventLabel(event: MatchEvent) {
@@ -48,9 +49,9 @@ function TimelineCard({ event, home }: { event: MatchEvent; home: boolean }) {
   </div>;
 }
 
-export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabel, minute, half, club, opponent, homeScore, awayScore, statistics, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, weather, motivationHome, motivationAway, rulesLoading, rulesError }: {
+export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabel, minute, half, club, opponent, homeScore, awayScore, statistics, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, weather, motivationHome, motivationAway, rulesLoading, rulesError, clubColors }: {
   competition: string; trophyAsset?: string | null; round: number; roundLabel?: string; minute: number; half: "1º tempo" | "2º tempo" | "fim";
-  club: string; opponent: string; homeScore: number; awayScore: number; statistics: MatchStatistics; fixtures: RoundFixture[]; events: MatchEvent[];
+  club: string; opponent: string; clubColors?: { primaryColor: string; secondaryColor: string }; homeScore: number; awayScore: number; statistics: MatchStatistics; fixtures: RoundFixture[]; events: MatchEvent[];
   running: boolean; speed: 1 | 2 | 4; halftimeWaiting: boolean; onToggleRunning: () => void | Promise<void>;
   onSpeedChange: (speed: 1 | 2 | 4) => void; onOpenDetail: () => void;
   weather?: MatchWeather; motivationHome?: number; motivationAway?: number; rulesLoading: boolean; rulesError: string | null;
@@ -65,7 +66,7 @@ export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabe
 
   const fouls = statistics.home.fouls + statistics.away.fouls;
   const cards = statistics.home.yellowCards + statistics.away.yellowCards + statistics.home.redCards + statistics.away.redCards;
-  return <main className={styles.page}>
+  return <main className={styles.page} style={clubThemeStyle(club, clubColors)}>
     <section className={styles.shell}>
       <header className={styles.header}>
         <div className={styles.competitionTitle}>

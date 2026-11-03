@@ -7,12 +7,11 @@ import styles from "./top-nav.module.css";
 
 export type NavItem = { icon: ClassicIconName; label: string; onClick: () => void; active?: boolean; children?: { label: string; description: string; onClick: () => void }[] };
 
-export function TopNav({ items, date, classic = false }: { items: NavItem[]; date: string; classic?: boolean }) {
+export function TopNav({ items, date, classic = false }: { items: NavItem[]; date: string; classic?: boolean; teamName?: string }) {
   return (
     <header className={styles.topbar} data-compact={classic || undefined}>
-      <div className={styles.brand} aria-label="FutManager">
-        <span className={styles.brandMark} aria-hidden="true">F<span /></span>
-        <span className={styles.brandCopy}>FUTMANAGER<small>MODO CARREIRA</small></span>
+      <div className={styles.brand} aria-label="FUTMANAGER">
+        <span className={styles.brandCopy}><strong>FUTMANAGER</strong></span>
       </div>
       <nav aria-label="Navegação do clube" className={styles.nav}>
         {items.map((item) => <NavButton key={item.label} item={item} />)}

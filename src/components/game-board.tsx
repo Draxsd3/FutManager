@@ -1095,9 +1095,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   if (!database || !hydrationDone) {
     return (
-      <div className="grid h-dvh overflow-hidden place-items-center bg-[#080d0b] bg-[radial-gradient(ellipse_at_top,#18231a,#080d0b_70%)] font-[Arial] text-sm text-[#eef3e8]">
-        <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#111915] px-5 py-4 text-[#eef3e8] shadow-2xl">
-          <span className="h-3 w-3 animate-pulse rounded-full bg-[#c4f06a] shadow-[0_0_14px_#c4f06a80]" aria-hidden="true" />
+      <div className="grid h-dvh overflow-hidden place-items-center bg-[#090a0f] bg-[radial-gradient(ellipse_at_top,#202129,#090a0f_70%)] font-[Arial] text-sm text-[#eef0f4]">
+        <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#15161d] px-5 py-4 text-[#eef0f4] shadow-2xl">
+          <span className="h-3 w-3 animate-pulse rounded-full bg-[#d4ad64] shadow-[0_0_14px_#d4ad6480]" aria-hidden="true" />
           Carregando suas carreiras...
         </div>
       </div>
@@ -1290,6 +1290,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           half={minute <= 45 ? "1º tempo" : minute < 90 ? "2º tempo" : "fim"}
           club={homeTeamName}
           opponent={awayTeamName}
+          clubColors={database.clubs.find((item) => item.name === club)}
           homeScore={displayedHomeScore}
           awayScore={displayedAwayScore}
           statistics={displayedStatistics}
@@ -1351,6 +1352,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       fixtures={fixtures}
       club={homeTeamName}
       opponent={awayTeamName}
+      clubColors={database.clubs.find((item) => item.name === club)}
       homeScore={displayedHomeScore}
       awayScore={displayedAwayScore}
       homeFormation={userIsHome ? formation : opponentFormation}
