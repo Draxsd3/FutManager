@@ -7,22 +7,23 @@ import styles from "./career-workspace.module.css";
 
 type Props = Omit<ComponentProps<typeof AppShell>, "children" | "hideNav" | "classicNav"> & {
   background: ReactNode;
+  classicContent?: boolean;
   title?: string;
   onClose: () => void;
   children?: ReactNode;
 };
 
 /** The roster remains mounted behind every career subwindow. */
-export function CareerWorkspace({ background, title, onClose, children, ...shell }: Props) {
+export function CareerWorkspace({ background, title, onClose, children, classicContent = false, ...shell }: Props) {
   return <>
     <div inert={!!title} aria-hidden={title ? true : undefined} className={styles.workspace}>
       <AppShell {...shell} classicNav>{background}</AppShell>
     </div>
-    {title && <CareerWindow title={title} onClose={onClose} style={clubThemeStyle(shell.teamName, shell.clubColors)}>{children}</CareerWindow>}
+    {title && <CareerWindow title={title} onClose={onClose} classicContent={classicContent} style={clubThemeStyle(shell.teamName, shell.clubColors)}>{children}</CareerWindow>}
   </>;
 }
 
-function CareerWindow({ title, onClose, children, style }: { title: string; onClose: () => void; children: ReactNode; style: CSSProperties }) {
+function CareerWindow({ title, onClose, children, style, classicContent }: { title: string; onClose: () => void; children: ReactNode; style: CSSProperties; classicContent: boolean }) {
   const label = useId();
   const panel = useRef<HTMLElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -57,7 +58,7 @@ function CareerWindow({ title, onClose, children, style }: { title: string; onCl
         <span id={label}>{title}</span>
         <button ref={closeButton} type="button" onClick={onClose} aria-label={`Fechar ${title}`} title="Fechar e voltar à Principal (Esc)">×</button>
       </header>
-      <div className={styles.content}>{children}</div>
+      <div className={`${styles.content} ${classicContent ? styles.classicContent : ""}`}>{children}</div>
     </section>
   </div>, document.body);
 }

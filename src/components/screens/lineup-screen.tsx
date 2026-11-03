@@ -353,7 +353,7 @@ export function LineupScreen(props: Props) {
         <header className={styles.header}>
           <div>
             <p className={styles.eyebrow}>CENTRO TÁTICO / {club}</p>
-            <h1>{match ? "Táticas da partida" : "Escalação & Tática"}</h1>
+            <h1>{match ? "Táticas da partida" : `ESCALAR TIME · ${formation}`}</h1>
             {match && <div className={styles.liveScore}>
               <span>{club}</span><b>{match.score}</b><span>{opponent}</span>
               <strong>{match.period} · PAUSADO</strong>
@@ -729,7 +729,7 @@ export function LineupScreen(props: Props) {
               <div className={styles.panelHeading}>
                 <div>
                   <p className={styles.eyebrow}>OPÇÕES PARA O JOGO</p>
-                  <h2>Banco de reservas</h2>
+                  <h2>{match ? "Banco de reservas" : "Jogadores disponíveis"}</h2>
                 </div>
                 <span className={styles.count}>{bench.length}</span>
               </div>
