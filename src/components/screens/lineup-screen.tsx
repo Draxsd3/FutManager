@@ -603,12 +603,6 @@ export function LineupScreen(props: Props) {
                 }}
                 aria-label="Campo de escalação"
               >
-                <div className={styles.lines}>
-                  <i className={styles.half} />
-                  <i className={styles.circle} />
-                  <i className={styles.topBox} />
-                  <i className={styles.bottomBox} />
-                </div>
                 <span className={styles.direction}>ATAQUE ↑</span>
                 {showSectors && (
                   <svg

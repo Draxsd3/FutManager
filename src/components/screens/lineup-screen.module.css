@@ -222,46 +222,6 @@
   box-shadow: inset 0 0 50px #0c2b2870;
   container-type: inline-size;
 }
-.lines {
-  position: absolute;
-  inset: 17px;
-  border: 1px solid #ffffff65;
-  pointer-events: none;
-}
-.lines i {
-  position: absolute;
-  display: block;
-  border: 1px solid #ffffff65;
-  pointer-events: none;
-}
-.half {
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 0;
-}
-.circle {
-  width: 26%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-.topBox {
-  top: 0;
-  left: 24%;
-  width: 52%;
-  height: 15%;
-  border-top: 0 !important;
-}
-.bottomBox {
-  bottom: 0;
-  left: 24%;
-  width: 52%;
-  height: 15%;
-  border-bottom: 0 !important;
-}
 .direction {
   position: absolute;
   top: 5px;
@@ -893,9 +853,6 @@
   .toggle {
     font-size: 9px;
   }
-  .lines {
-    inset: 8px;
-  }
   .field {
     border-radius: 5px;
   }
@@ -1252,4 +1209,21 @@
   .screen[data-mode="match"] .reserve { gap: 2px; padding: 2px; }
   .screen[data-mode="match"] .reserve b { font-size: 8px; }
   .screen[data-mode="match"] .reserve strong { font-size: 10px; }
+}
+
+/* A lighter tactical workspace keeps the supplied pitch as the visual focus. */
+.screen { background: #f1f5f2; color: #273c30; }
+.summary { background: #e4eee6; color: #263e30; border: 1px solid #d5e3d7; }
+.summary > div { border-color: #c9dacc; }
+.summary small, .summary em { color: #58715f; }
+.fieldViewport { --pitch-ratio: 0.6772334294; background: #e9f0e9; }
+.fieldViewport > .field {
+  background: #2b8614 url('/game-assets/fields/lineup-field.webp') center / 100% 100% no-repeat;
+  box-shadow: 0 3px 14px #284d2526;
+}
+.bench { background: #e9f1e8; }
+.reserve { background: #fff; }
+.regionBorders line { stroke: #ffffff70; }
+@media (max-width: 600px) {
+  .fieldViewport { --pitch-ratio: 0.6772334294; }
 }
