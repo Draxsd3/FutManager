@@ -379,3 +379,56 @@
 @media (prefers-reduced-motion: reduce) {
   .headerActions button, .resetButton, .detailButton, .reserve, .player { transition: none; }
 }
+
+/* Before kickoff, give the pitch its own left column, like the classic lineup. */
+.screen[data-mode="prematch"] { overflow: auto; }
+.screen[data-mode="prematch"] .container {
+  height: auto;
+  min-height: 100%;
+  grid-template-rows: auto auto auto auto auto;
+}
+.screen[data-mode="prematch"] .layout {
+  grid-template-columns: minmax(0, min(42%, 500px)) minmax(0, 1fr);
+  align-items: start;
+  overflow: visible;
+}
+.screen[data-mode="prematch"] .board {
+  min-height: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.screen[data-mode="prematch"] .boardHeader {
+  padding: 8px 0;
+  border: 0;
+}
+.screen[data-mode="prematch"] .fieldViewport {
+  display: block;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+}
+.screen[data-mode="prematch"] .field {
+  width: 100%;
+  height: auto;
+  max-height: none;
+  aspect-ratio: .68;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.screen[data-mode="prematch"] .field::after { display: none; }
+.screen[data-mode="prematch"] .boardFooter {
+  padding: 8px 0;
+  border: 0;
+  flex-wrap: wrap;
+}
+.screen[data-mode="prematch"] .sidebar { overflow: visible; }
+.screen[data-mode="prematch"] .bench { max-height: 360px; }
+@media (max-width: 800px) {
+  .screen[data-mode="prematch"] .layout { grid-template-columns: minmax(0, 1fr); }
+  .screen[data-mode="prematch"] .board { width: min(100%, 500px); }
+  .screen[data-mode="prematch"] .field { aspect-ratio: .68; }
+}
