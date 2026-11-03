@@ -77,3 +77,12 @@ O bloco JSON abaixo é lido deste mesmo arquivo em cada início/retomada. Valore
 }
 ```
 <!-- MATCH_ENGINE_JSON_END -->
+
+## Camada local de decisões — revisão de 03/11/2026
+
+- A bola tem portador e posição persistidos entre eventos; somente lances registrados mudam a posse. A segunda saída é da equipe oposta à primeira. O passe prefere opções úteis e livres, mas pode recuar; conduzir disputa habilidade de drible contra marcação e pressão.
+- A seleção de finalização depende do avanço da bola (sem chute antes de 45% de progressão), além dos coeficientes JSON acima. A cadência de criação é normalizada por 2,2 para a simulação comprimida, limitada a 55% por evento; não significa chance de gol. Distância, ângulo e pressão definem a qualidade da chance (`football-decisions.ts`), antes dos ajustes de execução/goleiro/clima/motivação/mando. A referência de escala de `goalBaseChance` é 0,115. Esses fatores são heurísticas de jogo, não dados oficiais de xG.
+- O portador finaliza e o goleiro efetivo defende. Assistência só pode vir do passe anterior ao autor do gol, sem autoassistência. Corridas automáticas buscam ficar em linha, com possibilidade de erro; posições manuais continuam livres.
+- O rival pode atacar mais se estiver perdendo a partir dos 60, pressionar mais a partir dos 75 ou defender uma vantagem no fim; expulsões também influenciam seu plano. Sua própria tática continua sob seu controle. Avançar a linha muda espaço e risco; pressão também custa faltas e fadiga.
+- Os minutos desde a entrada do jogador informam a penalidade de fadiga em habilidades. Eventos já salvos continuam intactos; o estado opcional novo aceita saves anteriores. A repetibilidade vale para a mesma versão do código e os mesmos dados de entrada, não entre atualizações diferentes do algoritmo.
+- Não usar IA externa ou API paga para decidir resultados. O lote reproduzível de 1.000 partidas e suas limitações estão em `docs/football-decision-engine.md`. Os placares de partidas de outras equipes permanecem no modelo simplificado do calendário nesta etapa.

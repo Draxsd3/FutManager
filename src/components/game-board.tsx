@@ -329,6 +329,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       const snapshot = { home: visual.filter((player) => player.key.startsWith("home-")).map((player) => player.target), away: visual.filter((player) => player.key.startsWith("away-")).map((player) => player.target) };
       const event = simulateAction({
         minute: nextMinute,
+        score: { home: homeScore, away: awayScore },
+        managedIsHome: userIsHome,
+        kickoffSide: seededRandom(`${matchPreparation.matchKey}|kickoff`)() < .5 ? "home" : "away",
+        minutesPlayedHome: Object.fromEntries(startersData.map((player) => [player.id, Math.max(0, nextMinute - (participation[player.id]?.entered ?? 0))])),
         starters: startersData,
         formation,
         positions: manualPositions,
