@@ -272,3 +272,9 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Novos campos opcionais nos eventos (`carrierId`, `targetId`, `ballAfter`, `chanceQuality`) preservam leitura de saves antigos, sem migração SQL. Mesma versão/estado/semente reproduz a partida ao recarregar; eventos já jogados não mudam. Minutos futuros de partidas antigas usam o código atualizado; não prometer determinismo entre versões diferentes.
 - Não chamar qualidade da chance de xG oficial nem apresentar o motor como treinado/validado em uma liga real. Continua uma simulação comprimida com um lance representativo/minuto; demais partidas do calendário usam o modelo simplificado anterior. Sem física contínua ou implementação completa de todas as regras/reinícios do futebol nesta etapa.
 - Documentação: `docs/football-decision-engine.md`, `public/game-assets/match-engine-rules.md` e seção 9 de MECANICA-JOGO. Teste reproduzível de 1.000 partidas verifica consistência e relações táticas; resultados e limites registrados no relatório.
+
+### 32. Refinamento leve do centro de treinamento — 03/11/2026
+
+- Pedido: refinar levemente a tela de treino da referência, usar mais ícones coerentes e remover cards/botões desnecessários. Preservar o tema escuro, a janela modal e a mecânica semanal; não redesenhar o restante do game.
+- Removida somente no treino a barra interna repetida de título/Voltar ao clube; o X do modal continua sendo a saída. Semana/temporada ficam em texto com calendário, sem card. Resumo lateral e métricas permanecem, mas sem caixas aninhadas/nota redundante.
+- Atividades viraram opções compactas com ícones SVG da família existente; descrição somente da atividade escolhida. Intensidade usa um seletor em vez de três botões. Selecionar aptos/Limpar ficam em um checkbox de seleção geral; seleção inicial de titulares e checkboxes individuais continuam. Mantidos filtros, seis dias, seis atividades, resumo/diário, aplicação, validações e salvamento.
