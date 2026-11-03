@@ -1218,10 +1218,10 @@
 .header p:not(.eyebrow){color:#93a095}
 .eyebrow{color:#91a095}
 .headerActions button,.boardFooter button{border:1px solid #ffffff1c;border-radius:7px;background:#191a21;color:#bdc9bd}
-.headerActions button:hover,.boardFooter button:hover{border-color:color-mix(in srgb, var(--team-accent, #d4ad64) 40.0%, transparent);background:color-mix(in srgb, var(--team-accent, #d4ad64) 5.1%, transparent);color:#eff4e9}
-.headerActions .primary{border-color:var(--team-accent, #d4ad64);background:var(--team-accent, #d4ad64);color:var(--team-accent-text, #15161b)}
-.headerActions .primary:hover{background:var(--team-accent, #d4ad64);color:var(--team-accent-text, #15161b)}
-.settingsToggle[aria-expanded=true]{border-color:var(--team-accent, #d4ad64);background:var(--team-accent, #d4ad64);color:var(--team-accent-text, #15161b)}
+.headerActions button:hover,.boardFooter button:hover{border-color:color-mix(in srgb, var(--game-accent, #a2dfb2) 40.0%, transparent);background:color-mix(in srgb, var(--game-accent, #a2dfb2) 5.1%, transparent);color:#eff4e9}
+.headerActions .primary{border-color:var(--game-accent, #a2dfb2);background:var(--game-accent, #a2dfb2);color:var(--game-accent-text, #10291a)}
+.headerActions .primary:hover{background:var(--game-accent, #a2dfb2);color:var(--game-accent-text, #10291a)}
+.settingsToggle[aria-expanded=true]{border-color:var(--game-accent, #a2dfb2);background:var(--game-accent, #a2dfb2);color:var(--game-accent-text, #10291a)}
 .summary{overflow:hidden;border:1px solid #ffffff14;border-radius:9px;background:#191a21;color:#edf3e9}
 .summary>div{border-color:#ffffff12}
 .summary small{color:#8f9c91}
@@ -1234,55 +1234,55 @@
 .panel .eyebrow{color:#94a296}
 .select,.search,.toggle{color:#a0ada1}
 .select select,.search input{border:1px solid #ffffff1b;border-radius:6px;background:#111218;color:#e3ebe0}
-.select select:focus,.search input:focus{border-color:color-mix(in srgb, var(--team-accent, #d4ad64) 53.3%, transparent);outline:2px solid color-mix(in srgb, var(--team-accent, #d4ad64) 9.4%, transparent)}
+.select select:focus,.search input:focus{border-color:color-mix(in srgb, var(--game-accent, #a2dfb2) 53.3%, transparent);outline:2px solid color-mix(in srgb, var(--game-accent, #a2dfb2) 9.4%, transparent)}
 .select select option{background:#15161d;color:#edf3e9}
 .note,.instructions{color:#97a497}
 .strength{color:#9ca99e}
 .strength b{color:#e7efe3}
 .strength>i{background:#2b2c34}
-.strength>i>span{background:var(--team-accent, #d4ad64)}
+.strength>i>span{background:var(--game-accent, #a2dfb2)}
 .fieldViewport{border:1px solid #ffffff14;background:#111218}
 .fieldViewport>.field{background:repeating-linear-gradient(0deg,#215c3e 0 8%,#286947 8% 16%);box-shadow:inset 0 0 70px #06140d99,0 12px 30px #0004}
 .lines,.lines i{border-color:#edffdf78}
 .half{border-color:#edffdf78}
-.sector{background:color-mix(in srgb, var(--team-accent, #d4ad64) 3.1%, transparent);color:#edf5e7aa}
-.sector.attack{background:#ffad6c0b}.sector.midfield{background:#7bc4ff0b}.sector.defense{background:#91e3c60b}.sector.keeper{background:color-mix(in srgb, var(--team-accent, #d4ad64) 4.3%, transparent)}
+.sector{background:color-mix(in srgb, var(--game-accent, #a2dfb2) 3.1%, transparent);color:#edf5e7aa}
+.sector.attack{background:#ffad6c0b}.sector.midfield{background:#7bc4ff0b}.sector.defense{background:#91e3c60b}.sector.keeper{background:color-mix(in srgb, var(--game-accent, #a2dfb2) 4.3%, transparent)}
 .sector span,.roleLabels span{border:1px solid #ffffff18;background:#17181fe8;color:#e8f2e3}
-.sector:hover,.sector:focus-visible{background:color-mix(in srgb, var(--team-accent, #d4ad64) 14.5%, transparent)}
-.sector:focus-visible span{outline-color:var(--team-accent, #d4ad64)}
+.sector:hover,.sector:focus-visible{background:color-mix(in srgb, var(--game-accent, #a2dfb2) 14.5%, transparent)}
+.sector:focus-visible span{outline-color:var(--game-accent, #a2dfb2)}
 .regionBorders line{stroke:#e4efdd78}
 .player{border-color:transparent;color:#f5f8f0}
-.player.selected,.player.hovered{border-color:var(--team-accent, #d4ad64);background:color-mix(in srgb, var(--team-accent, #d4ad64) 9.0%, transparent);box-shadow:0 0 0 3px color-mix(in srgb, var(--team-accent, #d4ad64) 9.8%, transparent)}
+.player.selected,.player.hovered{border-color:var(--game-accent, #a2dfb2);background:color-mix(in srgb, var(--game-accent, #a2dfb2) 9.0%, transparent);box-shadow:0 0 0 3px color-mix(in srgb, var(--game-accent, #a2dfb2) 9.8%, transparent)}
 .player> b{border-radius:4px;background:#14151be8;color:#f1f5ea;padding:2px 5px}
 .player small{color:#d9e7d2;text-shadow:0 1px 3px #000}
 .energy{background:#2b2c34}
-.energy>span{background:var(--team-accent, #d4ad64)}
+.energy>span{background:var(--game-accent, #a2dfb2)}
 .boardFooter{border-top:1px solid #ffffff12}
 .boardFooter>span{color:#96a397}
 .feedback{border:1px solid #ffffff12;border-radius:6px;background:#111218;color:#aab7aa}
 .panelHeading h2{color:#eff4e9}
-.count{border:1px solid color-mix(in srgb, var(--team-accent, #d4ad64) 25.1%, transparent);border-radius:30px;background:color-mix(in srgb, var(--team-accent, #d4ad64) 6.3%, transparent);color:var(--team-accent, #d4ad64)}
+.count{border:1px solid color-mix(in srgb, var(--game-accent, #a2dfb2) 25.1%, transparent);border-radius:30px;background:color-mix(in srgb, var(--game-accent, #a2dfb2) 6.3%, transparent);color:var(--game-accent, #a2dfb2)}
 .search{color:#a4b0a4}
 .bench{border:1px solid #ffffff12;border-radius:8px;background:repeating-linear-gradient(90deg,#14151be8,#14151be8 49%,#121c15e8 50%),url('/game-assets/backgrounds/reserve-bench.webp') center/cover}
 .reserve{border:1px solid #ffffff12;border-radius:6px;background:#1c1d25;color:#dce6d8}
-.reserve:hover,.reserve[aria-pressed=true]{border-color:color-mix(in srgb, var(--team-accent, #d4ad64) 46.7%, transparent);background:color-mix(in srgb, var(--team-accent, #d4ad64) 7.1%, transparent)}
-.reserve b{color:#edf3e9}.reserve strong{color:var(--team-accent, #d4ad64)}.reserve small{color:#94a196}
-.detailButton{border:1px solid #ffffff1a;border-radius:6px;background:#14151b;color:var(--team-accent, #d4ad64)}
-.detailButton:hover:not(:disabled){border-color:color-mix(in srgb, var(--team-accent, #d4ad64) 46.7%, transparent);background:color-mix(in srgb, var(--team-accent, #d4ad64) 5.1%, transparent)}.detailButton:disabled{color:#768278}
+.reserve:hover,.reserve[aria-pressed=true]{border-color:color-mix(in srgb, var(--game-accent, #a2dfb2) 46.7%, transparent);background:color-mix(in srgb, var(--game-accent, #a2dfb2) 7.1%, transparent)}
+.reserve b{color:#edf3e9}.reserve strong{color:var(--game-accent, #a2dfb2)}.reserve small{color:#94a196}
+.detailButton{border:1px solid #ffffff1a;border-radius:6px;background:#14151b;color:var(--game-accent, #a2dfb2)}
+.detailButton:hover:not(:disabled){border-color:color-mix(in srgb, var(--game-accent, #a2dfb2) 46.7%, transparent);background:color-mix(in srgb, var(--game-accent, #a2dfb2) 5.1%, transparent)}.detailButton:disabled{color:#768278}
 .facts{border-color:#ffffff12;color:#9eaa9e}
 .facts b{color:#e6eee1}
 .footer{border-top:1px solid #ffffff10;color:#87958a}
 .liveScore{border-color:#ffffff12;background:#14151b;color:#eef3e8}
-.liveScore b{color:var(--team-accent, #d4ad64)}.liveScore strong{color:#91a095}
+.liveScore b{color:var(--game-accent, #a2dfb2)}.liveScore strong{color:#91a095}
 .modalBackdrop{background:#08090ed9;backdrop-filter:blur(9px)}
 .modal{border:1px solid #ffffff1d;border-radius:12px;background:#15161d;color:#edf3e9;box-shadow:0 30px 100px #000b}
-.modal h2{color:#f1f4ed}.modal header button{border:1px solid #ffffff16;background:#1b261e;color:#d6e1d3}.detailGrid p{border:1px solid #ffffff0c;background:#202129}.detailGrid span{color:#91a095}.detailGrid strong{color:#eef3e8}.modalActions button{border:1px solid #ffffff1a;border-radius:6px;background:#21222a;color:var(--team-accent, #d4ad64)}.modalActions button:hover:not(:disabled){border-color:color-mix(in srgb, var(--team-accent, #d4ad64) 46.7%, transparent);background:color-mix(in srgb, var(--team-accent, #d4ad64) 6.3%, transparent)}.modal .note{color:#a5b1a5}
+.modal h2{color:#f1f4ed}.modal header button{border:1px solid #ffffff16;background:#1b261e;color:#d6e1d3}.detailGrid p{border:1px solid #ffffff0c;background:#202129}.detailGrid span{color:#91a095}.detailGrid strong{color:#eef3e8}.modalActions button{border:1px solid #ffffff1a;border-radius:6px;background:#21222a;color:var(--game-accent, #a2dfb2)}.modalActions button:hover:not(:disabled){border-color:color-mix(in srgb, var(--game-accent, #a2dfb2) 46.7%, transparent);background:color-mix(in srgb, var(--game-accent, #a2dfb2) 6.3%, transparent)}.modal .note{color:#a5b1a5}
 .errorMessage,.warning{border-color:#d9775d55;background:#8a372719;color:#ff9e88}
 @media(max-width:1100px){.layout{grid-template-columns:minmax(0,1fr) 275px}.settings{max-height:70dvh}.benchPanel{max-height:none}}
 @media(max-width:760px){.screen{overflow:auto}.container{padding:13px 10px}.header{align-items:flex-start}.header h1{font-size:21px}.summary{grid-template-columns:repeat(5,minmax(0,1fr));padding:8px 3px}.summary>div{padding-inline:5px}.summary small{font-size:6px;letter-spacing:0}.summary strong{font-size:15px}.layout{grid-template-columns:minmax(0,1fr);gap:9px}.sidebar{max-height:none}.settings{order:2}.board{order:1;min-height:460px}.benchPanel{order:3;min-height:320px}.fieldViewport{min-height:300px}.footer{gap:7px;flex-wrap:wrap}}
 @media(max-width:480px){.header{flex-direction:column}.headerActions{width:100%;justify-content:space-between}.headerActions button{padding:8px 9px;font-size:9px}.summary strong{font-size:12px}.summary small{font-size:5px}.fieldViewport{min-height:270px}.detailGrid{gap:6px}.modal{padding:14px}}
 
-.screen{background:radial-gradient(ellipse at 48% -20%,color-mix(in srgb,var(--team-primary,#68707f) 14%,#1c1d25) 0%,#111218 45%,#090a0f 82%)}
+.screen{background:radial-gradient(ellipse at 48% -20%,color-mix(in srgb,#267048 14%,#1c1d25) 0%,#111218 45%,#090a0f 82%)}
 .summary,.panel,.board,.liveScore,.modal{border-color:#373941;background-color:#15161d}
 .panel,.board,.modal{box-shadow:0 14px 34px #0005}
 .panelHeading,.boardHeader{background:#1c1d25}

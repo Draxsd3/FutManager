@@ -64,3 +64,18 @@
 .screen button:focus-visible, .screen select:focus-visible { outline: 2px solid #37864a; outline-offset: 3px; }
 @media (max-width: 850px) { .overview { grid-template-columns: 1fr; } .summary { display: none; } .header { align-items: flex-start; } .headerActions .date { display: none; } }
 @media (max-width: 600px) { .container { padding-top: 22px; } .header { flex-direction: column; gap: 12px; } .header h1 { font-size: 25px; } .tabs { gap: 20px; } .tabs button { font-size: 11px; } .hero { padding: 20px; } .heroTop { flex-wrap: wrap; } .heroBottom { flex-direction: column; align-items: stretch; } .heroBottom button { justify-content: space-between; } .sectionHeader { align-items: flex-start; flex-direction: column; } .sectionHeader label { flex-wrap: wrap; } .footer > span:last-child { display: none; } }
+
+/* Explicit light surfaces and dark text keep the schedule readable in career windows. */
+.screen { color-scheme: light; background: #eef4ef; color: #203b2a; }
+.eyebrow, .header p:not(.eyebrow), .tabs button, .tabs button > span,
+.sectionHeader label, .footer { color: #526c59; }
+.tabs button[aria-current] { color: #16572f; border-bottom-color: #27834d; }
+.summary, .schedule, .emptySection { background: #fff; color: #203b2a; border-color: #cedfd1; }
+.summary .kicker, .summaryRow > span, .note, .schedule td small,
+.tableFoot, .emptyRow, .emptySection p:not(.eyebrow) { color: #526c59; }
+.schedule th { background: #e7f0e8; color: #365943; border-color: #ccddcf; }
+.schedule td { color: #203b2a; }
+.pill { background: #e7f1e8; color: #365b3e; }
+.upcoming, .textButton { color: #206233; }
+.heroBottom button { background: #a2dfb2; color: #10291a; }
+.sectionHeader select { background: #fff; color: #203b2a; border-color: #b9cfbe; }
