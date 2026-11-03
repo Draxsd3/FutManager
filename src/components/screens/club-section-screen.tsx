@@ -9,6 +9,8 @@ import { Crest } from "@/components/ui/club-sidebar";
 import { StadiumScreen } from "./stadium-screen";
 import { AgendaScreen, type AgendaView } from "./agenda-screen";
 import { competitionTrophies } from "@/lib/game/assets";
+import { canJoinTraining, sessionEnergyDelta, TRAINING_DAYS, TRAINING_DRILLS, trainingDrillLabel, trainingWeekSessions, type TrainingDay, type TrainingDrillId, type TrainingIntensity, type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
+import trainingStyles from "./training-center.module.css";
 
 export type ClubSection = "agenda" | "stadium" | "juniors" | "teams" | "search" | "coaches" | "history" | "finances" | "trophies" | "training";
 
@@ -29,7 +31,11 @@ export function ClubSectionScreen({
   onAgenda,
   onBack,
   onOpenPlayer,
-  onTrainPlayer,
+  onTrainPlayers,
+  starters = [],
+  trainingSessions = [],
+  trainingWeek = 1,
+  trainingSeason = 2026,
 }: {
   agendaView?: AgendaView;
   onAgendaViewChange?: (view: AgendaView) => void;
@@ -47,13 +53,14 @@ export function ClubSectionScreen({
   inGameDate?: string;
   onBack: () => void;
   onOpenPlayer: (id: number) => void;
-  onTrainPlayer: (id: number, focus: string) => void;
+  onTrainPlayers: (input: Omit<TrainingSessionInput, "season" | "week">) => { record?: TrainingSessionRecord; error?: string };
+  starters?: number[];
+  trainingSessions?: TrainingSessionRecord[];
+  trainingWeek?: number;
+  trainingSeason?: number;
 }) {
   const [query, setQuery] = useState("");
   const [selectedClub, setSelectedClub] = useState(club);
-  const [selectedTrainingId, setSelectedTrainingId] = useState(squad[0]?.id ?? 0);
-  const [trainingFocus, setTrainingFocus] = useState("Físico");
-  const [trainingMessage, setTrainingMessage] = useState("");
   const currentClub = database.clubs.find((item) => item.name === club);
   const viewedClub = database.clubs.find((item) => item.name === selectedClub) ?? currentClub;
   const clubNameById = useMemo(() => Object.fromEntries(database.clubs.map((item) => [item.id, item.name])), [database.clubs]);
@@ -64,7 +71,6 @@ export function ClubSectionScreen({
       .filter((player) => player.name.toLocaleLowerCase("pt-BR").includes(normalized))
       .slice(0, 30);
   }, [database.players, query]);
-  const selectedTrainingPlayer = squad.find((player) => player.id === selectedTrainingId) ?? squad[0];
   const monthlyPayroll = squad.reduce((total, player) => total + player.salary * 1000, 0);
   const squadValue = squad.reduce((total, player) => total + player.marketValue, 0);
   const title = {
@@ -129,10 +135,7 @@ export function ClubSectionScreen({
         )}
 
         {section === "training" && (
-          <div className="grid gap-4 p-4 lg:grid-cols-[1.5fr_340px]">
-            <Panel title="ELENCO DISPONÍVEL"><DataTable headers={["Nome", "P", "Força", "Energia", "Idade"]}>{squad.map((player) => <tr key={player.id} onClick={() => { setSelectedTrainingId(player.id); setTrainingMessage(""); }} onDoubleClick={() => onOpenPlayer(player.id)} className={["cursor-pointer border-b", selectedTrainingPlayer?.id === player.id ? "bg-[#fff2a8]" : "hover:bg-[#e4eef3]"].join(" ")}><Cell>{player.name}</Cell><Cell>{player.position}</Cell><Cell><b>{player.overall}</b></Cell><Cell>{player.energy}%</Cell><Cell>{player.age}</Cell></tr>)}</DataTable></Panel>
-            <Panel title="SESSÃO DE TREINO">{selectedTrainingPlayer && <><div className="mb-4 flex items-center gap-3"><ClassicIcon name="user_green" size={32}/><div><b className="text-lg">{selectedTrainingPlayer.name}</b><p>{selectedTrainingPlayer.position} · Força {selectedTrainingPlayer.overall} · Energia {selectedTrainingPlayer.energy}%</p></div></div><label className="block font-bold">Foco do treino<select value={trainingFocus} onChange={(event) => { setTrainingFocus(event.target.value); setTrainingMessage(""); }} className="mt-1 block h-9 w-full border border-[#849198] bg-white px-2 font-normal"><option>Físico</option><option>Finalização</option><option>Passe</option><option>Defesa</option><option>Recuperação</option></select></label><p className="mt-3 text-[11px] text-[#68757b]">Treinos técnicos consomem 6% de energia e podem aumentar a força. Recuperação devolve 15% de energia.</p><button disabled={trainingFocus !== "Recuperação" && selectedTrainingPlayer.energy < 10} onClick={() => { onTrainPlayer(selectedTrainingPlayer.id, trainingFocus); setTrainingMessage(`Sessão de ${trainingFocus.toLocaleLowerCase("pt-BR")} concluída e salva.`); }} className="mt-5 flex w-full items-center justify-center gap-2 border border-[#687b85] bg-gradient-to-b from-white to-[#c7d4db] py-2 font-bold disabled:opacity-40"><ClassicIcon name={trainingFocus === "Recuperação" ? "arrow_refresh" : "chart_bar"}/>APLICAR TREINO</button>{trainingMessage && <p className="mt-3 border border-[#76a986] bg-[#e4f5e8] p-2 font-bold text-[#07552f]">{trainingMessage}</p>}</>}</Panel>
-          </div>
+          <TrainingCenter squad={squad} starters={starters} week={trainingWeek} season={trainingSeason} sessions={trainingSessions} onTrain={onTrainPlayers} />
         )}
       </section>
     </div>
@@ -143,3 +146,75 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 function Info({ label, value }: { label: string; value: string }) { return <div className="flex justify-between border-b border-[#dce7dc] py-2"><b>{label}</b><span>{value}</span></div>; }
 function DataTable({ headers, children }: { headers: string[]; children: React.ReactNode }) { return <div className="overflow-auto border border-[#c9d9ca]"><table className="w-full border-collapse text-left"><thead className="bg-[var(--team-accent)] text-[var(--team-accent-text)]"><tr>{headers.map((header) => <th key={header} className="border-r border-white/20 px-3 py-2 text-[11px]">{header}</th>)}</tr></thead><tbody>{children}</tbody></table></div>; }
 function Cell({ children }: { children: React.ReactNode }) { return <td className="px-3 py-2">{children}</td>; }
+
+
+function TrainingCenter({ squad, starters, week, season, sessions, onTrain }: { squad: Player[]; starters: number[]; week: number; season: number; sessions: TrainingSessionRecord[]; onTrain: (input: Omit<TrainingSessionInput, "season" | "week">) => { record?: TrainingSessionRecord; error?: string } }) {
+  const weekly = trainingWeekSessions(sessions, season, week);
+  const completedDays = new Set(weekly.map((session) => session.day));
+  const [day, setDay] = useState<TrainingDay>(TRAINING_DAYS.find((item) => !completedDays.has(item)) ?? TRAINING_DAYS[0]);
+  const [drill, setDrill] = useState<TrainingDrillId>("passe");
+  const [intensity, setIntensity] = useState<TrainingIntensity>("Moderada");
+  const [selectedIds, setSelectedIds] = useState<number[]>(() => starters.length ? starters : squad.slice(0, 11).map((player) => player.id));
+  const [position, setPosition] = useState("all");
+  const [query, setQuery] = useState("");
+  const [message, setMessage] = useState("");
+  const selectedSet = new Set(selectedIds);
+  const eligibleSelected = squad.filter((player) => selectedSet.has(player.id) && canJoinTraining(player, drill, intensity));
+  const energyDelta = sessionEnergyDelta(drill, intensity);
+  const selectedSession = weekly.find((session) => session.day === day);
+  const visiblePlayers = squad.filter((player) => (position === "all" || player.position === position) && player.name.toLocaleLowerCase("pt-BR").includes(query.trim().toLocaleLowerCase("pt-BR")));
+  const energySummary = energyDelta < 0 ? `+${Math.abs(energyDelta)}% energia` : `−${energyDelta}% energia`;
+
+  function updateSelection(ids: number[]) { setSelectedIds([...new Set(ids)]); setMessage(""); }
+  function togglePlayer(id: number) { updateSelection(selectedSet.has(id) ? selectedIds.filter((item) => item !== id) : [...selectedIds, id]); }
+  function applySession() {
+    const result = onTrain({ day, drill, intensity, playerIds: eligibleSelected.map((player) => player.id) });
+    setMessage(result.record ? `${trainingDrillLabel(result.record.drill)} aplicado a ${result.record.playerIds.length} atleta${result.record.playerIds.length === 1 ? "" : "s"}.` : result.error ?? "Não foi possível aplicar o treino.");
+    if (result.record) setSelectedIds(result.record.playerIds);
+  }
+
+  return <div className={trainingStyles.center}>
+    <header className={trainingStyles.heading}>
+      <div><span>PLANEJAMENTO DA SEMANA</span><h2>Centro de treinamento</h2><p>Organize a carga, escolha os atletas e acompanhe o efeito de cada sessão.</p></div>
+      <div className={trainingStyles.weekStamp}><b>SEMANA {week}</b><small>Temporada {season}</small></div>
+    </header>
+    <div className={trainingStyles.layout}>
+      <section className={trainingStyles.builder} aria-label="Configurar sessão de treino">
+        <div className={trainingStyles.sectionHead}><div><span>01 / AGENDA</span><h3>Escolha o dia</h3></div><small>{weekly.length}/6 concluídas</small></div>
+        <div className={trainingStyles.days}>{TRAINING_DAYS.map((item) => {
+          const done = completedDays.has(item);
+          return <button key={item} type="button" aria-pressed={day === item} data-done={done || undefined} className={day === item ? trainingStyles.dayActive : trainingStyles.day} onClick={() => { setDay(item); setMessage(""); }}><b>{item.slice(0, 3)}</b><small>{done ? "FEITO" : "LIVRE"}</small></button>;
+        })}</div>
+        {selectedSession && <p className={trainingStyles.slotNotice}>Sessão concluída: {trainingDrillLabel(selectedSession.drill)} · {selectedSession.playerIds.length} atletas.</p>}
+
+        <div className={trainingStyles.sectionHead}><div><span>02 / ATIVIDADE</span><h3>Tipo de treino</h3></div></div>
+        <div className={trainingStyles.drills}>{TRAINING_DRILLS.map((item) => <button key={item.id} type="button" aria-pressed={drill === item.id} className={drill === item.id ? trainingStyles.drillActive : trainingStyles.drill} onClick={() => { setDrill(item.id); setMessage(""); }}><span>{item.category}</span><b>{item.name}</b><small>{item.description}</small></button>)}</div>
+
+        <div className={trainingStyles.sectionHead}><div><span>03 / CARGA</span><h3>Intensidade</h3></div><small>{energySummary} por atleta</small></div>
+        <div className={trainingStyles.intensities}>{(["Leve", "Moderada", "Intensa"] as const).map((level) => <button type="button" key={level} aria-pressed={intensity === level} className={intensity === level ? trainingStyles.intensityActive : trainingStyles.intensity} onClick={() => { setIntensity(level); setMessage(""); }}><b>{level}</b><small>{level === "Leve" ? "Manutenção" : level === "Moderada" ? "Equilibrada" : "Maior estímulo"}</small></button>)}</div>
+
+        <div className={trainingStyles.sectionHead}><div><span>04 / ELENCO</span><h3>Atletas da sessão</h3></div><small>{eligibleSelected.length} aptos · {selectedIds.length} selecionados</small></div>
+        <div className={trainingStyles.rosterTools}><input aria-label="Buscar atleta no treino" placeholder="Buscar no elenco..." value={query} onChange={(event) => setQuery(event.target.value)} /><select aria-label="Filtrar posição no treino" value={position} onChange={(event) => setPosition(event.target.value)}><option value="all">Todas as posições</option><option value="G">Goleiros</option><option value="L">Laterais</option><option value="Z">Zagueiros</option><option value="M">Meias</option><option value="A">Atacantes</option></select></div>
+        <div className={trainingStyles.selectActions}><button type="button" onClick={() => updateSelection([...selectedIds, ...squad.filter((player) => canJoinTraining(player, drill, intensity)).map((player) => player.id)])}>Selecionar aptos</button><button type="button" onClick={() => updateSelection(starters.filter((id) => { const player = squad.find((item) => item.id === id); return !!player && canJoinTraining(player, drill, intensity); }))}>Titulares</button><button type="button" onClick={() => updateSelection([])}>Limpar</button></div>
+        <div className={trainingStyles.playerList} aria-label="Escolha os atletas">
+          {visiblePlayers.map((player) => {
+            const eligible = canJoinTraining(player, drill, intensity);
+            return <label key={player.id} className={eligible ? trainingStyles.playerRow : trainingStyles.playerUnavailable}><input type="checkbox" checked={selectedSet.has(player.id)} disabled={!eligible} onChange={() => togglePlayer(player.id)} /><span className={trainingStyles.playerPosition}>{player.position}</span><span className={trainingStyles.playerInfo}><b>{player.name}</b><small>Força {player.overall}</small></span><span className={trainingStyles.playerEnergy}>{player.energy}%</span><span className={trainingStyles.playerState}>{eligible ? "APTO" : drill === "recuperacao" ? "OK" : "DESCANSO"}</span></label>;
+          })}
+        </div>
+        <div className={trainingStyles.applyRow}><div><b>{selectedSession ? "Dia já utilizado" : "Carga prevista"}</b><small>{eligibleSelected.length ? `${eligibleSelected.length} atleta${eligibleSelected.length === 1 ? "" : "s"} · ${energySummary}` : "Selecione atletas aptos para treinar"}</small></div><button type="button" disabled={!!selectedSession || eligibleSelected.length === 0} onClick={applySession}>APLICAR SESSÃO <span aria-hidden="true">→</span></button></div>
+        {message && <p className={message.includes("aplicado") ? trainingStyles.success : trainingStyles.error} role="status">{message}</p>}
+      </section>
+
+      <aside className={trainingStyles.weekPanel} aria-label="Resumo dos treinos da semana">
+        <div className={trainingStyles.sectionHead}><div><span>SEMANA {week}</span><h3>Resumo das sessões</h3></div><b className={trainingStyles.sessionCount}>{weekly.length}/6</b></div>
+        <div className={trainingStyles.progress}><i style={{ width: `${weekly.length / TRAINING_DAYS.length * 100}%` }} /></div>
+        <div className={trainingStyles.weekStats}><div><b>{new Set(weekly.flatMap((session) => session.playerIds)).size}</b><span>atletas</span></div><div><b>{weekly.reduce((sum, session) => sum + session.overallImprovements, 0)}</b><span>evoluções</span></div><div><b>{weekly.reduce((sum, session) => sum + session.energySpent, 0)}</b><span>pts de energia</span></div></div>
+        <h4>DIÁRIO DE TREINO</h4>
+        {weekly.length ? <ol className={trainingStyles.sessionLog}>{weekly.map((session) => <li key={session.id}><span className={trainingStyles.sessionDay}>{session.day.slice(0, 3)}</span><span className={trainingStyles.sessionInfo}><b>{trainingDrillLabel(session.drill)}</b><small>{session.intensity} · {session.playerIds.length} atletas</small></span><span className={trainingStyles.sessionEnergy}>{session.energyRecovered ? `+${Math.round(session.energyRecovered / session.playerIds.length)}` : `−${Math.round(session.energySpent / session.playerIds.length)}`}%/atleta</span></li>)}</ol> : <p className={trainingStyles.emptyWeek}>Nenhuma sessão concluída nesta semana. Comece com uma atividade leve ou use a recuperação ativa.</p>}
+        <div className={trainingStyles.coachNote}><b>NOTA DA COMISSÃO</b><p>{weekly.length >= 5 ? "Boa consistência. Preserve a recuperação antes do próximo jogo." : weekly.length >= 3 ? "Carga equilibrada. Alterne técnica e recuperação." : "Treinos leves custam apenas 1–2% de energia por atleta; sessões intensas, até 5%."}</p></div>
+        <p className={trainingStyles.energyFootnote}>A evolução é gradual e depende da idade, força e intensidade. Cada dia aceita uma sessão.</p>
+      </aside>
+    </div>
+  </div>;
+}

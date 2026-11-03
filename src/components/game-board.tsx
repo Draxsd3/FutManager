@@ -46,6 +46,7 @@ import {
 } from "@/lib/game/session";
 import { agendaOptions, type AgendaView } from "@/components/screens/agenda-screen";
 import type { CareerProgress, MatchPreparation } from "@/lib/game/progress";
+import { applyTrainingSession, type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
 import { calculateMatchStatistics, calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, seededRandom, simulateAction } from "@/lib/game/live-match";
 import { completeCareerFixture, createCareerSeason, getCompetitionPlayerStats, getCompetitionStandings, nextCareerFixture, playerContributionsFromMatch, type CareerSeason } from "@/lib/game/season";
 import { loadMatchRules, type MatchRules } from "@/lib/game/match-rules";
@@ -176,6 +177,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [selectedPlayer, setSelectedPlayer] = useState<number | null>(null);
   const [profilePlayer, setProfilePlayer] = useState<number | null>(null);
   const [playerCareers, setPlayerCareers] = useState<Record<number, PlayerCareerRecord>>({});
+  const [trainingSessions, setTrainingSessions] = useState<TrainingSessionRecord[]>([]);
   const [manualPositions, setManualPositions] = useState<Record<number, ManualPosition>>({});
   const [competitionSeason, setCompetitionSeason] = useState<CareerSeason | undefined>();
   const [activeFixtureId, setActiveFixtureId] = useState<string>();
@@ -203,7 +205,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   const progress: CareerProgress = {
     page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, formation, style, marking, focus,
-    starters, careerSquad: squad, playerCareers, manualPositions, minute, homeScore, awayScore,
+    starters, careerSquad: squad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore,
     events, participation, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
     competitionSeason, activeFixtureId, transferNegotiations,
   };
@@ -223,7 +225,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setSaves(nextSaves);
     pendingCloudSave.current = next;
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, formation, style, marking, focus,
-    starters, careerSquad, playerCareers, manualPositions, minute, homeScore, awayScore, events,
+    starters, careerSquad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore, events,
     participation, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, activeFixtureId, transferNegotiations, userId]);
 
   useEffect(() => {
@@ -575,15 +577,17 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     navigate(action === "roster" ? "hub" : action);
   }
 
-  function trainPlayer(id: number, focusName: string) {
-    const updatedSquad = squad.map((player) => {
-      if (player.id !== id) return player;
-      if (focusName === "Recuperação") return { ...player, energy: Math.min(100, player.energy + 15) };
-      const improved = player.energy >= 20 && player.overall < 99 && Math.random() < 0.3;
-      return { ...player, energy: Math.max(0, player.energy - 6), overall: player.overall + (improved ? 1 : 0) };
-    });
-    setCareerSquad(updatedSquad);
+  function trainPlayers(input: Omit<TrainingSessionInput, "season" | "week">) {
+    const season = competitionSeason?.season ?? 2026;
+    if (trainingSessions.some((session) => session.season === season && session.week === round && session.day === input.day)) {
+      return { error: `A sessão de ${input.day.toLocaleLowerCase("pt-BR")} já foi concluída nesta semana.` };
+    }
+    const result = applyTrainingSession(squad, { ...input, season, week: round });
+    if (!result.record) return { error: result.error ?? "Não foi possível aplicar o treino." };
+    setCareerSquad(result.squad);
+    setTrainingSessions((current) => [...current, result.record!].slice(-240));
     setSyncLabel("Treino aplicado — salvando carreira...");
+    return { record: result.record };
   }
 
   function renderStandings() {
@@ -676,7 +680,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     const initialStarters = buildStartingXI("4-3-3", baseSquad);
     save.progress = { ...progressRef.current, page: "hub", matchPreparation: undefined, activeSaveId: save.id, coach: coach.trim(),
       round: 1, budget: 12624, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
-      careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, manualPositions: {},
+      careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, trainingSessions: [], manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
       detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, activeFixtureId: firstFixture?.id, transferNegotiations: [] };
     setActiveSaveId(save.id);
@@ -703,6 +707,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setCareerSquad(baseSquad);
     setStarters(initialStarters);
     setPlayerCareers({});
+    setTrainingSessions([]);
     setManualPositions({});
     void persistSave(save);
     setPage("hub");
@@ -724,6 +729,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setRound(save.round);
     setBudget(save.budget);
     setPlayerCareers(save.playerCareers ?? {});
+    setTrainingSessions(save.progress?.trainingSessions ?? []);
     setManualPositions(save.manualPositions ?? {});
     setTransferNegotiations(save.progress?.transferNegotiations ?? []);
     setHomeScore(0);
@@ -1165,6 +1171,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             round={competitionRound}
             competition={competitionName}
             playerCareers={playerCareers}
+            trainingSessions={trainingSessions}
             season={competitionSeason?.season ?? 2026}
             isHome={userIsHome}
             hasNextMatch={!!scheduledFixture}
@@ -1221,9 +1228,13 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             fixtures={fixtures}
             competition={competitionName}
             inGameDate={saves.find((save) => save.id === activeSaveId)?.inGameDate ?? "2026-01-22"}
+            starters={starters}
             onBack={() => navigate("hub")}
             onOpenPlayer={openPlayerProfile}
-            onTrainPlayer={trainPlayer}
+            trainingSessions={trainingSessions}
+            trainingWeek={round}
+            trainingSeason={competitionSeason?.season ?? 2026}
+            onTrainPlayers={trainPlayers}
           />}
         </CareerWorkspace>
         {renderStandings()}
