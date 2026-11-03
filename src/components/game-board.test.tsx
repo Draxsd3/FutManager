@@ -321,9 +321,32 @@ it("opens finances, trophies and training as modal shortcuts without losing the 
   for (const title of ["Finanças", "Troféus", "Treino"]) {
     fireEvent.click(await screen.findByRole("button", { name: title }));
     const dialog = screen.getByRole("dialog", { name: title });
+    if (title === "Treino") {
+      expect(within(dialog).getByRole("heading", { name: "Centro de treinamento" })).toBeTruthy();
+      expect(within(dialog).getByRole("heading", { name: "Atletas da sessão" })).toBeTruthy();
+    }
     fireEvent.keyDown(within(dialog).getByRole("button", { name: `Fechar ${title}` }), { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("button", { name: "Principal" }).getAttribute("aria-current")).toBe("page");
   }
   expect(readLocalSaves("alice")[0].managerName).toBe("Janelas do clube");
+});
+
+it("applies a manageable training session and persists its weekly summary", async () => {
+  render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Treino semanal" } });
+  fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+  await waitFor(() => expect(readLocalSaves("alice")[0]?.progress?.starters).toHaveLength(11));
+  const careerBefore = readLocalSaves("alice")[0];
+  const selectedId = careerBefore.progress!.starters[0];
+  const energyBefore = careerBefore.progress!.careerSquad!.find((player) => player.id === selectedId)!.energy;
+  fireEvent.click(await screen.findByRole("button", { name: "Treino" }));
+  const dialog = await screen.findByRole("dialog", { name: "Treino" });
+  fireEvent.click(within(dialog).getByRole("button", { name: /APLICAR SESSÃO/ }));
+  await waitFor(() => expect(readLocalSaves("alice")[0]?.progress?.trainingSessions).toHaveLength(1));
+  const saved = readLocalSaves("alice")[0].progress!;
+  expect(saved.trainingSessions?.[0]).toMatchObject({ week: 1, day: "Segunda", drill: "passe", intensity: "Moderada" });
+  expect(saved.trainingSessions?.[0].energySpent).toBe(22);
+  expect(saved.careerSquad!.find((player) => player.id === selectedId)!.energy).toBe(energyBefore - 2);
 });

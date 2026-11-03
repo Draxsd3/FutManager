@@ -1,43 +1,32 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { positionLabel, type Player } from "@/lib/game/mock-data";
 import type { PlayerCareerRecord } from "@/lib/game/career";
 import { ClubSidebar } from "@/components/ui/club-sidebar";
-import { fifaPosition, fifaPositionOrder } from "@/lib/game/fifa-position";
+import { fifaPosition } from "@/lib/game/fifa-position";
 import { PlayerJersey } from "@/components/ui/player-jersey";
+import { TRAINING_DAYS, trainingDrillLabel, trainingWeekSessions, type TrainingSessionRecord } from "@/lib/game/training";
 import styles from "./hub-screen.module.css";
 
-export function HubScreen({ club, coach, budget, opponent, round, competition, squad, starters, selectedPlayer, playerCareers = {}, season = 2026, isHome = true, hasNextMatch = true, roundLabel, onSelectPlayer, onOpenPlayer, onEscalar, onQuickAction }: {
+export function HubScreen({ club, coach, budget, opponent, round, competition, squad, starters, selectedPlayer, playerCareers = {}, trainingSessions = [], season = 2026, isHome = true, hasNextMatch = true, roundLabel, onSelectPlayer, onOpenPlayer, onEscalar, onQuickAction }: {
   club: string; coach: string; budget: number; opponent: string; round: number; competition: string;
-  squad: Player[]; starters: number[]; selectedPlayer: Player | null; playerCareers?: Record<number, PlayerCareerRecord>;
+  squad: Player[]; starters: number[]; selectedPlayer: Player | null; playerCareers?: Record<number, PlayerCareerRecord>; trainingSessions?: TrainingSessionRecord[];
   season?: number; isHome?: boolean; hasNextMatch?: boolean; roundLabel?: string;
   onSelectPlayer: (id: number) => void; onOpenPlayer: (id: number) => void; onEscalar: () => void;
   onQuickAction: (action: "roster" | "finances" | "trophies" | "training") => void;
 }) {
-  const [query, setQuery] = useState("");
-  const [role, setRole] = useState("all");
-  const [group, setGroup] = useState("all");
-  const [sort, setSort] = useState("position");
-  const visibleSquad = useMemo(() => squad.filter((player) => player.name.toLocaleLowerCase("pt-BR").includes(query.trim().toLocaleLowerCase("pt-BR")) && (role === "all" || player.position === role) && (group === "all" || (group === "starters" ? starters.includes(player.id) : !starters.includes(player.id))))
-    .sort((a, b) => sort === "overall" ? b.overall - a.overall || a.name.localeCompare(b.name, "pt-BR") : sort === "energy" ? b.energy - a.energy || a.name.localeCompare(b.name, "pt-BR") : sort === "name" ? a.name.localeCompare(b.name, "pt-BR") : fifaPositionOrder(a) - fifaPositionOrder(b) || b.overall - a.overall || a.name.localeCompare(b.name, "pt-BR")), [squad, starters, query, role, group, sort]);
   const selectedRecord = selectedPlayer ? playerCareers[selectedPlayer.id] : undefined;
   const selectedSeason = selectedRecord?.seasons.find((item) => item.season === season && item.club === club);
 
   return <div className={styles.workspace}>
     <ClubSidebar club={club} coach={coach} budget={budget} opponent={opponent} competition={competition} roundLabel={roundLabel ?? `${round}ª rodada`} isHome={isHome} hasNextMatch={hasNextMatch} squadSize={squad.length} ctaLabel="Escalar Time" onCta={onEscalar} onQuickAction={onQuickAction} />
     <section className={styles.roster} aria-label="Elenco do clube">
-      <div className={styles.toolbar}><div className={styles.rosterTitle}><b>Plantel</b><span>{visibleSquad.length} de {squad.length} atletas</span></div><div className={styles.filters}>
-        <label className={styles.search}><span className={styles.visuallyHidden}>Buscar atleta</span><input aria-label="Buscar atleta" placeholder="Buscar atleta..." value={query} onChange={(event) => setQuery(event.target.value)}/></label>
-        <label><span className={styles.visuallyHidden}>Filtrar posição</span><select aria-label="Filtrar posição" value={role} onChange={(event) => setRole(event.target.value)}><option value="all">Todas posições</option><option value="G">Goleiros</option><option value="L">Laterais</option><option value="Z">Zagueiros</option><option value="M">Meias</option><option value="A">Atacantes</option></select></label>
-        <label><span className={styles.visuallyHidden}>Filtrar elenco</span><select aria-label="Filtrar elenco" value={group} onChange={(event) => setGroup(event.target.value)}><option value="all">Todo o elenco</option><option value="starters">Titulares</option><option value="reserves">Reservas</option></select></label>
-        <label><span className={styles.visuallyHidden}>Ordenar elenco</span><select aria-label="Ordenar elenco" value={sort} onChange={(event) => setSort(event.target.value)}><option value="position">Por posição</option><option value="overall">Por força</option><option value="energy">Por energia</option><option value="name">Por nome</option></select></label>
-      </div></div>
+      <div className={styles.toolbar}><div className={styles.rosterTitle}><b>Plantel</b><span>{squad.length} atletas · temporada {season}</span></div><span className={styles.weekBadge}>SEMANA {round}</span></div>
       <div className={styles.rosterBody}>
         <div className={styles.tableScroll}>
           <table className={styles.table}>
             <thead><tr><th scope="col" title="Posição">P</th><th scope="col">Nome</th><th scope="col" title="Pé dominante">Pé</th><th scope="col" title="Força">F</th><th scope="col">Energia</th><th scope="col">Salário</th><th scope="col">Valor</th><th scope="col" title="Jogos na temporada">J</th><th scope="col" title="Gols na temporada">G</th><th scope="col">Car.</th><th scope="col">Idade</th><th scope="col" title="Assistências na temporada">A</th><th scope="col" title="Nota média na temporada">NM</th><th scope="col">Mercado</th></tr></thead>
-            <tbody>{visibleSquad.map((player) => {
+            <tbody>{squad.map((player) => {
               const record = playerCareers[player.id];
               const market = record?.marketStatus ?? player.marketAvailability ?? "normal";
               const marketLabel = ({ sale: "À venda", loan: "Empréstimo", retiring: "Aposentadoria", normal: "—" } as Record<string, string>)[market] ?? "—";
@@ -48,12 +37,12 @@ export function HubScreen({ club, coach, budget, opponent, round, competition, s
               </tr>;
             })}</tbody>
           </table>
-          {visibleSquad.length === 0 && <p className={styles.empty}>{squad.length ? "Nenhum atleta encontrado para os filtros." : "Nenhum atleta no elenco."}</p>}
+          {squad.length === 0 && <p className={styles.empty}>Nenhum atleta no elenco.</p>}
         </div>
-        <SquadInsights squad={squad} starters={starters} playerCareers={playerCareers} />
+        <SquadInsights squad={squad} season={season} week={round} trainingSessions={trainingSessions} onOpenTraining={() => onQuickAction("training")} />
       </div>
       {selectedPlayer && <PlayerPreview player={selectedPlayer} record={selectedRecord} season={season} current={selectedSeason} onOpen={() => onOpenPlayer(selectedPlayer.id)} />}
-      <footer className={styles.statusbar}><span>{visibleSquad.length} exibidos · {squad.length} / 35 jogadores</span><span>Selecione um atleta · duplo clique ou Enter abre a ficha</span></footer>
+      <footer className={styles.statusbar}><span>{squad.length} exibidos · {squad.length} / 35 jogadores</span><span>Selecione um atleta · duplo clique ou Enter abre a ficha</span></footer>
     </section>
   </div>;
 }
@@ -71,28 +60,30 @@ function PlayerPreview({ player, record, season, current, onOpen }: { player: Pl
   </section>;
 }
 
-function SquadInsights({ squad, starters, playerCareers }: { squad: Player[]; starters: number[]; playerCareers: Record<number, PlayerCareerRecord> }) {
-  const defenders = squad.filter((player) => player.position === "L" || player.position === "Z").length;
-  const sectors = [
-    { label: "Goleiros", count: squad.filter((player) => player.position === "G").length, color: "#c59d24" },
-    { label: "Defesa", count: defenders, color: "#547eaf" },
-    { label: "Meio-campo", count: squad.filter((player) => player.position === "M").length, color: "#239557" },
-    { label: "Ataque", count: squad.filter((player) => player.position === "A").length, color: "#be584f" },
-  ];
+function SquadInsights({ squad, season, week, trainingSessions, onOpenTraining }: { squad: Player[]; season: number; week: number; trainingSessions: TrainingSessionRecord[]; onOpenTraining: () => void }) {
   const averageEnergy = squad.length ? Math.round(squad.reduce((sum, player) => sum + player.energy, 0) / squad.length) : 0;
   const lowEnergy = [...squad].filter((player) => player.energy < 60).sort((a, b) => a.energy - b.energy);
-  const starterCount = squad.filter((player) => starters.includes(player.id)).length;
-  const forSale = squad.filter((player) => (playerCareers[player.id]?.marketStatus ?? player.marketAvailability) === "sale").length;
-  const forLoan = squad.filter((player) => (playerCareers[player.id]?.marketStatus ?? player.marketAvailability) === "loan").length;
+  const weeklySessions = trainingWeekSessions(trainingSessions, season, week);
+  const trainedIds = new Set(weeklySessions.flatMap((session) => session.playerIds));
+  const totalEnergySpent = weeklySessions.reduce((sum, session) => sum + session.energySpent, 0);
+  const totalEnergyRecovered = weeklySessions.reduce((sum, session) => sum + session.energyRecovered, 0);
+  const standouts = [...squad].sort((a, b) => b.overall - a.overall || b.energy - a.energy || a.name.localeCompare(b.name, "pt-BR")).slice(0, 3);
 
   return <aside aria-label="Resumo do elenco" className={styles.insights}>
-    <section className={styles.insightCard}>
-      <div className={styles.insightHeading}><div><span className={styles.insightLabel}>COMPOSIÇÃO</span><h3>Profundidade por setor</h3></div><span className={styles.insightPill}>{squad.length} atletas</span></div>
-      <div className={styles.insightStats}><div><b>{starterCount}</b><span>Titulares</span></div><div><b>{squad.length - starterCount}</b><span>Reservas</span></div></div>
-      <div className={styles.sectorList}>{sectors.map((sector) => <div className={styles.sectorRow} key={sector.label}>
-        <div><span>{sector.label}</span><b>{sector.count}</b></div>
-        <div className={styles.sectorBar} role="img" aria-label={`${sector.label}: ${sector.count} de ${squad.length}`}><i style={{ width: `${squad.length ? sector.count / squad.length * 100 : 0}%`, backgroundColor: sector.color }} /></div>
-      </div>)}</div>
+    <section className={`${styles.insightCard} ${styles.trainingCard}`}>
+      <div className={styles.insightHeading}><div><span className={styles.insightLabel}>TREINO</span><h3>Semana {week}</h3></div><span className={styles.insightPill}>{weeklySessions.length}/6 sessões</span></div>
+      <div className={styles.trainingWeek} aria-label={`Semana ${week}: ${weeklySessions.length} de 6 sessões concluídas`}>
+        {TRAINING_DAYS.map((day) => {
+          const session = weeklySessions.find((item) => item.day === day);
+          return <span key={day} className={session ? styles.trainingDayDone : styles.trainingDay} title={session ? `${day}: ${trainingDrillLabel(session.drill)}` : `${day}: sem treino`}>{day.slice(0, 3).toLocaleUpperCase("pt-BR")}</span>;
+        })}
+      </div>
+      {weeklySessions.length ? <>
+        <div className={styles.trainingSummary}><b>{trainedIds.size}</b><span>atletas treinados</span><i>·</i><b>{weeklySessions.reduce((sum, session) => sum + session.overallImprovements, 0)}</b><span>evoluções</span></div>
+        <p className={styles.trainingLoad}>{totalEnergySpent ? `−${totalEnergySpent} pts de energia` : "Sem desgaste"}{totalEnergyRecovered ? ` · +${totalEnergyRecovered} pts recuperados` : ""}</p>
+        <ul className={styles.trainingLog}>{weeklySessions.slice(-2).reverse().map((session) => <li key={session.id}><span><b>{session.day.slice(0, 3)}</b> {trainingDrillLabel(session.drill)}</span><small>{session.playerIds.length} atletas</small></li>)}</ul>
+      </> : <p className={styles.trainingEmpty}>Monte a semana e acompanhe aqui a carga e a evolução do elenco.</p>}
+      <button type="button" className={styles.trainingButton} onClick={onOpenTraining}>Abrir centro de treino <span aria-hidden="true">↗</span></button>
     </section>
 
     <section className={styles.insightCard}>
@@ -103,8 +94,8 @@ function SquadInsights({ squad, starters, playerCareers }: { squad: Player[]; st
     </section>
 
     <section className={styles.insightCard}>
-      <div className={styles.insightHeading}><div><span className={styles.insightLabel}>MERCADO</span><h3>Disponibilidade</h3></div></div>
-      <div className={styles.marketPills}><span>À venda · {forSale}</span><span>Empréstimo · {forLoan}</span></div>
+      <div className={styles.insightHeading}><div><span className={styles.insightLabel}>DESTAQUES</span><h3>Pilares do elenco</h3></div><span className={styles.insightPill}>{squad.length} atletas</span></div>
+      <ol className={styles.standouts}>{standouts.map((player, index) => <li key={player.id}><span className={styles.standoutRank}>0{index + 1}</span><span className={styles.standoutName}>{player.name}<small>{fifaPosition(player)} · {player.energy}% energia</small></span><b>{player.overall}</b></li>)}</ol>
     </section>
   </aside>;
 }

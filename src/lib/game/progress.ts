@@ -4,6 +4,7 @@ import type { MatchEvent, MatchWeather } from "@/lib/game/live-match";
 import type { MatchRules } from "@/lib/game/match-rules";
 import type { CareerSeason } from "./season";
 import type { TransferNegotiation } from "./transfers";
+import type { TrainingSessionRecord } from "./training";
 
 export type MatchPreparation = {
   matchKey: string;
@@ -44,5 +45,6 @@ export type CareerProgress = {
   competitionSeason?: CareerSeason;
   activeFixtureId?: string;
   transferNegotiations?: TransferNegotiation[];
+  trainingSessions?: TrainingSessionRecord[];
 };
 
