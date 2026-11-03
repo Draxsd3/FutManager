@@ -2,19 +2,16 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { clubThemes } from "@/lib/game/mock-data";
 import { ClassicIcon, type ClassicIconName } from "./classic-icon";
 import styles from "./top-nav.module.css";
 
 export type NavItem = { icon: ClassicIconName; label: string; onClick: () => void; active?: boolean; children?: { label: string; description: string; onClick: () => void }[] };
 
-export function TopNav({ items, date, classic = false, teamName = "FutManager" }: { items: NavItem[]; date: string; classic?: boolean; teamName?: string }) {
-  const badge = clubThemes[teamName]?.short ?? teamName.split(/\s+/).filter(Boolean).map((word) => word[0]).join("").slice(0, 3).toUpperCase();
+export function TopNav({ items, date, classic = false }: { items: NavItem[]; date: string; classic?: boolean; teamName?: string }) {
   return (
     <header className={styles.topbar} data-compact={classic || undefined}>
-      <div className={styles.brand} aria-label={`FutManager — ${teamName}`}>
-        <span className={styles.brandMark} aria-hidden="true">{badge}</span>
-        <span className={styles.brandCopy}><strong>{teamName}</strong><small>FUTMANAGER · MODO CARREIRA</small></span>
+      <div className={styles.brand} aria-label="FUTMANAGER">
+        <span className={styles.brandCopy}><strong>FUTMANAGER</strong></span>
       </div>
       <nav aria-label="Navegação do clube" className={styles.nav}>
         {items.map((item) => <NavButton key={item.label} item={item} />)}

@@ -30,10 +30,11 @@ it("opens choices without navigating, supports keyboard navigation and restores 
   expect(document.activeElement).toBe(trigger);
 });
 
-it("shows the chosen club identity in the game rail", () => {
+it("keeps the navigation brand independent from the selected club", () => {
   render(<TopNav items={items} date="22/01/2026" teamName="Flamengo" />);
-  expect(screen.getByText("Flamengo")).toBeTruthy();
-  expect(screen.getByText("CRF")).toBeTruthy();
+  expect(screen.getByText("FUTMANAGER")).toBeTruthy();
+  expect(screen.queryByText("Flamengo")).toBeNull();
+  expect(screen.queryByText("CRF")).toBeNull();
 });
 
 it("closes on an outside click", () => {
