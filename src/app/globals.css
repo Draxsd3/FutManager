@@ -2,16 +2,16 @@
 
 :root {
   color-scheme: dark;
-  --background: #080d0b;
-  --foreground: #eef3e8;
-  --accent: #c4f06a;
-  --accent-soft: #26331d;
-  --surface: #101815;
-  --surface-raised: #17221c;
-  --surface-high: #202c24;
-  --stroke: #ffffff14;
-  --muted: #98a69b;
-  --muted-strong: #bac4b8;
+  --background: #090a0f;
+  --foreground: #eef0f4;
+  --accent: #d4ad64;
+  --accent-soft: #33291c;
+  --surface: #121319;
+  --surface-raised: #191a21;
+  --surface-high: #24252d;
+  --stroke: #ffffff16;
+  --muted: #9aa0ac;
+  --muted-strong: #c3c7d0;
   --danger: #fa775f;
   --success: #70d3ad;
   --font-sans: var(--font-geist-sans);
@@ -38,13 +38,13 @@ body {
 button, input, select, textarea { font: inherit; }
 button { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--team-accent, var(--accent));
   outline-offset: 3px;
 }
-::selection { color: #10160d; background: var(--accent); }
+::selection { color: #101116; background: var(--team-accent, var(--accent)); }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #080d0b; }
-::-webkit-scrollbar-thumb { background: #ffffff25; border: 2px solid #080d0b; border-radius: 99px; }
+::-webkit-scrollbar-track { background: #090a0f; }
+::-webkit-scrollbar-thumb { background: #ffffff25; border: 2px solid #090a0f; border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: #ffffff42; }
 
 @media (prefers-reduced-motion: reduce) {

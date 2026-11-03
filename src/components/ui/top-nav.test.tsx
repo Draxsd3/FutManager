@@ -30,6 +30,12 @@ it("opens choices without navigating, supports keyboard navigation and restores 
   expect(document.activeElement).toBe(trigger);
 });
 
+it("shows the chosen club identity in the game rail", () => {
+  render(<TopNav items={items} date="22/01/2026" teamName="Flamengo" />);
+  expect(screen.getByText("Flamengo")).toBeTruthy();
+  expect(screen.getByText("CRF")).toBeTruthy();
+});
+
 it("closes on an outside click", () => {
   render(<TopNav items={items} date="22/01/2026" />);
   fireEvent.click(screen.getByRole("button", { name: "Agenda" }));

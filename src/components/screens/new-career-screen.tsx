@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import type { EditorClub } from "@/lib/game/editor-data";
 import { divisionKeys, type DivisionKey } from "@/lib/game/mock-data";
 import { Crest } from "@/components/ui/club-sidebar";
+import { clubThemeStyle } from "@/components/ui/app-shell";
 import styles from "./new-career-screen.module.css";
 
 export function NewCareerScreen({ coach, setCoach, division, setDivision, club, setClub, onStart, onBack, availableClubs }: {
@@ -19,7 +20,11 @@ export function NewCareerScreen({ coach, setCoach, division, setDivision, club, 
 }) {
   const divisionClubs = availableClubs.filter((item) => item.division === division);
   const selectedClub = availableClubs.find((item) => item.name === club);
-  const style = { "--club-color": selectedClub?.primaryColor ?? "#c4f06a" } as CSSProperties;
+  const clubColor = selectedClub?.primaryColor ?? "#d4ad64";
+  const style = {
+    ...(selectedClub ? clubThemeStyle(selectedClub.name, selectedClub) : { "--team-accent": "#d4ad64", "--team-accent-text": "#15161b" }),
+    "--club-color": clubColor,
+  } as CSSProperties & Record<`--${string}`, string>;
   return <main className={styles.screen} style={style}>
     <header className={styles.topbar}>
       <div className={styles.brand}><span>F</span> FUTMANAGER <i>·</i> NOVA CARREIRA</div>
