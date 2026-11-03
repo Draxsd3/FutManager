@@ -1331,3 +1331,61 @@
 .liveScore b, .modal h2, .detailGrid strong { color: #273c30; }
 .liveScore strong, .detailGrid span, .modal .note { color: #58715f; }
 .modal header button, .modalActions button { background: #eaf2ea; border-color: #cddfce; color: #304d38; }
+
+/* Pre-match: return to the original simple lineup layout while retaining today's tactics. */
+.screen[data-mode="prematch"] { height: 100%; overflow: auto; background: #90a08e; color: #172719; font-family: Arial, sans-serif; }
+.screen[data-mode="prematch"] .container { display: block; height: auto; max-width: none; padding: 0; }
+.screen[data-mode="prematch"] .header { margin: 0; padding: 8px 12px; background: #174c1b; color: #fff; }
+.screen[data-mode="prematch"] .header h1 { font-size: 15px; letter-spacing: 0; color: #fff; }
+.screen[data-mode="prematch"] .header .eyebrow { display: none; }
+.screen[data-mode="prematch"] .header p:not(.eyebrow) { color: #e0ebda; }
+.screen[data-mode="prematch"] .headerActions button { background: #edf2e9; color: #1e3624; border: 1px solid #b4c8b4; }
+.screen[data-mode="prematch"] .headerActions button:hover { background: #d7e8d5; color: #172719; }
+.screen[data-mode="prematch"] .headerActions .settingsToggle { display: none; }
+.screen[data-mode="prematch"] .summary { display: none; }
+.screen[data-mode="prematch"] .layout { display: flex; flex-direction: column; gap: 0; }
+.screen[data-mode="prematch"] .board { order: 0; display: block; width: 100%; min-height: 0; padding: 0; border: 0; border-radius: 0; background: #316f2e; box-shadow: none; }
+.screen[data-mode="prematch"] .boardHeader { margin: 0; padding: 8px 14px; background: #285f2a; color: #fff; }
+.screen[data-mode="prematch"] .boardHeader h2 { display: block; font-size: 13px; color: #fff; }
+.screen[data-mode="prematch"] .boardHeader .eyebrow { display: none; }
+.screen[data-mode="prematch"] .toggle { color: #fff; }
+.screen[data-mode="prematch"] .fieldViewport { display: block; min-height: 0; padding: 12px; border: 0; border-radius: 0; background: #316f2e; }
+.screen[data-mode="prematch"] .fieldViewport > .field { width: 100%; height: 400px; max-height: none; aspect-ratio: auto; background: linear-gradient(#316f2e, #1d5524); box-shadow: none; border-radius: 0; }
+.screen[data-mode="prematch"] .field .player { width: 104px; max-width: 22%; }
+.screen[data-mode="prematch"] .field .player svg { width: 45px; height: 45px; }
+.screen[data-mode="prematch"] .field .player > b { font-size: 10px; }
+.screen[data-mode="prematch"] .field .player small { font-size: 9px; }
+.screen[data-mode="prematch"] .boardFooter { padding: 7px 12px; border: 0; }
+.screen[data-mode="prematch"] .boardFooter > span { display: block; color: #e0ebda; }
+.screen[data-mode="prematch"] .feedback { margin: 0; padding: 6px 12px; background: #e3eddf; border: 0; border-radius: 0; color: #29422e; }
+.screen[data-mode="prematch"] .layout > .sidebar:not(.settings) { order: 1; display: block; max-height: none; overflow: visible; background: #536451; }
+.screen[data-mode="prematch"] .benchPanel { display: block; max-height: none; padding: 12px; background: #536451; border: 0; border-radius: 0; box-shadow: none; color: #fff; }
+.screen[data-mode="prematch"] .panelHeading { background: transparent; }
+.screen[data-mode="prematch"] .panelHeading h2 { color: #fff; }
+.screen[data-mode="prematch"] .panelHeading .eyebrow { display: none; }
+.screen[data-mode="prematch"] .count { display: inline-block; background: #e5ede1; color: #304a37; border-color: #b9ccb9; }
+.screen[data-mode="prematch"] .search, .screen[data-mode="prematch"] .benchPanel .select { display: inline-block; width: min(220px, 48%); margin: 5px 8px 5px 0; color: #fff; }
+.screen[data-mode="prematch"] .search input, .screen[data-mode="prematch"] .benchPanel select { background: #fff; color: #172719; border: 1px solid #a8baa7; }
+.screen[data-mode="prematch"] .detailButton { display: block; background: #f5f8f3; color: #263d29; border-color: #b5c8b4; }
+.screen[data-mode="prematch"] .bench { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; padding: 0; overflow: visible; background: transparent; border: 0; }
+.screen[data-mode="prematch"] .reserve { width: 108px; min-height: 65px; flex: 0 0 auto; padding: 5px; border: 1px solid #a9bca8; background: #e2e9dd; color: #243a27; }
+.screen[data-mode="prematch"] .reserve b, .screen[data-mode="prematch"] .reserve strong { color: #243a27; }
+.screen[data-mode="prematch"] .reserve small { display: block; color: #4c654e; }
+.screen[data-mode="prematch"] .reserve[aria-pressed="true"] { background: #f4f6ce; outline: 2px solid #e4d960; }
+.screen[data-mode="prematch"] .settings { order: 2; display: block; max-height: none; overflow: visible; background: #c8d1c5; }
+.screen[data-mode="prematch"] .settings > .panel:first-child { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 12px; border: 0; border-radius: 0; background: #c8d1c5; box-shadow: none; }
+.screen[data-mode="prematch"] .settings > .panel:first-child .eyebrow, .screen[data-mode="prematch"] .settings > .panel:first-child h2, .screen[data-mode="prematch"] .settings > .panel:first-child .note { display: none; }
+.screen[data-mode="prematch"] .settings > .panel:not(:first-child) { display: none; }
+.screen[data-mode="prematch"] .settings .select { margin: 0; color: #172719; font-size: 12px; font-weight: bold; }
+.screen[data-mode="prematch"] .settings select { background: #fff; color: #172719; border-color: #a8baa7; }
+.screen[data-mode="prematch"] .footer { margin: 0; padding: 8px 12px; background: #c8d1c5; color: #435c45; border: 0; }
+.screen[data-mode="prematch"] .modal { background: #fff; color: #243a27; }
+@media (max-width: 700px) {
+  .screen[data-mode="prematch"] .header { flex-direction: column; align-items: flex-start; }
+  .screen[data-mode="prematch"] .headerActions { width: 100%; justify-content: flex-start; }
+  .screen[data-mode="prematch"] .fieldViewport > .field { height: 370px; }
+  .screen[data-mode="prematch"] .field .player { width: 70px; }
+  .screen[data-mode="prematch"] .field .player svg { width: 32px; height: 32px; }
+  .screen[data-mode="prematch"] .field .player > b { font-size: 8px; }
+  .screen[data-mode="prematch"] .settings > .panel:first-child { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

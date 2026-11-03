@@ -1250,7 +1250,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   if (page === "lineup")
     return (
       <>
-        <CareerWorkspace {...workspace} title="Escalação">
+        <CareerWorkspace {...workspace} title="Escalação" classicContent>
           <LineupScreen
           club={club}
           coach={coach}
