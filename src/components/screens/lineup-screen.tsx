@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import type { Player } from "@/lib/game/mock-data";
 import type { ManualPosition } from "@/lib/game/career";
 import {
@@ -15,6 +15,7 @@ import {
 } from "@/lib/game/lineup";
 import { fifaPosition } from "@/lib/game/fifa-position";
 import { PlayerJersey } from "@/components/ui/player-jersey";
+import { Crest } from "@/components/ui/club-sidebar";
 import styles from "./lineup-screen.module.css";
 
 type Props = {
@@ -81,7 +82,6 @@ export function LineupScreen(props: Props) {
     onResetPositions,
     match,
   } = props;
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [showSectors, setShowSectors] = useState(false);
@@ -340,8 +340,7 @@ export function LineupScreen(props: Props) {
           if (holdTimer.current) clearTimeout(holdTimer.current);
           const current = gesture.current;
           gesture.current = null;
-          if (current?.moved)
-            e.currentTarget.releasePointerCapture?.(current.pointer);
+          if (current?.moved) e.currentTarget.releasePointerCapture?.(current.pointer);
           onSelectPlayer(null);
           setDragId(null);
           setHoverSlot(null);
@@ -351,250 +350,71 @@ export function LineupScreen(props: Props) {
     >
       <div className={styles.container}>
         <header className={styles.header}>
-          <div>
-            <p className={styles.eyebrow}>CENTRO TÁTICO / {club}</p>
+          <div className={styles.titleBlock}>
+            <p className={styles.eyebrow}>FUTMANAGER <span>/</span> {competition} · {round}ª RODADA</p>
             <h1>{match ? "Táticas da partida" : "Escalação & Tática"}</h1>
-            {match && <div className={styles.liveScore}>
-              <span>{club}</span><b>{match.score}</b><span>{opponent}</span>
-              <strong>{match.period} · PAUSADO</strong>
-            </div>}
-            {!match && <p>
-              {coach} · {competition} · {round}ª rodada · Adversário: {opponent}
-            </p>}
+            <div className={styles.fixture}>
+              <span><Crest club={club} size="sm" />{club}</span>
+              <b>VS</b>
+              <span><Crest club={opponent} size="sm" />{opponent}</span>
+              {match && <strong>{match.score} <small>· {match.period} · PAUSADO</small></strong>}
+              {!match && <small>{coach} · COMISSÃO TÉCNICA</small>}
+            </div>
           </div>
           <div className={styles.headerActions}>
-            <button
-              className={styles.settingsToggle}
-              aria-expanded={settingsOpen}
-              onClick={() => setSettingsOpen(!settingsOpen)}
-            >
-              Plano tático
-            </button>
-            {!match && <button onClick={onBack}>← Voltar ao clube</button>}
+            {!match && <button className={styles.backButton} onClick={onBack}>← <span>Voltar ao clube</span></button>}
             <button
               className={styles.primary}
               onClick={() => { void onPlay(); }}
               disabled={startersData.length !== 11 || isStartingMatch}
             >
-              {isStartingMatch ? "Lendo regras da partida…" : match ? "Voltar ao jogo →" : "Ir para a partida →"}
+              {isStartingMatch ? "Lendo regras…" : match ? "Voltar ao jogo →" : "Ir para a partida →"}
             </button>
             {matchStartError && <p role="alert" className={styles.errorMessage}>{matchStartError}</p>}
           </div>
         </header>
-        <div className={styles.summary}>
+
+        <div className={styles.summary} aria-label="Resumo da escalação">
           {match ? [
-            ["PLACAR", match.score],
-            ["RELÓGIO / PAUSADO", match.period],
-            ["SUBSTITUIÇÕES", String(match.substitutionsLeft)],
-            ["ESQUEMA", formation],
-            ["ENERGIA MÉDIA", `${energy}%`],
-          ].map(([label, value]) => (
-            <div key={label}><small>{label}</small><strong>{value}</strong></div>
-          )) : <>
-          <div>
-            <small>ESQUEMA</small>
-            <strong>{formation}</strong>
-          </div>
-          <div>
-            <small>TITULARES</small>
-            <strong>
-              {startersData.length}
-              <em>/11</em>
-            </strong>
-          </div>
-          <div>
-            <small>FORÇA AJUSTADA</small>
-            <strong>{overall}</strong>
-          </div>
-          <div>
-            <small>ENERGIA MÉDIA</small>
-            <strong>
-              {energy}
-              <em>%</em>
-            </strong>
-          </div>
-          <div>
-            <small>ADAPTAÇÃO / CONDIÇÃO</small>
-            <strong>
-              {warnings.length}
-              <em> alertas</em>
-            </strong>
-          </div>
+            ["PLACAR", match.score], ["TEMPO", match.period],
+            ["SUBSTITUIÇÕES", String(match.substitutionsLeft)], ["ESQUEMA", formation], ["ENERGIA MÉDIA", `${energy}%`],
+          ].map(([label, value]) => <div key={label}><small>{label}</small><strong>{value}</strong></div>) : <>
+            <div><small>ESQUEMA</small><strong>{formation}</strong></div>
+            <div><small>TITULARES</small><strong>{startersData.length}<em>/11</em></strong></div>
+            <div><small>FORÇA AJUSTADA</small><strong>{overall}<em> OVR</em></strong></div>
+            <div><small>ENERGIA MÉDIA</small><strong>{energy}<em>%</em></strong></div>
+            <div><small>PONTOS A REVISAR</small><strong>{warnings.length}<em>{warnings.length === 1 ? " alerta" : " alertas"}</em></strong></div>
           </>}
         </div>
-        <div className={styles.layout}>
-          <aside
-            className={`${styles.sidebar} ${styles.settings} ${settingsOpen ? styles.open : ""}`}
-            aria-label="Ajustes e análise tática"
-          >
-            <section className={styles.panel}>
-              <p className={styles.eyebrow}>IDENTIDADE DE JOGO</p>
-              <h2>Plano tático</h2>
-              <Select
-                label="Esquema tático"
-                value={formation}
-                onChange={setFormation}
-                options={formations}
-              />
-              <p className={styles.note}>
-                Alterar o esquema reorganiza automaticamente os titulares e
-                restaura as posições.
-              </p>
-              <Select
-                label="Estilo de jogo"
-                value={style}
-                onChange={setStyle}
-                options={["Equilibrado", "Ofensivo", "Defensivo"]}
-              />
-              <Select
-                label="Marcação / pressão"
-                value={marking}
-                onChange={setMarking}
-                options={["Leve", "Normal", "Pesada"]}
-              />
-              <Select
-                label="Concentração de ataque"
-                value={focus}
-                onChange={setFocus}
-                options={["Pelo meio", "Pelas laterais"]}
-              />
-            </section>
-            {match?.panel}
-            <section className={styles.panel}>
-              <p className={styles.eyebrow}>LEITURA DA EQUIPE</p>
-              <h2>Força por setor</h2>
-              {[
-                { label: "Ataque", roles: ["A"] },
-                { label: "Meio-campo", roles: ["M"] },
-                { label: "Defesa", roles: ["L", "Z"] },
-                { label: "Gol", roles: ["G"] },
-              ].map((sector) => {
-                const value = average(
-                  startersData
-                    .map((p, i) => ({ p, i }))
-                    .filter(({ i }) => sector.roles.includes(fits[i].role))
-                    .map(
-                      ({ p, i }) =>
-                        (Math.max(1, p.overall - fits[i].penalty) * p.energy) /
-                        100,
-                    ),
-                );
-                return (
-                  <div className={styles.strength} key={sector.label}>
-                    <span>{sector.label}</span>
-                    <b>{value}</b>
-                    <i>
-                      <span style={{ width: `${Math.min(100, value)}%` }} />
-                    </i>
-                  </div>
-                );
-              })}
-              <p className={styles.note}>
-                Estimativa com adaptação à função e energia. Não é uma previsão
-                do placar.
-              </p>
-            </section>
-            <section className={styles.panel}>
-              <h2>Como organizar</h2>
-              <ol className={styles.instructions}>
-                <li>Arraste a camisa com mouse ou toque.</li>
-                <li>Solte sobre outra camisa para trocar.</li>
-                <li>Solte em área livre para personalizar.</li>
-                <li>Ou selecione e clique em um setor.</li>
-              </ol>
-              <p className={styles.note}>
-                Teclado: Tab para navegar e Enter para selecionar jogador e
-                destino. Esc cancela o arraste.
-              </p>
-            </section>
-            <section className={styles.panel}>
-              <p className={styles.eyebrow}>ATLETA EM FOCO</p>
-              {active ? (
-                <>
-                  <div className={styles.identity}>
-                    <PlayerJersey player={active} />
-                    <div>
-                      <h2>{active.name}</h2>
-                      <p>
-                        {fifaPosition(active)} · Pé{" "}
-                        {active.foot === "D" ? "direito" : "esquerdo"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className={styles.facts}>
-                    <span>
-                      Força <b>{active.overall}</b>
-                    </span>
-                    <span>
-                      Energia <b>{active.energy}%</b>
-                    </span>
-                    <span>
-                      Idade <b>{active.age}</b>
-                    </span>
-                  </div>
-                  <p className={styles.note}>
-                    A adaptação considera a função mais próxima do esquema.
-                    Amarelo indica função secundária ou improvisada.
-                  </p>
-                </>
-              ) : (
-                <p className={styles.note}>
-                  Selecione uma camisa no campo ou no banco para ver seus dados
-                  e opções de destino.
-                </p>
-              )}
-            </section>
-            <section className={styles.panel}>
-              <h2>Alertas da escalação</h2>
-              <div className={styles.alerts}>
-                {warnings.length ? (
-                  warnings.map((p) => {
-                    const i = startersData.indexOf(p);
-                    return (
-                      <p key={p.id}>
-                        <b>{p.name}</b>
-                        <span>
-                          {p.energy < 65
-                            ? `Energia baixa: ${p.energy}%`
-                            : `Adaptação: ${fits[i].label}`}
-                        </span>
-                      </p>
-                    );
-                  })
-                ) : (
-                  <p className={styles.note}>
-                    Sem alertas de adaptação ou energia.
-                  </p>
-                )}
-              </div>
-            </section>
-          </aside>
-          <section className={styles.board}>
+
+        <section className={styles.tacticsBar} aria-label="Configurações da equipe">
+          <span className={styles.tacticsLabel}>PLANO DE JOGO</span>
+          <Select label="Formação" value={formation} onChange={setFormation} options={formations} />
+          <Select label="Estilo de jogo" value={style} onChange={setStyle} options={["Equilibrado", "Ofensivo", "Defensivo"]} />
+          <Select label="Marcação / pressão" value={marking} onChange={setMarking} options={["Leve", "Normal", "Pesada"]} />
+          <Select label="Concentração de ataque" value={focus} onChange={setFocus} options={["Pelo meio", "Pelas laterais"]} />
+        </section>
+
+        <main className={styles.layout}>
+          <section className={styles.board} aria-label="Prancheta tática">
             <div className={styles.boardHeader}>
-              <div>
-                <p className={styles.eyebrow}>PRANCHETA / TITULARES</p>
-                <h2>{match ? "Ajuste o rumo da partida." : "Seu jogo começa aqui."}</h2>
+              <div><p className={styles.eyebrow}>PRANCHETA TÁTICA</p><h2>Organize os titulares</h2></div>
+              <div className={styles.boardTools}>
+                <label className={styles.toggle}><input aria-label="Mostrar setores" type="checkbox" checked={showSectors} onChange={(e) => setShowSectors(e.target.checked)} />
+                  <span>Setores</span>
+                </label>
+                <button aria-label="Restaurar posições" className={styles.resetButton} onClick={() => {
+                  onResetPositions();
+                  setMessage("Posições do esquema restauradas. Titulares preservados.");
+                }}>↺ <span>Restaurar posições</span></button>
               </div>
-              <label className={styles.toggle}>
-                <input
-                  type="checkbox"
-                  checked={showSectors}
-                  onChange={(e) => setShowSectors(e.target.checked)}
-                />{" "}
-                Mostrar setores
-              </label>
             </div>
             <div className={styles.fieldViewport}>
               <div
                 ref={field}
                 className={`${styles.field} ${dragId !== null ? styles.dragging : ""}`}
                 onClick={(event) => {
-                  if (
-                    suppressClick.current ||
-                    !selectedPlayer ||
-                    (event.target as HTMLElement).closest("button")
-                  )
-                    return;
+                  if (suppressClick.current || !selectedPlayer || (event.target as HTMLElement).closest("button")) return;
                   const rect = event.currentTarget.getBoundingClientRect();
                   deployPoint(selectedPlayer.id, {
                     left: ((event.clientX - rect.left) / rect.width) * 100,
@@ -603,212 +423,113 @@ export function LineupScreen(props: Props) {
                 }}
                 aria-label="Campo de escalação"
               >
-                <span className={styles.direction}>ATAQUE ↑</span>
-                {showSectors && (
-                  <svg
-                    className={styles.regionBorders}
-                    viewBox="0 0 100 100"
-                    preserveAspectRatio="none"
-                    aria-hidden="true"
-                  >
-                    {fieldBoundaries.map((edge, index) => (
-                      <line
-                        key={index}
-                        x1={edge.from.left}
-                        y1={edge.from.top}
-                        x2={edge.to.left}
-                        y2={edge.to.top}
-                        vectorEffect="non-scaling-stroke"
-                      />
-                    ))}
-                  </svg>
-                )}
-                {showSectors &&
-                  fieldRegions.map((sector) => {
-                    const allowed = !!active;
-                    return (
-                      <button
-                        key={sector.name}
-                        className={`${styles.sector} ${styles[sector.group]} ${active && allowed ? styles.valid : ""}`}
-                        style={{
-                          clipPath: `polygon(${sector.polygon.map((point) => `${point.left}% ${point.top}%`).join(",")})`,
-                        }}
-                        title={`${sector.short} · ${sector.name}`}
-                        aria-label={`Posicionar em ${sector.name}`}
-                        aria-disabled={!active || !allowed}
-                        onClick={() => {
-                          if (suppressClick.current) return;
-                          if (active) deployPoint(active.id, sector);
-                          else
-                            setMessage(
-                              "Selecione um jogador antes de escolher o setor.",
-                            );
-                        }}
-                      >
-                        <span
-                          style={{
-                            left: `${sector.left}%`,
-                            top: `${sector.top}%`,
-                          }}
-                        >
-                          {sector.short}
-                        </span>
-                      </button>
-                    );
-                  })}
-                {showSectors && (
-                  <div className={styles.roleLabels} aria-hidden="true">
-                    {fieldRoleLabels.map((label) => (
-                      <span
-                        key={label.short}
-                        style={{ left: `${label.left}%`, top: `${label.top}%` }}
-                      >
-                        {label.short}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {startersData.map((player, index) => (
-                  <button
-                    key={player.id}
-                    data-player={player.id}
-                    data-slot={index}
-                    aria-label={`${player.name}, camisa ${player.shirtNumber ?? player.id}, titular, ${fits[index].label}`}
-                    aria-pressed={selectedPlayer?.id === player.id}
-                    className={`${styles.player} ${selectedPlayer?.id === player.id ? styles.selected : ""} ${dragId === player.id ? styles.source : ""} ${hoverSlot === index ? styles.hovered : ""}`}
-                    style={{
-                      left: `clamp(22px, ${positions[index].left}%, calc(100% - 22px))`,
-                      top: `clamp(30px, ${positions[index].top}%, calc(100% - 30px))`,
-                    }}
-                    onClick={() => select(player.id)}
-                  >
-                    <PlayerJersey player={player} />
-                    <b>{player.name}</b>
-                    <small>
-                      {fifaPosition(player)} ·{" "}
-                      {Math.max(1, player.overall - fits[index].penalty)}{" "}
-                      <span
-                        className={
-                          fits[index].label === "Natural"
-                            ? styles.natural
-                            : styles.warning
-                        }
-                      >
-                        {fits[index].label}
-                      </span>
-                    </small>
-                    <i className={styles.energy}>
-                      <span style={{ width: `${player.energy}%` }} />
-                    </i>
-                  </button>
-                ))}
+                <span className={styles.direction}>ATAQUE <b>↑</b></span>
+                <svg className={styles.pitchLines} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                  <rect x="3" y="2" width="94" height="96" rx="1" />
+                  <line x1="3" y1="50" x2="97" y2="50" />
+                  <circle cx="50" cy="50" r="9" />
+                  <circle className={styles.centerSpot} cx="50" cy="50" r=".7" />
+                  <rect x="25" y="2" width="50" height="15" />
+                  <rect x="38" y="2" width="24" height="6" />
+                  <rect x="25" y="83" width="50" height="15" />
+                  <rect x="38" y="92" width="24" height="6" />
+                  <path d="M 40 17 Q 50 23 60 17 M 40 83 Q 50 77 60 83" />
+                </svg>
+                {showSectors && <svg className={styles.regionBorders} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                  {fieldBoundaries.map((edge, index) => <line key={index} x1={edge.from.left} y1={edge.from.top} x2={edge.to.left} y2={edge.to.top} vectorEffect="non-scaling-stroke" />)}
+                </svg>}
+                {showSectors && fieldRegions.map((sector) => <button
+                  key={sector.name}
+                  className={`${styles.sector} ${styles[sector.group]} ${active ? styles.valid : ""}`}
+                  style={{ clipPath: `polygon(${sector.polygon.map((point) => `${point.left}% ${point.top}%`).join(",")})` }}
+                  title={`${sector.short} · ${sector.name}`}
+                  aria-label={`Posicionar em ${sector.name}`}
+                  aria-disabled={!active}
+                  onClick={() => {
+                    if (suppressClick.current) return;
+                    if (active) deployPoint(active.id, sector);
+                    else setMessage("Selecione um jogador antes de escolher o setor.");
+                  }}
+                ><span style={{ left: `${sector.left}%`, top: `${sector.top}%` }}>{sector.short}</span></button>)}
+                {showSectors && <div className={styles.roleLabels} aria-hidden="true">{fieldRoleLabels.map((label) => <span key={label.short} style={{ left: `${label.left}%`, top: `${label.top}%` }}>{label.short}</span>)}</div>}
+                {startersData.map((player, index) => <button
+                  key={player.id}
+                  data-player={player.id}
+                  data-slot={index}
+                  aria-label={`${player.name}, camisa ${player.shirtNumber ?? player.id}, titular, ${fits[index].label}`}
+                  aria-pressed={selectedPlayer?.id === player.id}
+                  className={`${styles.player} ${selectedPlayer?.id === player.id ? styles.selected : ""} ${dragId === player.id ? styles.source : ""} ${hoverSlot === index ? styles.hovered : ""}`}
+                  style={{ left: `clamp(25px, ${positions[index].left}%, calc(100% - 25px))`, top: `clamp(32px, ${positions[index].top}%, calc(100% - 32px))` }}
+                  onClick={() => select(player.id)}
+                >
+                  <PlayerJersey player={player} />
+                  <b>{player.name}</b>
+                  <small>{fifaPosition(player)} · {Math.max(1, player.overall - fits[index].penalty)} <span className={fits[index].label === "Natural" ? styles.natural : styles.warning}>{fits[index].label}</span></small>
+                  <i className={styles.energy}><span style={{ width: `${player.energy}%` }} /></i>
+                </button>)}
               </div>
             </div>
             <div className={styles.boardFooter}>
-              <span>
-                ↑ Ataque <span>·</span> ↓ Defesa <span>·</span> Camisas
-                douradas: goleiros
-              </span>
-              <button
-                onClick={() => {
-                  onResetPositions();
-                  setMessage(
-                    "Posições do esquema restauradas. Titulares preservados.",
-                  );
-                }}
-              >
-                Restaurar posições
-              </button>
+              <span><i /> Titulares <b>·</b> Arraste ou selecione para reposicionar</span>
+              <p role="status" className={styles.feedback}>{message}</p>
             </div>
-            <p role="status" className={styles.feedback}>
-              {message}
-            </p>
           </section>
-          <aside className={styles.sidebar}>
+
+          <aside className={styles.sidebar} aria-label="Banco e análise">
+            {match?.panel}
             <section className={`${styles.panel} ${styles.benchPanel}`}>
               <div className={styles.panelHeading}>
-                <div>
-                  <p className={styles.eyebrow}>OPÇÕES PARA O JOGO</p>
-                  <h2>Banco de reservas</h2>
-                </div>
+                <div><p className={styles.eyebrow}>ELENCO DISPONÍVEL</p><h2>Banco de reservas</h2></div>
                 <span className={styles.count}>{bench.length}</span>
               </div>
-              <label className={styles.search}>
-                Buscar reserva
-                <input
-                  type="search"
-                  placeholder="Nome do jogador"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </label>
-              <Select
-                label="Filtrar setor"
-                value={filter}
-                onChange={setFilter}
-                options={["all", "G", "L", "Z", "M", "A"]}
-                labels={[
-                  "Todos os setores",
-                  "Goleiros",
-                  "Laterais",
-                  "Zagueiros",
-                  "Meio-campistas",
-                  "Atacantes",
-                ]}
-              />
-              <button className={styles.detailButton} disabled={!selectedPlayer || !bench.some((p) => p.id === selectedPlayer.id)} onClick={(event) => { detailOrigin.current = event.currentTarget; setDetailPlayer(selectedPlayer); }}>{match ? "Ficha do reserva" : "Ver ficha do reserva selecionado"}</button>
-              <div
-                className={styles.bench}
-                style={
-                  {
-                    "--bench-count": Math.max(1, visibleBench.length),
-                    "--bench-compact-rows": Math.max(1, Math.ceil(visibleBench.length / 3)),
-                    "--bench-rows": Math.max(
-                      1,
-                      Math.ceil(visibleBench.length / 2),
-                    ),
-                  } as CSSProperties
-                }
-              >
-                {visibleBench.map((player) => (
-                  <button
-                    key={player.id}
-                    onClick={() => select(player.id)}
-                    onDoubleClick={(event) => { detailOrigin.current = event.currentTarget; setDetailPlayer(player); }}
-                    onKeyDown={(event) => { if (event.key.toLowerCase() === "i") { event.preventDefault(); detailOrigin.current = event.currentTarget; setDetailPlayer(player); } }}
-                    data-player={player.id}
-                    data-reserve={player.id}
-                    title="Dois cliques para detalhes; segure e arraste para mover"
-                    aria-label={`${player.name}, ${fifaPosition(player)}, força ${player.overall}. Dois cliques ou tecla I para detalhes`}
-                    aria-pressed={selectedPlayer?.id === player.id}
-                    className={styles.reserve}
-                  >
-                    <span
-                      data-player={player.id}
-                      className={styles.handle}
-                      title="Arrastar jogador"
-                    >
-                      <PlayerJersey player={player} />
-                    </span>
-                    <span>
-                      <b>{player.name}</b>
-                      <small>{fifaPosition(player)}</small>
-                    </span>
-                    <strong>{player.overall}</strong>
-                  </button>
-                ))}
-                {!visibleBench.length && (
-                  <p className={styles.note}>
-                    Nenhum reserva para este filtro.
-                  </p>
-                )}
+              <div className={styles.benchFilters}>
+                <label className={styles.search}><span>Buscar reserva</span><input type="search" placeholder="Nome do jogador" value={query} onChange={(e) => setQuery(e.target.value)} /></label>
+                <Select label="Filtrar setor" value={filter} onChange={setFilter} options={["all", "G", "L", "Z", "M", "A"]} labels={["Todas", "Goleiros", "Laterais", "Zagueiros", "Meio-campistas", "Atacantes"]} />
+              </div>
+              <button className={styles.detailButton} disabled={!selectedPlayer || !bench.some((p) => p.id === selectedPlayer.id)} onClick={(event) => { detailOrigin.current = event.currentTarget; setDetailPlayer(selectedPlayer); }}>Ver ficha do reserva selecionado</button>
+              <div className={styles.bench}>
+                {visibleBench.map((player) => <button
+                  key={player.id}
+                  onClick={() => select(player.id)}
+                  onDoubleClick={(event) => { detailOrigin.current = event.currentTarget; setDetailPlayer(player); }}
+                  onKeyDown={(event) => { if (event.key.toLowerCase() === "i") { event.preventDefault(); detailOrigin.current = event.currentTarget; setDetailPlayer(player); } }}
+                  data-player={player.id} data-reserve={player.id}
+                  title="Dois cliques para detalhes; segure e arraste para mover"
+                  aria-label={`${player.name}, ${fifaPosition(player)}, força ${player.overall}. Dois cliques ou tecla I para detalhes`}
+                  aria-pressed={selectedPlayer?.id === player.id}
+                  className={`${styles.reserve} ${selectedPlayer?.id === player.id ? styles.reserveSelected : ""}`}
+                >
+                  <span data-player={player.id} className={styles.handle} title="Arrastar jogador"><PlayerJersey player={player} /></span>
+                  <span className={styles.reserveInfo}><b>{player.name}</b><small>{fifaPosition(player)} · ENERGIA {player.energy}%</small></span>
+                  <strong>{player.overall}</strong>
+                </button>)}
+                {!visibleBench.length && <p className={styles.emptyBench}>Nenhum reserva para este filtro.</p>}
               </div>
             </section>
+
+            <section className={styles.panel}>
+              <div className={styles.panelHeading}><div><p className={styles.eyebrow}>LEITURA DA EQUIPE</p><h2>Força por setor</h2></div></div>
+              <div className={styles.strengthGrid}>
+                {[
+                  { label: "Ataque", roles: ["A"] }, { label: "Meio", roles: ["M"] },
+                  { label: "Defesa", roles: ["L", "Z"] }, { label: "Gol", roles: ["G"] },
+                ].map((sector) => {
+                  const value = average(startersData.map((p, i) => ({ p, i })).filter(({ i }) => sector.roles.includes(fits[i].role)).map(({ p, i }) => (Math.max(1, p.overall - fits[i].penalty) * p.energy) / 100));
+                  return <div className={styles.strength} key={sector.label}><span>{sector.label}</span><b>{value}</b><i><span style={{ width: `${Math.min(100, value)}%` }} /></i></div>;
+                })}
+              </div>
+            </section>
+            {warnings.length > 0 && <section className={`${styles.panel} ${styles.warningPanel}`}>
+              <div className={styles.panelHeading}><div><p className={styles.eyebrow}>ANTES DO APITO</p><h2>Revisar escalação</h2></div><span className={styles.warningCount}>{warnings.length}</span></div>
+              <div className={styles.alerts}>{warnings.slice(0, 3).map((p) => {
+                const i = startersData.indexOf(p);
+                return <p key={p.id}><b>{p.name}</b><span>{p.energy < 65 ? `Energia baixa · ${p.energy}%` : `Função ${fits[i].label.toLowerCase()}`}</span></p>;
+              })}</div>
+            </section>}
           </aside>
-        </div>
+        </main>
         <footer className={`${styles.footer} ${match ? styles.matchFooter : ""}`}>
-          {match ? match.substitutionActions : <>FUTMANAGER / CENTRO TÁTICO{" "}
-          <span>Organize. Ajuste. Entre em campo.</span></>}
+          {match ? match.substitutionActions : <><span>FUTMANAGER <b>·</b> {competition} {round}ª rodada</span><span>Organize. Ajuste. Entre em campo.</span></>}
         </footer>
       </div>
       {detailPlayer && <div className={styles.modalBackdrop} onMouseDown={(event) => { if (event.target === event.currentTarget) setDetailPlayer(null); }}>
@@ -830,18 +551,8 @@ export function LineupScreen(props: Props) {
           </div>
         </section>
       </div>}
-      <div
-        ref={ghost}
-        className={styles.ghost}
-        style={{ visibility: dragId === null ? "hidden" : "visible" }}
-        aria-hidden="true"
-      >
-        {active && (
-          <>
-            <PlayerJersey player={active} />
-            <b>{active.name}</b>
-          </>
-        )}
+      <div ref={ghost} className={styles.ghost} style={{ visibility: dragId === null ? "hidden" : "visible" }} aria-hidden="true">
+        {active && <><PlayerJersey player={active} /><b>{active.name}</b></>}
       </div>
     </section>
   );
