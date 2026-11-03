@@ -4,7 +4,7 @@ import { importBrazilDatabase } from "@/lib/importer/brazil-database";
 import { readCachedDatabase, cacheDatabase, hasPendingDatabaseSync, readCachedCareerSaves } from "@/lib/importer/database-cache";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AppShell } from "@/components/ui/app-shell";
+import { CareerWorkspace } from "@/components/ui/career-workspace";
 import { CompetitionCenter, type CareerCompetitionView } from "@/components/ui/competition-center";
 import { buildCompetitionCatalog } from "@/lib/game/competitions";
 import { competitionTrophyAsset } from "@/lib/game/competition-trophies";
@@ -1091,9 +1091,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   if (!database || !hydrationDone) {
     return (
-      <div className="grid h-dvh overflow-hidden place-items-center bg-[#f7f7f2] bg-[linear-gradient(rgba(247,247,242,.88),rgba(247,247,242,.92)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center font-[Arial] text-sm text-[#29402f]">
-        <div className="flex items-center gap-3 rounded-lg border border-[#c8d8ca] bg-white/90 px-5 py-4 shadow-lg">
-          <span className="h-3 w-3 animate-pulse rounded-full bg-[#16c864]" aria-hidden="true" />
+      <div className="grid h-dvh overflow-hidden place-items-center bg-[#090a0f] bg-[radial-gradient(ellipse_at_top,#202129,#090a0f_70%)] font-[Arial] text-sm text-[#eef0f4]">
+        <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#15161d] px-5 py-4 text-[#eef0f4] shadow-2xl">
+          <span className="h-3 w-3 animate-pulse rounded-full bg-[#d4ad64] shadow-[0_0_14px_#d4ad6480]" aria-hidden="true" />
           Carregando suas carreiras...
         </div>
       </div>
@@ -1149,10 +1149,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       />
     );
 
-  if (page === "hub")
-    return (
-      <>
-        <AppShell nav={nav} teamName={club} clubColors={database.clubs.find((item) => item.name === club)} date="22/01/2026" classicNav>
+  const workspace = {
+    nav, teamName: club, clubColors: database.clubs.find((item) => item.name === club),
+    date: "22/01/2026", onClose: () => navigate("hub"),
+    background: (
           <HubScreen
             club={club}
             coach={coach}
@@ -1173,7 +1173,13 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             onEscalar={openLineup}
             onQuickAction={openQuickAction}
           />
-        </AppShell>
+    ),
+  };
+
+  if (page === "hub")
+    return (
+      <>
+        <CareerWorkspace {...workspace} />
         {renderStandings()}
         {profilePlayer !== null && (() => {
           const player = squad.find((item) => item.id === profilePlayer);
@@ -1184,13 +1190,18 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       </>
     );
 
-  if (page === "settings") return <AppShell nav={nav} teamName={club} clubColors={database.clubs.find((item) => item.name === club)} date="22/01/2026"><section className="h-full overflow-auto bg-[#f1f5f2] p-6 text-[#263a2c]"><div className="mx-auto max-w-3xl space-y-4"><header className="rounded-2xl bg-[#173428] p-6 text-white"><p className="text-xs uppercase tracking-widest text-[#9bc9a8]">Carreira / Preferências</p><h1 className="mt-2 text-2xl font-black">Configurações</h1><p className="mt-1 text-sm text-[#c1d5c6]">Personalize sua experiência ou volte ao menu inicial.</p></header><div className="rounded-2xl border border-[#dfe9e1] bg-white p-6"><h2 className="text-lg font-black">Partida</h2><label className="mt-4 block text-sm font-bold">Velocidade padrão para novas partidas <select value={defaultMatchSpeed} onChange={(e) => setDefaultMatchSpeed(Number(e.target.value) as 1 | 2 | 4)} className="ml-3 rounded-lg border border-[#d5e0d8] bg-white p-2"><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><p className="mt-2 text-xs text-[#718477]">Salva na carreira; pode ser alterada durante cada jogo.</p></div><div className="rounded-2xl border border-[#dfe9e1] bg-white p-6"><h2 className="text-lg font-black">Sessão</h2><p className="mt-1 text-sm text-[#718477]">A carreira é salva antes de voltar ao menu inicial.</p><button onClick={() => leaveActiveCareer("menu")} className="mt-4 rounded-lg bg-[#246e43] px-4 py-2 text-xs font-bold text-white">Voltar ao menu inicial</button></div></div></section></AppShell>;
+  if (page === "settings") return <CareerWorkspace {...workspace} title="Configurações"><section className="h-full overflow-auto bg-[#f1f5f2] p-6 text-[#263a2c]"><div className="mx-auto max-w-3xl space-y-4"><header className="rounded-2xl bg-[#173428] p-6 text-white"><p className="text-xs uppercase tracking-widest text-[#9bc9a8]">Carreira / Preferências</p><h1 className="mt-2 text-2xl font-black">Configurações</h1><p className="mt-1 text-sm text-[#c1d5c6]">Personalize sua experiência ou volte ao menu inicial.</p></header><div className="rounded-2xl border border-[#dfe9e1] bg-white p-6"><h2 className="text-lg font-black">Partida</h2><label className="mt-4 block text-sm font-bold">Velocidade padrão para novas partidas <select value={defaultMatchSpeed} onChange={(e) => setDefaultMatchSpeed(Number(e.target.value) as 1 | 2 | 4)} className="ml-3 rounded-lg border border-[#d5e0d8] bg-white p-2"><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><p className="mt-2 text-xs text-[#718477]">Salva na carreira; pode ser alterada durante cada jogo.</p></div><div className="rounded-2xl border border-[#dfe9e1] bg-white p-6"><h2 className="text-lg font-black">Sessão</h2><p className="mt-1 text-sm text-[#718477]">A carreira é salva antes de voltar ao menu inicial.</p><button onClick={() => leaveActiveCareer("menu")} className="mt-4 rounded-lg bg-[#246e43] px-4 py-2 text-xs font-bold text-white">Voltar ao menu inicial</button></div></div></section></CareerWorkspace>;
 
+  const windowTitles: Partial<Record<Page, string>> = {
+    agenda: "Agenda", stadium: "Estádio", juniors: "Juniores", teams: "Times",
+    search: "Mercado", coaches: "Técnicos", history: "História", finances: "Finanças",
+    trophies: "Troféus", training: "Treino",
+  };
   const managementSection = sectionByPage[page];
   if (managementSection)
     return (
       <>
-        <AppShell nav={nav} teamName={club} clubColors={database.clubs.find((item) => item.name === club)} date="22/01/2026">
+        <CareerWorkspace {...workspace} title={windowTitles[page]}>
           {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
             section={managementSection}
             agendaView={agendaView}
@@ -1210,7 +1221,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             onOpenPlayer={openPlayerProfile}
             onTrainPlayer={trainPlayer}
           />}
-        </AppShell>
+        </CareerWorkspace>
         {renderStandings()}
         {profilePlayer !== null && (() => {
           const player = squad.find((item) => item.id === profilePlayer);
@@ -1224,7 +1235,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   if (page === "lineup")
     return (
       <>
-        <AppShell nav={nav} teamName={club} clubColors={database.clubs.find((item) => item.name === club)} date="22/01/2026" hideNav>
+        <CareerWorkspace {...workspace} title="Escalação">
           <LineupScreen
           club={club}
           coach={coach}
@@ -1252,7 +1263,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           manualPositions={manualPositions}
           onResetPositions={resetManualPositions}
           />
-        </AppShell>
+        </CareerWorkspace>
         {renderStandings()}
       </>
     );
@@ -1275,6 +1286,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           half={minute <= 45 ? "1º tempo" : minute < 90 ? "2º tempo" : "fim"}
           club={homeTeamName}
           opponent={awayTeamName}
+          clubColors={database.clubs.find((item) => item.name === club)}
           homeScore={displayedHomeScore}
           awayScore={displayedAwayScore}
           statistics={displayedStatistics}
@@ -1336,6 +1348,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       fixtures={fixtures}
       club={homeTeamName}
       opponent={awayTeamName}
+      clubColors={database.clubs.find((item) => item.name === club)}
       homeScore={displayedHomeScore}
       awayScore={displayedAwayScore}
       homeFormation={userIsHome ? formation : opponentFormation}

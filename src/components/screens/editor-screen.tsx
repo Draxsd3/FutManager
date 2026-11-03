@@ -11,6 +11,7 @@ import { automaticKitSvg, svgImage } from "@/lib/kits/design";
 import { KitStudio } from "./kit-studio";
 import { ClassicIcon, type ClassicIconName } from "@/components/ui/classic-icon";
 import { clubCrestAsset, clubKitAsset } from "@/lib/game/assets";
+import { clubThemeStyle } from "@/components/ui/app-shell";
 
 type EditorModal = "club" | "player" | null;
 const positions: PositionCode[] = ["G", "L", "Z", "M", "A"];
@@ -131,7 +132,7 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack }: 
 
   if (!selectedClub) return <main className={styles.screen}><button onClick={addClub}>Adicionar primeira equipe</button><button disabled={importing} onClick={() => void importBase()}>Importar base brasileira 2026</button><button onClick={onBack}>Início</button></main>;
 
-  return <main className={styles.screen}>
+  return <main className={styles.screen} style={clubThemeStyle(selectedClub.name, selectedClub)}>
     <header className={styles.pageHeader}><div><p>FUTMANAGER / PERSONALIZAÇÃO</p><h1>Editor de clubes<span>.</span></h1><p>Identidade, elenco e novos uniformes. Seu futebol, do seu jeito.</p></div><button onClick={onBack}>← Voltar ao início</button></header>
     <section className={styles.teamPanel}>
       <div className={styles.teamTableHeader}><span>Time</span><span>País</span><span>Nível</span></div>

@@ -1,0 +1,29 @@
+.shell {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  color: #eff0f2;
+  background:
+    radial-gradient(ellipse at 12% 4%, color-mix(in srgb, var(--team-primary, #68707f) 18%, transparent), transparent 42%),
+    radial-gradient(ellipse at 88% 105%, color-mix(in srgb, var(--team-secondary, #a8adb7) 10%, transparent), transparent 48%),
+    linear-gradient(145deg, #14151a 0%, #090a0f 48%, #111218 100%);
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+}
+.shell::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  opacity: .48;
+  background:
+    linear-gradient(90deg, transparent calc(50% - .5px), #ffffff0a 50%, transparent calc(50% + .5px)),
+    radial-gradient(ellipse at 50% 112%, transparent 0 30%, color-mix(in srgb, var(--team-accent, #d4ad64) 16%, transparent) 30.1% 30.25%, transparent 30.4%),
+    radial-gradient(ellipse at 50% 112%, transparent 0 49%, #ffffff08 49.1% 49.2%, transparent 49.4%),
+    linear-gradient(180deg, color-mix(in srgb, var(--team-primary, #68707f) 5%, transparent), transparent 34%);
+}
+.main { position: relative; z-index: 0; min-height: 0; flex: 1; overflow: hidden; }

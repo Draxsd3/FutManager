@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useRef } from "react";
 import type { ManualPosition } from "@/lib/game/career";
 import type { MatchStatistics } from "@/lib/game/live-match";
 import type { Player } from "@/lib/game/mock-data";
-import { clubThemes } from "@/lib/game/mock-data";
 import { formations } from "@/lib/game/formations";
+import { clubThemeStyle } from "@/components/ui/app-shell";
 import { Crest } from "@/components/ui/club-sidebar";
 import { Pitch } from "@/components/ui/pitch";
 import styles from "./match-detail-screen.module.css";
@@ -63,10 +63,7 @@ export function MatchDetailScreen({ club, clubColors, opponent, homeScore, awayS
   const outgoing = startersData.find((player) => player.id === substitutionOut);
   const incoming = bench.find((player) => player.id === selectedPlayer);
   const canSubstitute = substitutionsLeft > 0;
-  const primary = clubColors?.primaryColor ?? (clubThemes[club] ?? clubThemes.Palmeiras).primary;
-  const rgb = [1, 3, 5].map((offset) => parseInt(primary.slice(offset, offset + 2), 16));
-  const theme = { "--team-primary": primary,
-    "--team-text": rgb[0] * .299 + rgb[1] * .587 + rgb[2] * .114 > 145 ? "#111111" : "#ffffff" } as CSSProperties;
+  const theme = clubThemeStyle(club, clubColors);
 
   function close() {
     onSelectPlayer(null);

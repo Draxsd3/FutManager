@@ -1,19 +1,13 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import type { EditorClub } from "@/lib/game/editor-data";
 import { divisionKeys, type DivisionKey } from "@/lib/game/mock-data";
+import { Crest } from "@/components/ui/club-sidebar";
+import { clubThemeStyle } from "@/components/ui/app-shell";
+import styles from "./new-career-screen.module.css";
 
-export function NewCareerScreen({
-  coach,
-  setCoach,
-  division,
-  setDivision,
-  club,
-  setClub,
-  onStart,
-  onBack,
-  availableClubs,
-}: {
+export function NewCareerScreen({ coach, setCoach, division, setDivision, club, setClub, onStart, onBack, availableClubs }: {
   coach: string;
   setCoach: (value: string) => void;
   division: DivisionKey;
@@ -26,106 +20,50 @@ export function NewCareerScreen({
 }) {
   const divisionClubs = availableClubs.filter((item) => item.division === division);
   const selectedClub = availableClubs.find((item) => item.name === club);
-  return (
-    <div className="h-dvh overflow-hidden bg-[#14361b] bg-[linear-gradient(rgba(4,22,9,.65),rgba(4,22,9,.8)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center p-4 font-[Arial] text-white">
-      <section className="mx-auto h-full w-full max-w-[620px] overflow-auto border border-[#4d8657] bg-[#0b2812]/95 px-8 py-8 shadow-2xl sm:px-16">
-        <button onClick={onBack} className="mb-4 rounded border border-[#e7c84d] bg-[#174c27] px-3 py-1 text-xs font-bold text-[#f1d457]">
-          &lt; Voltar ao menu
-        </button>
-        <h1 className="text-center text-3xl font-black tracking-wide text-[#f1d457]">
-          FUTMANAGER
-        </h1>
-        <h2 className="mt-2 text-center text-lg font-bold">
-          Adicionar técnico humano
-        </h2>
-
-        <div className="mt-10 space-y-5 text-sm">
-          <Field label="Treinar time do país" value="🇧🇷 Brasil" disabled />
-
-          <label className="block font-bold">
-            Divisão
-            <select
-              value={division}
-              onChange={(e) => {
-                const next = e.target.value as DivisionKey;
-                setDivision(next);
-                setClub(availableClubs.find((item) => item.division === next)?.name ?? "");
-              }}
-              className="mt-1 block w-full border border-black/20 bg-white p-2 text-black"
-            >
-              {divisionKeys.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block font-bold">
-            Clube
-            <select
-              value={club}
-              onChange={(e) => setClub(e.target.value)}
-              className="mt-1 block w-full border border-black/20 bg-white p-2 text-black"
-            >
-              {divisionClubs.map((item) => (
-                <option key={item.id}>{item.name}</option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block border-t border-cyan-100/30 pt-5 font-bold">
-            Nome do técnico
-            <input
-              value={coach}
-              onChange={(e) => setCoach(e.target.value)}
-              className="mt-1 block w-full border border-black/20 bg-white p-2 text-black"
-              placeholder="Seu nome"
-            />
-          </label>
-
-          <p className="border-y border-cyan-100/20 py-4 text-center">
-            Time selecionado: <strong className="text-[var(--accent)]">{club}</strong>
-            {selectedClub && <span className="mt-1 block text-xs text-white/70">{selectedClub.stadiumName} · {selectedClub.stadiumCapacity.toLocaleString("pt-BR")} lugares</span>}
-          </p>
-
-          <div className="grid grid-cols-1 gap-4 border-t border-cyan-100/30 pt-6 sm:grid-cols-2">
-            <button
-              disabled
-              className="bg-gradient-to-b from-white to-slate-300 py-3 font-bold text-[#062332] opacity-40"
-            >
-              Adicionar e incluir outro
-            </button>
-            <button
-              disabled={!coach.trim() || !selectedClub}
-              onClick={onStart}
-              className="rounded border border-[#e7c84d] bg-[#e7c84d] py-3 font-black text-[#14391d] transition hover:bg-[#f1d457] disabled:opacity-40"
-            >
-              Iniciar jogo &gt;&gt;
-            </button>
-          </div>
+  const clubColor = selectedClub?.primaryColor ?? "#d4ad64";
+  const style = {
+    ...(selectedClub ? clubThemeStyle(selectedClub.name, selectedClub) : { "--team-accent": "#d4ad64", "--team-accent-text": "#15161b" }),
+    "--club-color": clubColor,
+  } as CSSProperties & Record<`--${string}`, string>;
+  return <main className={styles.screen} style={style}>
+    <header className={styles.topbar}>
+      <div className={styles.brand}><span>F</span> FUTMANAGER <i>·</i> NOVA CARREIRA</div>
+      <button type="button" onClick={onBack}>← <span>Voltar ao início</span></button>
+    </header>
+    <div className={styles.layout}>
+      <section className={styles.formPanel} aria-labelledby="career-title">
+        <div className={styles.step}><span>01</span><i /> VOCÊ COMEÇA NO BANCO</div>
+        <h1 id="career-title">Todo clube<br/>começa com <em>uma decisão.</em></h1>
+        <p className={styles.intro}>Escolha onde sua história vai acontecer. O resto se decide em campo.</p>
+        <div className={styles.fields}>
+          <Field label="País"><input value="Brasil" disabled readOnly /></Field>
+          <label className={styles.field}><span>Divisão</span><select value={division} onChange={(event) => { const next = event.target.value as DivisionKey; setDivision(next); setClub(availableClubs.find((item) => item.division === next)?.name ?? ""); }}>
+            {divisionKeys.map((item) => <option key={item}>{item}</option>)}
+          </select></label>
+          <label className={styles.field}><span>Seu clube</span><select value={club} onChange={(event) => setClub(event.target.value)}>
+            {divisionClubs.map((item) => <option key={item.id}>{item.name}</option>)}
+          </select></label>
+          <label className={`${styles.field} ${styles.coachField}`}><span>Nome do técnico</span><input value={coach} onChange={(event) => setCoach(event.target.value)} placeholder="Seu nome" autoComplete="name" /></label>
+        </div>
+        <div className={styles.formFooter}>
+          <span>Você poderá mudar a tática a qualquer momento.</span>
+          <button type="button" className={styles.start} disabled={!coach.trim() || !selectedClub} onClick={onStart}>Iniciar jogo <b aria-hidden="true">↗</b></button>
         </div>
       </section>
+      <aside className={styles.clubCard} aria-label="Clube selecionado">
+        <div className={styles.cardGrid} aria-hidden="true" />
+        <div className={styles.cardTop}><span>O SEU VESTIÁRIO</span><span>BR · 2026</span></div>
+        {selectedClub ? <>
+          <div className={styles.crestStage}><span className={styles.orbit} /><Crest club={selectedClub.name} /><span className={styles.cardIndex}>FM / {String(availableClubs.indexOf(selectedClub) + 1).padStart(3, "0")}</span></div>
+          <div className={styles.clubIdentity}><p>{selectedClub.state ?? "BRASIL"} <span>·</span> {selectedClub.division}</p><h2>{selectedClub.name}</h2><span className={styles.clubCoach}>{selectedClub.coachName ? `Comando atual · ${selectedClub.coachName}` : "Um escudo. Uma cidade. Uma história."}</span></div>
+          <div className={styles.stadiumInfo}><div><span>CASA</span><b>{selectedClub.stadiumName}</b></div><div><span>CAPACIDADE</span><b>{selectedClub.stadiumCapacity.toLocaleString("pt-BR")}</b></div></div>
+          <div className={styles.cardBottom}><span>PREPARE-SE PARA O APITO</span><span className={styles.clubStripe} /></div>
+        </> : <p className={styles.noClub}>Nenhum clube disponível nesta divisão.</p>}
+      </aside>
     </div>
-  );
+  </main>;
 }
 
-function Field({
-  label,
-  value,
-  disabled,
-}: {
-  label: string;
-  value: string;
-  disabled?: boolean;
-}) {
-  return (
-    <label className="block font-bold">
-      {label}
-      <input
-        value={value}
-        disabled={disabled}
-        readOnly
-        className="mt-1 block w-full border border-black/20 bg-white p-2 text-black"
-      />
-    </label>
-  );
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <label className={styles.field}><span>{label}</span>{children}</label>;
 }
