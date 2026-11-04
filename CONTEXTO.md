@@ -505,3 +505,10 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - `WindowHeaderContext` evita cabeçalho/título repetido nas telas de gestão embutidas, mantendo as ações e IDs acessíveis. Treino e escalação também removem a identidade duplicada dentro da janela; informações funcionais (semana, confronto, formação nos controles, camisas, reservas, botões) permanecem. Componentes usados isoladamente continuam com título próprio. Títulos de submodais permanecem independentes do pai.
 - Preservar temas do conteúdo (escalação escura), campo tático, camisas, posições, regras, handlers de fechar, refs de foco, diálogos acessíveis, navegação e saves. Sem alterações no motor ou calendário.
 - Validação: **392 testes / 82 arquivos aprovados**, com limite por teste de 15s nesta execução; lint, TypeScript, build de produção e diff-check aprovados. Dez testes novos cobrem cabeçalho uniforme em oito subtelas, X, ausência de duplicação, ações preservadas, IDs e hierarquia dos submodais. Testes anteriores atualizados para os títulos únicos; sem inspeção visual em navegador.
+
+### 63. Remover o scroll interno da tabela de classificação — 04/11/2026
+
+- Pedido com captura de tela da Classificação geral: **“Remova esse scroll”**.
+- Removido o limite de altura (`max-height`) e o scroll vertical interno de `.standingsTable` (assim como o `tabIndex={0}` da região rolável interna), exibindo a classificação completa diretamente no card sem barra de rolagem aninhada acima da legenda de faixas; a rolagem da janela continua centralizada em `.content` quando necessário e o `overflow-x: auto` permanece apenas para telas estreitas.
+- Preservados o modelo claro da tabela de classificação (colunas `#`, `Clube`, `PTS`, `J`, `V`, `E`, `D`, `GP`, `GC`, `SG`, `%`, `Recentes`), as faixas de classificação das Séries A e B, legenda, rodadas, mata-mata e estatísticas.
+- Validação: 14 testes direcionados em 3 arquivos aprovados (incluindo regressão contra scroll vertical interno em `.standingsTable`), lint, TypeScript, build de produção e diff-check aprovados. Sem inspeção visual em navegador.
