@@ -85,18 +85,27 @@ it("applies formation, style, marking and focus without consuming a substitution
   expect(substitute).not.toHaveBeenCalled();
 });
 
-it("blocks substitutions at the limit but keeps all tactical controls available at halftime", () => {
+it("reuses the pre-match lineup at halftime and blocks substitutions at the limit", () => {
   const { change, substitute, startSecondHalf } = setup({ substitutionsLeft: 0, isHalftime: true });
-  expect(screen.getByText(/Intervalo/)).toBeTruthy();
-  expect((reserve() as HTMLButtonElement).disabled).toBe(true);
-  expect((starter() as HTMLButtonElement).disabled).toBe(false);
-  fireEvent.click(reserve()); fireEvent.click(starter());
+  expect(screen.getByRole("heading", { name: "Táticas da partida" })).toBeTruthy();
+  expect(screen.getByRole("checkbox", { name: "Mostrar setores" })).toBeTruthy();
+  const reserveButton = document.querySelector(`[data-reserve="${bench[0].id}"]`) as HTMLButtonElement;
+  expect(reserveButton.disabled).toBe(true);
+  fireEvent.click(reserveButton);
   fireEvent.change(screen.getByLabelText("Formação"), { target: { value: "4-4-2" } });
   expect(change).toHaveBeenCalledWith("4-4-2");
   expect(substitute).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Iniciar 2º tempo →" }));
   expect(startSecondHalf).toHaveBeenCalledOnce();
+});
+
+it("requires confirmation for halftime substitutions on the shared lineup", () => {
+  const { substitute } = setup({ isHalftime: true });
+  fireEvent.click(document.querySelector(`button[data-player="${starters[0].id}"]`)!);
+  fireEvent.click(document.querySelector(`[data-reserve="${bench[0].id}"]`)!);
   expect(substitute).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Confirmar substituição" }));
+  expect(substitute).toHaveBeenCalledWith(bench[0].id);
 });
 
 it("closes through Escape, backdrop, close and return without committing a pending change", () => {
