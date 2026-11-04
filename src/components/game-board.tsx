@@ -1,6 +1,6 @@
 "use client";
 
-import { clubConfidence } from "@/lib/game/confidence";
+import { clubConfidence, mergeConfidenceHistory, type ConfidenceMatch } from "@/lib/game/confidence";
 
 import { importBrazilDatabase } from "@/lib/importer/brazil-database";
 import { readCachedDatabase, cacheDatabase, hasPendingDatabaseSync, readCachedCareerSaves } from "@/lib/importer/database-cache";
@@ -182,6 +182,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [trainingSessions, setTrainingSessions] = useState<TrainingSessionRecord[]>([]);
   const [manualPositions, setManualPositions] = useState<Record<number, ManualPosition>>({});
   const [competitionSeason, setCompetitionSeason] = useState<CareerSeason | undefined>();
+  const [confidenceHistory, setConfidenceHistory] = useState<ConfidenceMatch[]>([]);
+  const [confidenceStartBudget, setConfidenceStartBudget] = useState<number | undefined>();
   const [activeFixtureId, setActiveFixtureId] = useState<string>();
   const [transferNegotiations, setTransferNegotiations] = useState<TransferNegotiation[]>([]);
   const careerDatabase = useMemo(() => database ? databaseWithCompletedTransfers(database, transferNegotiations) : null, [database, transferNegotiations]);
@@ -209,7 +211,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore,
     events, participation, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
-    competitionSeason, activeFixtureId, transferNegotiations,
+    competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations,
   };
   const progressRef = useRef(progress);
   useEffect(() => { progressRef.current = progress; });
@@ -228,7 +230,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     pendingCloudSave.current = next;
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, formation, style, marking, focus,
     starters, careerSquad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore, events,
-    participation, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, activeFixtureId, transferNegotiations, userId]);
+    participation, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, userId]);
 
   useEffect(() => {
     if (!hydrationDone) return;
@@ -415,7 +417,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           const winnerClubId = activeFixture.type === "cup" && actualHome === actualAway
             ? (seededRandom(`${activeFixture.id}|penalties`)() < 0.5 ? activeFixture.homeClubId : activeFixture.awayClubId)
             : undefined;
-          setCompetitionSeason((current) => current ? completeCareerFixture(current, activeFixture.id, { home: actualHome, away: actualAway, winnerClubId, playerContributions: contributions }, careerDatabase!) : current);
+          const completedSeason = completeCareerFixture(competitionSeason, activeFixture.id, { home: actualHome, away: actualAway, winnerClubId, playerContributions: contributions }, careerDatabase!);
+          setCompetitionSeason(completedSeason);
+          setConfidenceHistory((current) => mergeConfidenceHistory(current, completedSeason));
         }
         setPlayerCareers((current) => recordPlayerMatch(current, squad, club, finalParticipation, {
           key: activeFixture?.id ?? matchPreparation.matchKey,
@@ -684,9 +688,11 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       round: 1, budget: 12624, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
       careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, trainingSessions: [], manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
-      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, activeFixtureId: firstFixture?.id, transferNegotiations: [] };
+      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, confidenceHistory: [], confidenceStartBudget: 12624, activeFixtureId: firstFixture?.id, transferNegotiations: [] };
     setActiveSaveId(save.id);
     setCompetitionSeason(newSeason);
+    setConfidenceHistory([]);
+    setConfidenceStartBudget(12624);
     setActiveFixtureId(firstFixture?.id);
     setTransferNegotiations([]);
     setRound(1);
@@ -742,6 +748,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     const clubId = database?.clubs.find((item) => item.name === save.clubName)?.id ?? save.clubId;
     const restoredSeason = save.progress?.competitionSeason ?? (database && clubId ? createCareerSeason(database, clubId, Number(save.inGameDate.slice(0, 4)) || 2026) ?? undefined : undefined);
     setCompetitionSeason(restoredSeason);
+    setConfidenceHistory(mergeConfidenceHistory(save.progress?.confidenceHistory ?? [], restoredSeason));
+    setConfidenceStartBudget(save.progress?.confidenceStartBudget);
     setActiveFixtureId(save.progress?.activeFixtureId ?? nextCareerFixture(restoredSeason)?.id);
     setPage("hub");
     if (save.progress) {
@@ -1173,7 +1181,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             round={competitionRound}
             competition={competitionName}
             playerCareers={playerCareers}
-            confidence={clubConfidence(competitionSeason)}
+            confidence={clubConfidence(competitionSeason, confidenceHistory, budget, squad.reduce((sum, player) => sum + (playerCareers[player.id]?.salary ?? player.salary), 0), confidenceStartBudget)}
             trainingSessions={trainingSessions}
             trainingWeek={round}
             season={competitionSeason?.season ?? 2026}

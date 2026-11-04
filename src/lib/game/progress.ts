@@ -1,3 +1,4 @@
+import type { ConfidenceMatch } from "./confidence";
 import type { DivisionKey, Player } from "./mock-data";
 import type { ManualPosition, PlayerCareerRecord, MatchParticipation } from "./career";
 import type { MatchEvent, MatchWeather } from "@/lib/game/live-match";
@@ -43,6 +44,8 @@ export type CareerProgress = {
   defaultMatchSpeed?: 1 | 2 | 4;
   halftimeWaiting: boolean;
   competitionSeason?: CareerSeason;
+  confidenceHistory?: ConfidenceMatch[];
+  confidenceStartBudget?: number;
   activeFixtureId?: string;
   transferNegotiations?: TransferNegotiation[];
   trainingSessions?: TrainingSessionRecord[];
