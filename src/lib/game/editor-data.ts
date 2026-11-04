@@ -2,6 +2,7 @@ import { clubThemes, clubs, squad, type DivisionKey, type Player, type PositionC
 import type { ManualPosition, PlayerCareerRecord } from "./career";
 
 export type TransfermarktOrigin = {
+  manualCorrection?: { fields: string[]; correctedAt: string };
   id: string; collectedAt: string; season: string;
   marketValueEur?: number | null; dateOfBirth?: string | null;
   modelVersion?: string; estimatedFields?: string[];

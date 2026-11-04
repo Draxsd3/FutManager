@@ -65,3 +65,13 @@ export function saveTransfermarktCheckpoint(userId: string, value: import("./tra
 export function readTransfermarktCheckpoint(userId: string) {
   return read<import("./transfermarkt-live").LiveCheckpoint>(accountStorageKey("transfermarkt-2026-staging-v1", userId));
 }
+
+/** Manual overlays are isolated by account and never written back to the source API. */
+export async function readTransfermarktCorrections(userId: string) {
+  const { manualCorrectionsSchema } = await import("./transfermarkt-corrections");
+  return manualCorrectionsSchema.parse(await read(accountStorageKey("transfermarkt-manual-v1", userId)) ?? []);
+}
+export async function saveTransfermarktCorrections(userId: string, value: import("./transfermarkt-corrections").ManualCorrection[]) {
+  const { manualCorrectionsSchema } = await import("./transfermarkt-corrections");
+  return store(accountStorageKey("transfermarkt-manual-v1", userId), manualCorrectionsSchema.parse(value));
+}

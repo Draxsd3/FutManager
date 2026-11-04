@@ -33,9 +33,8 @@ export async function prepareLiveTransfermarktSync(database: EditorDatabase, use
   const snapshot = await collectNationalSnapshot({ progress, signal,
     seed: async () => {
       progress("Validando o arquivo brasileiro 2026 enviado…");
-      const response = await fetch("/api/transfermarkt/seed", { cache: "no-store", signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(30_000)]) : AbortSignal.timeout(30_000) });
-      if (!response.ok) throw new Error("Não foi possível validar o arquivo brasileiro 2026. Tente novamente.");
-      const { checkpoint } = await response.json();
+      const [{ readTransfermarktCorrections }, { fetchCorrectedSeed }] = await Promise.all([import("./database-cache"), import("./transfermarkt-corrections")]);
+      const { checkpoint } = await fetchCorrectedSeed(await readTransfermarktCorrections(userId), signal);
       return { ...checkpoint, snapshot: transfermarktSnapshotSchema.parse(checkpoint.snapshot) };
     },
     load: () => readTransfermarktCheckpoint(userId), save: value => saveTransfermarktCheckpoint(userId, value),
