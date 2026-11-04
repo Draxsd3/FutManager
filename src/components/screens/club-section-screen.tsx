@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ComponentProps } from "react";
 import Image from "next/image";
+import type { CareerSeason } from "@/lib/game/season";
 import type { EditorDatabase } from "@/lib/game/editor-data";
 import type { Player, RoundFixture } from "@/lib/game/mock-data";
 import { ClassicIcon } from "@/components/ui/classic-icon";
@@ -23,7 +24,7 @@ export function ClubSectionScreen({
   round,
   budget,
   squad,
-  fixtures,
+  season,
   competition = "Campeonato Estadual",
   inGameDate = "2026-01-22",
   agendaView = "matches",
@@ -50,6 +51,7 @@ export function ClubSectionScreen({
   budget: number;
   squad: Player[];
   fixtures: RoundFixture[];
+  season?: CareerSeason;
   competition?: string;
   inGameDate?: string;
   onBack: () => void;
@@ -89,7 +91,7 @@ export function ClubSectionScreen({
 
   if (section === "stadium") return <StadiumScreen key={club} club={currentClub} budget={budget} payroll={monthlyPayroll} onBack={onBack} onAgenda={onAgenda} />;
 
-  if (section === "agenda") return <AgendaScreen club={club} coach={coach} competition={competition} inGameDate={inGameDate} round={round} fixtures={fixtures} view={agendaView} onViewChange={onAgendaViewChange ?? (() => undefined)} onBack={onBack} onPrepare={onPrepare ?? onBack} />;
+  if (section === "agenda") return <AgendaScreen club={club} coach={coach} competition={competition} inGameDate={inGameDate} round={round} season={season} database={database} view={agendaView} onViewChange={onAgendaViewChange ?? (() => undefined)} onBack={onBack} onPrepare={onPrepare ?? onBack} />;
 
   return (
     <div className="h-full min-h-0 overflow-hidden bg-[linear-gradient(rgba(247,247,242,.72),rgba(247,247,242,.8)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center p-4 text-[#26382a]">
