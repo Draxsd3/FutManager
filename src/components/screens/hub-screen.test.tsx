@@ -97,6 +97,7 @@ it("shows every completed day using the training week, not the competition round
   expect(screen.getByRole("heading", { name: "Semana 3" })).toBeTruthy();
   for (const day of days) expect(screen.getByLabelText(`${day}: treino concluído — Passe e posse`)).toBeTruthy();
   expect(screen.getAllByText("Passe e posse")).toHaveLength(6);
+  expect(screen.getByRole("list", { name: "Sessões de treino da semana" }).getAttribute("tabindex")).toBe("0");
   view.rerender(<HubScreen {...props} trainingWeek={4} trainingSessions={sessions} />);
   expect(screen.getByText("0/6 sessões")).toBeTruthy();
   expect(screen.queryByLabelText(/treino concluído/)).toBeNull();

@@ -29,3 +29,31 @@
 .energy b { color:#26392f; }
 .good { color:#26724c!important; }
 .low { color:#a9472e!important; }
+
+/* Give the squad summary more readable type and room without shrinking the roster on smaller screens. */
+@media (min-width:1361px) { .rosterBody { grid-template-columns:minmax(0,1fr) 276px; } }
+.insights { gap:10px; }
+.insights:focus-visible, .trainingLog:focus-visible { outline:2px solid #3e7952; outline-offset:-2px; }
+.insightCard { padding:12px 10px; }
+.insightHeading h3 { font-size:14px; line-height:1.25; }
+.insightLabel { font-size:10px; letter-spacing:.1em; }
+.insightPill { padding:4px 6px; font-size:10px; }
+.averageEnergy { font-size:19px; }
+.energyBar { height:8px; margin-top:10px; }
+.lowEnergyCaption, .lowEnergyList li { font-size:11px; line-height:1.4; }
+.trainingWeek { gap:4px; margin-top:11px; }
+.trainingDay, .trainingDayDone { height:28px; min-width:0; font-size:9px; }
+.trainingSummary { flex-wrap:wrap; font-size:10px; color:#536b59; }
+.trainingSummary b { font-size:11px; }
+.trainingLoad, .trainingEmpty { font-size:10px; line-height:1.4; }
+.trainingLog { max-height:105px; overflow:auto; scrollbar-width:thin; overscroll-behavior:contain; }
+.trainingLog li, .trainingLog li b, .trainingLog li small { font-size:10px; }
+.trainingLog li { padding-top:6px; }
+.trainingButton { min-height:38px; padding:0 11px; font-size:11px; }
+.standouts { gap:8px; margin-top:11px; }
+.standouts li { gap:9px; padding-top:8px; }
+.standoutRank { color:#5f705e; font-size:10px; }
+.standoutName { font-size:11px; line-height:1.3; }
+.standoutName small { font-size:10px; }
+.standouts li>b { font-size:14px; }
+@media (min-width:701px) and (max-width:1050px) { .insights { grid-template-columns:minmax(0,1fr); } }

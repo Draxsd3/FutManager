@@ -75,7 +75,7 @@ function SquadInsights({ squad, season, week, trainingSessions, onOpenTraining }
   const totalEnergyRecovered = weeklySessions.reduce((sum, session) => sum + session.energyRecovered, 0);
   const standouts = [...squad].sort((a, b) => b.overall - a.overall || b.energy - a.energy || a.name.localeCompare(b.name, "pt-BR")).slice(0, 3);
 
-  return <aside aria-label="Resumo do elenco" className={styles.insights}>
+  return <aside aria-label="Resumo do elenco" className={styles.insights} tabIndex={0}>
     <section className={`${styles.insightCard} ${styles.trainingCard}`}>
       <div className={styles.insightHeading}><div><span className={styles.insightLabel}>TREINO</span><h3>Semana {week}</h3></div><span className={styles.insightPill}>{weeklySessions.length}/6 sessões</span></div>
       <div className={styles.trainingWeek} aria-label={`Semana ${week}: ${weeklySessions.length} de 6 sessões concluídas`}>
@@ -87,7 +87,7 @@ function SquadInsights({ squad, season, week, trainingSessions, onOpenTraining }
       {weeklySessions.length ? <>
         <div className={styles.trainingSummary}><b>{trainedIds.size}</b><span>atletas treinados</span><i>·</i><b>{weeklySessions.reduce((sum, session) => sum + session.overallImprovements, 0)}</b><span>evoluções</span></div>
         <p className={styles.trainingLoad}>{totalEnergySpent ? `−${totalEnergySpent} pts de energia` : "Sem desgaste"}{totalEnergyRecovered ? ` · +${totalEnergyRecovered} pts recuperados` : ""}</p>
-        <ul className={styles.trainingLog}>{[...weeklySessions].reverse().map((session) => <li key={session.id}><span><b>{session.day.slice(0, 3)}</b> {trainingDrillLabel(session.drill)}</span><small>{session.playerIds.length} atletas</small></li>)}</ul>
+        <ul className={styles.trainingLog} aria-label="Sessões de treino da semana" tabIndex={weeklySessions.length > 3 ? 0 : undefined}>{[...weeklySessions].reverse().map((session) => <li key={session.id}><span><b>{session.day.slice(0, 3)}</b> {trainingDrillLabel(session.drill)}</span><small>{session.playerIds.length} atletas</small></li>)}</ul>
       </> : <p className={styles.trainingEmpty}>Monte a semana e acompanhe aqui a carga e a evolução do elenco.</p>}
       <button type="button" className={styles.trainingButton} onClick={onOpenTraining}>Abrir centro de treino <span aria-hidden="true">↗</span></button>
     </section>
