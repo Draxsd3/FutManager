@@ -1,5 +1,6 @@
 "use client";
 
+import { WindowHeader, WindowHeaderContext } from "@/components/ui/window-header";
 import { useEffect, useRef } from "react";
 import type { ManualPosition } from "@/lib/game/career";
 import type { MatchStatistics } from "@/lib/game/live-match";
@@ -88,9 +89,8 @@ export function MatchDetailScreen({ kit = 1, club, clubColors, opponent, homeSco
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
       }}>
-      <h1 id="match-tactics-title" className={styles.srOnly}>Táticas</h1>
-      <button ref={closeButton} type="button" className={`${styles.close} ${styles.modalClose}`} onClick={close} aria-label="Fechar táticas">×</button>
-
+      <WindowHeader title="Táticas" id="match-tactics-title" onClose={close} closeRef={closeButton} closeLabel="Fechar táticas" />
+      <WindowHeaderContext.Provider value>
       <div className={styles.halftimeLineup}>
         <p id="match-tactics-description" className={styles.description}>{isHalftime ? "Intervalo. Ajuste a equipe antes do segundo tempo; confirme as substituições antes de continuar." : "Partida pausada. Ajuste a equipe e confirme as substituições antes de voltar ao jogo."}</p>
         <LineupScreen kit={kit} club={club} coach={coach} opponent={opponent} competition={competition} round={round}
@@ -117,6 +117,7 @@ export function MatchDetailScreen({ kit = 1, club, clubColors, opponent, homeSco
           <button type="button" className={styles.return} onClick={() => { if (isHalftime) { onSelectPlayer(null); onStartSecondHalf(); } else close(); }}>{isHalftime ? "Iniciar 2º tempo →" : "Voltar ao jogo"}</button>
         </div>
       </footer>
+      </WindowHeaderContext.Provider>
     </section>
   </div>;
 }

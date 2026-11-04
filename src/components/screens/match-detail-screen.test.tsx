@@ -42,7 +42,7 @@ it("shows a tactics modal with the live pitch, reserves, team statistics and mat
   expect(field.closest('[data-layout="classic"][data-mode="match"]')).toBeTruthy();
   expect(document.querySelectorAll('[data-slot]')).toHaveLength(11);
   expect(document.querySelectorAll('[data-reserve]')).toHaveLength(bench.length);
-  expect(screen.getByRole("heading", { name: "ESCALAR TIME · 4-3-3" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Táticas" })).toBeTruthy();
   expect(screen.getByText("2 × 1")).toBeTruthy();
   expect(screen.getByText("Posse de bola")).toBeTruthy();
   expect(screen.getByText("Passes certos")).toBeTruthy();
@@ -86,7 +86,7 @@ it("applies formation, style, marking and focus without consuming a substitution
 
 it("reuses the pre-match lineup at halftime and blocks substitutions at the limit", () => {
   const { change, substitute, startSecondHalf } = setup({ substitutionsLeft: 0, isHalftime: true });
-  expect(screen.getByRole("heading", { name: "ESCALAR TIME · 4-3-3" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Táticas" })).toBeTruthy();
   expect(screen.getByRole("checkbox", { name: "Mostrar setores" })).toBeTruthy();
   const reserveButton = document.querySelector(`[data-reserve="${bench[0].id}"]`) as HTMLButtonElement;
   expect(reserveButton.disabled).toBe(true);

@@ -1,0 +1,9 @@
+/* Explicit shared chrome, never a global recoloring of dialog descendants. */
+.bar[data-window-header] { display:flex; flex:0 0 auto; align-items:center; gap:14px; min-height:46px; width:100%; margin:0; padding:7px 12px 7px 18px; border:0; border-bottom:1px solid #444b47; border-radius:0; background:#242827; color:#f3f5f3; font-family:var(--font-geist-sans),Arial,sans-serif; }
+.bar[data-window-header] .dot { flex:none; width:6px; height:6px; margin:0; border-radius:50%; background:#c5cbd0; }
+.bar[data-window-header] .title { flex:1; min-width:0; margin:0; color:#f3f5f3; font-size:11px; font-weight:800; line-height:1.4; letter-spacing:.02em; overflow-wrap:anywhere; }
+.bar[data-window-header] .close { display:grid; place-items:center; flex:none; width:30px; height:28px; min-height:0; margin:0; padding:0; border:1px solid #68736c; border-radius:6px; background:#ffffff07; color:#ecf0ed; font:700 20px/1 Arial,sans-serif; cursor:pointer; box-shadow:none; }
+.bar[data-window-header] .close span { margin:0; color:inherit; font:inherit; }
+.bar[data-window-header] .close:hover { background:#ffffff15; border-color:#a8b5ac; }
+.bar[data-window-header] .close:focus-visible { outline:2px solid #a4e0b1; outline-offset:3px; }
+@media(max-width:640px) { .bar[data-window-header] { min-height:40px; gap:10px; padding:6px 10px 6px 14px; } }

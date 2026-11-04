@@ -167,11 +167,11 @@ it("reloads directly into the last career screen without going through the start
   fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Técnica da Retomada" } });
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
   fireEvent.click(await screen.findByRole("button", { name: /Escalar Time/i }));
-  await screen.findByRole("heading", { name: /ESCALAR TIME ·/ });
+  await screen.findByRole("heading", { name: "Escalação" });
   view.unmount();
 
   render(game());
-  expect(await screen.findByRole("heading", { name: /ESCALAR TIME ·/ })).toBeTruthy();
+  expect(await screen.findByRole("heading", { name: "Escalação" })).toBeTruthy();
   expect(screen.queryByRole("button", { name: /CONTINUAR JOGANDO/ })).toBeNull();
 });
 
@@ -247,7 +247,7 @@ it("opens Agenda choices before navigating and routes each choice to its own sec
   fireEvent.click(screen.getByRole("menuitem", { name: /Jogos do seu time/ }));
   expect(await screen.findByRole("heading", { name: "Jogos do seu time" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: /Preparar equipe/ }));
-  expect(await screen.findByRole("heading", { name: /ESCALAR TIME ·/ })).toBeTruthy();
+  expect(await screen.findByRole("heading", { name: "Escalação" })).toBeTruthy();
 });
 
 it("preserves the custom lineup when reopening tactics and after a saved-career reload", async () => {
@@ -269,7 +269,7 @@ it("preserves the custom lineup when reopening tactics and after a saved-career 
   expect(readLocalSaves("alice")[0].progress?.starters).toEqual(xi);
   view.unmount();
   render(game());
-  expect(await screen.findByRole("heading", { name: /ESCALAR TIME ·/ })).toBeTruthy();
+  expect(await screen.findByRole("heading", { name: "Escalação" })).toBeTruthy();
   expect(document.querySelector(`[data-player="${id}"][data-slot]`)?.getAttribute("style")).toContain("10%");
 });
 
@@ -334,7 +334,7 @@ it("opens finances, trophies and training as modal shortcuts without losing the 
     fireEvent.click(await screen.findByRole("button", { name: title }));
     const dialog = screen.getByRole("dialog", { name: title });
     if (title === "Treino") {
-      expect(within(dialog).getByRole("heading", { name: "Centro de treinamento" })).toBeTruthy();
+      expect(within(dialog).getByRole("heading", { name: "Treino" })).toBeTruthy();
       expect(within(dialog).getByRole("heading", { name: "Atletas da sessão" })).toBeTruthy();
       expect(within(dialog).getByRole("region", { name: "Escolha os atletas" }).getAttribute("tabindex")).toBe("0");
     }
