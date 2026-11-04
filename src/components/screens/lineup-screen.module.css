@@ -72,7 +72,7 @@
 .fixture > strong small { color: var(--muted); font-size: 9px; font-weight: 600; }
 .fixture > small { overflow: hidden; color: #78867d; font-size: 8px; letter-spacing: .1em; text-overflow: ellipsis; white-space: nowrap; }
 .headerActions { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; }
-.headerActions button, .resetButton, .detailButton, .modalActions button {
+.headerActions button, .resetButton, .modalActions button {
   display: inline-flex;
   min-height: 34px;
   align-items: center;
@@ -89,7 +89,7 @@
   cursor: pointer;
   transition: border-color .16s ease, background .16s ease, transform .16s ease;
 }
-.headerActions button:hover, .resetButton:hover, .detailButton:hover:not(:disabled), .modalActions button:hover:not(:disabled) {
+.headerActions button:hover, .resetButton:hover, .modalActions button:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--accent) 52%, transparent);
   background: #ffffff12;
 }
@@ -263,9 +263,7 @@
 .panelHeading .eyebrow { margin-bottom: 3px; font-size: 7px; }
 .panelHeading h2 { font-size: 13px; }
 .count, .warningCount { display: grid; width: 26px; height: 26px; place-items: center; border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent); border-radius: 50%; background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); font-size: 10px; font-weight: 800; }
-.detailButton { width: 100%; min-height: 27px; margin-top: 7px; border-style: dashed; color: #bac6bc; font-size: 9px; }
-.detailButton:disabled { opacity: .4; cursor: not-allowed; }
-.bench { display: flex; min-height: 60px; flex: 1 1 auto; flex-direction: column; gap: 5px; margin-top: 7px; overflow: auto; padding: 1px 3px 1px 0; scrollbar-color: #3b4941 transparent; scrollbar-width: thin; }
+.bench { display: flex; min-height: 60px; flex: 1 1 auto; flex-direction: column; gap: 5px; margin-top: 0; overflow: auto; padding: 1px 3px 1px 0; scrollbar-color: #3b4941 transparent; scrollbar-width: thin; }
 .reserve { display: grid; min-height: 43px; flex: 0 0 auto; grid-template-columns: 39px minmax(0, 1fr) 28px; align-items: center; gap: 7px; padding: 3px 8px 3px 4px; border: 1px solid #ffffff12; border-radius: 7px; background: #ffffff05; color: #e8eee7; text-align: left; cursor: pointer; transition: border-color .15s, background .15s; }
 .reserve:hover, .reserve:focus-visible { border-color: color-mix(in srgb, var(--accent) 42%, transparent); background: #ffffff0c; outline: none; }
 .reserve.reserveSelected { border-color: color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 8%, #171d1b); }
@@ -371,7 +369,7 @@
   .footer { font-size: 7px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .headerActions button, .resetButton, .detailButton, .reserve, .player { transition: none; }
+  .headerActions button, .resetButton, .reserve, .player { transition: none; }
 }
 
 /* The same classic layout is used before kickoff and throughout a match. */
