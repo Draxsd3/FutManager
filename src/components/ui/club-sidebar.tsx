@@ -1,3 +1,4 @@
+import type { ClubConfidence } from "@/lib/game/confidence";
 import styles from "./club-sidebar.module.css";
 import Image from "next/image";
 import { clubThemes } from "@/lib/game/mock-data";
@@ -27,7 +28,8 @@ export function Crest({ club, size = "md" }: { club: string; size?: "sm" | "md" 
   );
 }
 
-export function ClubSidebar({ club, coach, budget, opponent, competition, roundLabel, isHome, hasNextMatch, squadSize, ctaLabel, onCta, onQuickAction }: {
+export function ClubSidebar({ confidence, club, coach, budget, opponent, competition, roundLabel, isHome, hasNextMatch, squadSize, ctaLabel, onCta, onQuickAction }: {
+  confidence: ClubConfidence | null;
   club: string; coach: string; budget: number; opponent: string; competition: string; roundLabel: string;
   isHome: boolean; hasNextMatch: boolean; squadSize: number; ctaLabel: string; onCta: () => void;
   onQuickAction: (action: "roster" | "finances" | "trophies" | "training") => void;
@@ -37,7 +39,7 @@ export function ClubSidebar({ club, coach, budget, opponent, competition, roundL
   return <aside className={styles.sidebar}>
     <div className={styles.club}><Crest club={club} size="sm"/><div><small>SEU CLUBE</small><h1>{club}</h1><p>Treinador · {coach}</p></div></div>
     <div className={styles.balance}><span>CAIXA DISPONÍVEL</span><b>R$ {(budget / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <small>mi</small></b></div>
-    <div className={styles.trust}><span>Confiança diretoria <b>—</b></span><span>Confiança torcida <b>—</b></span></div>
+    <div className={styles.trust} aria-label="Confiança estimada na temporada"><span title="Estimativa baseada nos resultados de toda a temporada; inicia em 50%.">Confiança diretoria <b>{confidence ? `${confidence.board}%` : "Indisponível"}</b></span><span title="Estimativa baseada nos últimos cinco jogos da temporada; inicia em 50%.">Confiança torcida <b>{confidence ? `${confidence.fans}%` : "Indisponível"}</b></span><small className={styles.trustNote}>{confidence ? confidence.matches ? `Estimativa por resultados · ${confidence.matches} jogo${confidence.matches === 1 ? "" : "s"}` : "Estimativa inicial · sem jogos" : "Histórico da temporada indisponível"}</small></div>
     <button type="button" onClick={onCta} className={styles.cta}><Image src="/icons/navigation/taticas.webp" alt="" aria-hidden="true" width={52} height={52} className={styles.tacticsIcon} unoptimized /><span><small>PREPARE SUA EQUIPE</small><strong>{ctaLabel}</strong></span><b aria-hidden="true">↗</b></button>
     <section className={styles.match} aria-label="Confronto">
       <div className={styles.matchHeader}><span>PRÓXIMO APITO</span><b>{hasNextMatch ? competition : "SEM JOGO AGENDADO"}</b></div>

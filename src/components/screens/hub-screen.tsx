@@ -1,5 +1,6 @@
 "use client";
 
+import type { ClubConfidence } from "@/lib/game/confidence";
 import { positionLabel, type Player } from "@/lib/game/mock-data";
 import type { PlayerCareerRecord } from "@/lib/game/career";
 import { ClubSidebar } from "@/components/ui/club-sidebar";
@@ -8,9 +9,10 @@ import { PlayerJersey } from "@/components/ui/player-jersey";
 import { TRAINING_DAYS, trainingDrillLabel, trainingWeekSessions, type TrainingSessionRecord } from "@/lib/game/training";
 import styles from "./hub-screen.module.css";
 
-export function HubScreen({ club, coach, budget, opponent, round, competition, squad, starters, selectedPlayer, playerCareers = {}, trainingSessions = [], trainingWeek = round, season = 2026, isHome = true, hasNextMatch = true, roundLabel, onSelectPlayer, onOpenPlayer, onEscalar, onQuickAction }: {
+export function HubScreen({ club, coach, budget, opponent, round, competition, squad, starters, selectedPlayer, playerCareers = {}, confidence = null, trainingSessions = [], trainingWeek = round, season = 2026, isHome = true, hasNextMatch = true, roundLabel, onSelectPlayer, onOpenPlayer, onEscalar, onQuickAction }: {
   club: string; coach: string; budget: number; opponent: string; round: number; competition: string;
   squad: Player[]; starters: number[]; selectedPlayer: Player | null; playerCareers?: Record<number, PlayerCareerRecord>; trainingSessions?: TrainingSessionRecord[];
+  confidence?: ClubConfidence | null;
   trainingWeek?: number; season?: number; isHome?: boolean; hasNextMatch?: boolean; roundLabel?: string;
   onSelectPlayer: (id: number) => void; onOpenPlayer: (id: number) => void; onEscalar: () => void;
   onQuickAction: (action: "roster" | "finances" | "trophies" | "training") => void;
@@ -19,7 +21,7 @@ export function HubScreen({ club, coach, budget, opponent, round, competition, s
   const selectedSeason = selectedRecord?.seasons.find((item) => item.season === season && item.club === club);
 
   return <div className={styles.workspace}>
-    <ClubSidebar club={club} coach={coach} budget={budget} opponent={opponent} competition={competition} roundLabel={roundLabel ?? `${round}ª rodada`} isHome={isHome} hasNextMatch={hasNextMatch} squadSize={squad.length} ctaLabel="Escalar Time" onCta={onEscalar} onQuickAction={onQuickAction} />
+    <ClubSidebar confidence={confidence} club={club} coach={coach} budget={budget} opponent={opponent} competition={competition} roundLabel={roundLabel ?? `${round}ª rodada`} isHome={isHome} hasNextMatch={hasNextMatch} squadSize={squad.length} ctaLabel="Escalar Time" onCta={onEscalar} onQuickAction={onQuickAction} />
     <section className={styles.roster} aria-label="Elenco do clube">
       <div className={styles.toolbar}><div className={styles.rosterTitle}><b>Plantel</b><span>{squad.length} atletas · temporada {season}</span></div><span className={styles.weekBadge}>SEMANA {trainingWeek}</span></div>
       <div className={styles.rosterBody}>
