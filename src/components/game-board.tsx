@@ -60,6 +60,7 @@ import type { CareerProgress, MatchPreparation } from "@/lib/game/progress";
 import { applyTrainingSession, type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
 import { calculateMatchStatistics, calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, seededRandom, simulateAction } from "@/lib/game/live-match";
 import { completeCareerFixture, createCareerSeason, getCompetitionPlayerStats, getCompetitionStandings, nextCareerFixture, playerContributionsFromMatch, type CareerSeason } from "@/lib/game/season";
+import { backgroundClubStrengths, roundFixtures } from "@/lib/game/round-fixtures";
 import { loadMatchRules, type MatchRules } from "@/lib/game/match-rules";
 import { visualFormation } from "@/lib/game/live-positioning";
 import {
@@ -326,27 +327,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     motivationAway: awayMotivation,
   });
   const matchStats = calculateMatchStatistics(events);
-  const fixtures = useMemo(() => {
-    if (!competitionSeason || !activeFixture) return [];
-    return competitionSeason.fixtures
-      .filter((fixture) => fixture.competitionId === activeFixture.competitionId && fixture.competitionRound === activeFixture.competitionRound && fixture.status !== "cancelled")
-      .map((fixture) => {
-        const current = fixture.id === activeFixture.id;
-        const live = current && page === "matchOverview";
-        const hasLiveScore = current && (page === "matchOverview" || page === "result");
-        const homeTeam = database?.clubs.find((item) => item.id === fixture.homeClubId);
-        return {
-          stadium: homeTeam?.stadiumName ?? "",
-          attendance: 0,
-          home: fixture.home,
-          away: fixture.away,
-          homeScore: hasLiveScore ? (userIsHome ? homeScore : awayScore) : fixture.homeScore ?? 0,
-          awayScore: hasLiveScore ? (userIsHome ? awayScore : homeScore) : fixture.awayScore ?? 0,
-          live,
-          played: fixture.status === "played" || hasLiveScore,
-        };
-      });
-  }, [competitionSeason, activeFixture, database, page, userIsHome, homeScore, awayScore]);
+  const backgroundStrengths = useMemo(() => careerDatabase ? backgroundClubStrengths(careerDatabase) : new Map<string, number>(), [careerDatabase]);
+  const fixtures = useMemo(() => roundFixtures({ season: competitionSeason, active: activeFixture, database: careerDatabase,
+    strengths: backgroundStrengths, page, minute, userIsHome, homeScore, awayScore }),
+  [competitionSeason, activeFixture, careerDatabase, backgroundStrengths, page, minute, userIsHome, homeScore, awayScore]);
 
   useEffect(() => {
     if (page !== "matchOverview" || !matchRunning || detailOpen || minute >= 90 || !matchPreparation) return;

@@ -61,7 +61,8 @@ export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabe
   const keyMoments = events.filter(isHighlight).slice(-24);
 
   useEffect(() => {
-    if (typeof logEnd.current?.scrollIntoView === "function") logEnd.current.scrollIntoView({ block: "nearest" });
+    const timeline = logEnd.current?.parentElement;
+    if (timeline) timeline.scrollTop = timeline.scrollHeight;
   }, [keyMoments.length]);
 
   const fouls = statistics.home.fouls + statistics.away.fouls;
@@ -81,7 +82,7 @@ export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabe
         <div className={styles.score}><span>{homeScore}</span><i>:</i><span>{awayScore}</span></div>
         <div className={styles.team}><Crest club={opponent} size="sm" /><strong>{opponent}</strong><span>VISITANTE</span></div>
       </div>
-      <MatchStatisticsTable homeTeam={club} awayTeam={opponent} statistics={statistics} compact />
+      <MatchStatisticsTable homeTeam={club} awayTeam={opponent} statistics={statistics} compact className={styles.matchStats} />
       <div className={styles.controls}>
         <div className={styles.speeds}><span>VELOCIDADE</span>{([1, 2, 4] as const).map(value => <button key={value} aria-pressed={speed === value} onClick={() => onSpeedChange(value)}>{value}x</button>)}</div>
         <div className={styles.actions}>{minute < 90 && <button className={styles.primary} onClick={onToggleRunning} disabled={rulesLoading}>{rulesLoading ? "Lendo regras…" : running ? "❚❚  Pausar" : halftimeWaiting ? "▶  Iniciar 2º tempo" : "▶  Continuar"}</button>}<button className={styles.secondary} onClick={onOpenDetail}>Escalação e táticas ↗</button></div>
@@ -116,7 +117,7 @@ export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabe
         </section>
         <aside className={styles.sidebar}>
           <section className={styles.panel}><div className={styles.sectionHeading}><div><span className={styles.eyebrow}>MESMA RODADA</span><h2>Todos os jogos</h2></div><span className={styles.badge}>{fixtures.length} partidas</span></div>
-            <div className={styles.fixtures}>{fixtures.map(fixture => <div className={styles.fixture} key={`${fixture.home}-${fixture.away}`}><div className={fixture.live ? styles.fixtureLive : ""}><span>{fixture.home}</span><b>{fixture.played === false ? "—" : `${fixture.homeScore} - ${fixture.awayScore}`}</b><span>{fixture.away}</span></div><small>{fixture.live ? "Sua partida · ao vivo" : fixture.played === false ? "Agendada" : "Resultado registrado"}</small></div>)}</div>
+            <div className={styles.fixtures} role="region" aria-label="Jogos da rodada" tabIndex={0}>{fixtures.map(fixture => <div className={styles.fixture} key={`${fixture.home}-${fixture.away}`}><div className={fixture.live ? styles.fixtureLive : ""}><span>{fixture.home}</span><b>{fixture.played === false ? "—" : `${fixture.homeScore} - ${fixture.awayScore}`}</b><span>{fixture.away}</span></div><small>{fixture.live ? `${fixture.managed ? "Sua partida · " : ""}${minute >= 90 ? "Encerrada" : halftimeWaiting ? "Intervalo" : running ? "Ao vivo" : "Pausada"} · ${minute}′` : fixture.played === false ? "Agendada" : "Resultado registrado"}</small></div>)}</div>
           </section>
         </aside>
       </div>

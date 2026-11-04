@@ -73,3 +73,21 @@ it("does not expose a Menu inicial action during the match", () => {
   render(<MatchOverviewScreen {...props} />);
   expect(screen.queryByRole("button", { name: "Menu inicial" })).toBeNull();
 });
+
+it("displays synchronized background matches and preserves scheduled and recorded results", () => {
+  const { props } = matchProps();
+  const fixtures = [
+    { home: "Flamengo", away: "Botafogo", homeScore: 1, awayScore: 0, stadium: "", attendance: 0, live: true, managed: true, played: true },
+    { home: "Santos", away: "São Paulo", homeScore: 0, awayScore: 0, stadium: "", attendance: 0, live: true, managed: false, played: true },
+    { home: "Corinthians", away: "Palmeiras", homeScore: 0, awayScore: 0, stadium: "", attendance: 0, played: false },
+  ];
+  const { rerender } = render(<MatchOverviewScreen {...props} fixtures={fixtures} />);
+  expect(screen.getByText("Sua partida · Ao vivo · 10′")).toBeTruthy();
+  expect(screen.getByText("Ao vivo · 10′")).toBeTruthy();
+  expect(screen.getByText("Agendada")).toBeTruthy();
+  expect(screen.getByRole("region", { name: "Jogos da rodada" }).getAttribute("tabindex")).toBe("0");
+  fixtures[1].homeScore = 1;
+  rerender(<MatchOverviewScreen {...props} running={false} minute={45} fixtures={fixtures} />);
+  expect(screen.getAllByText("1 - 0")).toHaveLength(2);
+  expect(screen.getByText("Pausada · 45′")).toBeTruthy();
+});
