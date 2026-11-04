@@ -19,3 +19,15 @@
 /* Illustrated navigation icons keep their original colors and transparent edges. */
 .navImage { width: 28px; height: 28px; flex: none; object-fit: contain; }
 @media (max-width: 650px) { .navImage { width: 25px; height: 25px; } }
+
+/* Place each label beneath its illustration on every screen size. */
+.navButton { flex-direction: column; gap: 2px; height: 64px; padding-block: 3px; }
+.navImage { width: 40px; height: 40px; }
+.navButton svg { width: 28px; height: 40px; flex: none; }
+.navLabel { display: inline-flex; align-items: center; gap: 3px; line-height: 1.1; white-space: nowrap; }
+.chevron { margin-left: 0; }
+@media (max-width: 650px) {
+  .navButton { height: 60px; gap: 2px; padding-block: 3px; }
+  .navImage { width: 36px; height: 36px; }
+  .navButton svg { width: 28px; height: 36px; }
+}
