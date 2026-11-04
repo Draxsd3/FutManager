@@ -460,3 +460,24 @@ it("advances the career date after a result and returns an expired incoming loan
     expect(restored.progress?.manualPositions[player.id]).toBeUndefined();
   });
 });
+
+it("archives concluded competitions from an old save and persists champions separately from the imported catalog", async () => {
+  const view = render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Técnico campeão" } });
+  fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+  await screen.findByRole("button", { name: "Empréstimos" });
+  await waitFor(() => expect(readLocalSaves("alice")[0]?.progress?.competitionSeason).toBeTruthy());
+  const save = structuredClone(readLocalSaves("alice")[0]), season = save.progress!.competitionSeason!;
+  season.fixtures = season.fixtures.filter(f => f.type === "league").map(f => ({ ...f, status: "played", homeScore: f.homeClubId === season.clubId ? 3 : 0, awayScore: f.awayClubId === season.clubId ? 3 : 0 }));
+  save.progress!.page = "hub"; delete save.progress!.championHistory;
+  view.unmount(); sessionStorage.clear(); writeLocalSaves([save], "alice");
+  render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /CONTINUAR JOGANDO/ }));
+  fireEvent.click(await screen.findByRole("button", { name: "CONTINUAR" }));
+  await screen.findByRole("button", { name: "Empréstimos" });
+  await waitFor(() => expect(readLocalSaves("alice")[0].progress?.championHistory?.[0]).toMatchObject({ championId: season.clubId, coach: "Técnico campeão", season: 2026 }));
+  fireEvent.click(screen.getByRole("button", { name: "História" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: /Times campeões/ }));
+  expect(await screen.findByRole("columnheader", { name: "Técnico campeão" })).toBeTruthy();
+}, 15000);

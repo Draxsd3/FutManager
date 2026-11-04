@@ -37,3 +37,14 @@ it("shows incremental progress and aborts on pause without claiming an applied c
   expect((await screen.findByRole("alert")).textContent).toContain("Coleta pausada");
   expect(screen.queryByRole("status")).toBeNull();
 });
+
+it("distinguishes a new full refresh from resuming staging", async () => {
+  const sync = vi.fn().mockRejectedValue(new Error("paused"));
+  render(<TransfermarktSettings onSynchronize={sync}/>);
+  fireEvent.click(screen.getByRole("button", { name: "Rodar importação — Séries A/B/C/D" }));
+  await screen.findByRole("alert");
+  expect(sync.mock.calls[0][2]).toBe(false);
+  fireEvent.click(screen.getByRole("button", { name: "Retomar coleta" }));
+  await waitFor(() => expect(sync).toHaveBeenCalledTimes(2));
+  expect(sync.mock.calls[1][2]).toBe(true);
+});

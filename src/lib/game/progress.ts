@@ -1,3 +1,4 @@
+import type { ChampionshipRecord } from "./honours";
 import type { CareerLoans } from "./loans";
 import type { ConfidenceMatch } from "./confidence";
 import type { DivisionKey, Player } from "./mock-data";
@@ -17,6 +18,7 @@ export type MatchPreparation = {
 };
 
 export type CareerProgress = {
+  championHistory?: ChampionshipRecord[];
   loanContracts?: CareerLoans;
   page: string;
   matchPreparation?: MatchPreparation;

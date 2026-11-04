@@ -1,3 +1,5 @@
+import { normalizeHonours } from "@/lib/game/honours";
+import { correctionFields } from "@/lib/importer/transfermarkt-corrections";
 import { loanFromTransferHistory } from "@/lib/importer/transfermarkt-loans";
 import { createClient } from "@supabase/supabase-js";
 import { liveRequestSchema, normalizeLiveClub } from "@/lib/importer/transfermarkt-live";
@@ -19,7 +21,7 @@ export async function POST(request: Request) {
     if (error || !data.user || data.user.is_anonymous) return reply({ error: "Sua sessão expirou. Entre novamente." }, 401);
   } catch { return reply({ error: "Não foi possível validar a sessão." }, 503); }
   const text = await request.text();
-  if (text.length > 1000) return reply({ error: "Pedido muito longo." }, 413);
+  if (text.length > 100_000) return reply({ error: "Pedido muito longo." }, 413);
   let input: unknown;
   try { input = JSON.parse(text); } catch { return reply({ error: "Pedido inválido." }, 400); }
   const parsed = liveRequestSchema.safeParse(input);
@@ -33,6 +35,7 @@ export async function POST(request: Request) {
     return JSON.parse(text);
   }
   try {
+    if (body.action === "honours") return reply(normalizeHonours(await get(`/clubs/${body.club}/achievements`), body.club));
     if (body.action === "loans") return reply({ loan: loanFromTransferHistory(await get(`/players/${body.player}/transfers`), body.player) });
     if (body.action === "seasons") return reply(await get(`/competitions/${body.competition}/seasons`));
     if (body.action === "members") return reply(await get(`/competitions/${body.competition}/clubs?season_id=${body.season}`));
@@ -40,6 +43,15 @@ export async function POST(request: Request) {
     const [profile, squad] = await Promise.all([
       get(`/clubs/${body.club}/profile`), get(`/clubs/${body.club}/players?season_id=${body.season}`),
     ]);
+    if (body.corrections?.length && squad && Array.isArray(squad.players)) {
+      squad.players = squad.players.map((player: { id: string; age?: number | null }) => {
+        const correction = body.corrections?.find(item => item.clubId === body.club && item.playerId === player.id);
+        if (!correction) return player;
+        const { clubId: _club, playerId: _player, correctedAt, ...fields } = correction;
+        void _club; void _player;
+        return { ...player, ...fields, ...(fields.dateOfBirth ? { age: null } : {}), manualCorrection: { fields: correctionFields(correction), correctedAt } };
+      });
+    }
     return reply(normalizeLiveClub(profile, squad, body.club));
   } catch (error) {
     console.error("Transfermarkt live collection failed", error);
