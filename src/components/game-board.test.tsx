@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { GameBoard } from "./game-board";
+import * as transfermarktSync from "@/lib/importer/transfermarkt-sync";
 import { readLocalSaves } from "@/lib/game/persistence";
 
 vi.mock("@/lib/game/persistence", async (importOriginal) => ({
@@ -352,4 +353,46 @@ it("applies a manageable training session and persists its weekly summary", asyn
   fireEvent.click(within(dialog).getByRole("button", { name: "Fechar Treino" }));
   expect(screen.getByText("1/6 sessões")).toBeTruthy();
   expect(screen.getByLabelText("Segunda: treino concluído — Passe e posse")).toBeTruthy();
+});
+
+it("offers Transfermarkt synchronization in Settings without changing the active career on an empty collection", async () => {
+  render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Catálogo protegido" } });
+  fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+  fireEvent.click(await screen.findByRole("button", { name: "Configurações" }));
+  expect(screen.getByRole("heading", { name: "Transfermarkt" })).toBeTruthy();
+  const before = structuredClone(readLocalSaves("alice")[0].progress);
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ snapshot: { version: 1, generatedAt: null, seasonId: null, clubs: [] } }) }));
+  fireEvent.click(screen.getByRole("button", { name: "Sincronizar Transfermarkt" }));
+  expect((await screen.findByRole("alert")).textContent).toContain("Nenhuma coleta");
+  expect(readLocalSaves("alice")[0].progress?.careerSquad).toEqual(before?.careerSquad);
+  expect(readLocalSaves("alice")[0].progress?.starters).toEqual(before?.starters);
+  expect(screen.getByRole("dialog", { name: "Configurações" })).toBeTruthy();
+});
+
+
+it("saves a synchronized catalog but leaves the active career squad untouched", async () => {
+  const { IDBFactory } = await import("fake-indexeddb");
+  vi.stubGlobal("indexedDB", new IDBFactory());
+  const spy = vi.spyOn(transfermarktSync, "prepareTransfermarktSync").mockImplementation(async (database) => ({
+    database: { ...database, players: database.players.map(player => ({ ...player, name: `Atualizado ${player.name}` })) },
+    clubs: database.clubs.length, players: database.players.length, collectedAt: "2026-11-03T12:00:00Z",
+  }));
+  try {
+    render(game("sync-success"));
+    fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+    fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Carreira preservada" } });
+    fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Configurações" }));
+    const before = structuredClone(readLocalSaves("sync-success")[0].progress);
+    fireEvent.click(screen.getByRole("button", { name: "Sincronizar Transfermarkt" }));
+    await waitFor(() => expect(screen.getByText(/jogadores sincronizados no catálogo/)).toBeTruthy(), { timeout: 5000 });
+    const { readCachedDatabase } = await import("@/lib/importer/database-cache");
+    expect((await readCachedDatabase("sync-success"))?.players[0].name).toMatch(/^Atualizado /);
+    expect(readLocalSaves("sync-success")[0].progress?.careerSquad).toEqual(before?.careerSquad);
+    expect(readLocalSaves("sync-success")[0].progress?.starters).toEqual(before?.starters);
+    fireEvent.click(screen.getByRole("button", { name: "Voltar ao menu inicial" }));
+    expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
+  } finally { spy.mockRestore(); }
 });
