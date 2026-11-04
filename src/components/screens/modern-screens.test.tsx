@@ -104,6 +104,9 @@ it("shows the stadium, editable sector prices, gate projection and upgrade choic
   const price = vi.fn(), expand = vi.fn(), agenda = vi.fn();
   render(<StadiumScreen club={club} budget={10000} payroll={20000} onBack={vi.fn()} onAgenda={agenda} onPriceChange={price} onExpand={expand} />);
   expect(screen.getByRole("heading", { name: club.stadiumName })).toBeTruthy();
+  expect(screen.getByRole("img", { name: "Imagem ilustrativa de um estádio de futebol" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Ingressos por setor" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Ampliação do estádio" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Agenda" }));
   expect(agenda).toHaveBeenCalledOnce();
   const input = screen.getByLabelText("Ingresso Popular (R$)");

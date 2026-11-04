@@ -1,5 +1,7 @@
 "use client";
 import { ManagementHeader } from "@/components/ui/management-header";
+import { InterfaceIcon } from "@/components/ui/interface-icon";
+import { Crest } from "@/components/ui/club-sidebar";
 
 import { useState } from "react";
 import type { EditorClub } from "@/lib/game/editor-data";
@@ -35,14 +37,14 @@ export function StadiumScreen({ club, budget, onBack, onAgenda, date = "2026-01-
     <div className={styles.container}>
       <ManagementHeader id="stadium-title" title={name} eyebrow={`Gestão do estádio · ${club?.name ?? "Clube"}`} icon="sport" actions={<>{onAgenda && <button type="button" onClick={onAgenda}>Agenda</button>}<button type="button" onClick={onBack}>Voltar</button></>} />
       <div className={styles.summary}>
-        <div><span>CAPACIDADE ATUAL</span><strong>{number(capacity)} <small>lugares</small></strong></div>
-        <div><span>CAIXA DO CLUBE</span><strong>{money(budget * 1000)}</strong></div>
-        <div><span>RECEITA LÍQUIDA ACUMULADA</span><strong>{money(total)}</strong></div>
-        <div><span>ÚLTIMA BILHETERIA</span><strong>{last ? money(last.net) : "Sem jogos em casa"}</strong>{last && <small>{formatDate(last.date)} · vs. {last.opponent}</small>}</div>
+        <div><InterfaceIcon name="sport" size={19} /><span>CAPACIDADE ATUAL</span><strong>{number(capacity)} <small>lugares</small></strong></div>
+        <div><InterfaceIcon name="money" size={19} /><span>CAIXA DO CLUBE</span><strong>{money(budget * 1000)}</strong></div>
+        <div><InterfaceIcon name="chart_bar" size={19} /><span>RECEITA LÍQUIDA ACUMULADA</span><strong>{money(total)}</strong></div>
+        <div><InterfaceIcon name="ticket" size={19} /><span>ÚLTIMA BILHETERIA</span><strong>{last ? money(last.net) : "Sem jogos em casa"}</strong>{last && <small>{formatDate(last.date)} · vs. {last.opponent}</small>}</div>
       </div>
       <div className={styles.columns}>
         <section className={styles.panel} aria-labelledby="prices-title">
-          <div className={styles.panelHeader}><div><span className={styles.eyebrow}>DIA DE JOGO</span><h2 id="prices-title">Ingressos por setor</h2></div><span className={styles.tag}>70% de ocupação</span></div>
+          <div className={styles.panelHeader}><div className={styles.panelTitle}><span className={styles.panelIcon}><InterfaceIcon name="ticket" size={22} /></span><div><span className={styles.eyebrow}>DIA DE JOGO</span><h2 id="prices-title">Ingressos por setor</h2></div></div><span className={styles.tag}>70% de ocupação</span></div>
           <p className={styles.description}>Preços em reais. O público é simulado com ocupação fixa de 70% em cada setor.</p>
           <div className={styles.sectorTable}>
             <div className={styles.tableHead}><span>SETOR</span><span>LUGARES</span><span>INGRESSO (R$)</span><span>BRUTO EST.</span></div>
@@ -56,9 +58,13 @@ export function StadiumScreen({ club, budget, onBack, onAgenda, date = "2026-01-
           <p className={styles.note}>Ao concluir um jogo em casa, a bilheteria líquida é creditada no caixa. Valores e custos são uma simulação; jogos fora não geram receita para o clube.</p>
         </section>
         <section className={styles.panel} aria-labelledby="works-title">
-          <div className={styles.panelHeader}><div><span className={styles.eyebrow}>INFRAESTRUTURA</span><h2 id="works-title">Ampliação do estádio</h2></div><span className={styles.tag}>{state.construction ? "EM OBRAS" : "DISPONÍVEL"}</span></div>
+          <div className={styles.panelHeader}><div className={styles.panelTitle}><span className={styles.panelIcon}><InterfaceIcon name="construction" size={22} /></span><div><span className={styles.eyebrow}>INFRAESTRUTURA</span><h2 id="works-title">Ampliação do estádio</h2></div></div><span className={styles.tag}>{state.construction ? "EM OBRAS" : "DISPONÍVEL"}</span></div>
+          <div className={styles.stadiumImage} role="img" aria-label="Imagem ilustrativa de um estádio de futebol">
+            <div className={styles.stadiumIdentity}>{club && <Crest club={club.name} size="sm" />}<span><small>A CASA DO CLUBE</small><strong>{name}</strong></span></div>
+            <span className={styles.imageCaption}>IMAGEM ILUSTRATIVA</span>
+          </div>
           {state.construction ? <div className={styles.progress}><strong>+ {number(state.construction.seats)} lugares em construção</strong><span>Início {formatDate(state.construction.startedOn)} · conclusão {formatDate(state.construction.endsOn)}</span><p>A capacidade aumenta ao atingir a data de conclusão na carreira.</p></div> : <p className={styles.description}>Escolha um projeto. O custo é debitado no início; a capacidade só aumenta após a conclusão.</p>}
-          <div className={styles.projects}>{EXPANSIONS.map(project => <div className={styles.project} key={project.seats}><div><strong>+ {number(project.seats)} lugares</strong><span>{money(project.cost)} · {project.days} dias</span></div><button type="button" disabled={!club || !onExpand || !!state.construction || budget * 1000 < project.cost} onClick={() => { setSelectedProject(project.seats); setError(""); }}>Selecionar obra</button></div>)}</div>
+          <div className={styles.projects}>{EXPANSIONS.map(project => <div className={styles.project} key={project.seats}><span className={styles.projectIcon}><InterfaceIcon name="add" size={16} /></span><div><strong>+ {number(project.seats)} lugares</strong><span>{money(project.cost)} · {project.days} dias</span></div><button type="button" disabled={!club || !onExpand || !!state.construction || budget * 1000 < project.cost} onClick={() => { setSelectedProject(project.seats); setError(""); }}>Selecionar obra</button></div>)}</div>
           {selectedProject !== null && !state.construction && <div className={styles.confirm}>
             <span>Confirmar + {number(selectedProject)} lugares por {money(EXPANSIONS.find(item => item.seats === selectedProject)!.cost)}?</span>
             <button type="button" onClick={() => { const message = onExpand?.(selectedProject); setError(message ?? ""); if (!message) setSelectedProject(null); }}>Confirmar obra</button>
