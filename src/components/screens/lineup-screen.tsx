@@ -468,7 +468,7 @@ export function LineupScreen(props: Props) {
                   style={{ left: `clamp(44px, ${positions[index].left}%, calc(100% - 44px))`, top: `clamp(36px, ${positions[index].top}%, calc(100% - 47px))` }}
                   onClick={() => select(player.id)}
                 >
-                  <PlayerJersey player={player} />
+                  <PlayerJersey club={club} player={player} />
                   <b>{player.name}</b>
                   <small>{fifaPosition(player)} · {Math.max(1, player.overall - fits[index].penalty)} <span className={fits[index].label === "Natural" ? styles.natural : styles.warning}>{fits[index].label}</span></small>
                   <i className={styles.energy} aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(100, player.energy))}%`, backgroundColor: player.energy < 40 ? "#ef6969" : player.energy < 65 ? "#f1ca62" : "#8ed09a" }} /></i>
@@ -501,7 +501,7 @@ export function LineupScreen(props: Props) {
                   aria-pressed={selectedPlayer?.id === player.id}
                   className={`${styles.reserve} ${selectedPlayer?.id === player.id ? styles.reserveSelected : ""} ${holdingId === player.id ? styles.reserveHolding : ""} ${dragId === player.id ? styles.reserveDragging : ""}`}
                 >
-                  <span data-player={player.id} className={styles.handle} title="Arrastar jogador"><PlayerJersey player={player} /></span>
+                  <span data-player={player.id} className={styles.handle} title="Arrastar jogador"><PlayerJersey club={club} player={player} /></span>
                   <span className={styles.reserveInfo}><b>{player.name}</b><small>{fifaPosition(player)} · ENERGIA {player.energy}%{!match && index >= 12 ? " · FORA DO BANCO" : ""}</small></span>
                   <strong>{player.overall}</strong>
                 </button>)}
@@ -554,7 +554,7 @@ export function LineupScreen(props: Props) {
         </section>
       </div>}
       <div ref={ghost} className={styles.ghost} style={{ visibility: dragId === null ? "hidden" : "visible" }} aria-hidden="true">
-        {active && <><PlayerJersey player={active} /><b>{active.name}</b></>}
+        {active && <><PlayerJersey club={club} player={active} /><b>{active.name}</b></>}
       </div>
     </section>
   );
