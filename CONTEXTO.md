@@ -292,3 +292,8 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 ### 35. Restauração dos setores do campo — 03/11/2026
 - O usuário pediu para voltar ao visual anterior à simplificação da PR #65. Restauradas as guias detalhadas, siglas e divisões de setores anteriores, no pré-jogo e no intervalo.
 - A simplificação em quatro faixas foi desfeita. Preservar as táticas no intervalo e todas as demais alterações posteriores e independentes.
+
+### 36. Uma única tela de táticas em todos os momentos — 03/11/2026
+- Pedido explícito: táticas durante a partida e no intervalo devem ser IDÊNTICAS à tela do início, com o mesmo conceito, não um campo alternativo.
+- Reutilizar sempre `LineupScreen`, com o mesmo campo, camisas, guias detalhadas, resumo, plano de jogo, banco, filtros e análise. Removido o caminho antigo que renderizava `Pitch` durante a partida e o cabeçalho duplicado do modal.
+- Diferenças apenas contextuais: placar/minuto, saldo de substituições, confirmação/cancelamento e botão de retomar/iniciar segundo tempo. Manter pausa, autosave, limites e reposicionamento livre.

@@ -360,12 +360,12 @@ export function LineupScreen(props: Props) {
         <header className={styles.header}>
           <div className={styles.titleBlock}>
             <p className={styles.eyebrow}>FUTMANAGER <span>/</span> {competition} · {round}ª RODADA</p>
-            <h1>{match ? "Táticas da partida" : `ESCALAR TIME · ${formation}`}</h1>
+            <h1>{`ESCALAR TIME · ${formation}`}</h1>
             <div className={styles.fixture}>
               <span><Crest club={club} size="sm" />{club}</span>
               <b>VS</b>
               <span><Crest club={opponent} size="sm" />{opponent}</span>
-              {match && <strong>{match.score} <small>· {match.period} · PAUSADO</small></strong>}
+              {match && <strong>{match.score} <small>· {match.period} · PAUSADO · {match.substitutionsLeft} substituições restantes</small></strong>}
               {!match && <small>{coach} · COMISSÃO TÉCNICA</small>}
             </div>
           </div>
@@ -383,16 +383,13 @@ export function LineupScreen(props: Props) {
         </header>
 
         <div className={styles.summary} aria-label="Resumo da escalação">
-          {match ? [
-            ["PLACAR", match.score], ["TEMPO", match.period],
-            ["SUBSTITUIÇÕES", String(match.substitutionsLeft)], ["ESQUEMA", formation], ["ENERGIA MÉDIA", `${energy}%`],
-          ].map(([label, value]) => <div key={label}><small>{label}</small><strong>{value}</strong></div>) : <>
+          <>
             <div><small>ESQUEMA</small><strong>{formation}</strong></div>
             <div><small>TITULARES</small><strong>{startersData.length}<em>/11</em></strong></div>
             <div><small>FORÇA AJUSTADA</small><strong>{overall}<em> OVR</em></strong></div>
             <div><small>ENERGIA MÉDIA</small><strong>{energy}<em>%</em></strong></div>
             <div><small>PONTOS A REVISAR</small><strong>{warnings.length}<em>{warnings.length === 1 ? " alerta" : " alertas"}</em></strong></div>
-          </>}
+          </>
         </div>
 
         <section className={styles.tacticsBar} aria-label="Configurações da equipe">

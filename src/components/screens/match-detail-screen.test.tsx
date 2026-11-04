@@ -31,36 +31,32 @@ function setup(overrides: Partial<ComponentProps<typeof MatchDetailScreen>> = {}
   }
   return { ...render(<Wrapper />), substitute, change, close, startSecondHalf, movePlayers };
 }
-const starter = (index = 0) => screen.getByRole("button", { name: new RegExp(`Sai: ${starters[index].name},`) });
-const reserve = (index = 0) => screen.getByRole("button", { name: new RegExp(`Entra: ${bench[index].name},`) });
+const starter = (index = 0) => screen.getByRole("button", { name: new RegExp(`${starters[index].name}, camisa`) });
+const reserve = (index = 0) => screen.getByRole("button", { name: new RegExp(`${bench[index].name},`) });
 
 it("shows a tactics modal with the live pitch, reserves, team statistics and match controls", () => {
   setup();
   expect(screen.getByRole("dialog", { name: "Táticas" })).toBeTruthy();
-  expect(screen.getByRole("group", { name: "Campo tático" })).toBeTruthy();
-  expect(document.querySelectorAll('[data-starter]')).toHaveLength(11);
+  expect(screen.getByLabelText("Campo de escalação")).toBeTruthy();
+  expect(document.querySelectorAll('[data-slot]')).toHaveLength(11);
   expect(document.querySelectorAll('[data-reserve]')).toHaveLength(bench.length);
-  expect(screen.getByText("35′ · PAUSADO")).toBeTruthy();
-  expect(screen.getByLabelText("Placar 2 a 1")).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "ESCALAR TIME · 4-3-3" })).toBeTruthy();
+  expect(screen.getByText("2 × 1")).toBeTruthy();
   expect(screen.getByText("Posse de bola")).toBeTruthy();
   expect(screen.getByText("Passes certos")).toBeTruthy();
   expect(screen.getByLabelText("Formação")).toBeTruthy();
   expect(screen.getByLabelText("Estilo de jogo")).toBeTruthy();
-  expect(screen.getByLabelText("Marcação")).toBeTruthy();
-  expect(screen.getByLabelText("Foco de ataque")).toBeTruthy();
+  expect(screen.getByLabelText("Marcação / pressão")).toBeTruthy();
+  expect(screen.getByLabelText("Concentração de ataque")).toBeTruthy();
 });
 
-it("keeps dragged players at their free-field coordinate without snapping them to a formation slot", () => {
-  const { movePlayers } = setup();
-  const pitch = screen.getByRole("group", { name: "Campo tático" });
-  Object.defineProperty(pitch, "getBoundingClientRect", { configurable: true, value: () => ({ left: 0, top: 0, right: 500, bottom: 700, width: 500, height: 700 }) });
-  const dataTransfer = { effectAllowed: "", setData: vi.fn(), getData: vi.fn(() => String(starters[0].id)) };
-  fireEvent.dragStart(starter(), { dataTransfer });
-  fireEvent.dragOver(pitch, { dataTransfer });
-  const drop = new Event("drop", { bubbles: true, cancelable: true });
-  Object.defineProperties(drop, { dataTransfer: { value: dataTransfer }, clientX: { value: 235 }, clientY: { value: 434 } });
-  pitch.dispatchEvent(drop);
-  expect(movePlayers).toHaveBeenCalledWith({ [starters[0].id]: { left: 47, top: 62 } });
+it.each([false, true])("uses the same free-placement sector controls during play and halftime (%s)", (isHalftime) => {
+  const place = vi.fn();
+  setup({ isHalftime, onPlacePlayer: place });
+  fireEvent.click(screen.getByLabelText("Mostrar setores"));
+  fireEvent.click(starter());
+  fireEvent.click(screen.getByRole("button", { name: "Posicionar em Meia esquerda" }));
+  expect(place).toHaveBeenCalledWith(starters[0].id, expect.any(Number), expect.objectContaining({ left: 10, top: 43 }));
 });
 
 it("requires explicit substitution confirmation in either selection order and can cancel", () => {
@@ -68,7 +64,7 @@ it("requires explicit substitution confirmation in either selection order and ca
   const confirm = screen.getByRole("button", { name: "Confirmar substituição" }) as HTMLButtonElement;
   expect(confirm.disabled).toBe(true);
   fireEvent.click(reserve()); fireEvent.click(starter());
-  expect(starter().getAttribute("aria-pressed")).toBe("true");
+  expect(screen.getByText("Sai")).toBeTruthy();
   expect(reserve().getAttribute("aria-pressed")).toBe("true");
   expect(substitute).not.toHaveBeenCalled();
   fireEvent.click(confirm); expect(substitute).toHaveBeenCalledWith(bench[0].id);
@@ -87,7 +83,7 @@ it("applies formation, style, marking and focus without consuming a substitution
 
 it("reuses the pre-match lineup at halftime and blocks substitutions at the limit", () => {
   const { change, substitute, startSecondHalf } = setup({ substitutionsLeft: 0, isHalftime: true });
-  expect(screen.getByRole("heading", { name: "Táticas da partida" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "ESCALAR TIME · 4-3-3" })).toBeTruthy();
   expect(screen.getByRole("checkbox", { name: "Mostrar setores" })).toBeTruthy();
   const reserveButton = document.querySelector(`[data-reserve="${bench[0].id}"]`) as HTMLButtonElement;
   expect(reserveButton.disabled).toBe(true);
@@ -133,6 +129,6 @@ it("restores focus and page scrolling on unmount and uses registered kit colors"
 
 it("handles an empty bench without allowing a substitution", () => {
   setup({ bench: [] });
-  expect(screen.getByText("Não há reservas disponíveis.")).toBeTruthy();
+  expect(screen.getByText("Nenhum reserva para este filtro.")).toBeTruthy();
   expect((screen.getByRole("button", { name: "Confirmar substituição" }) as HTMLButtonElement).disabled).toBe(true);
 });
