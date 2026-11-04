@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, type ComponentProps, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { ManagementIcon, type ManagementIconName } from "./management-header";
 import { AppShell, clubThemeStyle } from "./app-shell";
 import styles from "./career-workspace.module.css";
 
@@ -9,21 +10,22 @@ type Props = Omit<ComponentProps<typeof AppShell>, "children" | "hideNav" | "cla
   background: ReactNode;
   classicContent?: boolean;
   title?: string;
+  titleIcon?: ManagementIconName;
   onClose: () => void;
   children?: ReactNode;
 };
 
 /** The roster remains mounted behind every career subwindow. */
-export function CareerWorkspace({ background, title, onClose, children, classicContent = false, ...shell }: Props) {
+export function CareerWorkspace({ background, title, titleIcon, onClose, children, classicContent = false, ...shell }: Props) {
   return <>
     <div inert={!!title} aria-hidden={title ? true : undefined} className={styles.workspace}>
       <AppShell {...shell} classicNav>{background}</AppShell>
     </div>
-    {title && <CareerWindow title={title} onClose={onClose} classicContent={classicContent} style={clubThemeStyle(shell.teamName, shell.clubColors)}>{children}</CareerWindow>}
+    {title && <CareerWindow titleIcon={titleIcon} title={title} onClose={onClose} classicContent={classicContent} style={clubThemeStyle(shell.teamName, shell.clubColors)}>{children}</CareerWindow>}
   </>;
 }
 
-export function CareerWindow({ title, onClose, children, style, classicContent }: { title: string; onClose: () => void; children: ReactNode; style: CSSProperties; classicContent: boolean }) {
+export function CareerWindow({ title, titleIcon, onClose, children, style, classicContent }: { title: string; titleIcon?: ManagementIconName; onClose: () => void; children: ReactNode; style: CSSProperties; classicContent: boolean }) {
   const label = useId();
   const panel = useRef<HTMLElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -55,7 +57,7 @@ export function CareerWindow({ title, onClose, children, style, classicContent }
         }
       }} tabIndex={-1}>
       <header className={styles.header}>
-        <span id={label}>{title}</span>
+        {titleIcon ? <h1 id={label} className={styles.windowTitle}><span className={styles.titleIcon}><ManagementIcon name={titleIcon} /></span>{title}</h1> : <span id={label}>{title}</span>}
         <button ref={closeButton} type="button" onClick={onClose} aria-label={`Fechar ${title}`} title="Fechar e voltar à Principal (Esc)">×</button>
       </header>
       <div className={`${styles.content} ${classicContent ? styles.classicContent : ""}`}>{children}</div>

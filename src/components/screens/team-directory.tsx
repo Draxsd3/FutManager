@@ -27,8 +27,9 @@ type TeamPlayer = {
 };
 
 export function TeamDirectory({
-  database, club, coach, squad, budget, records, negotiations, onOpenPlayer, onTransferOffer, onBack,
+  embedded = false, database, club, coach, squad, budget, records, negotiations, onOpenPlayer, onTransferOffer, onBack,
 }: {
+  embedded?: boolean;
   database: EditorDatabase;
   club: string;
   coach: string;
@@ -146,7 +147,7 @@ export function TeamDirectory({
 
   return <main className={surface.screen} data-management-surface="teams">
     <div className={`${surface.content} space-y-4`}>
-      <ManagementHeader eyebrow="FutManager / universo" title="Times" icon="group" description="Explore os elencos, acompanhe os atletas disponíveis e inicie negociações com outros clubes." actions={<><span>Saldo do clube <b>R$ {(budget / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mi</b></span><button onClick={onBack}>← Voltar ao clube</button></>} />
+      {embedded ? <div className={`${surface.actions} justify-end`} aria-label="Ações de Times"><span>Saldo do clube <b>R$ {(budget / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mi</b></span><button onClick={onBack}>← Voltar ao clube</button></div> : <ManagementHeader eyebrow="FutManager / universo" title="Times" icon="group" description="Explore os elencos, acompanhe os atletas disponíveis e inicie negociações com outros clubes." actions={<><span>Saldo do clube <b>R$ {(budget / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mi</b></span><button onClick={onBack}>← Voltar ao clube</button></>} />}
 
       <section className={`${panel} p-3 sm:p-4`} aria-label="Filtros de clubes">
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(220px,1fr)_220px_220px_auto]">
