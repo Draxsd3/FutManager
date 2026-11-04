@@ -8,7 +8,7 @@ import { squad } from "@/lib/game/mock-data";
 afterEach(cleanup);
 it("preserves the original compact roster and its player and management actions", () => {
   const select = vi.fn(), open = vi.fn(), lineup = vi.fn(), quick = vi.fn();
-  const { container } = render(<HubScreen club="Corinthians" coach="Teste" budget={12620} opponent="Flamengo" round={1} competition="Estadual" squad={squad} starters={squad.slice(0,11).map(p=>p.id)} selectedPlayer={squad[0]} onSelectPlayer={select} onOpenPlayer={open} onEscalar={lineup} onQuickAction={quick}/>);
+  render(<HubScreen club="Corinthians" coach="Teste" budget={12620} opponent="Flamengo" round={1} competition="Estadual" squad={squad} starters={squad.slice(0,11).map(p=>p.id)} selectedPlayer={squad[0]} onSelectPlayer={select} onOpenPlayer={open} onEscalar={lineup} onQuickAction={quick}/>);
   expect(screen.queryByRole("heading", { name: "ELENCO" })).toBeNull();
   expect(screen.queryByText("Força média")).toBeNull();
   const roster = screen.getByRole("region", { name: "Elenco do clube" });
@@ -38,7 +38,12 @@ it("preserves the original compact roster and its player and management actions"
   for (const [label, action] of [["Elenco","roster"],["Finanças","finances"],["Troféus","trophies"],["Treino","training"]]) {
     fireEvent.click(screen.getByRole("button",{name:label})); expect(quick).toHaveBeenCalledWith(action);
   }
-  expect(container.querySelectorAll('svg[aria-hidden="true"]').length).toBeGreaterThan(4);
+  for (const [label, file] of [["Finanças", "financas"], ["Troféus", "trofeus"], ["Treino", "treino"]]) {
+    const image = screen.getByRole("button", { name: label }).querySelector("img");
+    expect(image?.getAttribute("src")).toBe(`/icons/navigation/${file}.webp`);
+    expect(image?.getAttribute("alt")).toBe("");
+  }
+  expect(screen.getByRole("button", { name: "Elenco" }).querySelector("svg")).toBeTruthy();
 });
 it("shows recorded season statistics and the actual next-match venue", () => {
   const player = squad[0];
