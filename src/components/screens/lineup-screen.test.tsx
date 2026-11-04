@@ -118,21 +118,14 @@ it("supports click/keyboard-compatible selection, sector movement and unrestrict
     expect.objectContaining({ left: 38, top: 9 }),
   );
 });
-it("filters reserves and restores positions without changing tactical controls", () => {
+it("shows the full bench without filters or explanatory text and keeps tactical controls", () => {
   const { reset, change, play } = setup();
-  fireEvent.change(screen.getByLabelText("Buscar reserva"), {
-    target: { value: "sem atleta" },
-  });
-  expect(screen.getByText("Nenhum reserva para este filtro.")).toBeTruthy();
-  fireEvent.change(screen.getByLabelText("Buscar reserva"), {
-    target: { value: "" },
-  });
-  fireEvent.change(screen.getByLabelText("Filtrar setor"), {
-    target: { value: "G" },
-  });
-  expect(document.querySelectorAll('button[class*="reserve"]').length).toBe(
-    bench.filter((p) => p.position === "G").length,
-  );
+  expect(screen.queryByLabelText("Buscar reserva")).toBeNull();
+  expect(screen.queryByLabelText("Filtrar setor")).toBeNull();
+  expect(screen.queryByText(/Os 12 primeiros são inscritos/)).toBeNull();
+  const list = screen.getByRole("region", { name: "Lista de reservas" });
+  expect(list.getAttribute("tabindex")).toBe("0");
+  expect(list.querySelectorAll("[data-reserve]")).toHaveLength(bench.length);
   fireEvent.click(screen.getByRole("button", { name: "Restaurar posições" }));
   expect(reset).toHaveBeenCalledOnce();
   fireEvent.change(screen.getByLabelText("Estilo de jogo"), {
