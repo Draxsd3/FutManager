@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from "node:fs";
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { CompetitionCenter } from "./competition-center";
@@ -198,4 +199,18 @@ it("shows Série B direct promotion, playoffs and relegation even before the fir
   expect([...rows].map(row => row.getAttribute("data-zone"))).toEqual(["acesso", "acesso", ...Array(4).fill("playoff-acesso"), ...Array(10).fill(null), ...Array(4).fill("rebaixamento")]);
   expect(screen.getByLabelText("Legenda das faixas de classificação").textContent).toContain("Playoff de acesso");
   expect(screen.getByText(/não garantem implementação desses desfechos/)).toBeTruthy();
+});
+
+it("renders the full standings table without an internal vertical scroll container", () => {
+  const database = createDefaultDatabase();
+  const clubs = Array.from({ length: 20 }, (_, i) => ({ club: `Clube ${String(i + 1).padStart(2, "0")}`, played: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0 }));
+  const data = { type: "league" as const, seasonYear: 2026, table: clubs, fixtures: [], topScorers: [], topRatings: [], matchesPlayed: 0, goals: 0 };
+  render(<CompetitionCenter club={clubs[0].club} competition="Série A" database={database} table={[]} fixtures={[]} topScorers={[]} topRatings={[]} round={2} onClose={vi.fn()} careerCompetitionData={{ "league:Brasil:Série A": data }} />);
+  const region = screen.getByRole("region", { name: "Tabela de classificação" });
+  expect(region.getAttribute("tabindex")).toBeNull();
+  expect(region.querySelectorAll("tbody tr")).toHaveLength(20);
+  const css = readFileSync("src/components/ui/competition-center.module.css", "utf8");
+  const rule = css.match(/\.standingsTable\s*\{[^}]*\}/)?.[0] ?? "";
+  expect(rule).toContain("max-height:none");
+  expect(rule).not.toMatch(/overflow(?:-y)?\s*:\s*(?:auto|scroll)/);
 });
