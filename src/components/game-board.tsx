@@ -1,5 +1,7 @@
 "use client";
 
+import { clubConfidence } from "@/lib/game/confidence";
+
 import { importBrazilDatabase } from "@/lib/importer/brazil-database";
 import { readCachedDatabase, cacheDatabase, hasPendingDatabaseSync, readCachedCareerSaves } from "@/lib/importer/database-cache";
 
@@ -1171,6 +1173,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             round={competitionRound}
             competition={competitionName}
             playerCareers={playerCareers}
+            confidence={clubConfidence(competitionSeason)}
             trainingSessions={trainingSessions}
             trainingWeek={round}
             season={competitionSeason?.season ?? 2026}

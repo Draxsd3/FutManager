@@ -35,3 +35,4 @@
   .quickHeading { margin-top: 4px; }
   .quick { padding-top: 0; }
 }
+.trust .trustNote { grid-column: 1 / -1; color: #aab6ae; font-size: 9px; line-height: 1.3; }
