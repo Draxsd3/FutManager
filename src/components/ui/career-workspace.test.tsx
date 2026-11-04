@@ -68,3 +68,10 @@ it("restores body scrolling on unmount", () => {
   expect(document.body.style.overflow).toBe("auto");
   document.body.style.overflow = "";
 });
+
+it("places the section icon and accessible title in the top window bar", () => {
+  render(<CareerWorkspace nav={[]} date="Hoje" teamName="Corinthians" background={null} title="Times" titleIcon="group" onClose={vi.fn()}><p>Conteúdo</p></CareerWorkspace>);
+  const heading = screen.getByRole("heading", { level: 1, name: "Times" });
+  expect(heading.closest("header")?.querySelector('[data-management-icon="group"]')).toBeTruthy();
+  expect(screen.getByRole("dialog", { name: "Times" })).toBeTruthy();
+});

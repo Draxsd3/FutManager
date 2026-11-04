@@ -81,3 +81,16 @@ it("mantém divisões de países diferentes independentes e volta a fechá-las a
   expect(within(brazil).getByRole("button", { expanded: false })).toBeTruthy();
   expect(within(italy).getByRole("button", { expanded: false })).toBeTruthy();
 });
+
+it("removes the repeated title and description inside the Times window but keeps actions and filters", () => {
+  const database = createDefaultDatabase();
+  const back = vi.fn();
+  const { container } = render(<TeamDirectory embedded database={database} club={database.clubs[0].name} coach="Técnico" squad={[]} budget={1000} records={{}} negotiations={[]} onOpenPlayer={vi.fn()} onTransferOffer={vi.fn()} onBack={back} />);
+  expect(screen.queryByRole("heading", { name: "Times" })).toBeNull();
+  expect(container.querySelector("[data-management-header]")).toBeNull();
+  expect(screen.queryByText("FutManager / universo")).toBeNull();
+  expect(screen.getByLabelText("Buscar clube")).toBeTruthy();
+  expect(screen.getByText("Saldo do clube")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: /Voltar ao clube/ }));
+  expect(back).toHaveBeenCalledOnce();
+});

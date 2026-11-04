@@ -11,3 +11,9 @@
 
 /* Use the available viewport for controls before falling back to scrolling. */
 .window { height: min(980px, 100%); }
+
+.windowTitle { display:flex; align-items:center; gap:10px; min-width:0; margin:0 auto 0 0; font:inherit; }
+.header .titleIcon { display:inline-flex; align-items:center; margin:0; }
+.titleIcon > span { width:28px; height:28px; margin:0; border-radius:7px; box-shadow:inset 1px 1px 0 #ffffff70,1px 2px 0 #315e44; }
+.titleIcon svg { width:19px; height:19px; }
+.header:has(.titleIcon)::before { display:none; }
