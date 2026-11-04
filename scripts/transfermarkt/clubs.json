@@ -1,0 +1,4944 @@
+{
+  "athpr": {
+    "name": "Athlético Paranaense",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atleticomg_bra": {
+    "name": "Atlético Mineiro",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "bahia": {
+    "name": "Bahia",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "botafogorj_bra": {
+    "name": "Botafogo",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "chapecoense_bra": {
+    "name": "Chapecoense",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "corinthians_bra": {
+    "name": "Corinthians",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "coritiba_bra": {
+    "name": "Coritiba",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cruzeiro_bra": {
+    "name": "Cruzeiro",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "flarj": {
+    "name": "Flamengo",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "flurj": {
+    "name": "Fluminense",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gremio": {
+    "name": "Grêmio",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "internacional_bra": {
+    "name": "Internacional",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "miirassol_sp": {
+    "name": "Mirassol",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "palmeiras": {
+    "name": "Palmeiras",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "bragantino_bra": {
+    "name": "Red Bull Bragantino",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "remo": {
+    "name": "Remo",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santos": {
+    "name": "Santos",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saopaulo_bra": {
+    "name": "São Paulo",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "vasco": {
+    "name": "Vasco da Gama",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "vitoria": {
+    "name": "Vitória",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "americamg_bra": {
+    "name": "América Mineiro",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "athleticclub_mg": {
+    "name": "Athletic Club",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atleticogo_bra": {
+    "name": "Atlético Goianiense",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "avai_bra": {
+    "name": "Avaí",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "botafogosp_bra": {
+    "name": "Botafogo SP",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "crb_bra": {
+    "name": "CRB",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ceara_bra": {
+    "name": "Ceará",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "criciuma_bra": {
+    "name": "Criciúma",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cuiaba_bra": {
+    "name": "Cuiabá",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "fortaleza": {
+    "name": "Fortaleza",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "goias": {
+    "name": "Goiás",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "novorinzontino_sp": {
+    "name": "Grêmio Novorizontino",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "juventude": {
+    "name": "Juventude",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "londrina_pr": {
+    "name": "Londrina",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "nautico": {
+    "name": "Náutico",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "operario_pr": {
+    "name": "Operário PR",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "pontepreta_bra": {
+    "name": "Ponte Preta",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sport": {
+    "name": "Sport Recife",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saobernardo_sp": {
+    "name": "São Bernardo",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "vilago": {
+    "name": "Vila Nova",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "amazonas_am": {
+    "name": "Amazonas FC",
+    "state": "Amazonas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "anapolisgo_bra": {
+    "name": "Anápolis",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "barra_sc": {
+    "name": "Barra-SC",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "botafogopb_bra": {
+    "name": "Botafogo PB",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "brusquesc_bra": {
+    "name": "Brusque",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "caxias": {
+    "name": "Caxias",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "confianca_se": {
+    "name": "Confiança",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ferroviaria_sp": {
+    "name": "Ferroviária",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "figueirense": {
+    "name": "Figueirense",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "florestace": {
+    "name": "Floresta",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guaranisp_bra": {
+    "name": "Guarani",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "interlimeirasp_bra": {
+    "name": "Internacional de Limeira",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "itabaiana_se": {
+    "name": "Itabaiana",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ituano_sp": {
+    "name": "Ituano",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "maranhãoqtt_bra": {
+    "name": "Maranhão",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "maringapr": {
+    "name": "Maringá",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "paysandu": {
+    "name": "Paysandu",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santa": {
+    "name": "Santa Cruz",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "voltaredondarj_bra": {
+    "name": "Volta Redonda",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ypiranga_rs": {
+    "name": "Ypiranga-RS",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "abcrn_bra": {
+    "name": "ABC",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "asaarapiracaal_bra": {
+    "name": "ASA",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "altos_pi": {
+    "name": "Altos",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "americarj": {
+    "name": "America RJ",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "americarn": {
+    "name": "América RN",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "aparecidense_go": {
+    "name": "Aparecidense",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "araguaina_to": {
+    "name": "Araguaína",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atleticoalagoinhas_bra": {
+    "name": "Atlético Alagoinhas",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atleticoce_bra": {
+    "name": "Atlético Cearense",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "azurizpr_bra": {
+    "name": "Azuriz",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "betimmg_bra": {
+    "name": "Betim",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "blumenau_sc": {
+    "name": "Blumenau",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "brasilpelotas_bra": {
+    "name": "Brasil de Pelotas",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "brasiliense_df_bra": {
+    "name": "Brasiliense",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cracgo_bra": {
+    "name": "CRAC",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "csa_bra": {
+    "name": "CSA",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cseal_bra": {
+    "name": "CSE",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "capital_df_bra": {
+    "name": "Capital",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cascavel_pr": {
+    "name": "Cascavel",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ceilandia_df_bra": {
+    "name": "Ceilândia",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "central_bra": {
+    "name": "Central - PE",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cianorte_pr": {
+    "name": "Cianorte",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "decisaope_bra": {
+    "name": "Decisão",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ecdemocrata_mg": {
+    "name": "Democrata GV",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ferroviarioce_bra": {
+    "name": "Ferroviário",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "fluminensepi_bra": {
+    "name": "Fluminense - PI",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gas_rr": {
+    "name": "GAS",
+    "state": "Roraima",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "galvez_ac": {
+    "name": "Galvez",
+    "state": "Acre",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gama_df_bra": {
+    "name": "Gama",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "goiatubago_bra": {
+    "name": "Goiatuba",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guapore_bra": {
+    "name": "Guaporé",
+    "state": "Rondônia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guaranybage_rs": {
+    "name": "Guarany Bagé",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "humaita_ac": {
+    "name": "Humaitá",
+    "state": "Acre",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "iape_ma": {
+    "name": "IAPE",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "iguatu_ce": {
+    "name": "Iguatu",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "imperatriz_ma": {
+    "name": "Imperatriz",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "independencia_ac": {
+    "name": "Independência",
+    "state": "Acre",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "inhumasgo_bra": {
+    "name": "Inhumas",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "jacuipense_bra": {
+    "name": "Jacuipense",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "joinville": {
+    "name": "Joinville",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "juazeirense_ba": {
+    "name": "Juazeirense",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "lagarto_se": {
+    "name": "Lagarto",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "luverdensemt_bra": {
+    "name": "Luverdense",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "madureira_bra": {
+    "name": "Madureira",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "maguary_cg_br": {
+    "name": "Maguary",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "manauara_br": {
+    "name": "Manauara",
+    "state": "Amazonas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "manaus_bra": {
+    "name": "Manaus",
+    "state": "Amazonas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "maracana_ce": {
+    "name": "Maracanã",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "marciliodiassc_bra": {
+    "name": "Marcílio Dias",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "marica_rj": {
+    "name": "Maricá",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "mixto_mt": {
+    "name": "Mixto",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "motoclubma_bra": {
+    "name": "Moto Club",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "nacional_am": {
+    "name": "Nacional - AM",
+    "state": "Amazonas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "noroeste_sp": {
+    "name": "Noroeste",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "novaiguacu_rj": {
+    "name": "Nova Iguaçu",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "operario_ms": {
+    "name": "Operário - MS",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "operariovg_mt": {
+    "name": "Operário - MT",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "oratorio_br": {
+    "name": "Oratório Recreativo",
+    "state": "Amapá",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "parnahyba_br": {
+    "name": "Parnahyba",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "portosportclube_bra": {
+    "name": "Porto Sport Clube",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "portovelhoro_bra": {
+    "name": "Porto Velho-RO",
+    "state": "Rondônia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "portuguesa_bra": {
+    "name": "Portuguesa",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "portuguesarj_bra": {
+    "name": "Portuguesa RJ",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "pousoalegre_mg": {
+    "name": "Pouso Alegre",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "retrope_bra": {
+    "name": "Retrô",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "riobranco_es": {
+    "name": "Rio Branco - ES",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "samapaiocorrea_ma": {
+    "name": "Sampaio Corrêa",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sampaiocorrea_rj": {
+    "name": "Sampaio Corrêa - RJ",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santacatarina_cg_br": {
+    "name": "Santa Catarina",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sergipe_se": {
+    "name": "Sergipe",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "serrabranca_pb_cg_br": {
+    "name": "Serra Branca",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sousapb_bra": {
+    "name": "Sousa",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "independente_pr": {
+    "name": "São Joseense",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saojosers_bra": {
+    "name": "São José",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saoluiz_rs": {
+    "name": "São Luiz",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saoraimundo_rr": {
+    "name": "São Raimundo - RR",
+    "state": "Roraima",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tocantinopolis_to": {
+    "name": "Tocantinópolis",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tombense_mg": {
+    "name": "Tombense",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ap_trem": {
+    "name": "Trem",
+    "state": "Amapá",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "trezepb_bra": {
+    "name": "Treze",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tunaluso_pa": {
+    "name": "Tuna Luso",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uberlandia_ec": {
+    "name": "Uberlândia",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uniaorondonopolis_mt": {
+    "name": "União Rondonópolis",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "veloclube_sp": {
+    "name": "Velo Clube",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "vitoria_es": {
+    "name": "Vitória - ES",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "xvdepiracicaba_sp": {
+    "name": "XV de Piracicaba",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "aguasantasp_bra": {
+    "name": "Água Santa",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "aguiapa_bra": {
+    "name": "Águia",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "corisabba_br": {
+    "name": "AA Corisabbá",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "assurn": {
+    "name": "ASSU",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "afogadospe_bra": {
+    "name": "Afogados",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "aimorers_bra": {
+    "name": "Aimoré",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "depalianca_al": {
+    "name": "Aliança",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "almirante_sc": {
+    "name": "Almirante Barroso",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "altinho_pe": {
+    "name": "Altinho",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "altosanto_ce": {
+    "name": "Alto Santo",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "arecrn": {
+    "name": "Alto do Rodrigues",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "amadense_se": {
+    "name": "Amadense",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ap_amapa": {
+    "name": "Amapá",
+    "state": "Amapá",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "amazoniaindependente_br": {
+    "name": "Amazônia Independente",
+    "state": "Amazonas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "americateofilo_mg": {
+    "name": "America TO",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "americanorj_bra": {
+    "name": "Americano",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "americano_ma": {
+    "name": "Americano - MA",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "amparosp_bra": {
+    "name": "Amparo",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "americago_bra": {
+    "name": "América - GO",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "america_pe": {
+    "name": "América - PE",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "america_se": {
+    "name": "América - SE",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "anapolinago": {
+    "name": "Anapolina",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "andira_ac": {
+    "name": "Andirá",
+    "state": "Acre",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "andraus_pr": {
+    "name": "Andraus",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "audaxrj_bra": {
+    "name": "Angra Audax RJ",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "angradosreis_rj": {
+    "name": "Angra dos Reis",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "aparecidago_bra": {
+    "name": "Aparecida",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "apucarana_pr": {
+    "name": "Apucarana Sports",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Aquidaba_SE": {
+    "name": "Aquidabã",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "aquidauanense_bra": {
+    "name": "Aquidauanense",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Aracaju_SE": {
+    "name": "Aracaju",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "aracruz_es": {
+    "name": "Aracruz",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "araguacema_br": {
+    "name": "Araguacema",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "araguaiamt_bra": {
+    "name": "Araguaia",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "araguarimg_bra": {
+    "name": "Araguari",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "araioses_ma": {
+    "name": "Araioses",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "araripina_pe": {
+    "name": "Araripina",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "araruamarj_bra": {
+    "name": "Araruama",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "araucariapr_bra": {
+    "name": "Araucária",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "araxa_mg": {
+    "name": "Araxá",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "aracatubasp_bra": {
+    "name": "Araçatuba",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "arrialdocaborj_bra": {
+    "name": "Arraial do Cabo",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "artsul_rj": {
+    "name": "Artsul",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "arukosports_pr_cg_br": {
+    "name": "Aruko Sports Brasil",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "assisensesp_bra": {
+    "name": "Assisense",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "asterbraba_es": {
+    "name": "Aster Brasil",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atibaia_sp": {
+    "name": "Atibaia",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atleticouberlandia_mg": {
+    "name": "Atletico Uberlândia",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atletico_ac": {
+    "name": "Atlético Acreano",
+    "state": "Acre",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atleticocarioca_br": {
+    "name": "Atlético Carioca",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atleticocatarinense_sc_cg_br": {
+    "name": "Atlético Catarinense - SC",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atleticocerrado_to": {
+    "name": "Atlético Cerrado",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atldiademasp_bra": {
+    "name": "Atlético Diadema",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Gloriense_SE": {
+    "name": "Atlético Gloriense",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atlguaratinguetasp_bra": {
+    "name": "Atlético Guaratinguetá",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atleticoitajai_sc": {
+    "name": "Atlético Itajaí",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atletico_es": {
+    "name": "Atlético Itapemirim",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atleticomogi_cg_br": {
+    "name": "Atlético Mogi - SP",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atletico_pe": {
+    "name": "Atlético Pernambucano",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atleticopotiguar_rn": {
+    "name": "Atlético Potiguar",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atletico_rr": {
+    "name": "Atlético Roraima",
+    "state": "Roraima",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atlsorocabasp_bra": {
+    "name": "Atlético Sorocaba",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atltrescoracoesmg_bra": {
+    "name": "Atlético Três Corações",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atleticopb_bra": {
+    "name": "Atlético-PB",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "audax_sp": {
+    "name": "Audax Osasco - SP",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "autoesporte_pb": {
+    "name": "Auto Esporte",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "avenida_rs": {
+    "name": "Avenida",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "aymoresmg_bra": {
+    "name": "Aymorés",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "acao_mt": {
+    "name": "Ação - MT",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "bacabal_ma": {
+    "name": "Bacabal",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "bage_rs": {
+    "name": "Bagé",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "bahiafeira_ba": {
+    "name": "Bahia de Feira",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "bandeirante_cg_br": {
+    "name": "Bandeirante",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "bangu_bra": {
+    "name": "Bangu",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "baraunas_rn": {
+    "name": "Baraúnas",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "barbalhace_bra": {
+    "name": "Barbalha",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "barcelonaba_bra": {
+    "name": "Barcelona - BA",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "barcelona_rj": {
+    "name": "Barcelona - RJ",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "barcelonafc_bra": {
+    "name": "Barcelona - RO",
+    "state": "Rondônia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "barramansarj_bra": {
+    "name": "Barra Mansa",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "barradatijuca_rj": {
+    "name": "Barra da Tijuca",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "barras_pi": {
+    "name": "Barras",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "barreiros_pe": {
+    "name": "Barreiros",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "barretos_sp": {
+    "name": "Barretos",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "bare_rr": {
+    "name": "Baré",
+    "state": "Roraima",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "batatais_sp": {
+    "name": "Batatais",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "batel_pr": {
+    "name": "Batel",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "belavista_br": {
+    "name": "Bela Vista - TO",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "belojardim_pe": {
+    "name": "Belo Jardim",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "esportivors_bra": {
+    "name": "Bento Gonçalvez",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "betis_mg": {
+    "name": "Betis",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "boa_mg": {
+    "name": "Boa Esporte",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "boavontade_ma": {
+    "name": "Boa Vontade",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "boavista_bra": {
+    "name": "Boavista",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "bocajunior_se": {
+    "name": "Boca Junior",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "bolamense_df_bra": {
+    "name": "Bolamense",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "bomjesusgo_bra": {
+    "name": "Bom Jesus",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "bomsucesso_rj": {
+    "name": "Bonsucesso",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Boquinhense_SE": {
+    "name": "Boquinhense",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "botafogoba_br": {
+    "name": "Botafogo - BA",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Botafogo_SE": {
+    "name": "Botafogo - SE",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "bragantino_pa": {
+    "name": "Bragantino - PA",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "brasilfar_rs": {
+    "name": "Brasil de Farroupilha",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "brasilia_df_bra": {
+    "name": "Brasilia",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "brasilissp_bra": {
+    "name": "Brasilis",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cenams_bra": {
+    "name": "CENA",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ceoal_bra": {
+    "name": "CEO",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "csppb": {
+    "name": "CSP",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ctecolatina_br": {
+    "name": "CTE Colatina",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cabense_pe": {
+    "name": "Cabense",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cabofriense_bra": {
+    "name": "Cabofriense",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cacerense_br": {
+    "name": "Cacerense",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "caete_br": {
+    "name": "Caeté",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "caico_rn": {
+    "name": "Caicó",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "caicara_pi": {
+    "name": "Caiçara",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "caldasgo_bra": {
+    "name": "Caldas",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "caldasnovasgo_bra": {
+    "name": "Caldas Novas",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "caldense_bra": {
+    "name": "Caldense",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "conquistafc_ba": {
+    "name": "Camaçari",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "lusacaba_bra": {
+    "name": "Camaçariense",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "camboriu_sc": {
+    "name": "Camboriú",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cameta_bra": {
+    "name": "Cametá",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "campinensepb_bra": {
+    "name": "Campinense",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "campogrande_ce": {
+    "name": "Campo Grande",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "campogranderj_bra": {
+    "name": "Campo Grande - RJ",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "campos_rj": {
+    "name": "Campos",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Caninde_SE": {
+    "name": "Canindé",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "capanemaba_pa": {
+    "name": "Capanema",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "capital_to": {
+    "name": "Capital - TO",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "capivariano_bra": {
+    "name": "Capivariano",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "capixababa_es": {
+    "name": "Capixaba",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "carajas_pa": {
+    "name": "Carajás",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "carapebus_rj": {
+    "name": "Carapebus",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cardosomoreirarj_bra": {
+    "name": "Cardoso Moreira",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "caririce_bra": {
+    "name": "Cariri",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "carlosrenaux_sc": {
+    "name": "Carlos Renaux",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "carpina_pe": {
+    "name": "Carpina",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "caruarucity_pe": {
+    "name": "Caruaru City",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cascavelcrpr_bra": {
+    "name": "Cascavel CR",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "castanhalpa_bra": {
+    "name": "Castanhal",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "castelo_es": {
+    "name": "Castelo",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "catanduva_sp_bra": {
+    "name": "Catanduva",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "catanduvense_sp": {
+    "name": "Catanduvense",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "caucaiace_bra": {
+    "name": "Caucaia",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cacador_sc": {
+    "name": "Caçadorense",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "centro_pe": {
+    "name": "Centro Limoeirense",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ceresgo_bra": {
+    "name": "Ceres · Goiás",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ceresrj_bra": {
+    "name": "Ceres · Rio de Janeiro",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "chapadinha_ma_cg_br": {
+    "name": "Chapadinha - MA",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "chagrande_pe": {
+    "name": "Chã Grande",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cliper_br": {
+    "name": "Cliper",
+    "state": "Amazonas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "coimbramg_bra": {
+    "name": "Coimbra",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "colinasto_bra": {
+    "name": "Colinas",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "colocolo_ba": {
+    "name": "Colo Colo - BA",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "comercial_ms": {
+    "name": "Comercial - MS",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "comercial_pi": {
+    "name": "Comercial - PI",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "comercial_sp": {
+    "name": "Comercial - SP",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "concordiasc_bra": {
+    "name": "Concórdia",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cordino_ma": {
+    "name": "Cordino",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "corissaba_pi": {
+    "name": "Cori-Sabbá",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "corintians_rn": {
+    "name": "Corintians - RN",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Coritiba_SE": {
+    "name": "Coritiba - SE",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "corumbaense_bra": {
+    "name": "Corumbaense",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "coruripe_al": {
+    "name": "Coruripe",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "costarica_ms": {
+    "name": "Costa Rica EC",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Cotinguiba_SE": {
+    "name": "Cotinguiba",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "coxim_br": {
+    "name": "Coxim",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "crateus_ce": {
+    "name": "Crateús",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "crato_ce": {
+    "name": "Crato",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ap_cristal": {
+    "name": "Cristal",
+    "state": "Amapá",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cruzeiropb_bra": {
+    "name": "Cruzeiro - PB",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cruzeiro_rn": {
+    "name": "Cruzeiro - RN",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cruzeiro_rs": {
+    "name": "Cruzeiro - RS",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cruzeiroarapiraca_br": {
+    "name": "Cruzeiro Arapiraca",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cruzeiro_al": {
+    "name": "Cruzeiro-AL",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "curraisnovos_rn": {
+    "name": "Currais Novos",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "democratafc_mg": {
+    "name": "Democrata SL",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "desportiva_es": {
+    "name": "Desportiva Ferroviária",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "desportiva_pb": {
+    "name": "Desportiva Guarabira",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "desportivaparaense_pa": {
+    "name": "Desportiva Paraense",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "desportivobrasil_sp": {
+    "name": "Desportivo Brasil",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "dimensao_al": {
+    "name": "Dimensão Saúde",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "docemelba_bra": {
+    "name": "Doce Mel",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "domboscomt": {
+    "name": "Dom Bosco",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "dorense_se": {
+    "name": "Dorense",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "dourados_br": {
+    "name": "Dourados",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "doze_es": {
+    "name": "Doze",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "duquedecaxias_rj": {
+    "name": "Duque de Caxias",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "duquecaxienserj_bra": {
+    "name": "Duquecaxiense",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ecsaobernardosp_bra": {
+    "name": "EC São Bernardo",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "elosportsp_bra": {
+    "name": "Elosport",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "esporte_pb": {
+    "name": "Esporte",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "esporte_ce": {
+    "name": "Esporte Limoeiro",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "esprofrj_bra": {
+    "name": "Esprof",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "espiritosanto_es": {
+    "name": "Espírito Santo",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "estanciano_se": {
+    "name": "Estanciano",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "estreladonorte_es": {
+    "name": "Estrela do Norte",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "aseevgo_bra": {
+    "name": "Evangélica",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "expressinho_ma": {
+    "name": "Expressinho",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ffsports_al": {
+    "name": "FF Sports",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "falcon_br": {
+    "name": "Falcon",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "farroupilha_rs": {
+    "name": "Farroupilha",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "fast_am": {
+    "name": "Fast Clube",
+    "state": "Amazonas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "femarpb_": {
+    "name": "Femar",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Fernandópolis_SP": {
+    "name": "Fernandópolis",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ferroviariodocabo_pe": {
+    "name": "Ferroviário - PE",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ferroviario_pi_cg_br": {
+    "name": "Ferroviário - PI",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "figueirensemg_bra": {
+    "name": "Figueirense - MG",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "flamengopb_bra": {
+    "name": "Flamengo - PB",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "flamengope": {
+    "name": "Flamengo - PE",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "flamengo_pi": {
+    "name": "Flamengo - PI",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "flamengo_sp": {
+    "name": "Flamengo de Guarulhos",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "fluminenseba_bra": {
+    "name": "Fluminense Feira",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "fluminense_sc": {
+    "name": "Fluminense do Itaum",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "formiga_mg": {
+    "name": "Formiga",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "formosa_df_bra": {
+    "name": "Formosa",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "forcajovem_to": {
+    "name": "Força Jovem",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "forcaeluzal_bra": {
+    "name": "Força e Luz",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "foziguacu_pr": {
+    "name": "Foz do Iguaçu",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atlfrancanasp_bra": {
+    "name": "Francana",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "freipaulistano_se": {
+    "name": "Freipaulistano",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "friburguenserj_bra": {
+    "name": "Friburguense",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "funorte_mg": {
+    "name": "Funorte",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "galicia_ba": {
+    "name": "Galícia",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Gararu_SE": {
+    "name": "Gararu",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gaviaokyikateje_pa": {
+    "name": "Gavião Kyikatêjê",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gaucho_rs": {
+    "name": "Gaúcho",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "genus_bra": {
+    "name": "Genus",
+    "state": "Rondônia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "globo_fc": {
+    "name": "Globo FC",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gloria_rs": {
+    "name": "Glória",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "goianesiago_bra": {
+    "name": "Goianésia",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "goianiago_bra": {
+    "name": "Goiânia",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "goncalense_rj": {
+    "name": "Gonçalense",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "goytacazrj": {
+    "name": "Goytacaz",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atlantico_ba": {
+    "name": "Grapiúna",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gremioanapolisgo_bra": {
+    "name": "Grêmio Anápolis",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gremiobaruerisp_bra": {
+    "name": "Grêmio Barueri",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gremiocarajasba_pa": {
+    "name": "Grêmio Carajás",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gel_ba_es": {
+    "name": "Grêmio Laranjeiras",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gremiomauasp_bra": {
+    "name": "Grêmio Mauaense",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gremioosasco_sp": {
+    "name": "Grêmio Osasco Audax",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gremiopaguemenos_cg_br": {
+    "name": "Grêmio Pague Menos",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gremioprudente_cg_br": {
+    "name": "Grêmio Prudente",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gremiosorriso_mt": {
+    "name": "Grêmio Sorriso",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guajara_bra": {
+    "name": "Guajará",
+    "state": "Rondônia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guamare_rn": {
+    "name": "Guamaré",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guaranisc_bra": {
+    "name": "Guarani SMO",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guarani_rs": {
+    "name": "Guarani Venâncio Aires",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guaranidejuazeiro_ce": {
+    "name": "Guarani de Juazeiro",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guarani_sc": {
+    "name": "Guarani de Palhoça",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guaranimg_bra": {
+    "name": "Guarani · Minas Gerais",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guarany_se": {
+    "name": "Guarany - SE",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guaranysobralce_bra": {
+    "name": "Guarany Sobral",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guaratinguetasp_bra": {
+    "name": "Guaratinguetá",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guarai_to": {
+    "name": "Guaraí",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guarulhossp_bra": {
+    "name": "Guarulhos",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "guaradf_bra": {
+    "name": "Guará",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "gurupi_to": {
+    "name": "Gurupi - TO",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "hercilioluzsc_bra": {
+    "name": "Hercílio Luz",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "horizontece_bra": {
+    "name": "Horizonte",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "itzsport_bra": {
+    "name": "ITZ Sport",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "icasa_ce": {
+    "name": "Icasa",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "igrejinha_rs": {
+    "name": "Igrejinha",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ap_Independente": {
+    "name": "Independente - AP",
+    "state": "Amapá",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Independente_SE": {
+    "name": "Independente - SE",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "independente_sp": {
+    "name": "Independente Limeira",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "independentepa": {
+    "name": "Independente-PA",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "interdelages_sc": {
+    "name": "Inter de Lages",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "interminas_mg": {
+    "name": "Inter de Minas",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "intersm_rs": {
+    "name": "Inter de Santa Maria",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "internacional_pb": {
+    "name": "Internacional - PB",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "interporto_to": {
+    "name": "Interporto",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ipatinga_mg": {
+    "name": "Ipatinga",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ipojuca_pe": {
+    "name": "Ipojuca",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "iporago_bra": {
+    "name": "Iporá",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "iranduba_am": {
+    "name": "Iranduba",
+    "state": "Amazonas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "iraty_pr": {
+    "name": "Iraty",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "itaberaigo_bra": {
+    "name": "Itaberaí",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "itabirito_mg": {
+    "name": "Itabirito-MG",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "itaborai_rj": {
+    "name": "Itaboraí",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "itabuna_br": {
+    "name": "Itabuna",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "itacuruba_pe": {
+    "name": "Itacuruba",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "itapaje_ce": {
+    "name": "Itapajé",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "itapipoca_ce": {
+    "name": "Itapipoca",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "itapirense_cg_br": {
+    "name": "Itapirense",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "itararesp_bra": {
+    "name": "Itararé",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "itumbiara_go": {
+    "name": "Itumbiara",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "itupiranga_pa": {
+    "name": "Itupiranga",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "izabelense_pa": {
+    "name": "Izabelense",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "jcfcam_bra": {
+    "name": "JC FC",
+    "state": "Amazonas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "jvlideral_ma": {
+    "name": "JV Lideral",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "jacyobaal_bra": {
+    "name": "Jaciobá",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "jacobina_ba": {
+    "name": "Jacobina",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "jacobinense_br": {
+    "name": "Jacobinense",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "jaguar_pe": {
+    "name": "Jaguar",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "jaguariunasp_bra": {
+    "name": "Jaguariúna",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "jaraguago_bra": {
+    "name": "Jaraguá",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "jataiense_go": {
+    "name": "Jataiense",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "jequieenseba_bra": {
+    "name": "Jequieense",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "jequieba": {
+    "name": "Jequié",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "jiparana_bra": {
+    "name": "Ji-Paraná",
+    "state": "Rondônia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "jorgeamadoba_bra": {
+    "name": "Jorge Amado",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "joseensesp_br": {
+    "name": "Joseense",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "josebonifaciosp_bra": {
+    "name": "José Bonifácio",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "juara_mt": {
+    "name": "Juara",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "juazeiro_ba": {
+    "name": "Juazeiro",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "juventudema_bra": {
+    "name": "Juventude-MA",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "juventus_ap_ba": {
+    "name": "Juventus - AP",
+    "state": "Amapá",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "juventusrj_bra": {
+    "name": "Juventus - RJ",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "juventus_sp": {
+    "name": "Juventus da Mooca",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "juventussc_bra": {
+    "name": "Juventus-SC",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "lajeadense_rs": {
+    "name": "Lajeadense",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Laranjeiras_SE": {
+    "name": "Laranjeiras",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "lemense_cg_br": {
+    "name": "Lemense",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "linense_sp": {
+    "name": "Linense",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "linhares_es": {
+    "name": "Linhares",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "lucenapb_bra": {
+    "name": "Lucena",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "luziania_df_bra": {
+    "name": "Luziania",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ap_macapa": {
+    "name": "Macapá",
+    "state": "Amapá",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "macau_rn": {
+    "name": "Macau",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "macaerj_bra": {
+    "name": "Macaé",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "mamore_mg": {
+    "name": "Mamoré",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "manthiqueirasp_bra": {
+    "name": "Manthiqueira",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "marabaacba_pa": {
+    "name": "Marabá",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "maranguape_ce": {
+    "name": "Maranguape",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Maruinense_SE": {
+    "name": "Maruinense",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "marilia_sp": {
+    "name": "Marília",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "matonense_sp": {
+    "name": "Matonense",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "mesquitarj_bra": {
+    "name": "Mesquita",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "metropolitanosc_bra": {
+    "name": "Metropolitano",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "miguelense_br": {
+    "name": "Miguelense",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "minasboca_mg": {
+    "name": "Minas Boca",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "miramarpb_bra": {
+    "name": "Miramar",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "mogimirim_sp": {
+    "name": "Mogi Mirim",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "monteazul_sp": {
+    "name": "Monte Azul",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "montecristogo_bra": {
+    "name": "Monte Cristo",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "montesclaros_mg": {
+    "name": "Montes Claros",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "morrinhosgo_bra": {
+    "name": "Morrinhos",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "mossoro_rn": {
+    "name": "Mossoró",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "muricial": {
+    "name": "Murici",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "nacional_pr": {
+    "name": "Nacional - PR",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "nacional_sp": {
+    "name": "Nacional - SP",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "nacionalmuriae_mg": {
+    "name": "Nacional Muriaé",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "nacional_mg": {
+    "name": "Nacional Nova Serrana",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "nacional_pb": {
+    "name": "Nacional de Patos",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "nacionalpombal_pb": {
+    "name": "Nacional de Pombal",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "natal_rn": {
+    "name": "Natal",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "naviraiense_br": {
+    "name": "Naviraiense",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "nacaosc_bra": {
+    "name": "Nação",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Neopolis_SE": {
+    "name": "Neopólis",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "novacidade_rj": {
+    "name": "Nova Cidade",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "novamutum_mt": {
+    "name": "Nova Mutum",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "novarussas_ce": {
+    "name": "Nova Russas",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "novaveneciaes_br": {
+    "name": "Nova Venécia",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "novoperario_bra": {
+    "name": "Novo",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "novohamburgo_bra": {
+    "name": "Novo Hamburgo",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "novohorizonte_go": {
+    "name": "Novo Horizonte",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "nauas_ac": {
+    "name": "Náuas",
+    "state": "Acre",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "nautico_ms_cg_br": {
+    "name": "Náutico - MS",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "nautico_rr": {
+    "name": "Náutico - RR",
+    "state": "Roraima",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "oeiras_pi": {
+    "name": "Oeiras",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "oeirensepi_bra": {
+    "name": "Oeirense",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "oestesp_bra": {
+    "name": "Oeste",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "olaria_rj": {
+    "name": "Olaria",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "olinda_pe": {
+    "name": "Olinda",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "olimpia_sp": {
+    "name": "Olímpia",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "olimpico_se": {
+    "name": "Olímpico",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "operarioam_br": {
+    "name": "Operário Alfa EC",
+    "state": "Amazonas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "operariodourados_bra": {
+    "name": "Operário de Dourados AC",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "operario_sc": {
+    "name": "Operário de Mafra",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "osascofcsp_bra": {
+    "name": "Osasco FC",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "osvaldocruzsp_bra": {
+    "name": "Osvaldo Cruz",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "pacajusce_bra": {
+    "name": "Pacajus",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "pacatubace_bra": {
+    "name": "Pacatuba",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "paduanorj_bra": {
+    "name": "Paduano",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Palestra_SE": {
+    "name": "Palestra",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "palmas_to": {
+    "name": "Palmas",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "palmacia_ce": {
+    "name": "Palmácia",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "paragominas_pa": {
+    "name": "Paragominas",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "paranavai_pr": {
+    "name": "Paranavaí",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "paranoa_df_cg_br": {
+    "name": "Paranoá EC",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "parana": {
+    "name": "Paraná",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "parauapebas_pa": {
+    "name": "Parauapebas",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "paraibapb_bra": {
+    "name": "Paraíba",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Paraíso_toc": {
+    "name": "Paraíso",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "parintins_am_cg_br": {
+    "name": "Parintins - AM",
+    "state": "Amazonas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Passagem_SE": {
+    "name": "Passagem",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "passofundo_rs": {
+    "name": "Passo Fundo",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "patrocinense_mg": {
+    "name": "Patrocinense",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "paulista_sp": {
+    "name": "Paulista",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "paulistanomt_bra": {
+    "name": "Paulistano",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "pelotasrs_bra": {
+    "name": "Pelotas",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "penapolense_sp": {
+    "name": "Penapolense",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "penarol_am": {
+    "name": "Penarol - AM",
+    "state": "Amazonas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "scpenedense_bra": {
+    "name": "Penedense",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "picos_pi": {
+    "name": "Picos",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "picuiense_pb": {
+    "name": "Picuiense",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "pinheirense_pa": {
+    "name": "Pinheirense",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "pinheiroma_bra": {
+    "name": "Pinheiro",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Pirambu_SE": {
+    "name": "Pirambu",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "placidodecastro_ac": {
+    "name": "Plácido de Castro",
+    "state": "Acre",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "pocone_mt": {
+    "name": "Poconé",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "pontaporanense_bra": {
+    "name": "Pontaporanense",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "porto_pe": {
+    "name": "Porto - PE",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "portovelho_es_cg_br": {
+    "name": "Porto Vitória - ES",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "portuguesasantista_sp": {
+    "name": "Portuguesa Santista",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "potiguar_bra": {
+    "name": "Potiguar Mossoró",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "potyguarrn_bra": {
+    "name": "Potyguar",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "presidenteprudentesp_bra": {
+    "name": "Presidente Prudente",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "primavera_sp": {
+    "name": "Primavera",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "primavera_bra": {
+    "name": "Primavera-SP",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "princesa_am": {
+    "name": "Princesa Solimões",
+    "state": "Amazonas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "princesa_pi": {
+    "name": "Princesa do Sul",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "iprofuterj_bra": {
+    "name": "Profute Volantes",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "progresso_rr": {
+    "name": "Progresso",
+    "state": "Roraima",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "Propria_SE": {
+    "name": "Propriá",
+    "state": "Sergipe",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "prospera_sc": {
+    "name": "Próspera",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "quixada_ce": {
+    "name": "Quixadá",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "radiumsp_bra": {
+    "name": "Radium",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "realariquemes_bra": {
+    "name": "Real Ariquemes",
+    "state": "Rondônia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "realcubatensesp_bra": {
+    "name": "Real Cubatense",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "realnavalba_pa": {
+    "name": "Real Naval",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "resenderj_bra": {
+    "name": "Resende",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "riobranco_ac": {
+    "name": "Rio Branco - AC",
+    "state": "Acre",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "riobranco_sp": {
+    "name": "Rio Branco - SP",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "riobranco_pr": {
+    "name": "Rio Branco PR",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "riobrancovn_es": {
+    "name": "Rio Branco VN",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "riogrande_rs": {
+    "name": "Rio Grande",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "rionegro_rr": {
+    "name": "Rio Negro - RR",
+    "state": "Roraima",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "riopreto_sp": {
+    "name": "Rio Preto",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "riosprj_bra": {
+    "name": "Rio São Paulo",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "rioverde_go": {
+    "name": "Rio Verde",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "riverpi_bra": {
+    "name": "River",
+    "state": "Piauí",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "rolandia_pr": {
+    "name": "Rolândia",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "rondoniense_bra": {
+    "name": "Rondoniense",
+    "state": "Rondônia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "operario_mt": {
+    "name": "Rubro Negro",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "river_rr": {
+    "name": "Ríver - RR",
+    "state": "Roraima",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "serc_bra": {
+    "name": "SERC",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sespsamambaensedf_bra": {
+    "name": "SESP Samambaense",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sabia_ma": {
+    "name": "Sabiá",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sabugypb_bra": {
+    "name": "Sabugy",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "salgueirope_bra": {
+    "name": "Salgueiro",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santacruz_es_bra": {
+    "name": "Santa Cruz - ES",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santacruzpb_bra": {
+    "name": "Santa Cruz - PB",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santacruz_rj": {
+    "name": "Santa Cruz - RJ",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santacruz_rs": {
+    "name": "Santa Cruz - RS",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santacruzrn": {
+    "name": "Santa Cruz RN",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santamaria_df_bra": {
+    "name": "Santa Maria",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santamariaba_pa": {
+    "name": "Santa Maria - PA",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santaquiteria_ma": {
+    "name": "Santa Quitéria",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santarita_al": {
+    "name": "Santa Rita",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santarosa_pa": {
+    "name": "Santa Rosa",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ap_santana": {
+    "name": "Santana",
+    "state": "Amapá",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santarritensemg_bra": {
+    "name": "Santarritense",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "santoandre_sp": {
+    "name": "Santo André",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ap_santos": {
+    "name": "Santos - AP",
+    "state": "Amapá",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "serra_es": {
+    "name": "Serra",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "serramacaense_rj": {
+    "name": "Serra Macaense",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "serratalhada_pe": {
+    "name": "Serra Talhada",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "serranopb": {
+    "name": "Serrano - PB",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "serrano_pe": {
+    "name": "Serrano - PE",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "serrano_rj": {
+    "name": "Serrano - RJ",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sertaozinho_sp": {
+    "name": "Sertãozinho",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "setedesetembro_pe": {
+    "name": "Sete de Setembro",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sinop_mt": {
+    "name": "Sinop",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "skysp_bra": {
+    "name": "Sky Brasil",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sobradinho_df_bra": {
+    "name": "Sobradinho",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "social_mg": {
+    "name": "Social",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sparta_to": {
+    "name": "Sparta",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "spartaxpb_": {
+    "name": "Spartax",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sportararipina_pe": {
+    "name": "Sport Araripina",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sportbelem_pa": {
+    "name": "Sport Belém",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sport_es": {
+    "name": "Sport Colatinense",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sportcampina_pb": {
+    "name": "Sport Lagoa Seca",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sportsinopmt_br": {
+    "name": "Sport Sinop",
+    "state": "Mato Grosso",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "sulamerica1_am": {
+    "name": "Sul América",
+    "state": "Amazonas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saobenedito_ce": {
+    "name": "São Benedito",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saobento_bra": {
+    "name": "São Bento",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saoborja_rs": {
+    "name": "São Borja",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saocaetano_bra": {
+    "name": "São Caetano",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saocarlos_sp": {
+    "name": "São Carlos",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saodomingos_al": {
+    "name": "São Domingos",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saofrancisco_ac": {
+    "name": "São Francisco - AC",
+    "state": "Acre",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saofrancisco_pa": {
+    "name": "São Francisco - PA",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saogabriel_rs": {
+    "name": "São Gabriel",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saogoncalo_rj": {
+    "name": "São Gonçalo",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ap_saojose": {
+    "name": "São José - AP",
+    "state": "Amapá",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saojosesp_bra": {
+    "name": "São José EC",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saojosedoegito_pe": {
+    "name": "São José do Egito",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saojosedoscampos_sp": {
+    "name": "São José dos Campos",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saojose_ma": {
+    "name": "São José-MA",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saomateus_es": {
+    "name": "São Mateus",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ap_saopaulo": {
+    "name": "São Paulo - AP",
+    "state": "Amapá",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saopaulo_rs": {
+    "name": "São Paulo - RS",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "lucenapb_": {
+    "name": "São Paulo Crystal",
+    "state": "Paraíba",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "saoraimundo_pa": {
+    "name": "São Raimundo - PA",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tabira_pe": {
+    "name": "Tabira",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "taboaodaserra_sp": {
+    "name": "Taboão da Serra",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "taguatinga_df_bra": {
+    "name": "Taguatinga",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tailandiaba_pa": {
+    "name": "Tailândia",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tanabisp_bra": {
+    "name": "Tanabi",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tapajospa_bra": {
+    "name": "Tapajós",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "taquaritingasp_bra": {
+    "name": "Taquaritinga",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "taubate_sp": {
+    "name": "Taubaté",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "teixeiradefreitas_ba": {
+    "name": "Teixeira de Freitas",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tiangua_ce": {
+    "name": "Tianguá",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tigres_rj": {
+    "name": "Tigres do Brasil",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "timbauba_pe": {
+    "name": "Timbaúba",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "timon_ma": {
+    "name": "Timon - MA",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tiradentes_ce": {
+    "name": "Tiradentes",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tocantinsfc_bra": {
+    "name": "Tocantins",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "toledopr_bra": {
+    "name": "Toledo",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tricordiano_mg": {
+    "name": "Tricordiano",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "trindade_go": {
+    "name": "Trindade",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "atleticotubarao_sc": {
+    "name": "Tubarão",
+    "state": "Santa Catarina",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tuntumma_bra": {
+    "name": "Tuntum",
+    "state": "Maranhão",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tupijf_bra": {
+    "name": "Tupi",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tupy_rs": {
+    "name": "Tupi Crissiumal",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tupy_es": {
+    "name": "Tupy - ES",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tupyjussaraba_go": {
+    "name": "Tupy de Jussara",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "tupynambasmg_bra": {
+    "name": "Tupynambás",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "unirb_ba": {
+    "name": "UNIRB",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "urso_bra": {
+    "name": "URSO Mundo Novo",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "urt_bra": {
+    "name": "URT",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uberaba_mg": {
+    "name": "Uberaba",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "umuaramago_bra": {
+    "name": "Umuarama",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "paracatu_df_bra": {
+    "name": "Unaí",
+    "state": "Distrito Federal",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uniaopr_bra": {
+    "name": "União",
+    "state": "Paraná",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uniao_ms": {
+    "name": "União - MS",
+    "state": "Mato Grosso do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uniaobarbarense_sp": {
+    "name": "União Barbarense",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uniao_ce": {
+    "name": "União Brejo Santo",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "cacoalense_bra": {
+    "name": "União Cacoalense",
+    "state": "Rondônia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uniaoaraguainense_br": {
+    "name": "União Carmolandense",
+    "state": "Tocantins",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uniaofrederiquense_rs": {
+    "name": "União Frederiquense",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uniaoinhumasba_go": {
+    "name": "União Inhumas",
+    "state": "Goiás",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uniaoluziense_mg": {
+    "name": "União Luziense",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "umarechalhermesrj_bra": {
+    "name": "União Marechal",
+    "state": "Rio de Janeiro",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uniaomogisp_bra": {
+    "name": "União Mogi",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uniaoparaenseba_pa": {
+    "name": "União Paraense",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uniaosuzano_cg_br": {
+    "name": "União Suzano",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "uniaors_bra": {
+    "name": "União-RS",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "valadaresmg_bra": {
+    "name": "Valadares",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "vasco_ac": {
+    "name": "Vasco - AC",
+    "state": "Acre",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "veracruz_pe": {
+    "name": "Vera Cruz",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "veranopolisrs_bra": {
+    "name": "Veranópolis",
+    "state": "Rio Grande do Sul",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "verdesmaresce_bra": {
+    "name": "Verdes Mares",
+    "state": "Ceará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "villanovamg": {
+    "name": "Vila Nova-MG",
+    "state": "Minas Gerais",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "vilavelhense_es": {
+    "name": "Vilavelhense",
+    "state": "Espírito Santo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "vilhenense_bra": {
+    "name": "Vilhenense",
+    "state": "Rondônia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "visaoceleste_rn": {
+    "name": "Visão Celeste",
+    "state": "Rio Grande do Norte",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "vitoriaconquista_bra": {
+    "name": "Vitória da Conquista",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "vitoriape_bra": {
+    "name": "Vitória-PE",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "votuporanguense_sp": {
+    "name": "Votuporanguense",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "venus_pa": {
+    "name": "Vênus",
+    "state": "Pará",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "xvdejausp_bra": {
+    "name": "XV de Jaú",
+    "state": "São Paulo",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ap_ypiranga": {
+    "name": "Ypiranga - AP",
+    "state": "Amapá",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ypiranga_ba": {
+    "name": "Ypiranga - BA",
+    "state": "Bahia",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ypiranga_pe": {
+    "name": "Ypiranga - PE",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "zumbi_br": {
+    "name": "Zumbi",
+    "state": "Alagoas",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  },
+  "ibis_pe": {
+    "name": "Íbis",
+    "state": "Pernambuco",
+    "transfermarktId": null,
+    "approved": false,
+    "evidenceUrl": null
+  }
+}
