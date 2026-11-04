@@ -301,4 +301,4 @@ Contas novas recebem a base automaticamente. Em contas existentes: **Editor de c
 Coletor, vínculos dos clubes cadastrados, validações e integração do snapshot:
 [docs/transfermarkt.md](docs/transfermarkt.md). Comandos: `npm run transfermarkt:discover`,
 `npm run transfermarkt:sync` (simulação por padrão) e `npm run transfermarkt:test`.
-A carga só utiliza vínculos aprovados; não adiciona clubes e não altera saves em andamento.
+O modo por competição (`transfermarkt:competitions` / `transfermarkt:competition-sync`) cria clubes ausentes e importa elencos completos. O modo legado usa vínculos aprovados. Nenhum modo altera saves em andamento.

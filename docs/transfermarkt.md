@@ -1,3 +1,30 @@
+# Fluxo atual: competição → clubes → todos os jogadores
+
+**Atualização de escopo:** o usuário autorizou criar clubes que não existem no jogo. O fluxo atual é o v2 abaixo; as seções de lista permitida/v1 mais adiante são documentação do modo legado, não uma restrição ao novo fluxo.
+
+```bash
+npm run transfermarkt:competitions -- --query brasileirão
+# Revisar .cache/transfermarkt/competitions.json: escolher A, B, C ou D profissional.
+# Substituir ID_REAL pelo ID retornado na pesquisa (não executar o exemplo literalmente).
+npm run transfermarkt:competition-sync -- --competition ID_REAL --division "Série A" --season 2026
+# Revisar preview.json/report.json e só então publicar:
+npm run transfermarkt:competition-sync -- --competition ID_REAL --division "Série A" --season 2026 --apply
+```
+
+O coletor pagina a pesquisa, lê `/competitions/{id}/clubs?season_id=2026`, verifica o nome da divisão e visita `/clubs/{id}/profile` e `/clubs/{id}/players?season_id=2026` para **cada participante**. Não importa U20/playoffs como divisão profissional. Para B/C/D repetir com o ID real e a divisão correspondente; o mesmo snapshot v2 acumula as competições da mesma temporada. Sem `--season`, coleta o elenco atual; perfis de clubes são atuais mesmo quando o elenco é de uma temporada específica.
+
+Todos os registros do elenco são mantidos, inclusive acima de 35; a aplicação e persistência agora têm guarda técnica de 200 atletas por clube. Resposta acima desse teto é rejeitada por inteiro, não truncada. Antes de sincronizar elencos acima de 35 na nuvem, **aplicar** `supabase/migrations/20261103235900_complete_imported_squads.sql`. Essa migração foi preparada, mas não executada remotamente nesta entrega.
+
+Snapshot v2 contém competição, divisão e temporada como proveniência. A aplicação procura vínculo legado aprovado ou nome normalizado único (acentos/prefixos comuns), conserva a identidade local se encontrada e cria os clubes restantes. Homônimos ambíguos exigem revisão em vez de escolha arbitrária. Em clube novo, estado desconhecido permanece ausente, estádio/técnico desconhecidos são marcados e cores/nível são defaults do jogo, não dados oficiais. Elencos completos usam IDs locais por conta. Valores de habilidade/salário continuam simulação e EUR não é convertido automaticamente em BRL.
+
+Se um participante falhar, **nenhuma nova coleta dessa execução é publicada**, mesmo com `--apply`; a prévia e relatório ficam disponíveis para corrigir/tentar novamente. Clubes fora da coleta não são apagados. A fonte é revisada/publicada administrativamente, e **Configurações → Transfermarkt** aplica esse snapshot ao perfil, criando os clubes faltantes. A interface não faz scraping ao vivo e saves em andamento não são reimportados.
+
+**Estado real:** a busca por brasileirão foi tentada e falhou com erro TLS no acesso ao serviço público neste ambiente. O snapshot continua vazio. Não foram obtidos jogadores reais nem criados times de teste em produção. É necessário acesso funcional à API para executar a coleta real; a migração de banco também está pendente.
+
+---
+
+## Referência do modo legado v1 (apenas clubes vinculados)
+
 # Transfermarkt: coleta controlada dos clubes já cadastrados
 
 ## API analisada

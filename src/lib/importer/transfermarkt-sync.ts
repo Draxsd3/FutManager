@@ -13,7 +13,7 @@ export async function prepareTransfermarktSync(database: EditorDatabase) {
   const [{ default: catalog }, { default: links }] = await Promise.all([
     import("@/data/brazil-clubs.json"), import("../../../scripts/transfermarkt/clubs.json"),
   ]);
-  const eligible = snapshot.clubs.filter(incoming => {
+  const eligible = snapshot.version === 2 ? snapshot.clubs : snapshot.clubs.filter(incoming => {
     const registered = catalog.find(club => club.source === incoming.source);
     return registered && database.clubs.some(club => club.name === registered.name && club.state === registered.state && club.country.toLowerCase() === "brasil");
   });
@@ -21,6 +21,6 @@ export async function prepareTransfermarktSync(database: EditorDatabase) {
   // Full snapshot is validated first: a corrupt/foreign record cannot be silently hidden by filtering.
   const updated = applyTransfermarktSnapshot(database, snapshot, catalog, links);
   return { database: updated, clubs: eligible.length,
-    players: eligible.reduce((total, club) => total + Math.min(35, club.players.length), 0),
+    players: eligible.reduce((total, club) => total + club.players.length, 0),
     collectedAt: snapshot.generatedAt! };
 }

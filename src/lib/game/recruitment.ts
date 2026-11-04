@@ -1,5 +1,4 @@
 import type { EditorDatabase } from "./editor-data";
-import { MAX_CLUB_SQUAD_SIZE } from "./editor-data";
 import type { Player } from "./mock-data";
 import type { TransferKind } from "./transfers";
 
@@ -27,7 +26,8 @@ export function recruitPlayer(
     return { squad, budget, message: "Jogador indisponível para contratação." };
   }
   if (source.marketStatus !== "sale" && source.marketStatus !== "loan") return { squad, budget, message: "Jogador não está à venda nem disponível para empréstimo." };
-  if (squad.length >= MAX_CLUB_SQUAD_SIZE) return { squad, budget, message: "Elenco cheio: limite de 35 jogadores." };
+  // Keep the existing in-career recruitment rule separate from the imported catalog.
+  if (squad.length >= 35) return { squad, budget, message: "Elenco cheio: limite de 35 jogadores." };
   const kind = terms?.kind ?? source.marketStatus;
   if (kind !== source.marketStatus) return { squad, budget, message: "O tipo de contratação não corresponde à disponibilidade do jogador." };
   const feeBrl = terms?.feeBrl ?? source.marketValueBrl * 2;

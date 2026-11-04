@@ -35,11 +35,11 @@ describe("editor database", () => {
     expect(outfield.every((player) => player.secondaryPosition)).toBe(true);
   });
 
-  it("caps every club squad at the FIFA competition limit", () => {
+  it("guards oversized catalogs without limiting complete real squads to 35", () => {
     const database = createDefaultDatabase();
     const clubId = database.clubs[0].id;
     const template = database.players.find((player) => player.clubId === clubId)!;
-    const oversized = [...database.players, ...Array.from({ length: 30 }, (_, index) => ({ ...template, id: `extra-${index}`, shirtNumber: 50 + index }))];
+    const oversized = [...database.players, ...Array.from({ length: MAX_CLUB_SQUAD_SIZE + 10 }, (_, index) => ({ ...template, id: `extra-${index}`, shirtNumber: 50 + index }))];
     const limited = enforceEditorSquadLimit(oversized);
     expect(limited.filter((player) => player.clubId === clubId)).toHaveLength(MAX_CLUB_SQUAD_SIZE);
   });
