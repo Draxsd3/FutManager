@@ -100,6 +100,7 @@ export async function readCloudDatabase(userId: string): Promise<EditorDatabase 
     players: (playerRows ?? []).map((row) => ({
       id: row.id,
       transfermarkt: row.transfermarkt ?? undefined,
+      ...(row.transfermarkt?.loan ? { loan: row.transfermarkt.loan } : {}),
       clubId: row.club_id,
       name: row.name,
       shirtNumber: row.shirt_number,
@@ -180,7 +181,7 @@ async function performCloudDatabaseWrite(database: EditorDatabase, expectedUserI
   if (limitedPlayers.length) {
     const rows = limitedPlayers.map((player) => ({
       id: player.id,
-      ...(player.transfermarkt ? { transfermarkt: player.transfermarkt } : {}),
+      ...(player.transfermarkt ? { transfermarkt: { ...player.transfermarkt, ...(player.loan ? { loan: player.loan } : {}) } } : {}),
       owner_id: userId,
       club_id: player.clubId,
       name: player.name,

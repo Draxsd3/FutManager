@@ -133,7 +133,9 @@ function evaluateOffer(offer: TransferNegotiation): TransferNegotiation {
 }
 
 export function databaseWithCompletedTransfers(database: EditorDatabase, negotiations: TransferNegotiation[]) {
-  const completed = new Map(negotiations.filter((item) => item.status === "completed").map((item) => [item.playerId, item]));
+  // Negotiations are newest first: an older loan must not override a later sale.
+  const completed = new Map<string, TransferNegotiation>();
+  for (const deal of negotiations) if (deal.status === "completed" && !completed.has(deal.playerId)) completed.set(deal.playerId, deal);
   if (!completed.size) return database;
   return {
     ...database,

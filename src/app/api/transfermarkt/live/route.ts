@@ -1,3 +1,4 @@
+import { loanFromTransferHistory } from "@/lib/importer/transfermarkt-loans";
 import { createClient } from "@supabase/supabase-js";
 import { liveRequestSchema, normalizeLiveClub } from "@/lib/importer/transfermarkt-live";
 
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
     return JSON.parse(text);
   }
   try {
+    if (body.action === "loans") return reply({ loan: loanFromTransferHistory(await get(`/players/${body.player}/transfers`), body.player) });
     if (body.action === "seasons") return reply(await get(`/competitions/${body.competition}/seasons`));
     if (body.action === "members") return reply(await get(`/competitions/${body.competition}/clubs?season_id=${body.season}`));
     // Two bounded upstream reads per request, rather than one long-running 156-club function.
