@@ -62,3 +62,50 @@ class ImportTests(unittest.TestCase):
 
 
 if __name__ == '__main__': unittest.main()
+
+
+class CompetitionTests(unittest.TestCase):
+    def test_search_reads_all_pages(self):
+        from sync import search_competitions
+        class Client:
+            def get(self, path):
+                return {'results': [{'id': path[-1]}], 'lastPageNumber': 2}
+        self.assertEqual(len(search_competitions(Client(), 'brasileirão')), 2)
+
+    def test_visits_each_club_and_keeps_forty_players(self):
+        from sync import collect_competition
+        paths = []
+        class Client:
+            def get(self, path):
+                paths.append(path)
+                if path.startswith('/competitions/'):
+                    return {'id': 'TEST', 'name': 'Campeonato Brasileiro Série A', 'seasonId': '2026', 'clubs': [{'id': '123'}]}
+                p, s = data()
+                s['players'] = [dict(s['players'][i % 11], id=str(i+1)) for i in range(40)]
+                return p if '/profile' in path else s
+        snapshot, report = collect_competition(Client(), 'TEST', 'Série A', '2026', {'clubs': []})
+        self.assertEqual(report['errors'], [])
+        self.assertEqual(len(snapshot['clubs'][0]['players']), 40)
+        self.assertEqual(snapshot['version'], 2)
+        self.assertEqual(len(paths), 3)
+        self.assertIn('season_id=2026', paths[-1])
+
+    def test_rejects_wrong_division_and_empty_listing(self):
+        from sync import collect_competition
+        for clubs in ([], [{'id': '123'}]):
+            class Client:
+                def get(self, path):
+                    return {'id': 'TEST', 'name': 'CBF Brasileiro U20', 'seasonId': '2026', 'clubs': clubs}
+            with self.assertRaises(ValueError):
+                collect_competition(Client(), 'TEST', 'Série A', '2026', {'clubs': []})
+
+    def test_reports_failed_club_instead_of_publishing_a_fake_success(self):
+        from sync import collect_competition
+        class Client:
+            def get(self, path):
+                if '/competitions/' in path:
+                    return {'id': 'TEST', 'name': 'Campeonato Brasileiro Série D', 'seasonId': '2026', 'clubs': [{'id': '123'}]}
+                raise OSError('503')
+        snapshot, report = collect_competition(Client(), 'TEST', 'Série D', '2026', {'clubs': []})
+        self.assertEqual(len(report['errors']), 1)
+        self.assertEqual(snapshot['clubs'], [])

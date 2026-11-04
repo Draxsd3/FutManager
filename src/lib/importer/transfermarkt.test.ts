@@ -29,7 +29,7 @@ it("updates only a registered club, preserving local ID, identity, division, ass
   expect(result.clubs[0]).toEqual({ ...club, stadiumName: "Updated stadium", stadiumCapacity: 42000, coachName: "Updated coach" });
   expect(result.clubs.slice(1)).toEqual(database.clubs.slice(1));
   const roster = result.players.filter(p => p.clubId === club.id);
-  expect(roster).toHaveLength(35);
+  expect(roster).toHaveLength(40);
   expect(roster[0].primaryPosition).toBe("G");
   expect(roster.every(p => p.marketValueBrl !== 10_000_000)).toBe(true);
   expect(result.players.filter(p => p.clubId !== club.id)).toEqual(database.players.filter(p => p.clubId !== club.id));
@@ -67,4 +67,33 @@ it("bundled snapshot validates and mapping covers only the existing catalog", as
   expect(transfermarktSnapshotSchema.safeParse(snapshot).success).toBe(true);
   expect(new Set(Object.keys(mapping))).toEqual(new Set(catalog.map(c => c.source)));
   expect(() => applyTransfermarktSnapshot(createDefaultDatabase(), snapshot, catalog, mapping)).not.toThrow();
+});
+
+it("imports missing competition clubs and their complete 40-player rosters idempotently", () => {
+  const { snapshot } = fixture();
+  const incoming = { ...snapshot, version: 2, competitions: [{ id: "TEST", name: "Campeonato Brasileiro Série A", division: "Série A", seasonId: "2026" }],
+    clubs: [{ ...snapshot.clubs[0], source: "tm-123", competitionId: "TEST", country: "Brasil", division: "Série A" }] };
+  const first = applyTransfermarktSnapshot({ clubs: [], players: [] }, incoming, [], {});
+  expect(first.clubs).toHaveLength(1);
+  expect(first.players).toHaveLength(40);
+  const second = applyTransfermarktSnapshot(first, incoming, [], {});
+  expect(second.clubs).toHaveLength(1);
+  expect(second.clubs[0].id).toBe(first.clubs[0].id);
+  expect(second.players.map(p => p.id)).toEqual(first.players.map(p => p.id));
+});
+
+it("keeps existing club identity and colors when competition names have common prefixes", () => {
+  const { database, snapshot, club } = fixture();
+  const incoming = { ...snapshot, version: 2, competitions: [{ id: "TEST", name: "Campeonato Brasileiro Série A", division: "Série A", seasonId: "2026" }],
+    clubs: [{ ...snapshot.clubs[0], name: `CR ${club.name}`, source: "tm-123", competitionId: "TEST", country: "Brasil", division: "Série A" }] };
+  const result = applyTransfermarktSnapshot(database, incoming, [], {});
+  expect(result.clubs).toHaveLength(database.clubs.length);
+  expect(result.clubs[0].id).toBe(club.id);
+  expect(result.clubs[0].primaryColor).toBe(club.primaryColor);
+  expect(result.players.filter(p => p.clubId === club.id)).toHaveLength(40);
+});
+
+it("refuses competition imports without matching competition provenance", () => {
+  const { snapshot } = fixture();
+  expect(() => applyTransfermarktSnapshot({ clubs: [], players: [] }, { ...snapshot, version: 2 }, [], {})).toThrow(/Unapproved/);
 });
