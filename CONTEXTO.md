@@ -289,6 +289,6 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Preservar posições livres, formação, estilo, marcação, foco, banco, pausa e autosave. Trocas durante a partida exigem confirmação e respeitam o limite; arrastar uma reserva apenas prepara a troca.
 - O segundo tempo só começa por ação explícita. Fechar o modal no intervalo mantém a partida parada.
 
-### 35. Simplificação visual dos setores do campo — 03/11/2026
-- Reduzir a poluição de posições mostrada na referência: com setores ativados, exibir somente Ataque, Meio, Defesa e Gol, separados por três guias horizontais discretas; remover siglas repetidas e a malha diagonal.
-- Manter setores desligados por padrão, camisas/nomes, proporções, formação e liberdade de posicionamento. Alvos de clique/teclado detalhados permanecem disponíveis sem rótulos visuais extras. Mesma prancheta no pré-jogo e no intervalo.
+### 35. Restauração dos setores do campo — 03/11/2026
+- O usuário pediu para voltar ao visual anterior à simplificação da PR #65. Restauradas as guias detalhadas, siglas e divisões de setores anteriores, no pré-jogo e no intervalo.
+- A simplificação em quatro faixas foi desfeita. Preservar as táticas no intervalo e todas as demais alterações posteriores e independentes.
