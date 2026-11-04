@@ -33,7 +33,7 @@ export function visualFormation({ starters, formation, opponentFormation = forma
     const direction = away ? -1 : 1;
     const bases = away
       ? slots.map((slot) => fieldPoint(slot, true))
-      : starters.slice(0, 11).map((player, index) => fieldPoint(manualPositions[player.id] ?? slots[index] ?? { left: 50, top: 50 }, false));
+      : starters.slice(0, 11).map((player, index) => fieldPoint((index === 10 ? slots[10] : manualPositions[player.id] ?? slots[index]) ?? { left: 50, top: 50 }, false));
     const attacking = scene?.team === team;
     const lineShift = scene ? (ball.x - 50) * .34 : 0;
     const depthProgress = clamp(((ball.x - 50) * direction) / 50, -1, 1);
@@ -41,7 +41,7 @@ export function visualFormation({ starters, formation, opponentFormation = forma
 
     // The nearest outfielder reacts to the ball; the rest move as a covering/supporting unit.
     const pressIndex = scene && !attacking ? bases.reduce((best, base, index) => {
-      if (index === 10 || (!away && starters[index]?.position === "G")) return best;
+      if (index === 10) return best;
       const distance = Math.hypot(base.x - ball.x, base.y - ball.y);
       return distance < best.distance ? { index, distance } : best;
     }, { index: -1, distance: Number.POSITIVE_INFINITY }).index : -1;
@@ -49,24 +49,19 @@ export function visualFormation({ starters, formation, opponentFormation = forma
     const result = bases.map((base, index) => {
       const player = away ? undefined : starters[index];
       const role = roles[index] ?? "M";
-      const goalkeeper = role === "G" || (!away && player?.position === "G");
+      const goalkeeper = role === "G";
       const active = scene?.team === team && scene.actorIndex === index;
       const receiving = scene?.team === team && scene.action === "pass" && scene.targetIndex === index;
       const involved = scene?.team !== team && ["tackle", "foul", "discussion"].includes(scene?.action ?? "") && scene?.targetIndex === index;
       let desired = base;
 
       if (scene) {
-        if (active) {
+        if (goalkeeper) {
+          desired = base;
+        } else if (active) {
           desired = scene.from;
         } else if (receiving || involved || (scene.team === team && scene.action === "offside" && scene.targetIndex === index)) {
           desired = scene.to;
-        } else if (goalkeeper) {
-          // Keep the keeper goal-aware, but let them advance, sweep and move laterally by phase.
-          // This is a soft response to the ball, not a hard lock around the lineup coordinate.
-          desired = {
-            x: base.x + clamp(ball.x - base.x, -32, 32) * .35 + lineShift * .12,
-            y: base.y + (ball.y - base.y) * .45,
-          };
         } else {
           const roleAdvance = role === "A" ? 10 : role === "M" ? 4 : role === "L" ? 2 : 0;
           const roleRetreat = role === "A" ? 6 : role === "M" ? 2 : 0;
@@ -101,8 +96,8 @@ export function visualFormation({ starters, formation, opponentFormation = forma
         if (distance >= 4 || distance === 0 || (a.active && b.active)) continue;
         const push = (4 - distance) / 2;
         const x = dx / distance * push, y = dy / distance * push;
-        if (!a.active) a.target = { x: clamp(a.target.x - x, 5, 95), y: clamp(a.target.y - y, 5, 95) };
-        if (!b.active) b.target = { x: clamp(b.target.x + x, 5, 95), y: clamp(b.target.y + y, 5, 95) };
+        if (!a.active && !a.goalkeeper) a.target = { x: clamp(a.target.x - x, 5, 95), y: clamp(a.target.y - y, 5, 95) };
+        if (!b.active && !b.goalkeeper) b.target = { x: clamp(b.target.x + x, 5, 95), y: clamp(b.target.y + y, 5, 95) };
       }
     }
     return result;

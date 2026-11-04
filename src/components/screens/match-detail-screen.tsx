@@ -67,6 +67,7 @@ export function MatchDetailScreen({ club, clubColors, opponent, homeScore, awayS
   const outgoing = startersData.find((player) => player.id === substitutionOut);
   const incoming = bench.find((player) => player.id === selectedPlayer);
   const canSubstitute = substitutionsLeft > 0;
+  const compatible = !!outgoing && !!incoming && ((startersData.indexOf(outgoing) === 10) === (incoming.position === "G"));
   const theme = clubThemeStyle(club, clubColors);
 
   function close() {
@@ -106,12 +107,12 @@ export function MatchDetailScreen({ club, clubColors, opponent, homeScore, awayS
       </div>
       <footer className={styles.footer}>
         <p className={styles.pending} role="status">{outgoing && incoming
-          ? <><span>Sai <b>{outgoing.name}</b></span><span>Entra <b>{incoming.name}</b></span></>
+          ? <><span>Sai <b>{outgoing.name}</b></span><span>Entra <b>{incoming.name}</b></span>{!compatible && <span>Escolha um goleiro para o gol e jogadores de linha para as demais posições.</span>}</>
           : canSubstitute ? "Selecione um titular no campo e uma reserva para preparar a troca." : "Limite de substituições atingido. Tática e formação continuam disponíveis."}</p>
         <div className={styles.actions}>
           {(outgoing || incoming) && <button type="button" className={styles.cancel} onClick={() => onSelectPlayer(null)}>Cancelar troca</button>}
-          <button type="button" className={styles.confirm} disabled={!canSubstitute || !outgoing || !incoming}
-            onClick={() => { if (canSubstitute && outgoing && incoming) onSubstitute(incoming.id); }}>Confirmar substituição</button>
+          <button type="button" className={styles.confirm} disabled={!canSubstitute || !compatible}
+            onClick={() => { if (canSubstitute && compatible && incoming) onSubstitute(incoming.id); }}>Confirmar substituição</button>
           <button type="button" className={styles.return} onClick={() => { if (isHalftime) { onSelectPlayer(null); onStartSecondHalf(); } else close(); }}>{isHalftime ? "Iniciar 2º tempo →" : "Voltar ao jogo"}</button>
         </div>
       </footer>

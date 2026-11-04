@@ -290,7 +290,7 @@ it("uses the shared pre-match tactics board, confirms substitutions once and tra
   expect(screen.getByLabelText("Campo de escalação")).toBeTruthy();
   expect(document.querySelector('[inert]')).toBeTruthy();
   const shirt = () => document.querySelector<HTMLButtonElement>(`button[data-player="${id}"][data-slot]`)!;
-  const reserve = document.querySelector<HTMLButtonElement>('button[data-reserve]')!;
+  const reserve = Array.from(document.querySelectorAll<HTMLButtonElement>('button[data-reserve]')).find((button) => before.careerSquad?.find((player) => player.id === Number(button.dataset.reserve))?.position !== 'G')!;
   const incoming = Number(reserve.dataset.reserve);
   fireEvent.click(shirt());
   fireEvent.click(reserve);
@@ -299,6 +299,10 @@ it("uses the shared pre-match tactics board, confirms substitutions once and tra
   fireEvent.click(screen.getByRole("button", { name: "Confirmar substituição" }));
   await waitFor(() => expect(readLocalSaves("alice")[0].progress?.substitutionsLeft).toBe(4));
   const after = readLocalSaves("alice")[0].progress!;
+  expect(after.matchBenchIds?.length).toBeLessThanOrEqual(12);
+  expect(after.matchBenchIds).toContain(incoming);
+  expect(after.participation?.[id]?.left).toBe(after.minute);
+  expect(document.querySelector(`button[data-reserve="${id}"]`)).toBeNull();
   expect(after.starters).not.toContain(id);
   expect(after.starters[0]).toBe(incoming);
   expect(after.manualPositions[incoming]).toEqual({ left: 38, top: 9 });
@@ -310,6 +314,7 @@ it("uses the shared pre-match tactics board, confirms substitutions once and tra
   expect(document.activeElement).toBe(tacticsTrigger);
   fireEvent.click(screen.getByRole("button", { name: /Escalação e táticas/ }));
   expect(document.querySelector(`button[data-player="${incoming}"][data-slot]`)).toBeTruthy();
+  expect(document.querySelector(`button[data-reserve="${id}"]`)).toBeNull();
   expect(readLocalSaves("alice")[0].progress?.manualPositions[incoming]).toEqual({ left: 38, top: 9 });
 });
 

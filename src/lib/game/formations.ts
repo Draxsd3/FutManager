@@ -93,6 +93,7 @@ export function playerFitAtPosition(player: Player, formation: string, position:
   const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
   const roles = formationSlotRoles[formation] ?? formationSlotRoles["4-3-3"];
   const index = slots.reduce((best, slot, slotIndex) => {
+    if ((slotIndex === 10) !== (fallbackIndex === 10)) return best;
     const distance = Math.hypot(slot.left - position.left, slot.top - position.top);
     return distance < best.distance ? { index: slotIndex, distance } : best;
   }, { index: fallbackIndex, distance: Number.POSITIVE_INFINITY }).index;
