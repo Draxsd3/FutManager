@@ -266,7 +266,7 @@ export function CompetitionCenter({
                         {isActive && isKnockout ? (
                           <CompetitionBracket fixtures={effectiveFixtures} />
                         ) : rows.length ? (
-                          <div className={`${styles.tableWrap} ${styles.standingsTable}`} role="region" aria-label="Tabela de classificação" tabIndex={0}>
+                          <div className={`${styles.tableWrap} ${styles.standingsTable}`} role="region" aria-label="Tabela de classificação">
                             <table>
                               <caption className={styles.srOnly}>
                                 Classificação de {selected.name}

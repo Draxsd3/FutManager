@@ -638,11 +638,10 @@
 .searchTools input { min-width:0; width:100%; padding:8px; border:1px solid #d2ddd0; border-radius:5px; background:white; color:#26392f; font:inherit; }
 .searchTools input[hidden] { display:none; }
 
-/* CBF-inspired light table; fixed position/stat widths keep the crest beside the rank. */
-.standingsTable { max-height:min(62vh,760px); overflow:auto; overscroll-behavior:contain; background:#fff; color:#243a55; scrollbar-width:thin; }
-.standingsTable:focus-visible { outline:2px solid #3e7952; outline-offset:-2px; }
+/* CBF-inspired light table; full-height without an internal vertical scrollbar. */
+.standingsTable { max-height:none; overflow-x:auto; overflow-y:visible; background:#fff; color:#243a55; }
 .mainData .standingsTable table { min-width:690px; font-size:11px; table-layout:fixed; }
-.mainData .standingsTable thead th { position:sticky; top:0; z-index:2; padding:10px 5px; color:#53657a; background:#fff; font-size:10px; }
+.mainData .standingsTable thead th { padding:10px 5px; color:#53657a; background:#fff; font-size:10px; }
 .mainData .standingsTable thead th:first-child { width:38px; }
 .mainData .standingsTable thead th:nth-child(2) { text-align:left; }
 .mainData .standingsTable thead th:nth-child(n+3):not(:last-child) { width:40px; }
