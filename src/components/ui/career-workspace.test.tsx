@@ -69,9 +69,10 @@ it("restores body scrolling on unmount", () => {
   document.body.style.overflow = "";
 });
 
-it("places the section icon and accessible title in the top window bar", () => {
+it("uses the same compact window header for all sections without a duplicate icon", () => {
   render(<CareerWorkspace nav={[]} date="Hoje" teamName="Corinthians" background={null} title="Times" titleIcon="group" onClose={vi.fn()}><p>Conteúdo</p></CareerWorkspace>);
   const heading = screen.getByRole("heading", { level: 1, name: "Times" });
-  expect(heading.closest("header")?.querySelector('[data-management-icon="group"]')).toBeTruthy();
+  expect(heading.closest("header")?.hasAttribute("data-window-header")).toBe(true);
+  expect(heading.closest("header")?.querySelector("[data-management-icon]")).toBeNull();
   expect(screen.getByRole("dialog", { name: "Times" })).toBeTruthy();
 });

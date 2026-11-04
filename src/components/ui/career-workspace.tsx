@@ -2,7 +2,8 @@
 
 import { useEffect, useId, useRef, type ComponentProps, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { ManagementIcon, type ManagementIconName } from "./management-header";
+import type { ManagementIconName } from "./management-header";
+import { WindowHeader, WindowHeaderContext } from "./window-header";
 import { AppShell, clubThemeStyle } from "./app-shell";
 import styles from "./career-workspace.module.css";
 
@@ -25,7 +26,7 @@ export function CareerWorkspace({ background, title, titleIcon, onClose, childre
   </>;
 }
 
-export function CareerWindow({ title, titleIcon, onClose, children, style, classicContent }: { title: string; titleIcon?: ManagementIconName; onClose: () => void; children: ReactNode; style: CSSProperties; classicContent: boolean }) {
+export function CareerWindow({ title, onClose, children, style, classicContent }: { title: string; titleIcon?: ManagementIconName; onClose: () => void; children: ReactNode; style: CSSProperties; classicContent: boolean }) {
   const label = useId();
   const panel = useRef<HTMLElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -56,11 +57,8 @@ export function CareerWindow({ title, titleIcon, onClose, children, style, class
           else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
         }
       }} tabIndex={-1}>
-      <header className={styles.header}>
-        {titleIcon ? <h1 id={label} className={styles.windowTitle}><span className={styles.titleIcon}><ManagementIcon name={titleIcon} /></span>{title}</h1> : <span id={label}>{title}</span>}
-        <button ref={closeButton} type="button" onClick={onClose} aria-label={`Fechar ${title}`} title="Fechar e voltar à Principal (Esc)">×</button>
-      </header>
-      <div className={`${styles.content} ${classicContent ? styles.classicContent : ""}`}>{children}</div>
+      <WindowHeader title={title} id={label} onClose={onClose} closeRef={closeButton} />
+      <div className={`${styles.content} ${classicContent ? styles.classicContent : ""}`}><WindowHeaderContext.Provider value>{children}</WindowHeaderContext.Provider></div>
     </section>
   </div>, document.body);
 }

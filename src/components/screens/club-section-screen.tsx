@@ -1,11 +1,12 @@
 "use client";
 import { ManagementHeader } from "@/components/ui/management-header";
+import { WindowHeaderContext } from "@/components/ui/window-header";
 import surface from "@/components/ui/management-surface.module.css";
 
 
 import { TrophyGallery } from "@/components/ui/championship-history";
 import type { ChampionshipRecord } from "@/lib/game/honours";
-import { useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import type { CareerSeason } from "@/lib/game/season";
 import type { EditorDatabase } from "@/lib/game/editor-data";
 import type { Player, RoundFixture } from "@/lib/game/mock-data";
@@ -158,6 +159,7 @@ function Cell({ children }: { children: React.ReactNode }) { return <td classNam
 
 
 function TrainingCenter({ squad, starters, week, season, sessions, onTrain }: { squad: Player[]; starters: number[]; week: number; season: number; sessions: TrainingSessionRecord[]; onTrain: (input: Omit<TrainingSessionInput, "season" | "week">) => { record?: TrainingSessionRecord; error?: string } }) {
+  const embedded = useContext(WindowHeaderContext);
   const weekly = trainingWeekSessions(sessions, season, week);
   const completedDays = new Set(weekly.map((session) => session.day));
   const [day, setDay] = useState<TrainingDay>(TRAINING_DAYS.find((item) => !completedDays.has(item)) ?? TRAINING_DAYS[0]);
@@ -189,7 +191,7 @@ function TrainingCenter({ squad, starters, week, season, sessions, onTrain }: { 
 
   return <div className={trainingStyles.center}>
     <header className={trainingStyles.heading}>
-      <div><span>PLANEJAMENTO DA SEMANA</span><h2><TrainingIcon name="resistencia" size={48} /> Centro de treinamento</h2><p>Organize a carga, escolha os atletas e acompanhe o efeito de cada sessão.</p></div>
+      {!embedded && <div><span>PLANEJAMENTO DA SEMANA</span><h2><TrainingIcon name="resistencia" size={48} /> Centro de treinamento</h2><p>Organize a carga, escolha os atletas e acompanhe o efeito de cada sessão.</p></div>}
       <div className={trainingStyles.weekStamp}><ClassicIcon name="calendar" size={16} /><span>Semana {week} · {season}</span></div>
     </header>
     <div className={trainingStyles.layout}>

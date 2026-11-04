@@ -1,9 +1,10 @@
 "use client";
 import { ManagementIcon } from "@/components/ui/management-header";
 
+import { WindowHeader, WindowHeaderContext } from "@/components/ui/window-header";
 import Image from "next/image";
 import { clubKitAsset } from "@/lib/game/assets";
-import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { useContext, useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import type { Player } from "@/lib/game/mock-data";
 import type { ManualPosition } from "@/lib/game/career";
 import {
@@ -60,6 +61,7 @@ type Props = {
 };
 
 export function LineupScreen(props: Props) {
+  const embedded = useContext(WindowHeaderContext);
   const {
     kit = 1,
     onKitChange,
@@ -362,8 +364,8 @@ export function LineupScreen(props: Props) {
       <div className={styles.container}>
         <header className={styles.header}>
           <div className={styles.titleBlock}>
-            <p className={styles.eyebrow}>FUTMANAGER <span>/</span> {competition} · {round}ª RODADA</p>
-            <h1><ManagementIcon name="tactics" />{`ESCALAR TIME · ${formation}`}</h1>
+            {!embedded && <><p className={styles.eyebrow}>FUTMANAGER <span>/</span> {competition} · {round}ª RODADA</p>
+            <h1><ManagementIcon name="tactics" />{`ESCALAR TIME · ${formation}`}</h1></>}
             <div className={styles.fixture}>
               <span><Crest club={club} size="sm" />{club}</span>
               <b>VS</b>
@@ -559,7 +561,7 @@ export function LineupScreen(props: Props) {
           if (event.shiftKey && document.activeElement === buttons[0]) { event.preventDefault(); buttons[buttons.length - 1].focus(); }
           else if (!event.shiftKey && document.activeElement === buttons[buttons.length - 1]) { event.preventDefault(); buttons[0].focus(); }
         }}>
-          <header><div><p className={styles.eyebrow}>FICHA DO RESERVA</p><h2 id="reserve-detail-title">{detailPlayer.name}</h2></div><button ref={detailClose} onClick={() => setDetailPlayer(null)} aria-label="Fechar ficha">×</button></header>
+          <WindowHeader id="reserve-detail-title" level={2} title={detailPlayer.name} onClose={() => setDetailPlayer(null)} closeRef={detailClose} closeLabel="Fechar ficha" />
           <div className={styles.detailGrid}>
             <p><span>Posição</span><strong>{fifaPosition(detailPlayer)}</strong></p><p><span>Força</span><strong>{detailPlayer.overall}</strong></p><p><span>Energia</span><strong>{detailPlayer.energy}%</strong></p><p><span>Idade</span><strong>{detailPlayer.age} anos</strong></p><p><span>Gols</span><strong>{detailPlayer.goals}</strong></p><p><span>Assistências</span><strong>{detailPlayer.assists}</strong></p><p><span>Nota média</span><strong>{detailPlayer.avgRating?.toFixed(1) ?? "—"}</strong></p><p><span>Contrato até</span><strong>{detailPlayer.contractUntil}</strong></p>
           </div>

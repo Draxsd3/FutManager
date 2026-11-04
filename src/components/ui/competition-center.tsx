@@ -1,7 +1,7 @@
 "use client";
 import { SERIES_A_2026_ZONES, standingsZone } from "@/lib/game/standings-zones";
 import { CompetitionBracket, CompetitionGroups, CompetitionRounds, recentMatches } from "./competition-results";
-import { ManagementIcon } from "@/components/ui/management-header";
+import { WindowHeader } from "./window-header";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -163,22 +163,7 @@ export function CompetitionCenter({
         aria-modal="true"
         aria-labelledby="competitions-title"
       >
-        <header className={styles.header}>
-          <div>
-            <p>CENTRAL DE COMPETIÇÕES / 2026</p>
-            <h1 id="competitions-title"><ManagementIcon name="data_table" />
-              O futebol além do seu clube<span>.</span>
-            </h1>
-          </div>
-          <button
-            ref={closeButton}
-            className={styles.closeButton}
-            onClick={onClose}
-            aria-label="Fechar central de competições"
-          >
-            <span aria-hidden="true">×</span>
-          </button>
-        </header>
+        <WindowHeader title="O futebol além do seu clube" id="competitions-title" onClose={onClose} closeLabel="Fechar central de competições" closeRef={closeButton} />
         <nav
           className={styles.categories}
           aria-label="Categorias de competição"

@@ -1,4 +1,7 @@
-import type { ComponentProps, ReactNode } from "react";
+"use client";
+
+import { useContext, type ComponentProps, type ReactNode } from "react";
+import { WindowHeaderContext } from "./window-header";
 import { InterfaceIcon } from "./interface-icon";
 import styles from "./management-surface.module.css";
 
@@ -13,7 +16,9 @@ export function ManagementHeader({ title, eyebrow, description, icon, actions, i
   title: string; eyebrow: string; description?: string; icon: ManagementIconName;
   actions?: ReactNode; id?: string; level?: 1 | 2;
 }) {
+  const embedded = useContext(WindowHeaderContext);
   const Heading = level === 1 ? "h1" : "h2";
+  if (embedded && level === 1) return <>{id && <span id={id} className={styles.srOnly}>{title}</span>}{actions && <div className={`${styles.actions} ${styles.embeddedActions}`}>{actions}</div>}</>;
   return <header className={styles.header} data-management-header>
     <div className={styles.identity}><ManagementIcon name={icon} /><div>
       <p className={styles.eyebrow}>{eyebrow}</p>

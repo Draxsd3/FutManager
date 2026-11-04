@@ -1,4 +1,5 @@
 "use client";
+import { WindowHeader } from "@/components/ui/window-header";
 import { ManagementIcon } from "@/components/ui/management-header";
 
 import { useMemo, useState, useEffect, useRef, type CSSProperties } from "react";
@@ -161,7 +162,7 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack }: 
       </>}
     </section>
 
-    {modal && <div className={styles.modalBackdrop} onMouseDown={() => setModal(null)}><section ref={dialog} role="dialog" aria-modal="true" aria-label={modal === "club" ? "Editar equipe" : "Editar jogador"} className={styles.modal} onKeyDown={(event) => { if(event.key === "Escape") setModal(null); }} onMouseDown={(event) => event.stopPropagation()}><header><strong>{modal === "club" ? "Editar equipe" : "Editar jogador"}</strong><button aria-label="Fechar editor" onClick={() => setModal(null)}><ClassicIcon name="cancel" /></button></header>{modal === "club" ? <ClubForm club={selectedClub} onChange={updateClub} /> : <PlayerForm player={selectedPlayer} onChange={updatePlayer} />}<footer><button onClick={() => setModal(null)}>Salvar e fechar</button></footer></section></div>}
+    {modal && <div className={styles.modalBackdrop} onMouseDown={() => setModal(null)}><section ref={dialog} role="dialog" aria-modal="true" aria-label={modal === "club" ? "Editar equipe" : "Editar jogador"} className={styles.modal} onKeyDown={(event) => { if(event.key === "Escape") setModal(null); }} onMouseDown={(event) => event.stopPropagation()}><WindowHeader level={2} title={modal === "club" ? "Editar equipe" : "Editar jogador"} onClose={() => setModal(null)} closeLabel="Fechar editor" />{modal === "club" ? <ClubForm club={selectedClub} onChange={updateClub} /> : <PlayerForm player={selectedPlayer} onChange={updatePlayer} />}<footer><button onClick={() => setModal(null)}>Salvar e fechar</button></footer></section></div>}
     <div className={styles.syncStatus}>{syncLabel}</div>
   </main>;
 }
