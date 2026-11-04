@@ -490,3 +490,10 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Pedido com referências: mover o título/ícone de Times do cabeçalho interno para a barra superior da janela e remover a repetição dentro da tela, deixando-a mais limpa.
 - Barra da janela Times recebe ícone compacto e título único (h1, mantendo nome acessível do diálogo). No conteúdo embutido, remover cabeçalho, breadcrumb e descrição redundantes; manter saldo/retorno em linha compacta, filtros e grupos por divisão. Uso isolado de Times mantém cabeçalho próprio. Sem mudar as demais telas, navegação, elencos ou negociações.
 - Validação: 17 testes direcionados em 4 arquivos aprovados, lint, TypeScript, build e diff-check aprovados. Duas regressões novas cobrem título/ícone na barra e ausência da duplicação no conteúdo com ações preservadas. Sem inspeção visual em navegador.
+
+### 61. Simplificar o topo da central de competições — 04/11/2026
+
+- Pedido com três referências: remover formato/grupo, contadores e médias acima das tabelas; manter apenas taça e nome da competição. Restaurar barra superior escura e usar somente X sem contorno para sair. Na exploração, manter apenas a lupa.
+- Removidos do cabeçalho da competição temporada/local, descrição de formato/participantes, selo de origem e métricas agregadas. Taça/nome seguidos das opções de classificação, rodadas/estatísticas e conteúdo existente. Barra superior na cor escura #242827; X sem texto visível ou borda, preservando nome acessível, foco, Escape e fechamento.
+- Exploração sem título/instruções e sem seletor País/região; lupa abre busca com foco e pode recolher/limpar o filtro. Catálogo, categorias e seleção de campeonato preservados. Não alterar resultados, tabelas, rodadas, calendário ou saves.
+- Validação: 10 testes direcionados em 2 arquivos aprovados, lint, TypeScript, build e diff-check aprovados. Regressão cobre ausência dos resumos/filtro de região, apenas taça/nome, lupa/foco/busca/recolhimento e X funcional. Sem inspeção visual em navegador.

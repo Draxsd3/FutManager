@@ -61,6 +61,7 @@ it("browses other divisions and categories without fabricating results or regist
   expect(screen.getByRole("button", { name: /Copa do Nordeste/ })).toBeTruthy();
   expect(screen.getByRole("button", { name: /Copa Verde/ })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Estadual" }));
+  fireEvent.click(screen.getByRole("button", { name: "Buscar campeonatos" }));
   fireEvent.change(screen.getByLabelText("Buscar campeonato"), {
     target: { value: "Paulista" },
   });
@@ -139,4 +140,28 @@ it("restores focus and body scrolling after closing", () => {
   expect(document.activeElement).toBe(trigger);
   expect(document.body.style.overflow).toBe("");
   trigger.remove();
+});
+
+
+it("keeps only trophy and competition title above the table with icon-only search and close", () => {
+  const database = createDefaultDatabase();
+  const close = vi.fn();
+  render(<CompetitionCenter club={database.clubs[0].name} competition={database.clubs[0].division} database={database} fixtures={[]} table={[]} topScorers={[]} topRatings={[]} round={1} onClose={close} />);
+  expect(screen.queryByText("Clubes cadastrados")).toBeNull();
+  expect(screen.queryByText("Média de gols")).toBeNull();
+  expect(screen.queryByText("EXPLORAR CAMPEONATOS")).toBeNull();
+  expect(screen.queryByText("País / região")).toBeNull();
+  expect(screen.getByRole("heading", { level: 2 }).parentElement?.textContent).toBe(screen.getByRole("heading", { level: 2 }).textContent);
+  expect(screen.queryByRole("searchbox")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Buscar campeonatos" }));
+  const search = screen.getByRole("searchbox", { name: "Buscar campeonato" });
+  expect(document.activeElement).toBe(search);
+  fireEvent.change(search, { target: { value: "não existe" } });
+  expect(screen.getByText("Nenhuma competição encontrada")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Buscar campeonatos" }));
+  expect(screen.getByRole("table")).toBeTruthy();
+  const button = screen.getByRole("button", { name: "Fechar central de competições" });
+  expect(button.textContent).toBe("×");
+  fireEvent.click(button);
+  expect(close).toHaveBeenCalledOnce();
 });

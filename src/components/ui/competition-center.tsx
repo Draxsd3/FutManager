@@ -66,7 +66,9 @@ export function CompetitionCenter({
   const [category, setCategory] = useState<CompetitionCategory>(activeId.startsWith("state:") ? "state" : "national");
   const [selectedId, setSelectedId] = useState(activeId);
   const [scope, setScope] = useState("table");
-  const [location, setLocation] = useState("all");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInput = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (searchOpen) searchInput.current?.focus(); }, [searchOpen]);
   const [search, setSearch] = useState("");
   const [formClub, setFormClub] = useState<string>();
   const [selectedRound, setSelectedRound] = useState("");
@@ -109,10 +111,8 @@ export function CompetitionCenter({
     };
   }, []);
   const inCategory = catalog.filter((item) => item.category === category);
-  const locations = [...new Set(inCategory.map((item) => item.location))];
   const options = inCategory.filter(
     (item) =>
-      (location === "all" || item.location === location) &&
       item.name
         .toLocaleLowerCase("pt-BR")
         .includes(search.toLocaleLowerCase("pt-BR")),
@@ -142,12 +142,6 @@ export function CompetitionCenter({
             a.club.localeCompare(b.club, "pt-BR"),
         )
     : [];
-  const goals = isActive
-    ? careerData?.goals ?? (isKnockout ? effectiveFixtures.filter((fixture) => fixture.played !== false).reduce((sum, fixture) => sum + fixture.homeScore + fixture.awayScore, 0) : effectiveTable.reduce((sum, row) => sum + row.goalsFor, 0))
-    : null;
-  const games = isActive
-    ? careerData?.matchesPlayed ?? (isKnockout ? effectiveFixtures.filter((fixture) => fixture.played !== false).length : effectiveTable.reduce((sum, row) => sum + row.played, 0) / 2)
-    : null;
   const scorers = isActive
     ? effectiveScorers.filter((player) => player.goals > 0 && player.played > 0)
     : [];
@@ -173,10 +167,11 @@ export function CompetitionCenter({
           </div>
           <button
             ref={closeButton}
+            className={styles.closeButton}
             onClick={onClose}
             aria-label="Fechar central de competições"
           >
-            Fechar <span aria-hidden="true">×</span>
+            <span aria-hidden="true">×</span>
           </button>
         </header>
         <nav
@@ -188,7 +183,6 @@ export function CompetitionCenter({
               key={item.id}
               onClick={() => {
                 setCategory(item.id);
-                setLocation("all");
                 setSearch("");
                 setScope("table"); setFormClub(undefined); setSelectedRound("");
               }}
@@ -200,28 +194,12 @@ export function CompetitionCenter({
         </nav>
         <div className={styles.layout}>
           <aside className={styles.browser}>
-            <p className={styles.eyebrow}>EXPLORAR CAMPEONATOS</p>
-            <label>
-              Buscar campeonato
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => { setSearch(event.target.value); setFormClub(undefined); }}
-                placeholder="Nome da competição"
-              />
-            </label>
-            <label>
-              País / região
-              <select
-                value={location}
-                onChange={(event) => { setLocation(event.target.value); setFormClub(undefined); }}
-              >
-                <option value="all">Todos</option>
-                {locations.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </label>
+            <div className={styles.searchTools}>
+              <button type="button" className={styles.searchToggle} aria-label="Buscar campeonatos" title="Buscar campeonatos" aria-expanded={searchOpen} aria-controls="competition-search" onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) { setSearch(""); setFormClub(undefined); } }}>
+                <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>
+              </button>
+              <input id="competition-search" ref={searchInput} type="search" hidden={!searchOpen} aria-label="Buscar campeonato" value={search} onChange={(event) => { setSearch(event.target.value); setFormClub(undefined); }} placeholder="Buscar campeonato" />
+            </div>
             <div className={styles.competitionList}>
               {options.map((item) => (
                 <button
@@ -250,53 +228,14 @@ export function CompetitionCenter({
                 </button>
               ))}
             </div>
-            <p className={styles.catalogNote}>
-              {options.length} competição(ões) no catálogo.
-              <br />
-              Catálogo não significa inscrição confirmada.
-            </p>
           </aside>
           <section className={styles.content}>
             {selected ? (
               <>
                 <header className={styles.competitionHeader}>
-                  {competitionTrophyAsset(selected) && <Image src={competitionTrophyAsset(selected)!} alt={`Troféu ${selected.name}`} width={64} height={84} unoptimized className={styles.headerTrophy} />}
-                  <div className={styles.headerInfo}>
-                    <p className={styles.eyebrow}>
-                      {selected.location} / TEMPORADA 2026
-                    </p>
-                    <h2>{selected.name}</h2>
-                    <p>
-                      {selected.format} <span>·</span>{" "}
-                      {rows.length
-                        ? `${rows.length} clubes cadastrados na divisão`
-                        : "Participantes ainda não cadastrados"}
-                    </p>
-                  </div>
-                  <span className={styles.badge}>
-                    {isActive ? "DADOS DA CARREIRA" : "CATÁLOGO"}
-                  </span>
+                  {competitionTrophyAsset(selected) ? <Image src={competitionTrophyAsset(selected)!} alt={`Troféu ${selected.name}`} width={64} height={84} unoptimized className={styles.headerTrophy} /> : <span className={styles.headerTrophy} aria-hidden="true"><ClassicIcon name="medal_award_gold" size={30} /></span>}
+                  <h2>{selected.name}</h2>
                 </header>
-                <div className={styles.metrics}>
-                  <Metric
-                    label="Clubes cadastrados"
-                    value={rows.length ? String(rows.length) : "—"}
-                  />
-                  <Metric
-                    label="Partidas registradas"
-                    value={games === null ? "—" : String(games)}
-                  />
-                  <Metric
-                    label="Gols registrados"
-                    value={goals === null ? "—" : String(goals)}
-                  />
-                  <Metric
-                    label="Média de gols"
-                    value={
-                      games && goals !== null ? (goals / games).toFixed(2) : "—"
-                    }
-                  />
-                </div>
                 <nav
                   className={styles.scopes}
                   aria-label="Detalhes da competição"
@@ -513,14 +452,6 @@ export function CompetitionCenter({
           </section>
         </div>
       </div>
-    </div>
-  );
-}
-function Metric({ value, label }: { value: string; label: string }) {
-  return (
-    <div>
-      <small>{label}</small>
-      <strong>{value}</strong>
     </div>
   );
 }
