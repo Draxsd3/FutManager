@@ -283,3 +283,8 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 
 - Ao concluir uma sessão, o card semanal da Principal deve marcar o dia e exibir a sessão/contagem atualizada. Usar a mesma semana de treino do centro e do save (`round` de progresso), não a rodada específica da competição: campeonatos intercalados podem ter rodadas diferentes da semana da carreira.
 - `HubScreen.trainingWeek` recebe a semana da carreira separada da rodada do confronto; badge e resumo usam esse valor. Exibir todos os até seis dias concluídos, não apenas os dois últimos, preservando a separação por semana/temporada e o estilo existente.
+
+## 34. Táticas no intervalo — 03/11/2026
+- O intervalo deve oferecer a mesma prancheta de escalação usada antes da partida, reutilizando `LineupScreen` dentro do modal de táticas.
+- Preservar posições livres, formação, estilo, marcação, foco, banco, pausa e autosave. Trocas durante a partida exigem confirmação e respeitam o limite; arrastar uma reserva apenas prepara a troca.
+- O segundo tempo só começa por ação explícita. Fechar o modal no intervalo mantém a partida parada.

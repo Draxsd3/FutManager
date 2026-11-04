@@ -172,3 +172,7 @@
 .return{color:var(--game-accent-text,#10291a)}
 .cancel{color:#d9dbe1}
 .modal button:focus-visible,.modal select:focus-visible{outline-color:var(--game-accent,#a2dfb2)}
+
+.halftimeLineup { flex: 1; min-height: 0; overflow: auto; }
+
+.halftimeModal { height: calc(100dvh - 32px); }

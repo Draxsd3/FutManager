@@ -50,6 +50,7 @@ type Props = {
     substitutionsLeft: number;
     panel: ReactNode;
     substitutionActions: ReactNode;
+    continueLabel?: string;
   };
 };
 
@@ -375,7 +376,7 @@ export function LineupScreen(props: Props) {
               onClick={() => { void onPlay(); }}
               disabled={startersData.length !== 11 || isStartingMatch}
             >
-              {isStartingMatch ? "Lendo regras…" : match ? "Voltar ao jogo →" : "Ir para a partida →"}
+              {isStartingMatch ? "Lendo regras…" : match ? (match.continueLabel ?? "Voltar ao jogo →") : "Ir para a partida →"}
             </button>
             {matchStartError && <p role="alert" className={styles.errorMessage}>{matchStartError}</p>}
           </div>
@@ -502,6 +503,7 @@ export function LineupScreen(props: Props) {
                   onClick={() => select(player.id)}
                   onDoubleClick={(event) => { detailOrigin.current = event.currentTarget; setDetailPlayer(player); }}
                   onKeyDown={(event) => { if (event.key.toLowerCase() === "i") { event.preventDefault(); detailOrigin.current = event.currentTarget; setDetailPlayer(player); } }}
+                  disabled={!!match && match.substitutionsLeft <= 0}
                   data-player={player.id} data-reserve={player.id}
                   title="Dois cliques para detalhes; segure e arraste para mover"
                   aria-label={`${player.name}, ${fifaPosition(player)}, força ${player.overall}. Dois cliques ou tecla I para detalhes`}

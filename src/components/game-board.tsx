@@ -1346,6 +1346,23 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             onStartSecondHalf={startSecondHalf}
             returnFocusTo={matchTacticsTrigger.current}
             isHalftime={halftimeWaiting}
+            coach={coach}
+            competition={competitionName}
+            round={competitionRound}
+            onResetPositions={resetManualPositions}
+            onPlacePlayer={(id, slot, point) => {
+              if (!starters.includes(id)) {
+                if (substitutionsLeft <= 0) return;
+                setSubstitutionOut(starters[slot]);
+                setSelectedPlayer(id);
+                return;
+              }
+              const result = deployLineupPlayer(starters, squad, formation, manualPositions, id, slot, point);
+              if (!result) return;
+              setStarters(result.starters);
+              setManualPositions(result.positions);
+              void persistCareerExtras(playerCareers, result.positions, result.starters);
+            }}
           />
         )}
       </>

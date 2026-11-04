@@ -4,10 +4,11 @@ import { useEffect, useRef } from "react";
 import type { ManualPosition } from "@/lib/game/career";
 import type { MatchStatistics } from "@/lib/game/live-match";
 import type { Player } from "@/lib/game/mock-data";
-import { formations } from "@/lib/game/formations";
+import { formationSlots, formations } from "@/lib/game/formations";
 import { clubThemeStyle } from "@/components/ui/app-shell";
 import { Crest } from "@/components/ui/club-sidebar";
 import { Pitch } from "@/components/ui/pitch";
+import { LineupScreen } from "./lineup-screen";
 import styles from "./match-detail-screen.module.css";
 
 export type { MatchEvent } from "@/lib/game/live-match";
@@ -41,13 +42,18 @@ type Props = {
   onStartSecondHalf: () => void | Promise<void>;
   isHalftime: boolean;
   returnFocusTo?: HTMLElement | null;
+  onPlacePlayer?: (id: number, slot: number, point?: ManualPosition) => void;
+  onResetPositions?: () => void;
+  coach?: string;
+  competition?: string;
+  round?: number;
 };
 
 /** Paused match tactics with the live lineup on a rendered pitch. */
 export function MatchDetailScreen({ club, clubColors, opponent, homeScore, awayScore, minute,
   formation, setFormation, style, setStyle, marking, setMarking, focus, setFocus, statistics,
   manualPositions, onMovePlayers, startersData, bench, substitutionsLeft, selectedPlayer,
-  substitutionOut, onSelectPlayer, onSubstitute, onClose, onStartSecondHalf, isHalftime, returnFocusTo }: Props) {
+  substitutionOut, onSelectPlayer, onSubstitute, onClose, onStartSecondHalf, isHalftime, returnFocusTo, onPlacePlayer, onResetPositions, coach = "", competition = "Partida", round = 1 }: Props) {
   const dialog = useRef<HTMLElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -72,7 +78,7 @@ export function MatchDetailScreen({ club, clubColors, opponent, homeScore, awayS
 
   return <div className={styles.backdrop} onClick={(event) => { if (event.target === event.currentTarget) close(); }}>
     <section ref={dialog} role="dialog" aria-modal="true" aria-labelledby="match-tactics-title"
-      aria-describedby="match-tactics-description" className={styles.modal} style={theme}
+      aria-describedby="match-tactics-description" className={`${styles.modal} ${isHalftime ? styles.halftimeModal : ""}`} style={theme}
       onKeyDown={(event) => {
         if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); return; }
         if (event.key !== "Tab") return;
@@ -92,6 +98,21 @@ export function MatchDetailScreen({ club, clubColors, opponent, homeScore, awayS
         <button ref={closeButton} type="button" className={styles.close} onClick={close} aria-label="Fechar táticas">×</button>
       </header>
 
+      {isHalftime ? <div className={styles.halftimeLineup}>
+        <p id="match-tactics-description" className={styles.description}>Intervalo. Ajuste a equipe antes do segundo tempo; confirme as substituições antes de continuar.</p>
+        <LineupScreen club={club} coach={coach} opponent={opponent} competition={competition} round={round}
+          formation={formation} setFormation={setFormation} style={style} setStyle={setStyle}
+          marking={marking} setMarking={setMarking} focus={focus} setFocus={setFocus}
+          startersData={startersData} bench={bench} onReorderBench={() => {}}
+          selectedPlayer={[...startersData, ...bench].find((player) => player.id === (selectedPlayer ?? substitutionOut)) ?? null}
+          onSelectPlayer={onSelectPlayer} onPlacePlayer={onPlacePlayer ?? ((id, slot, point) => {
+            if (startersData.some((player) => player.id === id)) onMovePlayers({ [id]: point ?? formationSlots[formation][slot] });
+          })}
+          onPlay={() => { onSelectPlayer(null); void onStartSecondHalf(); }} onBack={close}
+          manualPositions={manualPositions} onResetPositions={onResetPositions ?? (() => setFormation(formation))}
+          match={{ score: `${homeScore} × ${awayScore}`, period: "INTERVALO", substitutionsLeft, continueLabel: "Continuar para o 2º tempo →",
+            panel: <div className={styles.statList}><StatRow label="Posse de bola" home={statistics.home.possession} away={statistics.away.possession} suffix="%" /><StatRow label="Finalizações" home={statistics.home.shots} away={statistics.away.shots} /></div>, substitutionActions: null }} />
+      </div> : <>
       <div className={styles.toolbar}>
         <Select label="Formação" value={formation} onChange={setFormation} options={formations} />
         <Select label="Estilo de jogo" value={style} onChange={setStyle} options={["Equilibrado", "Ofensivo", "Defensivo"]} />
@@ -146,6 +167,7 @@ export function MatchDetailScreen({ club, clubColors, opponent, homeScore, awayS
         </aside>
       </div>
 
+      </>}
       <footer className={styles.footer}>
         <p className={styles.pending} role="status">{outgoing && incoming
           ? <><span>Sai <b>{outgoing.name}</b></span><span>Entra <b>{incoming.name}</b></span></>
