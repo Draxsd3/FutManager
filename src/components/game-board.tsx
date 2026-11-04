@@ -526,7 +526,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     careerCompetitionData[competitionId] = {
       type: metadata.type,
       table: standings,
-      fixtures: competitionFixtures.map((fixture) => ({
+      fixtures: [...competitionFixtures].sort((a, b) => (a.scheduledDate ?? "").localeCompare(b.scheduledDate ?? "") || a.competitionRound - b.competitionRound).map((fixture) => ({
         stadium: database?.clubs.find((item) => item.id === fixture.homeClubId)?.stadiumName ?? "",
         attendance: 0,
         home: fixture.home,
@@ -535,6 +535,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         awayScore: fixture.awayScore ?? 0,
         played: fixture.status === "played",
         roundLabel: fixture.roundLabel,
+        scheduledDate: fixture.scheduledDate,
+        participantsPending: fixture.status === "locked",
+        winner: fixture.winnerClubId === fixture.homeClubId ? fixture.home : fixture.winnerClubId === fixture.awayClubId ? fixture.away : undefined,
       })),
       topScorers: playerStats.filter((player) => player.goals > 0 && player.played > 0).slice(0, 5)
         .map((player) => ({ name: player.playerName, club: player.club, goals: player.goals, played: player.played })),

@@ -55,7 +55,7 @@ it("browses other divisions and categories without fabricating results or regist
   fireEvent.click(screen.getByRole("button", { name: /Copa do Brasil/ }));
   expect(screen.getByRole("img", { name: "Troféu Copa do Brasil" }).getAttribute("src")).toContain("tr_copa_BRA.png");
 
-  expect(screen.getByRole("table")).toBeTruthy();
+  expect(screen.getByRole("region", { name: "Chave eliminatória" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Regional" }));
   expect(screen.getByText("Tabela ainda não disponível")).toBeTruthy();
   expect(screen.getByRole("button", { name: /Copa do Nordeste/ })).toBeTruthy();
@@ -104,7 +104,7 @@ it("shows only persisted career results for an active knockout competition", () 
       onClose={vi.fn()}
     />,
   );
-  expect(screen.getByText("Mata-mata sem tabela de pontos")).toBeTruthy();
+  expect(screen.getByRole("region", { name: "Chave eliminatória" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Rodadas" }));
   expect(screen.getByText("2 × 1")).toBeTruthy();
   expect(screen.getByText("—")).toBeTruthy();

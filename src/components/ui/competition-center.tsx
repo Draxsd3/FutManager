@@ -1,4 +1,5 @@
 "use client";
+import { CompetitionBracket, CompetitionGroups, CompetitionRounds, recentMatches } from "./competition-results";
 import { ManagementIcon } from "@/components/ui/management-header";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -13,6 +14,7 @@ import type {
 
 export type CareerCompetitionView = {
   type: "league" | "state" | "cup";
+  groups?: { name: string; table: TableRow[] }[];
   table: TableRow[];
   fixtures: RoundFixture[];
   topScorers: TopScorer[];
@@ -66,6 +68,8 @@ export function CompetitionCenter({
   const [scope, setScope] = useState("table");
   const [location, setLocation] = useState("all");
   const [search, setSearch] = useState("");
+  const [formClub, setFormClub] = useState<string>();
+  const [selectedRound, setSelectedRound] = useState("");
   const panel = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const onCloseRef = useRef(onClose);
@@ -121,6 +125,7 @@ export function CompetitionCenter({
   const effectiveScorers = careerData?.topScorers ?? topScorers;
   const effectiveRatings = careerData?.topRatings ?? topRatings;
   const isKnockout = careerData?.type === "cup" || selected?.id === "national:Copa do Brasil";
+  const visibleScope = scope === "table" && isKnockout ? (careerData?.groups?.length ? "groups" : "bracket") : scope;
   const rows = selected
     ? [...selected.clubs]
         .map((name) => ({
@@ -185,7 +190,7 @@ export function CompetitionCenter({
                 setCategory(item.id);
                 setLocation("all");
                 setSearch("");
-                setScope("table");
+                setScope("table"); setFormClub(undefined); setSelectedRound("");
               }}
               aria-current={category === item.id ? "page" : undefined}
             >
@@ -201,7 +206,7 @@ export function CompetitionCenter({
               <input
                 type="search"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => { setSearch(event.target.value); setFormClub(undefined); }}
                 placeholder="Nome da competição"
               />
             </label>
@@ -209,7 +214,7 @@ export function CompetitionCenter({
               País / região
               <select
                 value={location}
-                onChange={(event) => setLocation(event.target.value)}
+                onChange={(event) => { setLocation(event.target.value); setFormClub(undefined); }}
               >
                 <option value="all">Todos</option>
                 {locations.map((item) => (
@@ -224,7 +229,7 @@ export function CompetitionCenter({
                   aria-pressed={selected?.id === item.id}
                   onClick={() => {
                     setSelectedId(item.id);
-                    setScope("table");
+                    setScope("table"); setFormClub(undefined); setSelectedRound("");
                   }}
                 >
                   <span className={styles.trophy} aria-hidden="true">
@@ -297,14 +302,16 @@ export function CompetitionCenter({
                   aria-label="Detalhes da competição"
                 >
                   {[
-                    { id: "table", label: "Classificação" },
+                    ...(!isKnockout ? [{ id: "table", label: "Classificação" }] : []),
+                    ...(careerData?.groups?.length ? [{ id: "groups", label: "Fase de grupos" }] : []),
+                    ...(isKnockout ? [{ id: "bracket", label: "Mata-mata" }] : []),
                     { id: "rounds", label: "Rodadas" },
                     { id: "stats", label: "Estatísticas" },
                   ].map((item) => (
                     <button
                       key={item.id}
                       onClick={() => setScope(item.id)}
-                      aria-current={scope === item.id ? "page" : undefined}
+                      aria-current={visibleScope === item.id ? "page" : undefined}
                     >
                       {item.label}
                     </button>
@@ -312,7 +319,7 @@ export function CompetitionCenter({
                 </nav>
                 <div className={styles.dataGrid}>
                   <div className={styles.mainData}>
-                    {scope === "table" && (
+                    {visibleScope === "table" && (
                       <>
                         <div className={styles.sectionTitle}>
                           <h3>
@@ -327,7 +334,7 @@ export function CompetitionCenter({
                           </span>
                         </div>
                         {isActive && isKnockout ? (
-                          <Empty title="Mata-mata sem tabela de pontos" text="A Copa do Brasil usa chave eliminatória. Os resultados e a classificação por fase aparecem em Rodadas; nenhuma pontuação de liga é inventada." />
+                          <CompetitionBracket fixtures={effectiveFixtures} />
                         ) : rows.length ? (
                           <div className={styles.tableWrap}>
                             <table>
@@ -347,6 +354,7 @@ export function CompetitionCenter({
                                     "GP",
                                     "GC",
                                     "SG",
+                                    "Últimas 5",
                                   ].map((title) => (
                                     <th key={title} scope="col">
                                       {title}
@@ -387,6 +395,16 @@ export function CompetitionCenter({
                                     ].map((value, i) => (
                                       <td key={i}>{value ?? "—"}</td>
                                     ))}
+                                    <td><div className={styles.form} aria-label={`Últimas partidas de ${row.club}`}>
+                                      {isActive && recentMatches(effectiveFixtures, row.club).map((match, index) => {
+                                        const own = match.home === row.club ? match.homeScore : match.awayScore;
+                                        const other = match.home === row.club ? match.awayScore : match.homeScore;
+                                        const result = own === other ? "E" : own > other ? "V" : "D";
+                                        const label = `${result === "V" ? "Vitória" : result === "D" ? "Derrota" : "Empate"}: ${match.home} ${match.homeScore} × ${match.awayScore} ${match.away}, ${match.roundLabel ?? "rodada registrada"}`;
+                                        return <button key={index} data-result={result} title={label} aria-label={label} onClick={() => { setFormClub(row.club); setSelectedRound(match.roundLabel ?? "Rodada registrada"); }}>{result === "V" ? "✓" : result === "D" ? "×" : "−"}</button>;
+                                      })}
+                                      {(!isActive || !recentMatches(effectiveFixtures, row.club).length) && <span aria-label="Sem partidas concluídas">—</span>}
+                                    </div></td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -400,12 +418,14 @@ export function CompetitionCenter({
                         )}
                         <p className={styles.disclaimer}>
                           {isActive
-                            ? "Classificação e estatísticas acumuladas somente a partir de partidas concluídas desta temporada."
+                            ? "Últimas 5: ✓ vitória · × derrota · − empate (da mais antiga à mais recente). Clique em um resultado para abrir a rodada ao lado. Classificação acumulada somente de partidas concluídas."
                             : "Clubes de outras divisões podem ser consultados. Pontuação, grupos e resultados só aparecem quando registrados para a competição."}
                         </p>
                       </>
                     )}
-                    {scope === "rounds" && (
+                    {visibleScope === "groups" && <CompetitionGroups groups={careerData?.groups ?? []} />}
+                    {visibleScope === "bracket" && <CompetitionBracket fixtures={isActive ? effectiveFixtures : []} />}
+                    {visibleScope === "rounds" && (
                       <>
                         <div className={styles.sectionTitle}>
                           <h3>Jogos e rodadas</h3>
@@ -413,32 +433,13 @@ export function CompetitionCenter({
                             {isActive ? roundLabel ?? `${round}ª rodada` : "Sem calendário"}
                           </span>
                         </div>
-                        {isActive && effectiveFixtures.length ? (
-                          effectiveFixtures.map((match, i) => (
-                            <article
-                              className={styles.fixture}
-                              key={`${match.home}-${i}`}
-                            >
-                              <span>
-                                {match.roundLabel ?? roundLabel ?? `${round}ª rodada`} <small>{match.stadium}</small>
-                              </span>
-                              <strong>{match.home}</strong>
-                              <b>{match.played === false ? "—" : `${match.homeScore} × ${match.awayScore}`}</b>
-                              <strong>{match.away}</strong>
-                            </article>
-                          ))
-                        ) : (
-                          <Empty
-                            title="Calendário não cadastrado"
-                            text="Os confrontos e resultados desta competição aparecerão aqui quando estiverem disponíveis."
-                          />
-                        )}
+                        {isActive && effectiveFixtures.length ? <CompetitionRounds fixtures={effectiveFixtures} selectedRound={selectedRound} onRound={setSelectedRound} /> : <Empty title="Calendário não cadastrado" text="Os confrontos e resultados desta competição aparecerão aqui quando estiverem disponíveis." />}
                         <p className={styles.disclaimer}>
                           Confrontos e placares vêm do calendário persistido; jogos ainda não realizados permanecem sem resultado.
                         </p>
                       </>
                     )}
-                    {scope === "stats" && (
+                    {visibleScope === "stats" && (
                       <>
                         <div className={styles.sectionTitle}>
                           <h3>Estatísticas da competição</h3>
@@ -466,6 +467,7 @@ export function CompetitionCenter({
                     )}
                   </div>
                   <aside className={styles.sidebar}>
+                    {formClub && isActive && visibleScope === "table" ? <><button className={styles.closeRounds} onClick={() => setFormClub(undefined)}>Fechar rodadas ×</button><CompetitionRounds fixtures={effectiveFixtures} club={formClub} selectedRound={selectedRound} onRound={setSelectedRound} /></> : <>
                     <Rank
                       title="Artilheiros"
                       rows={scorers
@@ -498,6 +500,7 @@ export function CompetitionCenter({
                         <dd>Não registrada</dd>
                       </dl>
                     </section>
+                    </>}
                   </aside>
                 </div>
               </>
