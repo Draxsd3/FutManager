@@ -435,15 +435,19 @@ export function LineupScreen(props: Props) {
               >
                 <span className={styles.direction}>ATAQUE <b>↑</b></span>
                 <svg className={styles.pitchLines} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                  <rect x="3" y="2" width="94" height="96" rx="1" />
+                  {/* Proportions based on a 105 × 68 m pitch. */}
+                  <rect x="3" y="2" width="94" height="96" />
                   <line x1="3" y1="50" x2="97" y2="50" />
-                  <circle cx="50" cy="50" r="9" />
-                  <circle className={styles.centerSpot} cx="50" cy="50" r=".7" />
-                  <rect x="25" y="2" width="50" height="15" />
-                  <rect x="38" y="2" width="24" height="6" />
-                  <rect x="25" y="83" width="50" height="15" />
-                  <rect x="38" y="92" width="24" height="6" />
-                  <path d="M 40 17 Q 50 23 60 17 M 40 83 Q 50 77 60 83" />
+                  <ellipse cx="50" cy="50" rx="12.65" ry="8.36" />
+                  <ellipse className={styles.centerSpot} cx="50" cy="50" rx=".42" ry=".28" />
+                  <rect x="22.13" y="2" width="55.74" height="15.09" />
+                  <rect x="37.34" y="2" width="25.32" height="5.03" />
+                  <rect x="22.13" y="82.91" width="55.74" height="15.09" />
+                  <rect x="37.34" y="92.97" width="25.32" height="5.03" />
+                  <ellipse className={styles.centerSpot} cx="50" cy="12.06" rx=".42" ry=".28" />
+                  <ellipse className={styles.centerSpot} cx="50" cy="87.94" rx=".42" ry=".28" />
+                  <path d="M 39.91 17.09 A 12.65 8.36 0 0 0 60.09 17.09 M 39.91 82.91 A 12.65 8.36 0 0 1 60.09 82.91" />
+                  <path d="M 3 2.9 A 1.38 .91 0 0 0 4.38 2 M 95.62 2 A 1.38 .91 0 0 0 97 2.9 M 3 97.1 A 1.38 .91 0 0 1 4.38 98 M 95.62 98 A 1.38 .91 0 0 1 97 97.1" />
                 </svg>
                 {showSectors && <svg className={styles.regionBorders} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                   {fieldBoundaries.map((edge, index) => <line key={index} x1={edge.from.left} y1={edge.from.top} x2={edge.to.left} y2={edge.to.top} vectorEffect="non-scaling-stroke" />)}
@@ -466,12 +470,11 @@ export function LineupScreen(props: Props) {
                   key={player.id}
                   data-player={player.id}
                   data-slot={index}
-                  data-name-align={positions[index].left < 15 ? "left" : positions[index].left > 85 ? "right" : "center"}
                   title={`${player.name} · ${fifaPosition(player)} · Energia ${player.energy}%`}
                   aria-label={`${player.name}, camisa ${player.shirtNumber ?? player.id}, titular, ${fits[index].label}, energia ${player.energy}%`}
                   aria-pressed={selectedPlayer?.id === player.id}
                   className={`${styles.player} ${selectedPlayer?.id === player.id ? styles.selected : ""} ${dragId === player.id ? styles.source : ""} ${hoverSlot === index ? styles.hovered : ""}`}
-                  style={{ left: `clamp(25px, ${positions[index].left}%, calc(100% - 25px))`, top: `clamp(32px, ${positions[index].top}%, calc(100% - 32px))` }}
+                  style={{ left: `clamp(44px, ${positions[index].left}%, calc(100% - 44px))`, top: `clamp(36px, ${positions[index].top}%, calc(100% - 47px))` }}
                   onClick={() => select(player.id)}
                 >
                   <PlayerJersey player={player} />
