@@ -10,8 +10,6 @@ import {
 } from "@/lib/game/formations";
 import {
   fieldRegions,
-  fieldBoundaries,
-  fieldRoleLabels,
 } from "@/lib/game/lineup";
 import { fifaPosition } from "@/lib/game/fifa-position";
 import { PlayerJersey } from "@/components/ui/player-jersey";
@@ -444,7 +442,7 @@ export function LineupScreen(props: Props) {
                   <path d="M 40 17 Q 50 23 60 17 M 40 83 Q 50 77 60 83" />
                 </svg>
                 {showSectors && <svg className={styles.regionBorders} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                  {fieldBoundaries.map((edge, index) => <line key={index} x1={edge.from.left} y1={edge.from.top} x2={edge.to.left} y2={edge.to.top} vectorEffect="non-scaling-stroke" />)}
+                  {[30, 60, 88].map((top) => <line key={top} x1="0" y1={top} x2="100" y2={top} vectorEffect="non-scaling-stroke" />)}
                 </svg>}
                 {showSectors && fieldRegions.map((sector) => <button
                   key={sector.name}
@@ -458,8 +456,8 @@ export function LineupScreen(props: Props) {
                     if (active) deployPoint(active.id, sector);
                     else setMessage("Selecione um jogador antes de escolher o setor.");
                   }}
-                ><span style={{ left: `${sector.left}%`, top: `${sector.top}%` }}>{sector.short}</span></button>)}
-                {showSectors && <div className={styles.roleLabels} aria-hidden="true">{fieldRoleLabels.map((label) => <span key={label.short} style={{ left: `${label.left}%`, top: `${label.top}%` }}>{label.short}</span>)}</div>}
+                />)}
+                {showSectors && <div className={styles.roleLabels} aria-hidden="true">{[{ name: "Ataque", top: 9 }, { name: "Meio", top: 35 }, { name: "Defesa", top: 65 }, { name: "Gol", top: 95 }].map((label) => <span key={label.name} style={{ left: "50%", top: `${label.top}%` }}>{label.name}</span>)}</div>}
                 {startersData.map((player, index) => <button
                   key={player.id}
                   data-player={player.id}
