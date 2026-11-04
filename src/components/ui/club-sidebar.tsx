@@ -53,10 +53,10 @@ export function ClubSidebar({ confidence, club, coach, budget, opponent, competi
       </> : <p className={styles.noFixture}>A temporada aguarda o próximo confronto.</p>}
     </section>
     <div className={styles.quickHeading}><span>GESTÃO DO CLUBE</span><span>{squadSize}/35 atletas</span></div>
-    <div className={styles.quick} role="group" aria-label="Ações do clube"><Quick icon="group" label="Elenco" onClick={() => onQuickAction("roster")} /><Quick icon="money" label="Finanças" onClick={() => onQuickAction("finances")} /><Quick icon="medal_award_gold" label="Troféus" onClick={() => onQuickAction("trophies")} /><Quick icon="chart_bar" label="Treino" onClick={() => onQuickAction("training")} /></div>
+    <div className={styles.quick} role="group" aria-label="Ações do clube"><Quick icon="group" label="Elenco" onClick={() => onQuickAction("roster")} /><Quick icon="money" label="Finanças" image="/icons/navigation/financas.webp" onClick={() => onQuickAction("finances")} /><Quick icon="medal_award_gold" label="Troféus" image="/icons/navigation/trofeus.webp" onClick={() => onQuickAction("trophies")} /><Quick icon="chart_bar" label="Treino" image="/icons/navigation/treino.webp" onClick={() => onQuickAction("training")} /></div>
   </aside>;
 }
 
-function Quick({ icon, label, onClick }: { icon: ClassicIconName; label: string; onClick: () => void }) {
-  return <button type="button" title={label} aria-label={label} onClick={onClick}><ClassicIcon name={icon} size={21}/><span>{label}</span></button>;
+function Quick({ icon, image, label, onClick }: { icon: ClassicIconName; image?: string; label: string; onClick: () => void }) {
+  return <button type="button" title={label} aria-label={label} onClick={onClick}>{image ? <Image src={image} alt="" aria-hidden="true" width={32} height={32} className={styles.quickImage} unoptimized /> : <ClassicIcon name={icon} size={21}/>}<span>{label}</span></button>;
 }
