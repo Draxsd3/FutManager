@@ -99,44 +99,25 @@ it("shows honest empty saves and allows returning to the menu", () => {
   fireEvent.click(screen.getByRole("button", { name: "Voltar ao menu" }));
   expect(back).toHaveBeenCalledOnce();
 });
-it("shows actual stadium data and simulates without changing club or budget", () => {
-  const club = createDefaultDatabase().clubs[0],
-    snapshot = JSON.stringify(club);
-  const agenda = vi.fn();
-  render(
-    <StadiumScreen
-      club={club}
-      budget={100}
-      payroll={20000}
-      onBack={vi.fn()}
-      onAgenda={agenda}
-    />,
-  );
-  expect(screen.getAllByText(club.stadiumName).length).toBeGreaterThan(0);
-  fireEvent.click(screen.getByRole("button", { name: /Consultar agenda/ }));
+it("shows the stadium, editable sector prices, gate projection and upgrade choices in one view", () => {
+  const club = createDefaultDatabase().clubs[0];
+  const price = vi.fn(), expand = vi.fn(), agenda = vi.fn();
+  render(<StadiumScreen club={club} budget={10000} payroll={20000} onBack={vi.fn()} onAgenda={agenda} onPriceChange={price} onExpand={expand} />);
+  expect(screen.getByRole("heading", { name: club.stadiumName })).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Agenda" }));
   expect(agenda).toHaveBeenCalledOnce();
-  fireEvent.click(
-    screen.getByRole("button", { name: "Simulador de bilheteria" }),
-  );
-  fireEvent.change(screen.getByLabelText("Ocupação estimada"), {
-    target: { value: "100" },
-  });
-  expect(
-    screen.getByRole("heading", {
-      name: `${club.stadiumCapacity.toLocaleString("pt-BR")} torcedores`,
-    }),
-  ).toBeTruthy();
-  fireEvent.change(screen.getByLabelText("Ingresso médio (R$)"), {
-    target: { value: "0" },
-  });
-  expect(screen.getByText(/Esta simulação não altera/)).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "Visão geral" }));
-  expect(screen.getByText(/100.000/)).toBeTruthy();
-  expect(JSON.stringify(club)).toBe(snapshot);
-  fireEvent.click(screen.getByRole("button", { name: "Infraestrutura" }));
-  expect(
-    screen.getByText(/Obras, manutenção e ampliação ainda não são executáveis/),
-  ).toBeTruthy();
+  const input = screen.getByLabelText("Ingresso Popular (R$)");
+  fireEvent.change(input, { target: { value: "75" } });
+  fireEvent.blur(input);
+  expect(price).toHaveBeenCalledWith("popular", 75);
+  fireEvent.change(input, { target: { value: "-1" } });
+  fireEvent.blur(input);
+  expect(input.getAttribute("aria-invalid")).toBe("true");
+  expect(price).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getAllByRole("button", { name: "Selecionar obra" })[0]);
+  expect(expand).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Confirmar obra" }));
+  expect(expand).toHaveBeenCalledWith(1000);
 });
 it("clamps invalid simulation inputs, allows losses and never exceeds capacity", () => {
   expect(simulateGate(100, 120, 10, 2000)).toEqual({
