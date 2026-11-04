@@ -100,12 +100,12 @@ it("shows every completed day using the training week, not the competition round
 it("shows confidence estimates and updates them when season results change", () => {
   const props = { club: "Corinthians", coach: "Teste", budget: 12000, opponent: "Flamengo", round: 2, competition: "Paulista", squad: squad.slice(0, 2), starters: [], selectedPlayer: null, onSelectPlayer: vi.fn(), onOpenPlayer: vi.fn(), onEscalar: vi.fn(), onQuickAction: vi.fn() };
   const view = render(<HubScreen {...props} confidence={{ board: 50, fans: 50, matches: 0 }} />);
-  expect(screen.getByText("Estimativa inicial · sem jogos")).toBeTruthy();
+  expect(screen.getByText("Sem jogos · diretoria considera finanças")).toBeTruthy();
   expect(screen.getAllByText("50%")).toHaveLength(2);
   view.rerender(<HubScreen {...props} confidence={{ board: 90, fans: 100, matches: 1 }} />);
   expect(screen.getByText("90%")).toBeTruthy();
-  expect(within(screen.getByLabelText("Confiança estimada na temporada")).getByText("100%")).toBeTruthy();
-  expect(screen.getByText("Estimativa por resultados · 1 jogo")).toBeTruthy();
+  expect(within(screen.getByLabelText("Confiança estimada na carreira")).getByText("100%")).toBeTruthy();
+  expect(screen.getByText("Estimativa da carreira · 1 jogo")).toBeTruthy();
   view.rerender(<HubScreen {...props} confidence={null} />);
   expect(screen.getAllByText("Indisponível")).toHaveLength(2);
 });
