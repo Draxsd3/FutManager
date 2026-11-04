@@ -37,7 +37,8 @@ const reserve = (index = 0) => screen.getByRole("button", { name: new RegExp(`${
 it("shows a tactics modal with the live pitch, reserves, team statistics and match controls", () => {
   setup();
   expect(screen.getByRole("dialog", { name: "Táticas" })).toBeTruthy();
-  expect(screen.getByLabelText("Campo de escalação")).toBeTruthy();
+  const field = screen.getByLabelText("Campo de escalação");
+  expect(field.closest('[data-layout="classic"][data-mode="match"]')).toBeTruthy();
   expect(document.querySelectorAll('[data-slot]')).toHaveLength(11);
   expect(document.querySelectorAll('[data-reserve]')).toHaveLength(bench.length);
   expect(screen.getByRole("heading", { name: "ESCALAR TIME · 4-3-3" })).toBeTruthy();
@@ -53,6 +54,7 @@ it("shows a tactics modal with the live pitch, reserves, team statistics and mat
 it.each([false, true])("uses the same free-placement sector controls during play and halftime (%s)", (isHalftime) => {
   const place = vi.fn();
   setup({ isHalftime, onPlacePlayer: place });
+  expect(screen.getByLabelText("Campo de escalação").closest('[data-layout="classic"][data-mode="match"]')).toBeTruthy();
   fireEvent.click(screen.getByLabelText("Mostrar setores"));
   fireEvent.click(starter());
   fireEvent.click(screen.getByRole("button", { name: "Posicionar em Meia esquerda" }));

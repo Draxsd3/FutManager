@@ -60,6 +60,7 @@ const starterButton = (index: number) =>
   });
 it("uses numbered shirts, not photos, and exposes every sector", () => {
   setup();
+  expect(screen.getByLabelText("Campo de escalação").closest('[data-layout="classic"][data-mode="prematch"]')).toBeTruthy();
   expect(screen.queryByText("Adicionar foto")).toBeNull();
   expect(starterButton(0).getAttribute("title")).toContain(starters[0].name);
   expect(starterButton(0).getAttribute("aria-label")).toContain(starters[0].name);

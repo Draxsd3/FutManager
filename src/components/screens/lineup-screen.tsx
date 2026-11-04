@@ -334,6 +334,7 @@ export function LineupScreen(props: Props) {
     <section
       className={styles.screen}
       data-mode={match ? "match" : "prematch"}
+      data-layout="classic"
       onPointerDown={down}
       onPointerMove={move}
       onPointerUp={(e) => finish(e)}
