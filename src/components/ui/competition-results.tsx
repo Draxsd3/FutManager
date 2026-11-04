@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { RoundFixture, TableRow } from "@/lib/game/mock-data";
 import { Crest } from "./club-sidebar";
 import styles from "./competition-center.module.css";
@@ -20,40 +20,32 @@ export function CompetitionRounds({ fixtures, club, selectedRound, onRound }: { 
 }
 export function CompetitionBracket({ fixtures }: { fixtures: RoundFixture[] }) {
   const phases = [...new Set(fixtures.map(match => match.roundLabel ?? "Fase registrada"))];
-  const board = useRef<HTMLDivElement>(null);
-  const [paths, setPaths] = useState<string[]>([]);
-  useEffect(() => {
-    const element = board.current;
-    if (!element) return;
-    function measure() {
-      if (!element) return;
-      const bounds = element.getBoundingClientRect();
-      const cards = Array.from(element.querySelectorAll<HTMLElement>("[data-bracket-match]"));
-      const lines: string[] = [];
-      for (const source of cards) {
-        const winner = source.dataset.winner;
-        if (!winner) continue;
-        const next = cards.find(card => Number(card.dataset.phase) === Number(source.dataset.phase) + 1 && [card.dataset.home, card.dataset.away].includes(winner));
-        if (!next) continue;
-        const a = source.getBoundingClientRect(), b = next.getBoundingClientRect();
-        const x1 = a.right - bounds.left + element.scrollLeft, y1 = a.top + a.height / 2 - bounds.top;
-        const x2 = b.left - bounds.left + element.scrollLeft, y2 = b.top + b.height / 2 - bounds.top;
-        lines.push(`M ${x1} ${y1} H ${(x1 + x2) / 2} V ${y2} H ${x2}`);
-      }
-      setPaths(lines);
-    }
-    measure();
-    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : undefined;
-    observer?.observe(element);
-    window.addEventListener("resize", measure);
-    return () => { observer?.disconnect(); window.removeEventListener("resize", measure); };
-  }, [fixtures]);
-  const final = fixtures.find(match => match.roundLabel?.toLocaleLowerCase("pt-BR") === "final" && match.played !== false && match.winner);
-  return <section aria-label="Chave eliminatória"><p className={styles.disclaimer}>Confrontos por fase. As linhas ligam vencedores confirmados à próxima fase. Jogos bloqueados aguardam definição dos participantes; empates só têm vencedor com decisão registrada.</p>
-    {phases.length ? <div className={styles.bracket} ref={board}><svg className={styles.bracketLines} aria-hidden="true">{paths.map((path, i) => <path key={i} d={path} />)}</svg>{phases.map((phase, phaseIndex) => <section className={styles.bracketPhase} key={phase}><h3>{phase}</h3><div>{fixtures.filter(match => (match.roundLabel ?? "Fase registrada") === phase).map((match, index) => <article className={styles.tie} key={index} data-bracket-match="" data-phase={phaseIndex} data-winner={match.played !== false && !match.participantsPending ? match.winner : undefined} data-home={!match.participantsPending ? match.home : undefined} data-away={!match.participantsPending ? match.away : undefined}>
-      {[{ name: match.home, score: match.homeScore }, { name: match.away, score: match.awayScore }].map((team, teamIndex) => <div key={teamIndex} data-winner={!match.participantsPending && match.winner === team.name ? "true" : undefined}>{!match.participantsPending && <Crest club={team.name} size="sm" />}<span>{match.participantsPending ? "A definir" : team.name}</span><b>{match.played === false ? "—" : team.score}</b></div>)}
-      <small>{match.participantsPending ? "Aguardando classificação" : match.played === false ? "A disputar" : "Encerrado"}</small>
-    </article>)}</div></section>)}{final && <section className={styles.champion}><span>CAMPEÃO</span><Crest club={final.winner!} size="sm" /><strong>{final.winner}</strong></section>}</div> : <p>Chave ainda não cadastrada. As fases aparecerão quando os confrontos forem definidos.</p>}
+  const [selectedPhase, setSelectedPhase] = useState("");
+  const active = phases.includes(selectedPhase) ? selectedPhase : phases.find(phase => fixtures.some(match => (match.roundLabel ?? "Fase registrada") === phase && match.played === false && !match.participantsPending)) ?? phases[0];
+  const matches = fixtures.filter(match => (match.roundLabel ?? "Fase registrada") === active);
+  const final = fixtures.find(match => match.roundLabel?.toLocaleLowerCase("pt-BR") === "final" && match.played !== false && !match.participantsPending && match.winner);
+  return <section aria-label="Confrontos do mata-mata">
+    {phases.length ? <>
+      <div className={styles.knockoutHeading}><label>Fase <select aria-label="Fase do mata-mata" value={active} onChange={event => setSelectedPhase(event.target.value)}>{phases.map(phase => <option key={phase}>{phase}</option>)}</select></label><span>{matches.length} confronto{matches.length === 1 ? "" : "s"}</span></div>
+      {final && <p className={styles.knockoutChampion}><strong>Campeão:</strong> {final.winner}</p>}
+      <div className={styles.knockoutList} role="region" aria-label={`Confrontos de ${active}`} tabIndex={0}>
+        {matches.map((match, index) => {
+          const pending = !!match.participantsPending;
+          const played = !pending && match.played !== false;
+          return <article className={styles.knockoutMatch} key={index}>
+            <div className={styles.knockoutTeam} data-winner={played && match.winner === match.home ? "true" : undefined}>
+              {!pending && <Crest club={match.home} size="sm" />}<span>{pending ? "A definir" : match.home}</span>
+            </div>
+            <strong className={styles.knockoutScore}>{played ? `${match.homeScore} × ${match.awayScore}` : "— × —"}</strong>
+            <div className={`${styles.knockoutTeam} ${styles.knockoutAway}`} data-winner={played && match.winner === match.away ? "true" : undefined}>
+              {!pending && <Crest club={match.away} size="sm" />}<span>{pending ? "A definir" : match.away}</span>
+            </div>
+            <small>{pending ? "Aguardando classificação" : played ? match.winner ? `Encerrado · Classificado: ${match.winner}` : "Encerrado" : "A disputar"}</small>
+          </article>;
+        })}
+      </div>
+      <p className={styles.disclaimer}>Jogos pendentes aguardam a definição dos participantes; empates só têm vencedor quando a decisão estiver registrada.</p>
+    </> : <p>Confrontos ainda não cadastrados. As fases aparecerão quando forem definidas.</p>}
   </section>;
 }
 export function CompetitionGroups({ groups }: { groups: { name: string; table: TableRow[] }[] }) {
