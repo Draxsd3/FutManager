@@ -182,7 +182,3 @@
 .modalClose { position: absolute; right: 8px; top: 8px; z-index: 5; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .unifiedModal .description { margin-right: 48px; }
-
-/* The identical pre-match/halftime board sits on the shared light surface. */
-.unifiedModal { background:#f5f6f3; border-color:#dce3da; color:#26392f; }
-.unifiedModal .modalClose { background:#fafbf8; border-color:#d2ddd0; color:#354c3b; }
