@@ -402,7 +402,7 @@ export function stateCompetitionName(state: string) {
 export function nextCareerFixture(season: CareerSeason | null | undefined): SeasonFixture | null {
   if (!season) return null;
   return season.fixtures
-    .filter((fixture) => fixture.status === "scheduled" && (fixture.homeClubId === season.clubId || fixture.awayClubId === season.clubId))
+    .filter((fixture) => fixture.status === "scheduled" && (!season.calendarVersion || !!fixture.scheduledDate) && (fixture.homeClubId === season.clubId || fixture.awayClubId === season.clubId))
     .sort((a, b) => a.calendarRound - b.calendarRound || a.competitionRound - b.competitionRound)[0] ?? null;
 }
 
@@ -413,7 +413,7 @@ export function completeCareerFixture(
   database: EditorDatabase,
 ): CareerSeason {
   const fixture = season.fixtures.find((item) => item.id === fixtureId);
-  if (!fixture || fixture.status !== "scheduled") return season;
+  if (!fixture || fixture.status !== "scheduled" || (season.calendarVersion && !fixture.scheduledDate)) return season;
   const winnerClubId = fixture.type === "cup"
     ? score.winnerClubId ?? (score.home > score.away ? fixture.homeClubId : score.away > score.home ? fixture.awayClubId : seededRandom(`${fixture.id}|penalties`)() < 0.5 ? fixture.homeClubId : fixture.awayClubId)
     : undefined;
@@ -421,7 +421,7 @@ export function completeCareerFixture(
     if (item.id === fixtureId) return { ...item, status: "played" as const, homeScore: score.home, awayScore: score.away, ...(winnerClubId ? { winnerClubId } : {}), playerContributions: score.playerContributions ?? [] };
     const dueCupBackground = item.type === "cup" && item.status === "locked" && item.homeClubId !== season.clubId && item.awayClubId !== season.clubId && item.calendarRound <= fixture.calendarRound;
     const dueScheduled = item.status === "scheduled" && item.calendarRound <= fixture.calendarRound;
-    if (dueCupBackground || dueScheduled) return simulateFixture(database, item);
+    if ((dueCupBackground || dueScheduled) && (!season.calendarVersion || item.scheduledDate)) return simulateFixture(database, item);
     return item;
   });
   if (fixture.type === "cup") {

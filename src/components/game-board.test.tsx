@@ -464,7 +464,7 @@ it("advances the career date after a result and returns an expired incoming loan
   await waitFor(() => {
     const restored = readLocalSaves("alice")[0];
     expect(restored.inGameDate).toBe(expectedDate);
-    expect(restored.progress?.competitionSeason?.calendarVersion).toBe(2);
+    expect(restored.progress?.competitionSeason?.calendarVersion).toBe(3);
     expect(restored.progress?.loanContracts?.[player.sourceId!].status).toBe("returned");
     expect(restored.progress?.careerSquad?.some(item => item.id === player.id)).toBe(false);
     expect(restored.progress?.starters).not.toContain(player.id);
