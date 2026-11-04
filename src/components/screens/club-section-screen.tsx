@@ -10,6 +10,7 @@ import { ClassicIcon } from "@/components/ui/classic-icon";
 import { InterfaceIcon } from "@/components/ui/interface-icon";
 import { Crest } from "@/components/ui/club-sidebar";
 import { StadiumScreen } from "./stadium-screen";
+import { projectStadiumGate, stadiumCapacity, newStadium, type StadiumSector, type StadiumState } from "@/lib/game/stadium";
 import type { ManagerJobsProps } from "./manager-jobs";
 import { AgendaScreen, type AgendaView } from "./agenda-screen";
 import { canJoinTraining, sessionEnergyDelta, TRAINING_DAYS, TRAINING_DRILLS, trainingDrillLabel, trainingWeekSessions, type TrainingDay, type TrainingDrillId, type TrainingIntensity, type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
@@ -19,6 +20,7 @@ export type ClubSection = "agenda" | "stadium" | "juniors" | "teams" | "search" 
 
 export function ClubSectionScreen({
   section,
+  stadium, onStadiumPriceChange, onStadiumExpand,
   championHistory = [],
   jobs,
   database,
@@ -42,6 +44,9 @@ export function ClubSectionScreen({
   trainingWeek = 1,
   trainingSeason = 2026,
 }: {
+  stadium?: StadiumState;
+  onStadiumPriceChange?: (sector: StadiumSector, price: number) => void;
+  onStadiumExpand?: (seats: number) => string | undefined;
   championHistory?: ChampionshipRecord[];
   jobs?: ManagerJobsProps;
   agendaView?: AgendaView;
@@ -94,7 +99,7 @@ export function ClubSectionScreen({
     training: "CENTRO DE TREINAMENTO",
   }[section];
 
-  if (section === "stadium") return <StadiumScreen key={club} club={currentClub} budget={budget} payroll={monthlyPayroll} onBack={onBack} onAgenda={onAgenda} />;
+  if (section === "stadium") return <StadiumScreen key={club} club={currentClub} budget={budget} payroll={monthlyPayroll} date={inGameDate} stadium={stadium} onPriceChange={onStadiumPriceChange} onExpand={onStadiumExpand} onBack={onBack} onAgenda={onAgenda} />;
 
   if (section === "agenda") return <AgendaScreen jobs={jobs} club={club} coach={coach} competition={competition} inGameDate={inGameDate} round={round} season={season} database={database} view={agendaView} onViewChange={onAgendaViewChange ?? (() => undefined)} onBack={onBack} onPrepare={onPrepare ?? onBack} />;
 
@@ -131,7 +136,7 @@ export function ClubSectionScreen({
         {section === "finances" && (
           <div className="grid gap-4 p-4 lg:grid-cols-[1fr_1.2fr]">
             <Panel title="RESUMO FINANCEIRO"><div className="mb-5 flex items-center gap-3"><ClassicIcon name="money" size={32}/><div><p className="text-[11px] text-[#68757b]">SALDO DISPONÍVEL</p><b className="text-2xl text-[#07552f]">R$ {(budget / 1000).toFixed(2)} milhões</b></div></div><Info label="Folha salarial mensal" value={`R$ ${monthlyPayroll.toLocaleString("pt-BR")}`}/><Info label="Valor de mercado do elenco" value={`R$ ${squadValue.toFixed(1)} milhões`}/><Info label="Jogadores sob contrato" value={String(squad.length)}/></Panel>
-            <Panel title="PROJEÇÃO DO MÊS"><Info label="Bilheteria estimada" value={`R$ ${Math.round((currentClub?.stadiumCapacity ?? 15000) * 18).toLocaleString("pt-BR")}`}/><Info label="Patrocínios" value="R$ 450.000"/><Info label="Salários" value={`- R$ ${monthlyPayroll.toLocaleString("pt-BR")}`}/><Info label="Manutenção do estádio" value={`- R$ ${Math.round((currentClub?.stadiumCapacity ?? 15000) * 2.4).toLocaleString("pt-BR")}`}/><p className="mt-4 border-t pt-3 text-[11px] text-[#68757b]">Os lançamentos serão consolidados quando a rodada for concluída.</p></Panel>
+            <Panel title="PROJEÇÃO DO MÊS"><Info label="Bilheteria líquida estimada (jogo em casa)" value={`R$ ${projectStadiumGate(stadiumCapacity(currentClub?.stadiumCapacity ?? 0, stadium ?? newStadium(), inGameDate), (stadium ?? newStadium()).prices).net.toLocaleString("pt-BR")}`}/><Info label="Patrocínios" value="R$ 450.000"/><Info label="Salários" value={`- R$ ${monthlyPayroll.toLocaleString("pt-BR")}`}/><Info label="Manutenção do estádio" value={`- R$ ${Math.round((currentClub?.stadiumCapacity ?? 15000) * 2.4).toLocaleString("pt-BR")}`}/><p className="mt-4 border-t pt-3 text-[11px] text-[#68757b]">Somente a bilheteria líquida de jogos em casa é creditada ao fim da partida. Patrocínios, salários e manutenção acima são projeções.</p></Panel>
           </div>
         )}
 

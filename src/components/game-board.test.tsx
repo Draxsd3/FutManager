@@ -597,3 +597,71 @@ it("saves the chosen imported shirt per career, restores it and carries it into 
   for (const image of dialog.querySelectorAll("svg image")) expect(image.getAttribute("href")).toBe(clubKitAsset(club, 3));
   expect(readLocalSaves("alice")[0].progress?.kit).toBe(3);
 }, 15000);
+
+it("persists sector prices and paid stadium construction across career reload", async () => {
+  const { IDBFactory } = await import("fake-indexeddb");
+  vi.stubGlobal("indexedDB", new IDBFactory());
+  const view = render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Gestão do estádio" } });
+  fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+  fireEvent.click(await screen.findByRole("button", { name: "Estádio" }));
+  const price = await screen.findByLabelText("Ingresso Popular (R$)");
+  fireEvent.change(price, { target: { value: "42" } });
+  fireEvent.blur(price);
+  fireEvent.click(screen.getAllByRole("button", { name: "Selecionar obra" })[0]);
+  fireEvent.click(screen.getByRole("button", { name: "Confirmar obra" }));
+  await waitFor(() => {
+    const save = readLocalSaves("alice")[0];
+    expect(save.budget).toBe(11624);
+    expect(save.progress?.stadiums?.[save.clubId].prices.popular).toBe(42);
+    expect(save.progress?.stadiums?.[save.clubId].construction?.seats).toBe(1000);
+  });
+  view.unmount();
+  render(game());
+  await waitFor(() => expect((screen.getByLabelText("Ingresso Popular (R$)") as HTMLInputElement).value).toBe("42"));
+  expect(screen.getByText(/lugares em construção/)).toBeTruthy();
+  expect(readLocalSaves("alice")[0].budget).toBe(11624);
+}, 15000);
+
+it.each([true, false])("credits gate only for a completed home fixture (home=%s)", async (home) => {
+  const { IDBFactory } = await import("fake-indexeddb");
+  const { cacheCareerSaves, readCachedDatabase } = await import("@/lib/importer/database-cache");
+  const { newStadium, projectStadiumGate } = await import("@/lib/game/stadium");
+  vi.stubGlobal("indexedDB", new IDBFactory());
+  const view = render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Bilheteria" } });
+  fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /Escalar Time/i }));
+  fireEvent.click(await screen.findByRole("button", { name: /Ir para a partida/ }));
+  await screen.findByText("AO VIVO");
+  const save = structuredClone(readLocalSaves("alice")[0]);
+  const database = (await readCachedDatabase("alice"))!;
+  const fixture = save.progress!.competitionSeason!.fixtures.find(item => item.id === save.progress!.activeFixtureId)!;
+  if ((fixture.homeClubId === save.clubId) !== home) {
+    [fixture.homeClubId, fixture.awayClubId] = [fixture.awayClubId, fixture.homeClubId];
+    [fixture.home, fixture.away] = [fixture.away, fixture.home];
+  }
+  save.progress!.minute = 89;
+  save.progress!.matchRunning = false;
+  save.progress!.page = "matchOverview";
+  save.progress!.halftimeWaiting = false;
+  save.progress!.detailOpen = false;
+  save.budget = 12624; save.progress!.budget = 12624;
+  view.unmount();
+  sessionStorage.clear();
+  writeLocalSaves([save], "alice");
+  await cacheCareerSaves([save], "alice");
+  render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /CONTINUAR JOGANDO/ }));
+  fireEvent.click(await screen.findByRole("button", { name: "CONTINUAR" }));
+  fireEvent.click(await screen.findByRole("button", { name: /Continuar/ }));
+  const expectedNet = projectStadiumGate(database.clubs.find(c => c.id === save.clubId)!.stadiumCapacity, newStadium().prices).net;
+  await waitFor(() => {
+    const result = readLocalSaves("alice")[0];
+    expect(result.progress?.minute).toBe(90);
+    expect(result.budget).toBeCloseTo(12624 + 151 + (home ? expectedNet / 1000 : 0));
+    expect(result.progress?.stadiums?.[save.clubId]?.receipts.length ?? 0).toBe(home ? 1 : 0);
+  }, { timeout: 5000 });
+}, 20000);

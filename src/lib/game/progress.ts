@@ -1,3 +1,4 @@
+import type { StadiumState } from "./stadium";
 import type { ManagerMarket } from "./manager-market";
 import type { JobClubSnapshot, ManagerAppointment } from "./manager-jobs";
 import type { ChampionshipRecord } from "./honours";
@@ -20,6 +21,7 @@ export type MatchPreparation = {
 };
 
 export type CareerProgress = {
+  stadiums?: Record<string, StadiumState>;
   managerMarket?: ManagerMarket;
   jobClubSnapshots?: Record<string, JobClubSnapshot>;
   managerAppointments?: ManagerAppointment[];

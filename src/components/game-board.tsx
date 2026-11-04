@@ -1,5 +1,6 @@
 "use client";
 
+import { newStadium, recordGate, setSectorPrice, startExpansion, type StadiumSector, type StadiumState } from "@/lib/game/stadium";
 import { CURRENT_CAREER_RULESET, currentCareerSaves, isCurrentCareerSave } from "@/lib/game/career-rules";
 import { applyBrazilianCalendar, BRAZILIAN_REFERENCE_SEASON, careerCalendarDate, formatCalendarDate } from "@/lib/game/brazilian-calendar";
 import { acceptManagerJob, applyForManagerJob, declineManagerJob, initializeCareerMarket, refreshJobOffers, updateCareerMarket, type JobClubSnapshot, type ManagerAppointment } from "@/lib/game/manager-jobs";
@@ -116,6 +117,11 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const transfermarktSyncRunning = useRef(false);
   const [round, setRound] = useState(1);
   const [budget, setBudget] = useState(12624);
+  const [stadiums, setStadiums] = useState<Record<string, StadiumState>>({});
+  const stadiumsRef = useRef(stadiums);
+  const budgetRef = useRef(budget);
+  useEffect(() => { stadiumsRef.current = stadiums; }, [stadiums]);
+  useEffect(() => { budgetRef.current = budget; }, [budget]);
   const [careerSquad, setCareerSquad] = useState<typeof initialSquad | null>(null);
 
   const [kit, setKit] = useState<1 | 2 | 3>(1);
@@ -238,7 +244,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore,
     events, participation, matchBenchIds, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
-    managerMarket, jobClubSnapshots, managerAppointments, competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
+    stadiums, managerMarket, jobClubSnapshots, managerAppointments, competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
 
   };
   const progressRef = useRef(progress);
@@ -258,7 +264,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     pendingCloudSave.current = next;
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore, events,
-    participation, matchBenchIds, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, managerMarket, jobClubSnapshots, managerAppointments, userId]);
+    participation, matchBenchIds, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, managerMarket, jobClubSnapshots, managerAppointments, stadiums, userId]);
 
 
   useEffect(() => {
@@ -391,7 +397,20 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       }
       if (nextMinute >= matchPreparation.rules.durationMinutes) {
         setMatchRunning(false);
-        setBudget((value) => value + 151);
+        let gateNet = 0;
+        if (userIsHome && activeFixture && managedClubRecord) {
+          const id = managedClubRecord.id;
+          const currentStadium = stadiumsRef.current[id] ?? newStadium();
+          const date = savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11";
+          const result = recordGate(currentStadium, managedClubRecord.stadiumCapacity, date, activeFixture.id, opponent);
+          if (result.receipt) {
+            gateNet = result.receipt.net / 1000;
+            const nextStadiums = { ...stadiumsRef.current, [id]: result.state };
+            stadiumsRef.current = nextStadiums;
+            setStadiums(nextStadiums);
+          }
+        }
+        setBudget((value) => value + 151 + gateNet);
         const finalEvents = [...events, event];
         const goals: Record<number, number> = {};
         const assists: Record<number, number> = {};
@@ -439,7 +458,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             : undefined;
           const completedSeason = completeCareerFixture(competitionSeason, activeFixture.id, { home: actualHome, away: actualAway, winnerClubId, playerContributions: contributions }, careerDatabase!);
           setCompetitionSeason(completedSeason);
-          setManagerMarket(current => updateCareerMarket(current ?? initializeCareerMarket(careerDatabase!, competitionSeason, coach, budget), completedSeason, { clubId: managedClubRecord!.id, budget: budget + 151, payroll: squad.reduce((total, player) => total + (playerCareers[player.id]?.salary ?? player.salary), 0) }, savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"));
+          setManagerMarket(current => updateCareerMarket(current ?? initializeCareerMarket(careerDatabase!, competitionSeason, coach, budget), completedSeason, { clubId: managedClubRecord!.id, budget: budget + 151 + gateNet, payroll: squad.reduce((total, player) => total + (playerCareers[player.id]?.salary ?? player.salary), 0) }, savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"));
           setChampionHistory(history => archiveChampionships(history, completedSeason, careerDatabase!, coach));
           setConfidenceHistory((current) => mergeConfidenceHistory(current, completedSeason));
         }
@@ -749,12 +768,14 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       playerCareers: {},
       manualPositions: {},
     };
+    stadiumsRef.current = {};
+    setStadiums({});
     const initialLoans = Object.fromEntries((database?.players ?? []).filter(player => player.loan).map(player => [player.id, player.loan!]));
     setLoanContracts(initialLoans);
     setLoansOpen(false);
     const initialStarters = buildStartingXI("4-3-3", baseSquad);
     save.progress = { ...progressRef.current, page: "hub", matchPreparation: undefined, activeSaveId: save.id, coach: coach.trim(),
-      round: 1, budget: 12624, kit: 1, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
+      round: 1, budget: 12624, stadiums: {}, kit: 1, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
       careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, trainingSessions: [], manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
       detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, confidenceHistory: [], confidenceStartBudget: 12624, managerMarket: initializeCareerMarket(database, newSeason, coach.trim(), 12624), jobClubSnapshots: {}, managerAppointments: [{ clubId: selectedClub.id, club: selectedClub.name, startedOn: save.inGameDate }], activeFixtureId: firstFixture?.id, transferNegotiations: [], loanContracts: initialLoans, championHistory: [] };
@@ -828,6 +849,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setDivision(save.division);
     setRound(save.round);
     setBudget(save.budget);
+    budgetRef.current = save.budget;
+    stadiumsRef.current = save.progress?.stadiums ?? {};
+    setStadiums(stadiumsRef.current);
     setPlayerCareers(save.playerCareers ?? {});
     setKit(save.progress?.kit === 2 || save.progress?.kit === 3 ? save.progress.kit : 1);
     setTrainingSessions(save.progress?.trainingSessions ?? []);
@@ -1004,6 +1028,34 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     let index = 0;
     const nextSquad = squad.map((player) => starters.includes(player.id) ? player : reordered[index++]);
     setCareerSquad(nextSquad);
+  }
+
+  function saveStadiumChanges(nextStadiums: Record<string, StadiumState>, nextBudget: number) {
+    stadiumsRef.current = nextStadiums;
+    budgetRef.current = nextBudget;
+    setStadiums(nextStadiums);
+    setBudget(nextBudget);
+    const current = savesRef.current.find(save => save.id === activeSaveId);
+    if (current) {
+      const nextProgress = { ...progressRef.current, stadiums: nextStadiums, budget: nextBudget };
+      progressRef.current = nextProgress;
+      void persistSave({ ...current, budget: nextBudget, progress: nextProgress, updatedAt: new Date().toISOString() });
+    }
+  }
+  function changeStadiumPrice(sector: StadiumSector, price: number) {
+    if (!managedClubRecord) return;
+    const id = managedClubRecord.id;
+    const state = stadiumsRef.current[id] ?? newStadium();
+    const next = setSectorPrice(state, sector, price);
+    if (next !== state) saveStadiumChanges({ ...stadiumsRef.current, [id]: next }, budgetRef.current);
+  }
+  function expandStadium(seats: number): string | undefined {
+    if (!managedClubRecord) return "Clube indisponível.";
+    const id = managedClubRecord.id;
+    const date = savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11";
+    const result = startExpansion(stadiumsRef.current[id] ?? newStadium(), seats, date, budgetRef.current);
+    if (result.error) return result.error;
+    saveStadiumChanges({ ...stadiumsRef.current, [id]: result.state }, result.budget);
   }
 
   const jobActionInProgress = useRef(false);
@@ -1391,6 +1443,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens championHistory={championHistory} section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={managementDatabase ?? database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations.filter(deal => deal.buyerClubId === managedClubRecord?.id)} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
             jobs={managerMarket && careerDatabase && managedClubRecord ? { market: managerMarket, database: careerDatabase, currentClubId: managedClubRecord.id, date: saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11", appointments: managerAppointments, onApply: applyToManagerJob, onDecline: declineJob, onAccept: acceptJob } : undefined}
             championHistory={championHistory}
+            stadium={managedClubRecord ? stadiums[managedClubRecord.id] : undefined}
+            onStadiumPriceChange={changeStadiumPrice}
+            onStadiumExpand={expandStadium}
             section={managementSection}
             agendaView={agendaView}
             onAgendaViewChange={setAgendaView}
