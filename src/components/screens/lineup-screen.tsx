@@ -83,8 +83,6 @@ export function LineupScreen(props: Props) {
     onResetPositions,
     match,
   } = props;
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("all");
   const [showSectors, setShowSectors] = useState(false);
   const [message, setMessage] = useState(
     "Organize os jogadores; o goleiro permanece fixo no gol.",
@@ -116,13 +114,6 @@ export function LineupScreen(props: Props) {
   const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
   const players = [...startersData, ...bench];
   const active = players.find((p) => p.id === (dragId ?? selectedPlayer?.id));
-  const visibleBench = bench.filter(
-    (p) =>
-      (filter === "all" || p.position === filter) &&
-      p.name
-        .toLocaleLowerCase("pt-BR")
-        .includes(query.toLocaleLowerCase("pt-BR")),
-  );
   const positions = startersData.map(
     (p, i) => i === 10 ? slots[10] : manualPositions[p.id] ?? slots[i],
   );
@@ -497,14 +488,9 @@ export function LineupScreen(props: Props) {
                 <div><p className={styles.eyebrow}>ELENCO DISPONÍVEL</p><h2>Banco de reservas</h2></div>
                 <span title="Os 12 primeiros reservas serão inscritos para a partida; reordene antes do início." className={styles.count}>{match ? `${bench.length} disponíveis` : `${Math.min(bench.length, 12)} inscritos / ${bench.length} no elenco`}</span>
               </div>
-              {!match && <p>Os 12 primeiros são inscritos para a partida. Reordene a lista para escolher o banco.</p>}
-              <div className={styles.benchFilters}>
-                <label className={styles.search}><span>Buscar reserva</span><input type="search" placeholder="Nome do jogador" value={query} onChange={(e) => setQuery(e.target.value)} /></label>
-                <Select label="Filtrar setor" value={filter} onChange={setFilter} options={["all", "G", "L", "Z", "M", "A"]} labels={["Todas", "Goleiros", "Laterais", "Zagueiros", "Meio-campistas", "Atacantes"]} />
-              </div>
               <button className={styles.detailButton} disabled={!selectedPlayer || !bench.some((p) => p.id === selectedPlayer.id)} onClick={(event) => { detailOrigin.current = event.currentTarget; setDetailPlayer(selectedPlayer); }}>Ver ficha do reserva selecionado</button>
-              <div className={styles.bench}>
-                {visibleBench.map((player) => <button
+              <div className={styles.bench} role="region" aria-label="Lista de reservas" tabIndex={0}>
+                {bench.map((player, index) => <button
                   key={player.id}
                   onClick={() => select(player.id)}
                   onDoubleClick={(event) => { detailOrigin.current = event.currentTarget; setDetailPlayer(player); }}
@@ -517,10 +503,10 @@ export function LineupScreen(props: Props) {
                   className={`${styles.reserve} ${selectedPlayer?.id === player.id ? styles.reserveSelected : ""} ${holdingId === player.id ? styles.reserveHolding : ""} ${dragId === player.id ? styles.reserveDragging : ""}`}
                 >
                   <span data-player={player.id} className={styles.handle} title="Arrastar jogador"><PlayerJersey player={player} /></span>
-                  <span className={styles.reserveInfo}><b>{player.name}</b><small>{fifaPosition(player)} · ENERGIA {player.energy}%{!match && bench.findIndex((p) => p.id === player.id) >= 12 ? " · FORA DO BANCO" : ""}</small></span>
+                  <span className={styles.reserveInfo}><b>{player.name}</b><small>{fifaPosition(player)} · ENERGIA {player.energy}%{!match && index >= 12 ? " · FORA DO BANCO" : ""}</small></span>
                   <strong>{player.overall}</strong>
                 </button>)}
-                {!visibleBench.length && <p className={styles.emptyBench}>Nenhum reserva para este filtro.</p>}
+                {!bench.length && <p className={styles.emptyBench}>Nenhum reserva disponível.</p>}
               </div>
             </section>
 
