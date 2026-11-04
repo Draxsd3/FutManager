@@ -112,3 +112,7 @@
   .schedule table { white-space: normal; }
   .schedule th, .schedule td { padding: 7px; }
 }
+
+/* The season list scrolls independently so the agenda controls remain visible. */
+.tableWrap { max-height: min(42vh, 420px); overflow: auto; }
+.schedule th { position: sticky; top: 0; z-index: 1; }

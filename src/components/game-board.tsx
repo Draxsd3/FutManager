@@ -1289,6 +1289,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             budget={budget}
             squad={squad}
             fixtures={fixtures}
+            season={competitionSeason}
             competition={competitionName}
             inGameDate={saves.find((save) => save.id === activeSaveId)?.inGameDate ?? "2026-01-22"}
             starters={starters}
