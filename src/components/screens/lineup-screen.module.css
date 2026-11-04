@@ -603,3 +603,10 @@
 
 /* Keep the shared heading icon aligned without replacing the original dark theme. */
 .header h1 { display:flex; align-items:center; gap:12px; }
+
+/* Keep tactics and match details in view without a large title block. */
+.header { gap:12px; padding-bottom:5px; }
+.header h1 { gap:7px; font-size:16px; }
+.header .eyebrow { margin-bottom:2px; }
+.fixture { margin-top:3px; gap:7px; }
+@media(max-width:560px) { .header h1 { font-size:15px; } }
