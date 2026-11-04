@@ -158,6 +158,8 @@ export function deployLineupPlayer(
   const origin = starters.indexOf(id),
     displaced = starters[slot];
   if (displaced === undefined) return null;
+  // O slot 10 é o goleiro; ele não pode ser deslocado para o ataque.
+  if ((slot === 10) !== (player.position === "G") || (origin === 10 && slot !== 10)) return null;
   const next = [...starters],
     nextPositions = { ...positions };
   if (origin >= 0) next[origin] = displaced;
@@ -167,7 +169,8 @@ export function deployLineupPlayer(
     if (positions[id]) nextPositions[displaced] = positions[id];
     else delete nextPositions[displaced];
   } else if (origin < 0) delete nextPositions[displaced];
-  if (point)
+  if (slot === 10) delete nextPositions[id];
+  else if (point)
     nextPositions[id] = {
       left: Math.min(100, Math.max(0, point.left)),
       top: Math.min(100, Math.max(0, point.top)),

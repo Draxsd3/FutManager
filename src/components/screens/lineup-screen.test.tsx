@@ -302,7 +302,7 @@ it("places a selected player at exact field coordinates while guides are off", (
   });
   expect(screen.queryByRole("button", { name: /Posicionar em/ })).toBeNull();
 });
-it("places reserve keepers at the nearest actual outfield location without snapping to goal", () => {
+it("blocks placing reserve keepers in an outfield position", () => {
   const { place } = setup();
   const reserve = bench.find((p) => p.position === "G")!;
   fireEvent.click(
@@ -312,11 +312,8 @@ it("places reserve keepers at the nearest actual outfield location without snapp
   fireEvent.click(
     screen.getByRole("button", { name: "Posicionar em Centroavante esquerdo" }),
   );
-  expect(place).toHaveBeenCalledWith(
-    reserve.id,
-    1,
-    expect.objectContaining({ left: 38, top: 9 }),
-  );
+  expect(place).not.toHaveBeenCalled();
+  expect(screen.getByText(/O goleiro permanece no gol/)).toBeTruthy();
 });
 it("offers contiguous polygon targets for second striker, wingbacks and every center-back side without role restrictions", () => {
   const { place } = setup();
