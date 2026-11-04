@@ -5,7 +5,7 @@ import { advanceSeasonBeforeDate, createCareerSeason, nextCareerFixture, type Ca
 import type { CareerProgress } from "./progress";
 
 /** Per-club state: numeric player IDs, money and tactics must not leak between teams. */
-export type JobClubSnapshot = Pick<CareerProgress, "careerSquad" | "starters" | "playerCareers" | "manualPositions" | "trainingSessions" | "competitionSeason" | "formation" | "style" | "marking" | "focus" | "confidenceHistory" | "confidenceStartBudget">;
+export type JobClubSnapshot = Pick<CareerProgress, "kit" | "careerSquad" | "starters" | "playerCareers" | "manualPositions" | "trainingSessions" | "competitionSeason" | "formation" | "style" | "marking" | "focus" | "confidenceHistory" | "confidenceStartBudget">;
 export type ManagerAppointment = { clubId: string; club: string; startedOn: string; endedOn?: string };
 
 export function initializeCareerMarket(database: EditorDatabase, season: CareerSeason, coach: string, budget: number): ManagerMarket {
@@ -90,7 +90,7 @@ export function acceptManagerJob(save: CareerSave, database: EditorDatabase, app
   const squad = cached?.careerSquad ?? buildSquadFromDatabase(database, target.name, true);
   if (!squad || squad.length < 11 || !squad.some(player => player.position === "G")) return { error: "O elenco do clube está incompleto." };
   // Copy only club-scoped fields, never recursively nest full progress snapshots.
-  const previous: JobClubSnapshot = { careerSquad: progress.careerSquad, starters: progress.starters, playerCareers: progress.playerCareers, manualPositions: progress.manualPositions, trainingSessions: progress.trainingSessions,
+  const previous: JobClubSnapshot = { kit: progress.kit, careerSquad: progress.careerSquad, starters: progress.starters, playerCareers: progress.playerCareers, manualPositions: progress.manualPositions, trainingSessions: progress.trainingSessions,
     competitionSeason: oldSeason, formation: progress.formation, style: progress.style, marking: progress.marking, focus: progress.focus, confidenceHistory: progress.confidenceHistory, confidenceStartBudget: progress.confidenceStartBudget };
   const oldClub = appointment.clubs[save.clubId];
   const clubs = { ...appointment.clubs, [save.clubId]: { ...oldClub, coach: null, budget: save.budget, vacancyVersion: (oldClub.vacancyVersion ?? 0) + 1 }, [target.id]: { ...appointment.clubs[target.id], processedFixtures: season.fixtures.filter(f => f.status === "played" && [f.homeClubId, f.awayClubId].includes(target.id)).map(f => f.id) } };
@@ -99,7 +99,7 @@ export function acceptManagerJob(save: CareerSave, database: EditorDatabase, app
   const nextProgress: CareerProgress = { ...progress, ...(cached ?? {}), managerMarket: nextMarket, jobClubSnapshots: { ...progress.jobClubSnapshots, [save.clubId]: previous },
     managerAppointments: [...appointments.map((item, index) => index === appointments.length - 1 ? { ...item, endedOn: save.inGameDate } : item), { clubId: target.id, club: target.name, startedOn: save.inGameDate }],
     club: target.name, division: target.division, budget: clubs[target.id].budget, careerSquad: squad, starters: cached?.starters ?? buildStartingXI("4-3-3", squad), playerCareers: cached?.playerCareers ?? {}, manualPositions: cached?.manualPositions ?? {}, trainingSessions: cached?.trainingSessions ?? [],
-    formation: cached?.formation ?? "4-3-3", style: cached?.style ?? "Equilibrado", marking: cached?.marking ?? "Leve", focus: cached?.focus ?? "Pelo meio",
+    kit: cached?.kit ?? 1, formation: cached?.formation ?? "4-3-3", style: cached?.style ?? "Equilibrado", marking: cached?.marking ?? "Leve", focus: cached?.focus ?? "Pelo meio",
     competitionSeason: season, confidenceHistory: [], confidenceStartBudget: clubs[target.id].budget, activeFixtureId: nextCareerFixture(season)?.id,
     transferNegotiations: progress.transferNegotiations?.map(deal => deal.buyerClubId === save.clubId && (deal.status === "countered" || deal.status === "agreed") ? { ...deal, status: "rejected", message: "Negociação encerrada com a saída do treinador." } : deal),
     page: "hub", minute: 0, homeScore: 0, awayScore: 0, events: [], participation: {}, matchBenchIds: undefined, matchPreparation: undefined, detailOpen: false, matchRunning: false, halftimeWaiting: false, substitutionsLeft: 5 };

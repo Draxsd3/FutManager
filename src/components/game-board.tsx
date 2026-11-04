@@ -118,6 +118,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [budget, setBudget] = useState(12624);
   const [careerSquad, setCareerSquad] = useState<typeof initialSquad | null>(null);
 
+  const [kit, setKit] = useState<1 | 2 | 3>(1);
   const [formation, setFormation] = useState("4-3-3");
   const [style, setStyle] = useState("Equilibrado");
   const [marking, setMarking] = useState("Leve");
@@ -234,7 +235,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [standingsOpen, setStandingsOpen] = useState(false);
 
   const progress: CareerProgress = {
-    page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, formation, style, marking, focus,
+    page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore,
     events, participation, matchBenchIds, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
     managerMarket, jobClubSnapshots, managerAppointments, competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
@@ -255,7 +256,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     writeLocalSaves(nextSaves, userId);
     setSaves(nextSaves);
     pendingCloudSave.current = next;
-  }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, formation, style, marking, focus,
+  }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore, events,
     participation, matchBenchIds, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, managerMarket, jobClubSnapshots, managerAppointments, userId]);
 
@@ -753,7 +754,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setLoansOpen(false);
     const initialStarters = buildStartingXI("4-3-3", baseSquad);
     save.progress = { ...progressRef.current, page: "hub", matchPreparation: undefined, activeSaveId: save.id, coach: coach.trim(),
-      round: 1, budget: 12624, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
+      round: 1, budget: 12624, kit: 1, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
       careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, trainingSessions: [], manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
       detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, confidenceHistory: [], confidenceStartBudget: 12624, managerMarket: initializeCareerMarket(database, newSeason, coach.trim(), 12624), jobClubSnapshots: {}, managerAppointments: [{ clubId: selectedClub.id, club: selectedClub.name, startedOn: save.inGameDate }], activeFixtureId: firstFixture?.id, transferNegotiations: [], loanContracts: initialLoans, championHistory: [] };
@@ -768,6 +769,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setRound(1);
     setDefaultMatchSpeed(1);
     setBudget(12624);
+    setKit(1);
     setFormation("4-3-3");
     setStyle("Equilibrado");
     setMarking("Leve");
@@ -827,6 +829,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setRound(save.round);
     setBudget(save.budget);
     setPlayerCareers(save.playerCareers ?? {});
+    setKit(save.progress?.kit === 2 || save.progress?.kit === 3 ? save.progress.kit : 1);
     setTrainingSessions(save.progress?.trainingSessions ?? []);
     setManualPositions(save.manualPositions ?? {});
     setTransferNegotiations(save.progress?.transferNegotiations ?? []);
@@ -882,6 +885,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       setCareerLoaded(true);
       return true;
     }
+    setKit(1);
     setFormation("4-3-3");
     setStyle("Equilibrado");
     setMarking("Leve");
@@ -1317,6 +1321,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     date: formatCalendarDate(saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"), onClose: () => navigate("hub"),
     background: (
           <HubScreen
+            kit={kit}
             club={club}
             coach={coach}
             budget={budget}
@@ -1425,6 +1430,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       <>
         <CareerWorkspace {...workspace} title="Escalação" classicContent>
           <LineupScreen
+          kit={kit}
+          onKitChange={setKit}
           club={club}
           coach={coach}
           opponent={opponent}
@@ -1490,6 +1497,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         </div>
         {detailOpen && (
           <MatchDetailScreen
+            kit={kit}
             club={club}
             clubColors={database.clubs.find((item) => item.name === club)}
             opponent={opponent}

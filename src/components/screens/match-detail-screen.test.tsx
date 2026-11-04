@@ -2,6 +2,7 @@
 import { useState, type ComponentProps } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { clubKitAsset } from "@/lib/game/assets";
 import { squad, buildStartingXI } from "@/lib/game/mock-data";
 import { MatchDetailScreen } from "./match-detail-screen";
 
@@ -141,4 +142,11 @@ it("blocks a goalkeeper replacing an outfield player", () => {
   fireEvent.click(reserve(bench.findIndex((player) => player.position === "G")));
   expect((screen.getByRole("button", { name: "Confirmar substituição" }) as HTMLButtonElement).disabled).toBe(true);
   expect(substitute).not.toHaveBeenCalled();
+});
+
+it.each([false, true])("keeps the selected third shirt during match tactics and halftime (%s), without changing shirts midgame", (isHalftime) => {
+  setup({ kit: 3, isHalftime });
+  expect(screen.getByText("Uniforme 3")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: /Usar camisa/ })).toBeNull();
+  for (const image of document.querySelectorAll("svg image")) expect(image.getAttribute("href")).toBe(clubKitAsset("Flamengo", 3));
 });

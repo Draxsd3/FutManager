@@ -9,7 +9,8 @@ import { PlayerJersey } from "@/components/ui/player-jersey";
 import { TRAINING_DAYS, trainingDrillLabel, trainingWeekSessions, type TrainingSessionRecord } from "@/lib/game/training";
 import styles from "./hub-screen.module.css";
 
-export function HubScreen({ club, coach, budget, opponent, round, competition, squad, starters, selectedPlayer, playerCareers = {}, confidence = null, trainingSessions = [], trainingWeek = round, season = 2026, isHome = true, hasNextMatch = true, roundLabel, loanReminder = 0, onLoans, onSelectPlayer, onOpenPlayer, onEscalar, onQuickAction }: {
+export function HubScreen({ kit = 1, club, coach, budget, opponent, round, competition, squad, starters, selectedPlayer, playerCareers = {}, confidence = null, trainingSessions = [], trainingWeek = round, season = 2026, isHome = true, hasNextMatch = true, roundLabel, loanReminder = 0, onLoans, onSelectPlayer, onOpenPlayer, onEscalar, onQuickAction }: {
+  kit?: 1 | 2 | 3;
   loanReminder?: number;
   onLoans?: () => void;
   club: string; coach: string; budget: number; opponent: string; round: number; competition: string;
@@ -46,16 +47,16 @@ export function HubScreen({ club, coach, budget, opponent, round, competition, s
         </div>
         <SquadInsights squad={squad} season={season} week={trainingWeek} trainingSessions={trainingSessions} onOpenTraining={() => onQuickAction("training")} />
       </div>
-      {selectedPlayer && <PlayerPreview club={club} player={selectedPlayer} record={selectedRecord} season={season} current={selectedSeason} onOpen={() => onOpenPlayer(selectedPlayer.id)} />}
+      {selectedPlayer && <PlayerPreview kit={kit} club={club} player={selectedPlayer} record={selectedRecord} season={season} current={selectedSeason} onOpen={() => onOpenPlayer(selectedPlayer.id)} />}
       <footer className={styles.statusbar}><span>{squad.length} exibidos · {squad.length} / 35 jogadores</span><span>Selecione um atleta · duplo clique ou Enter abre a ficha</span></footer>
     </section>
   </div>;
 }
 
-function PlayerPreview({ club, player, record, season, current, onOpen }: { club: string; player: Player; record?: PlayerCareerRecord; season: number; current?: PlayerCareerRecord["seasons"][number]; onOpen: () => void }) {
+function PlayerPreview({ kit, club, player, record, season, current, onOpen }: { kit: 1 | 2 | 3; club: string; player: Player; record?: PlayerCareerRecord; season: number; current?: PlayerCareerRecord["seasons"][number]; onOpen: () => void }) {
   const contractUntil = record?.contractUntil ?? player.contractUntil;
   return <section className={styles.playerPreview} aria-label={`Prévia de ${player.name}`}>
-    <div className={styles.previewJersey}><PlayerJersey club={club} player={player} /></div>
+    <div className={styles.previewJersey}><PlayerJersey kit={kit} club={club} player={player} /></div>
     <div className={styles.previewIdentity}><span className={styles.previewKicker}>ATLETA SELECIONADO</span><strong>{player.name}</strong><span>{positionLabel[player.position]} · {player.age} anos · Pé {player.foot === "D" ? "direito" : "esquerdo"}</span></div>
     <div className={styles.previewStat}><span>FORÇA</span><b>{player.overall}</b></div>
     <div className={styles.previewStat}><span>ENERGIA</span><b>{player.energy}%</b><i><i style={{ width: `${Math.max(0, Math.min(100, player.energy))}%` }} /></i></div>
