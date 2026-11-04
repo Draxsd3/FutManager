@@ -1,6 +1,5 @@
 import { z } from "zod";
-import type { EditorDatabase, EditorPlayer } from "@/lib/game/editor-data";
-import { MAX_CLUB_SQUAD_SIZE } from "@/lib/game/editor-data";
+import type { EditorClub, EditorDatabase, EditorPlayer } from "@/lib/game/editor-data";
 import { normalizeName } from "./matching";
 
 const numericId = z.string().regex(/^[1-9]\d*$/);
@@ -12,7 +11,9 @@ const playerSchema = z.object({
   contractEndsOn: z.iso.date().nullable(),
   marketValueEur: z.number().int().min(0).max(10_000_000_000).nullable(),
 });
+const divisionSchema = z.enum(["Série A", "Série B", "Série C", "Série D"]);
 const clubSchema = z.object({
+  competitionId: z.string().optional(), division: divisionSchema.optional(), country: z.literal("Brasil").optional(),
   source: z.string().min(1), id: numericId, name: z.string().trim().min(1).max(250),
   fetchedAt: z.iso.datetime({ offset: true }), updatedAt: z.string().nullable(),
   stadiumName: z.string().trim().min(1).max(250).nullable(),
@@ -21,7 +22,9 @@ const clubSchema = z.object({
   players: z.array(playerSchema).min(11).max(200),
 });
 export const transfermarktSnapshotSchema = z.object({
-  version: z.literal(1), generatedAt: z.iso.datetime({ offset: true }).nullable(),
+  version: z.union([z.literal(1), z.literal(2)]),
+  competitions: z.array(z.object({ id: z.string().regex(/^[A-Za-z0-9]+$/), name: z.string().min(1), division: divisionSchema, seasonId: z.string().min(1) })).optional(),
+  generatedAt: z.iso.datetime({ offset: true }).nullable(),
   seasonId: z.string().regex(/^\d{4}$/).nullable(), clubs: z.array(clubSchema).max(2000),
 });
 export type TransfermarktSnapshot = z.infer<typeof transfermarktSnapshotSchema>;
@@ -29,7 +32,7 @@ type CatalogClub = { source: string; name: string; state: string };
 type Link = { transfermarktId: string | null; approved: boolean };
 
 /** Pure allowlisted overlay. Caller must never apply this to an active career snapshot.
- * No new clubs, no currency guesses, no ratings presented as Transfermarkt measurements.
+ * Version 2 imports competition members, including missing clubs. No currency/rating guesses.
  */
 export function applyTransfermarktSnapshot(
   database: EditorDatabase, input: unknown, catalog: CatalogClub[], links: Record<string, Link>,
@@ -42,7 +45,9 @@ export function applyTransfermarktSnapshot(
   for (const incoming of snapshot.clubs) {
     const registered = catalog.find((club) => club.source === incoming.source);
     const link = links[incoming.source];
-    if (!registered || !link?.approved || link.transfermarktId !== incoming.id) {
+    const competition = snapshot.competitions?.find(item => item.id === incoming.competitionId);
+    const fromCompetition = snapshot.version === 2 && competition && competition.division === incoming.division && incoming.country === "Brasil";
+    if (snapshot.version === 2 ? !fromCompetition : (!registered || !link?.approved || link.transfermarktId !== incoming.id)) {
       throw new Error(`Unapproved Transfermarkt link: ${incoming.source}`);
     }
     if (clubIds.has(incoming.id) || updates.has(incoming.source)) throw new Error("Duplicate club identity");
@@ -55,12 +60,32 @@ export function applyTransfermarktSnapshot(
     updates.set(incoming.source, incoming);
   }
   const playersByClub = new Map<string, EditorPlayer[]>();
-  const clubs = database.clubs.map((club) => {
-    const registered = catalog.find((entry) => entry.name === club.name && entry.state === club.state);
-    const incoming = registered && updates.get(registered.source);
-    if (!incoming || club.country.toLowerCase() !== "brasil") return club;
+  const targets = new Map<string, z.infer<typeof clubSchema>>();
+  const baseClubs = [...database.clubs];
+  const normalizedClub = (name: string) => normalizeName(name).replace(/^(se|cr|sc|ec|clube de regatas|clube de regatas do) /, "").replace(/ (fc|ec|fr|fbpa|futebol clube)$/, "");
+  for (const incoming of updates.values()) {
+    const registered = catalog.find(entry => entry.source === incoming.source || links[entry.source]?.approved && links[entry.source]?.transfermarktId === incoming.id);
+    const matches = baseClubs.filter(club => club.country.toLowerCase() === "brasil" &&
+      (registered ? club.name === registered.name && club.state === registered.state : normalizedClub(club.name) === normalizedClub(incoming.name)));
+    if (matches.length > 1) throw new Error(`Clube ambíguo: ${incoming.name}. Confira o vínculo antes de importar.`);
+    let club = matches[0];
+    if (!club && snapshot.version === 2) {
+      club = { id: crypto.randomUUID(), name: incoming.name, shortName: incoming.name.slice(0, 3).toUpperCase(),
+        division: incoming.division!, country: "Brasil", foundedYear: 0, primaryColor: "#246e43", secondaryColor: "#ffffff",
+        stadiumName: incoming.stadiumName ?? "Não informado", stadiumCapacity: incoming.stadiumCapacity ?? 0,
+        coachName: incoming.coachName ?? "Não informado", level: 10, kitStyle: "lisa" } satisfies EditorClub;
+      baseClubs.push(club);
+    }
+    if (club) {
+      if (targets.has(club.id)) throw new Error("Two Transfermarkt clubs matched the same local club");
+      targets.set(club.id, incoming);
+    }
+  }
+  const clubs = baseClubs.map((club) => {
+    const incoming = targets.get(club.id);
+    if (!incoming) return club;
     const previous = database.players.filter((player) => player.clubId === club.id);
-    const senior = [...incoming.players].sort((a, b) => Number(b.position === "G") - Number(a.position === "G")).slice(0, MAX_CLUB_SQUAD_SIZE);
+    const senior = [...incoming.players].sort((a, b) => Number(b.position === "G") - Number(a.position === "G"));
     const reused = new Set<string>();
     const roster = senior.map((player, index): EditorPlayer => {
       // Name matching is only used for game defaults, never for approving a club/link.
@@ -83,7 +108,7 @@ export function applyTransfermarktSnapshot(
       };
     });
     playersByClub.set(club.id, roster);
-    return { ...club, stadiumName: incoming.stadiumName ?? club.stadiumName,
+    return { ...club, division: snapshot.version === 2 ? incoming.division! : club.division, stadiumName: incoming.stadiumName ?? club.stadiumName,
       stadiumCapacity: incoming.stadiumCapacity ?? club.stadiumCapacity,
       coachName: incoming.coachName ?? club.coachName };
   });

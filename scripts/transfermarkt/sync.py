@@ -1,5 +1,5 @@
 """Transfermarkt API v4 collector. No third-party Python dependencies.
-Only approved links to the existing FutManager catalog may be synchronized.
+Legacy club sync uses approved links; competition sync includes missing Brazilian senior clubs.
 """
 import argparse
 import datetime as dt
@@ -203,13 +203,78 @@ def synchronize(client, catalog, mapping, previous, season=None, selected=None):
     return {'version': 1, 'generatedAt': now(), 'seasonId': season, 'clubs': sorted(records.values(), key=lambda c: c['source'])}, report
 
 
+
+def search_competitions(client, query):
+    results = []
+    page = 1
+    while True:
+        response = client.get('/competitions/search/' + urllib.parse.quote(query, safe='') + f'?page_number={page}')
+        results.extend(response['results'])
+        last = number(response.get('lastPageNumber'), 1, 1000)
+        if page >= last:
+            return results
+        page += 1
+
+
+def collect_competition(client, competition_id, division, season, previous):
+    if division not in ('Série A', 'Série B', 'Série C', 'Série D'):
+        raise ValueError('Only Brazilian national senior divisions A/B/C/D are supported')
+    if not competition_id or not competition_id.isalnum():
+        raise ValueError('Invalid competition ID; use the search result')
+    if previous.get('clubs') and previous.get('version') != 2:
+        raise ValueError('Use a separate v2 snapshot, do not mix with the legacy club import')
+    if previous.get('clubs') and previous.get('seasonId') != season:
+        raise ValueError('Do not mix seasons')
+    query = '?season_id=' + urllib.parse.quote(season) if season else ''
+    listing = client.get(f'/competitions/{competition_id}/clubs{query}')
+    if listing.get('id') != competition_id or not isinstance(listing.get('clubs'), list) or not listing['clubs']:
+        raise ValueError('Invalid or empty competition listing')
+    if season and listing.get('seasonId') != season:
+        raise ValueError('Competition season mismatch')
+    ids = [entity_id(c.get('id')) for c in listing['clubs']]
+    if len(ids) != len(set(ids)):
+        raise ValueError('Duplicate club in competition')
+    import unicodedata
+    title = ''.join(c for c in unicodedata.normalize('NFD', text(listing.get('name')).lower()) if not unicodedata.combining(c))
+    expected = ''.join(c for c in unicodedata.normalize('NFD', division.lower()) if not unicodedata.combining(c))
+    if expected not in title or not any(term in title for term in ('brasileiro', 'brasileirao')) or any(term in title for term in ('u20', 'u-20', 'sub-20', 'playoff')):
+        raise ValueError('Competition title does not match the selected Brazilian senior division')
+    competition = {'id': competition_id, 'name': text(listing.get('name')), 'division': division,
+                   'seasonId': text(listing.get('seasonId'))}
+    records = {c['id']: c for c in previous.get('clubs', [])}
+    competitions = {c['id']: c for c in previous.get('competitions', [])}
+    competitions[competition_id] = competition
+    report = {'fetchedAt': now(), 'competition': competition, 'expectedClubs': len(ids), 'updated': [], 'errors': []}
+    for club_id in ids:
+        try:
+            profile = client.get(f'/clubs/{club_id}/profile')
+            squad = client.get(f'/clubs/{club_id}/players{query}')
+            record = normalize('tm-' + club_id, club_id, profile, squad)
+            record.update({'competitionId': competition_id, 'division': division, 'country': 'Brasil'})
+            records[club_id] = record
+            report['updated'].append(club_id)
+        except (ValueError, KeyError, TypeError, OSError) as error:
+            report['errors'].append({'id': club_id, 'error': str(error)[:300], 'preservedPrevious': club_id in records})
+    # Refuse an inconsistent published snapshot rather than silently drop transferred players.
+    seen = set()
+    for club in records.values():
+        for player in club['players']:
+            if player['id'] in seen:
+                raise ValueError('Player appears in multiple clubs; refresh affected competitions together')
+            seen.add(player['id'])
+    return {'version': 2, 'generatedAt': now(), 'seasonId': season,
+            'competitions': list(competitions.values()), 'clubs': list(records.values())}, report
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['discover', 'sync'])
+    parser.add_argument('command', choices=['discover', 'sync', 'competitions', 'competition-sync'])
     parser.add_argument('--base-url', default=os.getenv('TRANSFERMARKT_API_URL', 'https://transfermarkt-api.fly.dev'))
     parser.add_argument('--mapping', type=Path, default=MAPPING)
     parser.add_argument('--output', type=Path, default=SNAPSHOT)
     parser.add_argument('--work-dir', type=Path, default=ROOT / '.cache/transfermarkt')
+    parser.add_argument('--query', default='brasileirão', help='Competition search text')
+    parser.add_argument('--competition', help='Competition ID from search, never a club ID')
+    parser.add_argument('--division', choices=['Série A', 'Série B', 'Série C', 'Série D'])
     parser.add_argument('--club', action='append', help='Existing catalog source key; repeatable')
     parser.add_argument('--season', help='Omit for current roster; e.g. 2026 for historical season')
     parser.add_argument('--refresh', action='store_true')
@@ -220,6 +285,27 @@ def main():
     catalog = read(CATALOG)
     mapping = read(args.mapping)
     client = Client(args.base_url, args.work_dir / 'cache', args.refresh)
+    if args.command == 'competitions':
+        results = search_competitions(client, args.query)
+        write(args.work_dir / 'competitions.json', results)
+        print(json.dumps(results, ensure_ascii=False, indent=2))
+        return
+    if args.command == 'competition-sync':
+        if not args.competition or not args.division:
+            parser.error('--competition and --division are required')
+        previous = read(args.output) if args.output.exists() else {'version': 2, 'clubs': [], 'competitions': [], 'seasonId': args.season}
+        # An empty v1 bootstrap can be replaced by the competition-based format.
+        snapshot, report = collect_competition(client, args.competition, args.division, args.season, previous)
+        write(args.work_dir / 'report.json', report)
+        write(args.work_dir / 'preview.json', snapshot)
+        # Competition publication is all-or-nothing: missing teams must not look complete.
+        applied = bool(args.apply and not report['errors'])
+        if applied:
+            write(args.output, snapshot)
+        print(json.dumps({'clubs': len(report['updated']), 'players': sum(len(c['players']) for c in snapshot['clubs']), 'errors': report['errors'], 'applied': applied}, ensure_ascii=False))
+        if report['errors']:
+            raise SystemExit(2)
+        return
     if args.command == 'discover':
         result = []
         selected = set(args.club or [c['source'] for c in catalog])

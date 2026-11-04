@@ -50,8 +50,8 @@ export type EditorDatabase = {
   players: EditorPlayer[];
 };
 
-// FIFA Club World Cup 2025: final club lists may contain up to 35 players.
-export const MAX_CLUB_SQUAD_SIZE = 35;
+// Technical guard for complete source rosters, not a 35-player competition registration list.
+export const MAX_CLUB_SQUAD_SIZE = 200;
 
 export function enforceEditorSquadLimit(players: EditorPlayer[]) {
   const counts = new Map<string, number>();
