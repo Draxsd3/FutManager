@@ -4,3 +4,28 @@
 @media(max-width:850px){.toolbar,.rosterBody{margin-inline:0}.toolbar{padding-inline:12px}.rosterBody{padding-inline:12px}.playerPreview{margin-inline:12px;grid-template-columns:45px minmax(110px,1fr) repeat(2,minmax(60px,.6fr)) minmax(120px,1fr) auto;gap:8px}.previewJersey{width:44px;height:54px}.previewStat:nth-of-type(5){display:none}}
 @media(max-width:700px){.workspace{display:flex;flex-direction:column;overflow:auto;height:100%}.roster{min-height:760px;flex:none;overflow:visible;padding:0 10px 10px}.toolbar{padding:13px 1px 9px}.rosterBody{display:grid;grid-template-columns:minmax(0,1fr);flex:none;overflow:visible;padding:0}.tableScroll{min-height:300px}.insights{grid-template-columns:minmax(0,1fr)}.playerPreview{grid-template-columns:42px minmax(0,1fr) auto;gap:9px;margin:10px 0 8px;padding:9px}.previewJersey{width:40px;height:48px}.previewIdentity strong{font-size:11px}.previewStat,.previewValue{display:none}.previewButton{min-height:29px;padding:0 8px}.statusbar{padding-inline:2px}.statusbar span:last-child{display:none}}
 @media(max-width:390px){.playerPreview{grid-template-columns:36px minmax(0,1fr) auto;gap:7px;padding:7px}.previewJersey{width:34px;height:43px}}
+
+/* The principal roster shares Training's neutral canvas, not another outer card. */
+.workspace,.roster { background:#f5f6f3; color:#26392f; }
+.toolbar,.statusbar { border-color:#dce3da; }
+.rosterTitle b,.table td.name,.insightHeading h3,.previewIdentity strong,.previewStat b,.previewValue b,.trainingSummary b { color:#304a37; }
+.rosterTitle span,.weekBadge,.insightLabel,.insightPill,.lowEnergyCaption,.trainingEmpty,.trainingLoad,.previewKicker,.previewStat>span,.previewValue>span,.previewIdentity>span:last-child,.previewValue small,.statusbar { color:#5f705e; }
+.tableScroll { background:#fafbf8; border-color:#dce3da; box-shadow:none; }
+.table thead { background:#eaf0e5; color:#536b59; }
+.table th,.table td { border-color:#dce3da; }
+.table td { color:#536b59; }
+.table tbody tr.selected { background:#e5eedf; box-shadow:inset 2px 0 #3e7952; }
+.insightCard { background:transparent; border:0; border-top:1px solid #dce3da; border-radius:0; box-shadow:none; }
+.trainingDay { background:#fafbf8; border-color:#dce3da; color:#5f705e; }
+.trainingDayDone { background:#e5eedf; border-color:#99b58e; color:#3e7952; }
+.trainingLog li,.lowEnergyList li { color:#536b59; border-color:#dce3da; }
+.trainingLog li b,.averageEnergy,.standouts li>b { color:#3e7952; }
+.standoutName { color:#304a37; }
+.standoutName small,.trainingLog li small { color:#5f705e; }
+.playerPreview { background:#eaf0e5; border-color:#d2ddd0; border-radius:6px; box-shadow:none; }
+.previewButton,.trainingButton { background:#e5eedf; border-color:#99b58e; color:#315f40; }
+.energy { background:#dce3da; }
+.energy>span { background:#8db483; }
+.energy b { color:#26392f; }
+.good { color:#26724c!important; }
+.low { color:#a9472e!important; }

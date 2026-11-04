@@ -542,3 +542,13 @@
     display: none;
   }
 }
+
+/* Reuse the training palette without changing modal focus or table behavior. */
+.window { background:#f5f6f3; color:#26392f; border:1px solid #dce3da; border-radius:12px; }
+.header { background:transparent; color:#26392f; border-bottom:1px solid #dce3da; padding:24px 28px; }
+.header h1 { display:flex; align-items:center; flex-wrap:wrap; gap:12px; font-size:23px; letter-spacing:-.045em; }
+.header h1 span { color:inherit; }
+.header p { color:#5f705e; font-size:9px; }
+.header button { background:#fafbf8; border-color:#d2ddd0; color:#354c3b; border-radius:6px; }
+.categories { background:transparent; }
+@media(max-width:700px) { .header { padding:18px 14px; } .header h1 { font-size:20px; } }

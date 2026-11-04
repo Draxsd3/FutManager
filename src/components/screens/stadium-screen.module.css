@@ -47,3 +47,16 @@
 
 .confirm { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px; margin-top: 6px; border-radius: 5px; background: #eef4ee; font-size: 10px; }
 .confirm button { padding: 5px 8px; border: 1px solid #91a799; border-radius: 4px; background: #fff; color: #294335; font-weight: 700; cursor: pointer; }
+
+/* Same quiet canvas, typography and section dividers as Training. */
+.screen { background:#f5f6f3; color:#26392f; }
+.container { max-width:1400px; padding:24px 28px; }
+.summary { gap:16px; margin-bottom:20px; }
+.summary>div { padding:12px 0; border:0; border-bottom:1px solid #dce3da; border-radius:0; background:transparent; }
+.summary span,.summary small,.description,.note,.project span,.gateSummary span,.sector strong small { color:#5f705e; }
+.columns { gap:28px; }
+.panel { padding:18px 0; border:0; border-top:1px solid #dce3da; border-radius:0; background:transparent; }
+.panel h2 { font-size:16px; }
+.gateSummary div { border-radius:6px; background:#eaf0e5; }
+.project { border-radius:6px; background:#fafbf8; }
+@media(max-width:700px) { .container { padding:18px 14px; } .columns { gap:16px; } }

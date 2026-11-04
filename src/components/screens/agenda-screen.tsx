@@ -1,4 +1,5 @@
 "use client";
+import { ManagementHeader } from "@/components/ui/management-header";
 
 import { brazilianCalendarPeriods, formatCalendarDate } from "@/lib/game/brazilian-calendar";
 import { ManagerJobs, type ManagerJobsProps } from "./manager-jobs";
@@ -32,7 +33,7 @@ export function AgendaScreen({ club, coach, competition, inGameDate, round, seas
 
   return <section className={styles.screen} aria-labelledby="agenda-title">
     <div className={styles.container}>
-      <header className={styles.header}><div><p className={styles.eyebrow}>CLUBE / AGENDA</p><h1 id="agenda-title">Cada jogo, um novo capítulo.</h1><p>Organize os compromissos do {club} e planeje seu próximo passo.</p></div><div className={styles.headerActions}><span className={styles.date}>{date.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</span><button onClick={onBack}>← Voltar ao clube</button></div></header>
+      <ManagementHeader id="agenda-title" eyebrow="Clube / agenda" title="Cada jogo, um novo capítulo." icon="calendar" description={`Organize os compromissos do ${club} e planeje seu próximo passo.`} actions={<><span>{date.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</span><button onClick={onBack}>← Voltar ao clube</button></>} />
       <nav className={styles.tabs} aria-label="Seções da agenda">{agendaOptions.map((option, index) => <button key={option.id} type="button" aria-current={view === option.id ? "page" : undefined} onClick={() => onViewChange(option.id)}><span aria-hidden="true">0{index + 1}</span>{option.label}</button>)}</nav>
 
       {view === "matches" ? <>

@@ -1,4 +1,7 @@
 "use client";
+import { ManagementHeader } from "@/components/ui/management-header";
+import surface from "@/components/ui/management-surface.module.css";
+
 
 import { useMemo, useState } from "react";
 import type { EditorClub, EditorDatabase, EditorPlayer } from "@/lib/game/editor-data";
@@ -8,7 +11,7 @@ import type { PlayerCareerRecord } from "@/lib/game/career";
 import { askingFeeBrl, formatBrl, type TransferNegotiation } from "@/lib/game/transfers";
 import { Crest } from "@/components/ui/club-sidebar";
 
-const panel = "rounded-2xl border border-[#dfe8e1] bg-white shadow-[0_12px_35px_rgba(27,61,39,.06)]";
+const panel = "min-w-0 border-t border-[#dce3da] bg-transparent";
 const control = "rounded-xl border border-[#d5e0d8] bg-white px-3 py-2.5 text-sm text-[#263d30] outline-none transition focus:border-[#438458] focus:ring-2 focus:ring-[#438458]/15";
 const primaryButton = "inline-flex items-center justify-center gap-2 rounded-xl bg-[#216b43] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#175735] disabled:cursor-not-allowed disabled:opacity-50";
 const secondaryButton = "inline-flex items-center justify-center gap-2 rounded-xl border border-[#d5e0d8] bg-white px-4 py-2.5 text-sm font-bold text-[#354d3c] transition hover:bg-[#f4f8f5]";
@@ -128,15 +131,9 @@ export function TeamDirectory({
     setOfferOpen(false);
   }
 
-  return <main className="h-full min-h-0 overflow-auto bg-[#eef3ef] p-3 text-[#23392b] sm:p-5 lg:p-6">
-    <div className="mx-auto max-w-[1450px] space-y-4">
-      <header className="relative overflow-hidden rounded-3xl bg-[#173e2c] px-5 py-5 text-white shadow-[0_18px_50px_rgba(23,62,44,.18)] sm:px-7 sm:py-6">
-        <div className="absolute -right-10 -top-24 h-64 w-64 rounded-full border-[32px] border-white/[.035]" />
-        <div className="relative flex flex-wrap items-center justify-between gap-4">
-          <div><p className="text-[10px] font-extrabold uppercase tracking-[.22em] text-[#9fd1aa]">FutManager / universo</p><h1 className="mt-1 text-3xl font-black tracking-tight">Times<span className="text-[#a9d971">.</span></h1><p className="mt-1 max-w-xl text-sm text-[#d0e2d4]">Explore os elencos, acompanhe os atletas disponíveis e inicie negociações com outros clubes.</p></div>
-          <div className="relative flex flex-wrap items-center gap-2"><span className="rounded-xl border border-white/20 bg-white/[.08] px-4 py-2.5 text-xs font-semibold">Saldo do clube <b className="ml-1 text-[#c5e89b]">R$ {(budget / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mi</b></span><button className="rounded-xl border border-white/25 bg-white/[.06] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-white/[.13]" onClick={onBack}>← Voltar ao clube</button></div>
-        </div>
-      </header>
+  return <main className={surface.screen} data-management-surface="teams">
+    <div className={`${surface.content} space-y-4`}>
+      <ManagementHeader eyebrow="FutManager / universo" title="Times" icon="group" description="Explore os elencos, acompanhe os atletas disponíveis e inicie negociações com outros clubes." actions={<><span>Saldo do clube <b>R$ {(budget / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mi</b></span><button onClick={onBack}>← Voltar ao clube</button></>} />
 
       <section className={`${panel} p-3 sm:p-4`} aria-label="Filtros de clubes">
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(220px,1fr)_220px_220px_auto]">
