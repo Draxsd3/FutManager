@@ -1,7 +1,13 @@
 import { clubThemes, clubs, squad, type DivisionKey, type Player, type PositionCode } from "./mock-data";
 import type { ManualPosition, PlayerCareerRecord } from "./career";
 
+export type TransfermarktOrigin = {
+  id: string; collectedAt: string; season: string;
+  marketValueEur?: number | null; dateOfBirth?: string | null;
+  modelVersion?: string; estimatedFields?: string[];
+};
 export type EditorClub = {
+  transfermarkt?: TransfermarktOrigin;
   id: string;
   name: string;
   shortName: string;
@@ -22,6 +28,7 @@ export type EditorClub = {
 export type EditorPlayerMarketStatus = "normal" | "sale" | "loan";
 
 export type EditorPlayer = {
+  transfermarkt?: TransfermarktOrigin;
   id: string;
   marketStatus: EditorPlayerMarketStatus;
   clubId: string;

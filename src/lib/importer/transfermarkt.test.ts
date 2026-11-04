@@ -26,7 +26,7 @@ it("updates only a registered club, preserving local ID, identity, division, ass
   const result = applyTransfermarktSnapshot(database, snapshot, catalog, links);
   expect(database).toEqual(before);
   expect(result.clubs).toHaveLength(database.clubs.length);
-  expect(result.clubs[0]).toEqual({ ...club, stadiumName: "Updated stadium", stadiumCapacity: 42000, coachName: "Updated coach" });
+  expect(result.clubs[0]).toEqual({ ...club, transfermarkt: { id: "123", collectedAt: "2026-11-03T12:00:00Z", season: "2026" }, stadiumName: "Updated stadium", stadiumCapacity: 42000, coachName: "Updated coach" });
   expect(result.clubs.slice(1)).toEqual(database.clubs.slice(1));
   const roster = result.players.filter(p => p.clubId === club.id);
   expect(roster).toHaveLength(40);

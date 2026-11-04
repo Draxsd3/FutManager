@@ -57,3 +57,11 @@ export async function readCachedDatabase(userId: string): Promise<EditorDatabase
 export async function hasPendingDatabaseSync(userId: string): Promise<boolean> {
   return (await readCache(userId))?.pendingSync ?? false;
 }
+
+/** Staging only: never read as the active catalog or career. */
+export function saveTransfermarktCheckpoint(userId: string, value: import("./transfermarkt-live").LiveCheckpoint | null) {
+  return store(accountStorageKey("transfermarkt-2026-staging-v1", userId), value);
+}
+export function readTransfermarktCheckpoint(userId: string) {
+  return read<import("./transfermarkt-live").LiveCheckpoint>(accountStorageKey("transfermarkt-2026-staging-v1", userId));
+}

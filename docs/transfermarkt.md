@@ -1,29 +1,39 @@
-# Fluxo atual: competição → clubes → todos os jogadores
+# Importação ao vivo no jogo — 2026
 
-**Antes da primeira carga:** ver [Modelo inicial da importação nacional](transfermarkt-modelo-inicial.md). A etapa atual é de modelagem/revisão, sem executar carga em massa.
+Em **Configurações → Transfermarkt → Rodar importação — Séries A/B/C/D**, a aplicação consulta a instância fornecida pelo usuário: `https://transfermarkt-api-umber.vercel.app` (API 5.0.0). Não exige pesquisas manuais, Docker local, aprovação individual de 156 vínculos nem publicação prévia de snapshot.
 
-**Atualização de escopo:** o usuário autorizou criar clubes que não existem no jogo. O fluxo atual é o v2 abaixo; as seções de lista permitida/v1 mais adiante são documentação do modo legado, não uma restrição ao novo fluxo.
+## Operação
 
-```bash
-npm run transfermarkt:competitions -- --query brasileirão
-# Revisar .cache/transfermarkt/competitions.json: escolher A, B, C ou D profissional.
-# Substituir ID_REAL pelo ID retornado na pesquisa (não executar o exemplo literalmente).
-npm run transfermarkt:competition-sync -- --competition ID_REAL --division "Série A" --season 2026
-# Revisar preview.json/report.json e só então publicar:
-npm run transfermarkt:competition-sync -- --competition ID_REAL --division "Série A" --season 2026 --apply
-```
+1. Conta autenticada por email/senha. Navegador chama somente `/api/transfermarkt/live`; servidor valida a sessão Supabase e consulta host fixo, sem URL arbitrária ou credenciais de serviço no browser.
+2. Manifesto profissional fixo, conferido na pesquisa real da fonte: BRA1/A20, BRA2/B20, BRA3/C20, BRA4/D96. Para cada competição, resolver nome de temporada **2026** pelo endpoint `/seasons`. A fonte atualmente devolve **ID 2025** nas quatro divisões. Não inferir isso para outras temporadas.
+3. Conferir membros, contagens e ausência de clube em mais de uma divisão. Buscar perfil e elenco completos de cada membro com o ID de temporada resolvido. Perfil é atual, não um perfil histórico garantido.
+4. Progresso na tela, solicitações curtas e sequenciais com intervalo, timeout e três tentativas em erros transitórios. Manter Configurações aberta: **não é worker autônomo**. Pausar/fechar aborta a coleta. IndexedDB guarda a etapa por conta/dispositivo por até 24h; Rodar retoma clubes concluídos. Checkpoint é removido depois de salvar o catálogo.
+5. Validação integral (156 clubes, Brasil, IDs únicos, 11–200 jogadores/clube e goleiro). Idade ausente é calculada do nascimento na data da coleta; sem ambos ou posição reconhecida, falha explícita, não elimina jogador silenciosamente. Falha não altera o catálogo.
+6. Confirmação final com número de clubes/jogadores antes de aplicar. Preservar UUIDs, cores/uniformes existentes, outros clubes e carreira ativa. Mudanças ficam no catálogo para novas carreiras ao retornar ao menu inicial. Clubes ausentes são criados; clubes novos usam cores da fonte quando disponíveis.
 
-O coletor pagina a pesquisa, lê `/competitions/{id}/clubs?season_id=2026`, verifica o nome da divisão e visita `/clubs/{id}/profile` e `/clubs/{id}/players?season_id=2026` para **cada participante**. Não importa U20/playoffs como divisão profissional. Para B/C/D repetir com o ID real e a divisão correspondente; o mesmo snapshot v2 acumula as competições da mesma temporada. Sem `--season`, coleta o elenco atual; perfis de clubes são atuais mesmo quando o elenco é de uma temporada específica.
+## Dados e modelagem
 
-Todos os registros do elenco são mantidos, inclusive acima de 35; a aplicação e persistência agora têm guarda técnica de 200 atletas por clube. Resposta acima desse teto é rejeitada por inteiro, não truncada. Antes de sincronizar elencos acima de 35 na nuvem, **aplicar** `supabase/migrations/20261103235900_complete_imported_squads.sql`. Essa migração foi preparada, mas não executada remotamente nesta entrega.
+Identidade externa, nascimento, EUR original e data da coleta ficam em `transfermarkt` no catálogo. UUIDs continuam locais por conta. Vínculo externo tem prioridade sobre nome; fallback só aceita correspondência única por nome normalizado/nome curto. Homônimos ambíguos bloqueiam aplicação. IDs duplicados de atletas entre elencos também bloqueiam.
 
-Snapshot v2 contém competição, divisão e temporada como proveniência. A aplicação procura vínculo legado aprovado ou nome normalizado único (acentos/prefixos comuns), conserva a identidade local se encontrada e cria os clubes restantes. Homônimos ambíguos exigem revisão em vez de escolha arbitrária. Em clube novo, estado desconhecido permanece ausente, estádio/técnico desconhecidos são marcados e cores/nível são defaults do jogo, não dados oficiais. Elencos completos usam IDs locais por conta. Valores de habilidade/salário continuam simulação e EUR não é convertido automaticamente em BRL.
+Modelo **provisório** `provisional-national-v1`: bases A74/B64/C54/D46, variação determinística pelo ID (−6 a +6, apenas diversidade de simulação, não evidência de habilidade), ajuste de idade e sinal logarítmico opcional do mercado, guarda 35–90. Notas anteriores são preservadas. Qualidades variam por função. Salário e BRL são estimativas da engine, **não salários oficiais nem conversão de EUR**. Sem cotação datada não há conversão factual; EUR ausente permanece null. Fallbacks obrigatórios (contrato/pé/camisa) ficam identificados como estimados. Esse modelo não equivale a scouting calibrado; detalhes conceituais em [modelo inicial](transfermarkt-modelo-inicial.md).
 
-Se um participante falhar, **nenhuma nova coleta dessa execução é publicada**, mesmo com `--apply`; a prévia e relatório ficam disponíveis para corrigir/tentar novamente. Clubes fora da coleta não são apagados. A fonte é revisada/publicada administrativamente, e **Configurações → Transfermarkt** aplica esse snapshot ao perfil, criando os clubes faltantes. A interface não faz scraping ao vivo e saves em andamento não são reimportados.
+## Banco e limitações verificadas
 
-**Estado real:** a busca por brasileirão foi tentada e falhou com erro TLS no acesso ao serviço público neste ambiente. O snapshot continua vazio. Não foram obtidos jogadores reais nem criados times de teste em produção. É necessário acesso funcional à API para executar a coleta real; a migração de banco também está pendente.
+Para persistir toda a carga **na nuvem**, aplicar as migrações, em ordem:
+- `supabase/migrations/20261103235900_complete_imported_squads.sql` — guarda de 200, não 35.
+- `supabase/migrations/20261104050000_transfermarkt_origin.sql` — colunas JSONB opcionais de identidade/proveniência.
+
+**Migrações preparadas, não executadas remotamente nesta sessão.** Se o Supabase rejeitar a gravação, a interface informa nuvem pendente; catálogo continua no dispositivo/IndexedDB, não afirma sincronização remota. Não alterar triggers/credenciais por uma rota pública. A persistência remota não é uma transação única: não interpretar erro como sucesso completo na nuvem.
+
+Verificados via consultas reais: quatro listas de temporadas, membros das Séries A/D e perfil/elenco do Flamengo. Testes automatizados cobrem manifesto de 156 clubes com fixtures, retomada, fonte incompleta, idade por nascimento, UUIDs, autenticação, proxy fechado e preservação de carreira. **Não foi executada a carga real completa autenticada na conta do usuário**, nem prometida disponibilidade contínua da fonte. `src/data/transfermarkt-snapshot.json` continua vazio; não é mais usado pelo botão Rodar.
+
+Termos/licenças: a licença MIT do código da API não concede direitos sobre os dados do Transfermarkt. Não contornar bloqueios ou CAPTCHA. Limites/indisponibilidade da fonte são reportados como erro com retomada.
 
 ---
+
+## Coletor administrativo/legado
+
+As seções abaixo descrevem o fluxo antigo de snapshot publicado, não o novo botão. O script Python recebe IDs internos em `--season`; não usá-lo com ano de exibição sem resolver a temporada. `/api/transfermarkt` e `prepareTransfermarktSync` permanecem para compatibilidade, mas a UI usa `prepareLiveTransfermarktSync`.
 
 ## Referência do modo legado v1 (apenas clubes vinculados)
 
