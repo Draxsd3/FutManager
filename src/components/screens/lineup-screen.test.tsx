@@ -343,12 +343,12 @@ it("offers contiguous polygon targets for second striker, wingbacks and every ce
     );
   }
 });
-it("draws merged role outlines and a single label per role while preserving all side targets", () => {
+it("shows only four simple sector labels and three lines while preserving free placement targets", () => {
   setup();
   fireEvent.click(screen.getByLabelText("Mostrar setores"));
   const labels = document.querySelectorAll('[class*="roleLabels"] span');
-  expect(labels).toHaveLength(15);
-  for (const role of ["CB", "CM", "ST"])
+  expect(labels).toHaveLength(4);
+  for (const role of ["Ataque", "Meio", "Defesa", "Gol"])
     expect(
       Array.from(labels).filter((label) => label.textContent === role),
     ).toHaveLength(1);
@@ -357,7 +357,7 @@ it("draws merged role outlines and a single label per role while preserving all 
   ).toHaveLength(0);
   expect(
     document.querySelectorAll('[class*="regionBorders"] line').length,
-  ).toBeGreaterThan(0);
+  ).toBe(3);
   expect(screen.getAllByRole("button", { name: /Posicionar em/ })).toHaveLength(
     20,
   );
