@@ -184,5 +184,17 @@ it("shows accessible 2026 base bands for a real twenty-team Série A table only"
   view.rerender(<CompetitionCenter {...props} careerCompetitionData={{ "league:Brasil:Série A": { ...data, table: clubs.slice(0, 19) } }} />);
   expect(screen.queryByLabelText("Legenda das faixas de classificação")).toBeNull();
   view.rerender(<CompetitionCenter {...props} careerCompetitionData={{ "league:Brasil:Série A": { ...data, table: clubs.map(row => ({ ...row, played: 0 })) } }} />);
-  expect(screen.queryByLabelText("Legenda das faixas de classificação")).toBeNull();
+  expect(screen.getByLabelText("Legenda das faixas de classificação")).toBeTruthy();
+  expect(screen.getByRole("table").querySelector("tbody tr")?.getAttribute("data-zone")).toBe("libertadores-grupos");
+});
+
+it("shows Série B direct promotion, playoffs and relegation even before the first round", () => {
+  const database = createDefaultDatabase();
+  const clubs = Array.from({ length: 20 }, (_, i) => ({ club: `Clube B ${String(i + 1).padStart(2, "0")}`, played: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0 }));
+  const data = { type: "league" as const, seasonYear: 2026, table: clubs, fixtures: [], topScorers: [], topRatings: [], matchesPlayed: 0, goals: 0 };
+  render(<CompetitionCenter club={clubs[0].club} competition="Série B" database={database} table={[]} fixtures={[]} topScorers={[]} topRatings={[]} round={1} onClose={vi.fn()} careerCompetitionData={{ "league:Brasil:Série B": data }} />);
+  const rows = screen.getByRole("table").querySelectorAll("tbody tr");
+  expect([...rows].map(row => row.getAttribute("data-zone"))).toEqual(["acesso", "acesso", ...Array(4).fill("playoff-acesso"), ...Array(10).fill(null), ...Array(4).fill("rebaixamento")]);
+  expect(screen.getByLabelText("Legenda das faixas de classificação").textContent).toContain("Playoff de acesso");
+  expect(screen.getByText(/não garantem implementação desses desfechos/)).toBeTruthy();
 });

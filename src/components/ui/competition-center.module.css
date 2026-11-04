@@ -638,27 +638,33 @@
 .searchTools input { min-width:0; width:100%; padding:8px; border:1px solid #d2ddd0; border-radius:5px; background:white; color:#26392f; font:inherit; }
 .searchTools input[hidden] { display:none; }
 
-/* Compact, readable standings with the last five results at the right. */
-.standingsTable { max-height:min(62vh,760px); overflow:auto; overscroll-behavior:contain; background:#202124; color:#e8eaed; scrollbar-width:thin; }
+/* CBF-inspired light table; fixed position/stat widths keep the crest beside the rank. */
+.standingsTable { max-height:min(62vh,760px); overflow:auto; overscroll-behavior:contain; background:#fff; color:#243a55; scrollbar-width:thin; }
 .standingsTable:focus-visible { outline:2px solid #3e7952; outline-offset:-2px; }
-.mainData .standingsTable table { min-width:560px; font-size:11px; }
-.mainData .standingsTable thead th { position:sticky; top:0; z-index:2; padding:10px 7px; color:#d3d7dc; background:#252629; font-size:10px; }
-.mainData .standingsTable td, .mainData .standingsTable tbody th { padding:6px 7px; border-top:1px solid #343538; }
-.mainData .standingsTable tbody th { min-width:140px; color:#e8eaed; }
+.mainData .standingsTable table { min-width:690px; font-size:11px; table-layout:fixed; }
+.mainData .standingsTable thead th { position:sticky; top:0; z-index:2; padding:10px 5px; color:#53657a; background:#fff; font-size:10px; }
+.mainData .standingsTable thead th:first-child { width:38px; }
+.mainData .standingsTable thead th:nth-child(2) { text-align:left; }
+.mainData .standingsTable thead th:nth-child(n+3):not(:last-child) { width:40px; }
+.mainData .standingsTable thead th:last-child { width:135px; }
+.mainData .standingsTable td, .mainData .standingsTable tbody th { padding:6px 5px; border:0; height:38px; }
+.mainData .standingsTable tbody th { min-width:0; color:#243a55; }
+.mainData .standingsTable tbody th > span { gap:7px; }
 .standingsTable tbody th img, .standingsTable tbody th [role="img"] { width:25px; height:26px; object-fit:contain; }
-.standingsTable tr.ownClub { background:#31363a; }
-.standingsTable tr[data-zone="libertadores-grupos"] td:first-child { box-shadow:inset 3px 0 #3d7bf4; }
-.standingsTable tr[data-zone="libertadores-preliminar"] td:first-child { box-shadow:inset 3px 0 #3db869; }
+.standingsTable tbody tr:nth-child(odd) { background:#f5f5f5; }
+.standingsTable tbody tr.ownClub { background:#e9f1eb; }
+.standingsTable tr[data-zone="libertadores-grupos"] td:first-child, .standingsTable tr[data-zone="acesso"] td:first-child { box-shadow:inset 3px 0 #3d7bf4; }
+.standingsTable tr[data-zone="libertadores-preliminar"] td:first-child, .standingsTable tr[data-zone="playoff-acesso"] td:first-child { box-shadow:inset 3px 0 #3db869; }
 .standingsTable tr[data-zone="sul-americana"] td:first-child { box-shadow:inset 3px 0 #22b9b6; }
 .standingsTable tr[data-zone="rebaixamento"] td:first-child { box-shadow:inset 3px 0 #f13f57; }
-.standingsTable .form { justify-content:flex-end; min-width:106px; }
-.standingsTable .form button { width:19px; height:19px; font-size:11px; }
-.standingsTable .form button[data-latest="true"] { outline:1px solid currentColor; outline-offset:2px; }
-.standingsTable .form button:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+.standingsTable .form { justify-content:center; min-width:106px; }
+.standingsTable .form button { width:19px; height:19px; font-size:10px; }
+.standingsTable .form button[data-latest="true"] { outline:1px solid #798b81; outline-offset:2px; }
+.standingsTable .form button:focus-visible { outline:2px solid #243a55; outline-offset:2px; }
 .zoneLegend { display:flex; flex-wrap:wrap; gap:8px 14px; padding:10px 14px; color:#526856; font-size:10px; }
 .zoneLegend span { display:inline-flex; align-items:center; gap:5px; }
 .zoneLegend i { width:8px; height:8px; border-radius:50%; background:#aaa; }
-.zoneLegend i[data-zone="libertadores-grupos"] { background:#3d7bf4; }
-.zoneLegend i[data-zone="libertadores-preliminar"] { background:#3db869; }
+.zoneLegend i[data-zone="libertadores-grupos"], .zoneLegend i[data-zone="acesso"] { background:#3d7bf4; }
+.zoneLegend i[data-zone="libertadores-preliminar"], .zoneLegend i[data-zone="playoff-acesso"] { background:#3db869; }
 .zoneLegend i[data-zone="sul-americana"] { background:#22b9b6; }
 .zoneLegend i[data-zone="rebaixamento"] { background:#f13f57; }
