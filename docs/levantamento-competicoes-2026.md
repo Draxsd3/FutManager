@@ -1,0 +1,25 @@
+# Levantamento inicial dos regulamentos de 2026
+
+Este é um inventário de pesquisa **parcial**, não uma declaração de que os formatos estejam implementados no motor. O catálogo atual contém quatro divisões nacionais, Copa do Brasil, Copa do Nordeste, Copa Verde e 27 estaduais. As regras diferem entre competições; não se deve tratar todas como liga de pontos corridos ou aplicar um mata-mata genérico como se fosse oficial.
+
+## Decisões de produto
+
+- Bases personalizadas e saves existentes devem ser preservados. Se uma base não for compatível com os participantes necessários, manter uma simulação adaptada, explicitamente identificada como tal, sem inventar inscrição oficial.
+- Usar regras de 2026 como referência simulada para anos seguintes; não apresentá-las como regulamentos oficiais futuros.
+- Cada formato precisa de participantes, fases, classificação, desempates, calendário, inscrição e desfechos persistentes; histórico e jogos já realizados não podem ser recalculados ao carregar um save.
+
+## Fontes primárias já consultadas
+
+- [Série A — REC 2026, arts. 5–8 e 14–15](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_Brasileiro_SA_rie_A_2026_v15_12_2025_final_02692c1077.pdf): 20 clubes; turno e returno; G4 grupos, 5º preliminar, seis melhores não classificados à Libertadores na Sul-Americana, quatro últimos rebaixados. Vagas podem ser repassadas por outras competições. Critérios de desempate incluem confronto direto somente para dois clubes, cartões e sorteio.
+- [Série B — REC 2026, arts. 5 e 11–14](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_Brasileiro_Serie_B_2026_85d55b9f72.pdf): 20 clubes; 38 rodadas; 1º e 2º sobem; 3º × 6º e 4º × 5º em ida e volta definem mais dois acessos; quatro últimos caem. Playoff considera pontos, saldo e posição na liga.
+- [Série C — documentos 2026](https://www.cbf.com.br/futebol-brasileiro/noticias/supercopa-sub17/a/cbf-publica-documentos-tecnicos-da-serie-c-de-2026): 20 clubes em 2026; a CBF anunciou mudança para 24 em 2027. Conferir REC integral, acesso e desempates antes de implementar.
+- [Série D — Conselho Técnico 2026](https://www.cbf.com.br/futebol-brasileiro/noticias/campeonato-brasileiro/a/com-aumento-nas-cotas-de-participacao-cbf-realiza-conselho-tecnico-da-nova-serie-d): 96 clubes, 16 grupos de seis, quatro avançam por grupo; mata-mata de ida e volta; semifinalistas e dois vencedores de playoff dos eliminados nas quartas sobem à Série C.
+- [Copa do Brasil — CBF](https://www.cbf.com.br/futebol-brasileiro/noticias/jogos-/a/copa-do-brasil-de-2026-tera-recorde-de-participantes-e-17-estreantes): 126 clubes; fases 1 a 4 em jogo único; fases 5 a semifinal em ida e volta; final em jogo único. [As 20 equipes da Série A entram na quinta fase](https://www.cbf.com.br/futebol-brasileiro/noticias/copa-brasil/a/sorteio-da-copa-do-brasil-define-confrontos-da-5-fase). Conferir REC e critérios de entrada/sorteio antes de implementar.
+- [Copa do Nordeste — CBF](https://www.cbf.com.br/futebol-brasileiro/noticias/serie-a/a/confira-os-documentos-tecnicos-da-copa-do-nordeste-de-2026): 20 clubes, primeira fase com quatro grupos de cinco. Conferir REC para cruzamentos e desempates.
+- [Copa Verde — CBF](https://www.cbf.com.br/futebol-brasileiro/noticias/competicoes-ranking/a/cbf-detalha-formato-do-sorteio-da-copa-verde-2026): 24 clubes, quatro grupos de seis, divididos em Copa Norte e Copa Centro-Oeste; quartas em jogo único, semifinais e final em ida e volta.
+- [Paulista A1 — REC 2026](https://futebolpaulista.com.br/Repositorio/Competicao/Regulamento/1551/1551_639033989807692307.pdf): 16 clubes; oito melhores na primeira fase vão às quartas e os dois últimos caem. Conferir sorteio e confrontos no REC antes de implementar; não reutilizar o regulamento de 2025.
+- [Carioca — FERJ](https://www.fferj.com.br/Noticias/View/23148): 12 clubes em dois grupos, que jogam contra o outro grupo; quatro de cada avançam às quartas; sem vantagem de empate nas quartas e semifinais. [FERJ explica rebaixamento e formato](http://www.fferj.com.br/noticias/a-bola-vai-rolar-no-campeonato-carioca-superbet). Confirmar REC integral e classificação antes de implementar.
+
+## Ainda pendente
+
+Os outros 25 regulamentos estaduais precisam ser localizados e verificados nas respectivas federações. Também faltam, para todas as competições, confirmar detalhes de desempate e avanço, inscrição por mérito, interação entre competições, atualizações oficiais e testes completos. Em particular, atualmente o motor gera liga genérica para todas as divisões, estaduais em turno único e Copa do Brasil simplificada; as regiões ainda não têm calendário real. Esses resultados não são implementação oficial dos formatos acima.

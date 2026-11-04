@@ -181,7 +181,8 @@ it("shows accessible 2026 base bands for a real twenty-team Série A table only"
   expect(rows[0].textContent).toContain("Libertadores · fase de grupos (faixa-base)");
   expect(screen.getAllByLabelText(/Empate: Clube 01 1 × 1 Clube 02/)[0]).toBeTruthy();
   view.rerender(<CompetitionCenter {...props} careerCompetitionData={{ "league:Brasil:Série A": { ...data, seasonYear: 2027 } }} />);
-  expect(screen.queryByLabelText("Legenda das faixas de classificação")).toBeNull();
+  expect(screen.getByLabelText("Legenda das faixas de classificação")).toBeTruthy();
+  expect(screen.getByText(/também usadas como referência nas temporadas seguintes/)).toBeTruthy();
   view.rerender(<CompetitionCenter {...props} careerCompetitionData={{ "league:Brasil:Série A": { ...data, table: clubs.slice(0, 19) } }} />);
   expect(screen.queryByLabelText("Legenda das faixas de classificação")).toBeNull();
   view.rerender(<CompetitionCenter {...props} careerCompetitionData={{ "league:Brasil:Série A": { ...data, table: clubs.map(row => ({ ...row, played: 0 })) } }} />);

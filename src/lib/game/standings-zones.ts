@@ -17,7 +17,7 @@ export const SERIES_B_2026_ZONES: ZoneInfo[] = [
   { id: "rebaixamento", label: "Rebaixamento" },
 ];
 export function standingsZones(competitionId: string, season: number | undefined, teamCount: number): ZoneInfo[] {
-  if (season !== 2026 || teamCount !== 20) return [];
+  if (season === undefined || season < 2026 || teamCount !== 20) return [];
   if (competitionId === "league:Brasil:Série A") return SERIES_A_2026_ZONES;
   if (competitionId === "league:Brasil:Série B") return SERIES_B_2026_ZONES;
   return [];
