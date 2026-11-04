@@ -1,9 +1,13 @@
 import type { CareerSeason, SeasonFixture } from "./season";
+import { SERIE_A_ROUND_WINDOWS_2026 } from "./serie-a-calendar-2026";
 
 /** CBF 2026 planning windows, NOT the official fixture list. Other years are projections. */
-export const BRAZILIAN_CALENDAR_VERSION = 2;
+export const BRAZILIAN_CALENDAR_VERSION = 3;
 export const BRAZILIAN_REFERENCE_SEASON = 2026;
+export const MAX_REFERENCE_STATE_DATES = 11;
 export const BRAZILIAN_CALENDAR_SOURCES = [
+  "https://www.cbf.com.br/futebol-brasileiro/noticias/noticias/a/cbf-divulga-tabela-detalhada-das-primeiras-rodadas-do-brasileirao-2026",
+  "https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/Tabela_BA_sica_Brasileiro_SA_rie_A_2026_d64996b4d8.pdf",
   "https://www.cbf.com.br/a-cbf/noticias/informes/a/cbf-oficializa-datas-do-calendario-do-futebol-do-brasil-profissional-masculino-de-2026",
   "https://www.cbf.com.br/futebol-brasileiro/noticias/campeonato-brasileiro/a/cbf-divulga-documentos-tecnicos-do-brasileirao-da-serie-b-de-2026",
   "https://www.cbf.com.br/futebol-brasileiro/noticias/jogos/a/cbf-divulga-tabela-basica-plano-geral-de-acoes-e-regulamento-especifico-da-copa-do-brasil-2026",
@@ -53,11 +57,19 @@ function windowFor(fixture: SeasonFixture, roundIndex: number, count: number): W
     target = start;
   } else if (fixture.type === "state") {
     start = day("01-11"); end = day("03-08");
-    target = interpolate(start, end, roundIndex, count);
+    // The generated statewide round-robin is not an official federation format.
+    // Do not squeeze an arbitrary number of rounds into the eleven reference dates.
+    if (year === BRAZILIAN_REFERENCE_SEASON && roundIndex >= MAX_REFERENCE_STATE_DATES) {
+      return { start: end + 1, end, target: end + 1 };
+    }
+    target = interpolate(start, end, roundIndex, year === BRAZILIAN_REFERENCE_SEASON ? Math.min(count, MAX_REFERENCE_STATE_DATES) : count);
   } else if (fixture.division === "Série A") {
     start = day("01-28"); end = day("12-02");
     // Reserve the domestic Série A interruption only in the World Cup year 2026.
-    if (year === BRAZILIAN_REFERENCE_SEASON) {
+    if (year === BRAZILIAN_REFERENCE_SEASON && count === SERIE_A_ROUND_WINDOWS_2026.length) {
+      const [first, last] = SERIE_A_ROUND_WINDOWS_2026[roundIndex];
+      start = day(first); end = day(last); target = start;
+    } else if (year === BRAZILIAN_REFERENCE_SEASON) {
       const before = Math.max(1, Math.round(count * 18 / 38));
       if (roundIndex < before) {
         end = day("05-31");
@@ -90,34 +102,53 @@ export function applyBrazilianCalendar(season: CareerSeason, notBefore?: string)
     rounds.set(fixture.competitionRound, group);
     competitions.set(fixture.competitionId, rounds);
   }
-  const groups = [...competitions.values()].flatMap(rounds => {
-    const ordered = [...rounds.entries()].sort(([a], [b]) => a - b);
-    return ordered.map(([, fixtures], index) => {
-      const window = windowFor(fixtures[0], index, ordered.length);
-      // An old save may reach the interruption with unplayed first-half rounds.
-      // Reflow those rounds after the domestic restart instead of stranding the entire league.
-      if (notBefore && fixtures[0].type === "league" && fixtures[0].division === "Série A" && season.season === 2026 && notBefore > "2026-05-31" && window.end <= dayNumber("2026-05-31")) {
-        window.start = dayNumber("2026-07-22");
-        window.end = dayNumber("2026-12-02");
-        window.target = Math.max(window.start, dayNumber(notBefore));
-      }
-      return { fixtures, ...window };
-    });
-  }).sort((a, b) => a.target - b.target || a.fixtures[0].competitionId.localeCompare(b.fixtures[0].competitionId));
-  // Reserve the Copa slot for every eligible club, including projected/byed ties.
-  // A different human club must not change national/state dates via a different cup path.
-  const domesticClubIds = new Set(season.fixtures.filter(f => f.type !== "cup").flatMap(f => [f.homeClubId, f.awayClubId]));
   const occupied = new Map<string, number[]>();
-  const lastRound = new Map<string, number>();
-  const dated = new Map<string, SeasonFixture>();
-  const issues = new Set<string>();
-  const yearStart = dayNumber(`${season.season}-01-01`);
   // Already played dates (when available) are immutable, including after a future version upgrade.
   for (const fixture of season.fixtures) {
     if (fixture.status !== "played" || !fixture.scheduledDate) continue;
     const day = dayNumber(fixture.scheduledDate);
     for (const id of [fixture.homeClubId, fixture.awayClubId]) occupied.set(id, [...(occupied.get(id) ?? []), day]);
   }
+  const groups = [...competitions.values()].flatMap(rounds => {
+    const ordered = [...rounds.entries()].sort(([a], [b]) => a - b);
+    const windows = ordered.map(([, fixtures], index) => windowFor(fixtures[0], index, ordered.length));
+    // If a legacy save has missed a round, reflow its pending league together. Never
+    // move completed matches or force a past official window onto a current save.
+    const reflowLeague = !!notBefore && ordered[0][1][0].type === "league" && ordered[0][1][0].division === "Série A"
+      && ordered.some(([, fixtures], index) => {
+        const pending = fixtures.filter(f => f.status !== "played" && f.status !== "cancelled");
+        if (!pending.length) return false;
+        const { start, end } = windows[index];
+        const earliest = Math.max(start, dayNumber(notBefore));
+        // A state match already played under v2 can occupy both possible opener
+        // dates. Reflow pending matches rather than strand all 38 rounds.
+        const clubs = new Set(pending.flatMap(f => [f.homeClubId, f.awayClubId]));
+        for (let date = earliest; date <= end; date++) {
+          if ([...clubs].every(id => (occupied.get(id) ?? []).every(other => Math.abs(other - date) >= MIN_CALENDAR_REST_DAYS))) return false;
+        }
+        return true;
+      });
+    return ordered.map(([, fixtures], index) => {
+      const window = { ...windows[index] };
+      if (reflowLeague) {
+        window.start = Math.max(window.start, dayNumber(notBefore!));
+        if (season.season === 2026 && window.start > dayNumber("2026-05-31") && window.start < dayNumber("2026-07-22")) window.start = dayNumber("2026-07-22");
+        window.end = dayNumber(`${season.season}-12-02`);
+        window.target = Math.max(window.start, window.target);
+      }
+      // Reserve narrow national slots before allowing a flexible state window to
+      // consume them. Otherwise state round 6 can push Série A's opener to 30/01.
+      const priority = fixtures[0].type === "league" && fixtures[0].division === "Série A" && season.season === 2026 && ordered.length === 38 ? 0 : 1;
+      return { fixtures, priority, ...window };
+    });
+  }).sort((a, b) => a.priority - b.priority || a.target - b.target || a.fixtures[0].competitionId.localeCompare(b.fixtures[0].competitionId));
+  // Reserve the Copa slot for every eligible club, including projected/byed ties.
+  // A different human club must not change national/state dates via a different cup path.
+  const domesticClubIds = new Set(season.fixtures.filter(f => f.type !== "cup").flatMap(f => [f.homeClubId, f.awayClubId]));
+  const lastRound = new Map<string, number>();
+  const dated = new Map<string, SeasonFixture>();
+  const issues = new Set<string>();
+  const yearStart = dayNumber(`${season.season}-01-01`);
   for (const group of groups) {
     const pending = group.fixtures.filter(f => f.status !== "played" && f.status !== "cancelled");
     if (!pending.length) continue;
@@ -128,7 +159,13 @@ export function applyBrazilianCalendar(season: CareerSeason, notBefore?: string)
     const candidates = Array.from({ length: Math.max(0, group.end - min + 1) }, (_, i) => min + i)
       .sort((a, b) => Math.abs(a - desired) - Math.abs(b - desired) || a - b);
     const clubs = pending[0].type === "cup" ? new Set([...domesticClubIds, ...pending.flatMap(f => [f.homeClubId, f.awayClubId])]) : new Set(pending.flatMap(f => [f.homeClubId, f.awayClubId]));
-    const chosen = candidates.find(day => [...clubs].every(id => (occupied.get(id) ?? []).every(other => Math.abs(other - day) >= MIN_CALENDAR_REST_DAYS)));
+    const chosen = candidates.find(day => {
+      // Reflowing a legacy save must not turn the interruption into free match
+      // dates. The basic table allows round 18 through 01/06, then resumes 22/07.
+      if (pending[0].type === "league" && pending[0].division === "Série A" && season.season === 2026
+        && day > dayNumber("2026-06-01") && day < dayNumber("2026-07-22")) return false;
+      return [...clubs].every(id => (occupied.get(id) ?? []).every(other => Math.abs(other - day) >= MIN_CALENDAR_REST_DAYS));
+    });
     if (chosen === undefined) {
       issues.add(pending[0].competitionName);
       // Undated rounds must not be overtaken by later rounds of the same tournament.
