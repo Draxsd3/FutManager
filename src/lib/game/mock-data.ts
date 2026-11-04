@@ -144,6 +144,7 @@ export type RoundFixture = {
   managed?: boolean;
   played?: boolean;
   roundLabel?: string;
+  competitionRound?: number;
   scheduledDate?: string;
   participantsPending?: boolean;
   winner?: string;

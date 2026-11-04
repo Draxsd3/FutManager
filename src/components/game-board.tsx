@@ -525,6 +525,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     const scored = competitionFixtures.filter((fixture) => fixture.status === "played");
     careerCompetitionData[competitionId] = {
       type: metadata.type,
+      seasonYear: metadata.season,
       table: standings,
       fixtures: [...competitionFixtures].sort((a, b) => (a.scheduledDate ?? "").localeCompare(b.scheduledDate ?? "") || a.competitionRound - b.competitionRound).map((fixture) => ({
         stadium: database?.clubs.find((item) => item.id === fixture.homeClubId)?.stadiumName ?? "",
@@ -535,6 +536,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         awayScore: fixture.awayScore ?? 0,
         played: fixture.status === "played",
         roundLabel: fixture.roundLabel,
+        competitionRound: fixture.competitionRound,
         scheduledDate: fixture.scheduledDate,
         participantsPending: fixture.status === "locked",
         winner: fixture.winnerClubId === fixture.homeClubId ? fixture.home : fixture.winnerClubId === fixture.awayClubId ? fixture.away : undefined,

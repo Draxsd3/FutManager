@@ -4,7 +4,7 @@ import { Crest } from "./club-sidebar";
 import styles from "./competition-center.module.css";
 
 export function recentMatches(fixtures: RoundFixture[], club: string) {
-  return fixtures.filter(match => match.played !== false && !match.participantsPending && (match.home === club || match.away === club)).sort((a, b) => (a.scheduledDate ?? "").localeCompare(b.scheduledDate ?? "")).slice(-5);
+  return fixtures.filter(match => match.played !== false && !match.participantsPending && Number.isFinite(match.homeScore) && Number.isFinite(match.awayScore) && (match.home === club || match.away === club)).sort((a, b) => (a.scheduledDate ?? "").localeCompare(b.scheduledDate ?? "") || (a.competitionRound ?? 0) - (b.competitionRound ?? 0)).slice(-5);
 }
 export function CompetitionRounds({ fixtures, club, selectedRound, onRound }: { fixtures: RoundFixture[]; club?: string; selectedRound: string; onRound: (round: string) => void }) {
   const rounds = [...new Set(fixtures.map(match => match.roundLabel ?? "Rodada registrada"))];

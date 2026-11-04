@@ -165,3 +165,24 @@ it("keeps only trophy and competition title above the table with icon-only searc
   fireEvent.click(button);
   expect(close).toHaveBeenCalledOnce();
 });
+
+it("shows accessible 2026 base bands for a real twenty-team Série A table only", () => {
+  const database = createDefaultDatabase();
+  const clubs = Array.from({ length: 20 }, (_, i) => ({ club: `Clube ${String(i + 1).padStart(2, "0")}`, played: 1, wins: 0, draws: 1, losses: 0, goalsFor: 1, goalsAgainst: 1, points: 20 - i }));
+  const data = { type: "league" as const, seasonYear: 2026, table: clubs, fixtures: [{ home: clubs[0].club, away: clubs[1].club, stadium: "Campo", attendance: 0, homeScore: 1, awayScore: 1, played: true, roundLabel: "1ª rodada" }], topScorers: [], topRatings: [], matchesPlayed: 1, goals: 2 };
+  const props = { club: clubs[0].club, competition: "Série A", database, table: [], fixtures: [], topScorers: [], topRatings: [], round: 1, onClose: vi.fn() };
+  const view = render(<CompetitionCenter {...props} careerCompetitionData={{ "league:Brasil:Série A": data }} />);
+  const rows = screen.getByRole("table").querySelectorAll("tbody tr");
+  expect(rows).toHaveLength(20);
+  expect([...rows].map(row => row.getAttribute("data-zone"))).toEqual(["libertadores-grupos", "libertadores-grupos", "libertadores-grupos", "libertadores-grupos", "libertadores-preliminar", ...Array(6).fill("sul-americana"), ...Array(5).fill(null), ...Array(4).fill("rebaixamento")]);
+  expect(screen.getByLabelText("Legenda das faixas de classificação")).toBeTruthy();
+  expect(screen.getByText(/Vagas podem mudar por outras competições/)).toBeTruthy();
+  expect(rows[0].textContent).toContain("Libertadores · fase de grupos (faixa-base)");
+  expect(screen.getAllByLabelText(/Empate: Clube 01 1 × 1 Clube 02/)[0]).toBeTruthy();
+  view.rerender(<CompetitionCenter {...props} careerCompetitionData={{ "league:Brasil:Série A": { ...data, seasonYear: 2027 } }} />);
+  expect(screen.queryByLabelText("Legenda das faixas de classificação")).toBeNull();
+  view.rerender(<CompetitionCenter {...props} careerCompetitionData={{ "league:Brasil:Série A": { ...data, table: clubs.slice(0, 19) } }} />);
+  expect(screen.queryByLabelText("Legenda das faixas de classificação")).toBeNull();
+  view.rerender(<CompetitionCenter {...props} careerCompetitionData={{ "league:Brasil:Série A": { ...data, table: clubs.map(row => ({ ...row, played: 0 })) } }} />);
+  expect(screen.queryByLabelText("Legenda das faixas de classificação")).toBeNull();
+});
