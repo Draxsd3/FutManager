@@ -303,3 +303,9 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Coleta administrativa offline via `scripts/transfermarkt/sync.py`: descoberta de candidatos, aprovação manual por source/ID com evidência, perfil/elenco v4 camelCase, cache, limite de chamadas, retries, validação, dry-run, relatório e publicação atômica do snapshot. Não vincular homônimos automaticamente.
 - Aplicação validada em `src/lib/importer/transfermarkt.ts`, integrada à inicialização/importação do catálogo. Manter IDs/identidade/cores/uniformes e contas/saves existentes; não atualizar carreiras em andamento. Valores EUR não são BRL e habilidades/salários continuam simulação.
 - Consulta ao serviço público falhou no transporte TLS neste ambiente; snapshot inicial vazio e 706 vínculos pendentes, sem inventar dados atualizados. Carga real depende de acesso à API e aprovação dos vínculos. Operação/limites/termos documentados em `docs/transfermarkt.md`.
+
+### 38. Sincronização Transfermarkt nas Configurações — 03/11/2026
+- Criar opção Transfermarkt com botão de sincronização no modal de Configurações, mantendo as demais opções.
+- Botão busca a última coleta aprovada/publicada em `/api/transfermarkt` (same-origin/no-store), valida e aplica apenas aos clubes cadastrados. Não é consulta ao vivo ao Transfermarkt: a coleta administrativa e aprovação dos vínculos continuam necessárias.
+- Exibir processamento, contagem/data da coleta, sucesso, erro e nuvem pendente com clareza. Sem snapshot publicado, informar que não há coleta; não simular sucesso nem mudar o catálogo.
+- Salvar catálogo por conta no cache local/IndexedDB e Supabase; manter banco usado pela carreira em memória até retornar ao menu inicial. Não substituir elenco/progresso da carreira em andamento. Não criar clubes, abas ou navegação nova.

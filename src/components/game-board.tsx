@@ -2,6 +2,9 @@
 
 import { clubConfidence, mergeConfidenceHistory, type ConfidenceMatch } from "@/lib/game/confidence";
 
+import { TransfermarktSettings } from "@/components/screens/transfermarkt-settings";
+import { prepareTransfermarktSync } from "@/lib/importer/transfermarkt-sync";
+
 import { importBrazilDatabase } from "@/lib/importer/brazil-database";
 import { readCachedDatabase, cacheDatabase, hasPendingDatabaseSync, readCachedCareerSaves } from "@/lib/importer/database-cache";
 
@@ -99,6 +102,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [division, setDivision] = useState<DivisionKey>("Série A");
   const [club, setClub] = useState<string>("Flamengo");
   const databaseRevision = useRef(0);
+  const synchronizedCatalog = useRef<EditorDatabase | null>(null);
+  const transfermarktSyncRunning = useRef(false);
   const [round, setRound] = useState(1);
   const [budget, setBudget] = useState(12624);
   const [careerSquad, setCareerSquad] = useState<typeof initialSquad | null>(null);
@@ -521,6 +526,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   function leaveActiveCareer(nextPage: Extract<Page, "menu" | "new" | "saves" | "editor">) {
+    databaseRevision.current += 1;
     sessionRestoreVersion.current += 1;
     writeActiveCareerSession(userId, null);
     pendingCloudSave.current = null;
@@ -532,6 +538,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setSelectedPlayer(null);
     setCareerLoaded(false);
     setActiveSaveId(null);
+    if (synchronizedCatalog.current) {
+      setDatabase(synchronizedCatalog.current);
+      synchronizedCatalog.current = null;
+    }
     setPage(nextPage);
   }
 
@@ -601,7 +611,36 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return <CompetitionCenter database={database} fixtures={fixtures} club={club} competition={division} activeCompetitionId={centerCompetitionId} roundLabel={competitionRoundLabel} careerCompetitionData={careerCompetitionData} table={centerTable} topScorers={centerTopScorers} topRatings={centerTopRatings} round={competitionRound} onClose={() => setStandingsOpen(false)} />;
   }
 
+  async function synchronizeTransfermarkt() {
+    if (!database || transfermarktSyncRunning.current) throw new Error("Sincronização indisponível. Aguarde e tente novamente.");
+    transfermarktSyncRunning.current = true;
+    const startedRevision = databaseRevision.current;
+    try {
+      const result = await prepareTransfermarktSync(synchronizedCatalog.current ?? database);
+      if (startedRevision !== databaseRevision.current) throw new Error("O catálogo mudou durante a sincronização. Tente novamente.");
+      ++databaseRevision.current;
+      const localSaved = writeLocalDatabase(result.database, userId);
+      // Stage before the asynchronous cache write so returning to the menu cannot miss it.
+      synchronizedCatalog.current = result.database;
+      await cacheDatabase(result.database, userId).catch(() => {
+        if (!localSaved) {
+          synchronizedCatalog.current = null;
+          throw new Error("Não foi possível salvar o catálogo neste dispositivo. Tente novamente.");
+        }
+      });
+      // Do not replace the database feeding the running career, opponents or negotiations.
+      let cloudPending = false;
+      try {
+        await writeCloudDatabase(result.database, userId);
+        await cacheDatabase(result.database, userId, false).catch(() => undefined);
+      } catch { cloudPending = true; }
+      setSyncLabel(cloudPending ? "Transfermarkt salvo localmente — nuvem pendente" : "Catálogo Transfermarkt sincronizado");
+      return { clubs: result.clubs, players: result.players, collectedAt: result.collectedAt, cloudPending };
+    } finally { transfermarktSyncRunning.current = false; }
+  }
+
   function changeDatabase(next: EditorDatabase) {
+    synchronizedCatalog.current = null;
     const revision = ++databaseRevision.current;
     const limited = upgradeEditorDatabase(next);
     setDatabase(limited);
@@ -1213,7 +1252,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       </>
     );
 
-  if (page === "settings") return <CareerWorkspace {...workspace} title="Configurações"><section className="h-full overflow-auto bg-[#f1f5f2] p-6 text-[#263a2c]"><div className="mx-auto max-w-3xl space-y-4"><header className="rounded-2xl bg-[#173428] p-6 text-white"><p className="text-xs uppercase tracking-widest text-[#9bc9a8]">Carreira / Preferências</p><h1 className="mt-2 text-2xl font-black">Configurações</h1><p className="mt-1 text-sm text-[#c1d5c6]">Personalize sua experiência ou volte ao menu inicial.</p></header><div className="rounded-2xl border border-[#dfe9e1] bg-white p-6"><h2 className="text-lg font-black">Partida</h2><label className="mt-4 block text-sm font-bold">Velocidade padrão para novas partidas <select value={defaultMatchSpeed} onChange={(e) => setDefaultMatchSpeed(Number(e.target.value) as 1 | 2 | 4)} className="ml-3 rounded-lg border border-[#d5e0d8] bg-white p-2"><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><p className="mt-2 text-xs text-[#718477]">Salva na carreira; pode ser alterada durante cada jogo.</p></div><div className="rounded-2xl border border-[#dfe9e1] bg-white p-6"><h2 className="text-lg font-black">Sessão</h2><p className="mt-1 text-sm text-[#718477]">A carreira é salva antes de voltar ao menu inicial.</p><button onClick={() => leaveActiveCareer("menu")} className="mt-4 rounded-lg bg-[#246e43] px-4 py-2 text-xs font-bold text-white">Voltar ao menu inicial</button></div></div></section></CareerWorkspace>;
+  if (page === "settings") return <CareerWorkspace {...workspace} title="Configurações"><section className="h-full overflow-auto bg-[#f1f5f2] p-6 text-[#263a2c]"><div className="mx-auto max-w-3xl space-y-4"><header className="rounded-2xl bg-[#173428] p-6 text-white"><p className="text-xs uppercase tracking-widest text-[#9bc9a8]">Carreira / Preferências</p><h1 className="mt-2 text-2xl font-black">Configurações</h1><p className="mt-1 text-sm text-[#c1d5c6]">Personalize sua experiência ou volte ao menu inicial.</p></header><div className="rounded-2xl border border-[#dfe9e1] bg-white p-6"><h2 className="text-lg font-black">Partida</h2><label className="mt-4 block text-sm font-bold">Velocidade padrão para novas partidas <select value={defaultMatchSpeed} onChange={(e) => setDefaultMatchSpeed(Number(e.target.value) as 1 | 2 | 4)} className="ml-3 rounded-lg border border-[#d5e0d8] bg-white p-2"><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><p className="mt-2 text-xs text-[#718477]">Salva na carreira; pode ser alterada durante cada jogo.</p></div><TransfermarktSettings onSynchronize={synchronizeTransfermarkt} /><div className="rounded-2xl border border-[#dfe9e1] bg-white p-6"><h2 className="text-lg font-black">Sessão</h2><p className="mt-1 text-sm text-[#718477]">A carreira é salva antes de voltar ao menu inicial.</p><button onClick={() => leaveActiveCareer("menu")} className="mt-4 rounded-lg bg-[#246e43] px-4 py-2 text-xs font-bold text-white">Voltar ao menu inicial</button></div></div></section></CareerWorkspace>;
 
   const windowTitles: Partial<Record<Page, string>> = {
     agenda: "Agenda", stadium: "Estádio", juniors: "Juniores", teams: "Times",

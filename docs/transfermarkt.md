@@ -81,3 +81,19 @@ Transfermarkt não fornece overall/força, salário mensal em BRL, energia, estr
 A chamada ao serviço público neste ambiente falhou no transporte TLS; acesso externo aqui é restrito. Assim **nenhum elenco atualizado foi coletado nesta execução**. O snapshot inicial está vazio e o catálogo anterior permanece intacto. Não há dados de testes, exemplos fictícios nem snapshots históricos apresentados como atualizados.
 
 Para efetivar a carga: executar descoberta/revisão/coleta em ambiente com acesso à API (ou instância própria), aprovar os vínculos e versionar o snapshot revisado antes da publicação. É uma dependência operacional pendente, não um erro mascarado como importação concluída.
+
+## Botão nas Configurações
+
+Em **Configurações → Transfermarkt → Sincronizar Transfermarkt**, o usuário pode
+aplicar a última coleta **aprovada e publicada** ao catálogo de seu perfil.
+`GET /api/transfermarkt` serve apenas dados públicos validados, sem cache e sem
+credenciais, consultas externas ou escrita no banco. Não é coleta ao vivo nem
+aprova vínculos. A interface explica essa diferença e mostra erro quando ainda
+não há snapshot publicado.
+
+O botão bloqueia cliques duplicados, valida a resposta, preserva todos os clubes
+não abrangidos e salva nos armazenamentos da conta. Falha da nuvem é apresentada
+como sincronização pendente, não como salvamento remoto concluído. O catálogo
+carregado pela carreira continua em memória sem alterações; a versão atualizada
+fica disponível ao retornar ao menu inicial. Elenco, escalação, negociações e
+progresso salvos da carreira não são reimportados.
