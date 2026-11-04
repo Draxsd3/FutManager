@@ -18,7 +18,7 @@ export function ManagementHeader({ title, eyebrow, description, icon, actions, i
 }) {
   const embedded = useContext(WindowHeaderContext);
   const Heading = level === 1 ? "h1" : "h2";
-  if (embedded && level === 1) return <>{id && <span id={id} className={styles.srOnly}>{title}</span>}{actions && <div className={`${styles.actions} ${styles.embeddedActions}`}>{actions}</div>}</>;
+  if (embedded && level === 1) return id ? <span id={id} className={styles.srOnly}>{title}</span> : null;
   return <header className={styles.header} data-management-header>
     <div className={styles.identity}><ManagementIcon name={icon} /><div>
       <p className={styles.eyebrow}>{eyebrow}</p>

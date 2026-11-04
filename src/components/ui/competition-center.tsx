@@ -46,6 +46,7 @@ export function CompetitionCenter({
   topRatings,
   fixtures,
   round,
+  date,
   onClose,
 }: {
   club: string;
@@ -59,6 +60,7 @@ export function CompetitionCenter({
   topRatings: TopRating[];
   fixtures: RoundFixture[];
   round: number;
+  date?: string;
   onClose: () => void;
 }) {
   const catalog = useMemo(() => buildCompetitionCatalog(database), [database]);
@@ -164,7 +166,7 @@ export function CompetitionCenter({
         aria-modal="true"
         aria-labelledby="competitions-title"
       >
-        <WindowHeader title="O futebol além do seu clube" id="competitions-title" onClose={onClose} closeLabel="Fechar central de competições" closeRef={closeButton} />
+        <WindowHeader title="O futebol além do seu clube" date={date} id="competitions-title" onClose={onClose} closeLabel="Fechar central de competições" closeRef={closeButton} />
         <nav
           className={styles.categories}
           aria-label="Categorias de competição"

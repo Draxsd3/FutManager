@@ -148,17 +148,18 @@ export function TeamDirectory({
 
   return <main className={surface.screen} data-management-surface="teams">
     <div className={`${surface.content} space-y-4`}>
-      {embedded ? <div className={`${surface.actions} justify-end`} aria-label="Ações de Times"><span>Saldo do clube <b>R$ {(budget / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mi</b></span><button onClick={onBack}>← Voltar ao clube</button></div> : <ManagementHeader eyebrow="FutManager / universo" title="Times" icon="group" description="Explore os elencos, acompanhe os atletas disponíveis e inicie negociações com outros clubes." actions={<><span>Saldo do clube <b>R$ {(budget / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mi</b></span><button onClick={onBack}>← Voltar ao clube</button></>} />}
+      {!embedded && <ManagementHeader eyebrow="FutManager / universo" title="Times" icon="group" description="Explore os elencos, acompanhe os atletas disponíveis e inicie negociações com outros clubes." actions={<><span>Saldo do clube <b>R$ {(budget / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mi</b></span><button onClick={onBack}>← Voltar ao clube</button></>} />}
 
       <section className={`${panel} p-3 sm:p-4`} aria-label="Filtros de clubes">
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(220px,1fr)_220px_220px_auto]">
+        <div className={`grid gap-2 sm:grid-cols-2 ${embedded ? "lg:grid-cols-[minmax(200px,1fr)_200px_220px_auto_auto]" : "lg:grid-cols-[minmax(220px,1fr)_220px_220px_auto]"}`}>
           <label className="sr-only" htmlFor="team-directory-query">Buscar clube</label>
           <input id="team-directory-query" className={control} placeholder="Buscar clube pelo nome" value={query} onChange={(event) => { setQuery(event.target.value); setExpandedGroups({}); }} />
           <label className="sr-only" htmlFor="team-directory-country">País</label>
           <select id="team-directory-country" className={control} value={country} onChange={(event) => { setCountry(event.target.value); setDivision(""); }}><option value="">Todos os países</option>{countryOptions.map((item) => <option key={item}>{item}</option>)}</select>
           <label className="sr-only" htmlFor="team-directory-division">Competição</label>
           <select id="team-directory-division" className={control} value={division} onChange={(event) => setDivision(event.target.value)}><option value="">Todas as divisões nacionais</option>{divisionOptions.map((item) => <option key={item} value={item}>{/^Série [ABCD]$/.test(item) ? `Brasileirão · ${item}` : item}</option>)}</select>
-          <div className="flex items-center justify-between rounded-xl bg-[#f3f7f3] px-3 py-2 text-xs sm:col-span-2 lg:col-span-1"><span className="text-[#718477]">Clubes</span><b className="text-sm text-[#246e43]">{visibleClubs.length}</b></div>
+          <div className="flex items-center justify-between gap-2 rounded-xl bg-[#f3f7f3] px-3 py-2 text-xs sm:col-span-2 lg:col-span-1"><span className="text-[#718477]">Clubes</span><b className="text-sm text-[#246e43]">{visibleClubs.length}</b></div>
+          {embedded && <div className="flex items-center justify-between gap-2 rounded-xl bg-[#f3f7f3] px-3 py-2 text-xs sm:col-span-2 lg:col-span-1"><span className="text-[#718477]">Saldo do clube</span><b className="text-sm text-[#246e43]">R$ {(budget / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mi</b></div>}
         </div>
         <p className="mt-3 text-xs leading-relaxed text-[#5f705e]">Clubes separados por divisão nacional. Copas, como a Copa do Brasil, não formam grupos separados: seus participantes continuam nas respectivas divisões.</p>
       </section>
