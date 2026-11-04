@@ -477,3 +477,10 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Pedido: **“Mantenha harmoniosos os elementos”**, com referência ao confronto compacto da barra lateral. Distribuir os dois clubes simetricamente: escudos de mesma dimensão acima dos nomes, VS central alinhado aos escudos, nomes completos com quebra e altura mínima equivalente, CASA/FORA discretos e alinhados. Regularizar respiros, hierarquia e entrelinhas; permitir quebra do campeonato em vez de corte.
 - Alteração restrita ao card, sem mudar o tema escuro, a ordem mandante/visitante, adversário, calendário ou ações da barra. Estado sem próximo jogo preservado.
 - Validação: 3 testes direcionados aprovados (mandante, visitante e ausência de jogo), lint, TypeScript, build e diff-check aprovados. Sem inspeção visual em navegador.
+
+### 59. Organizar Times por divisões nacionais — 04/11/2026
+
+- Pedido: separar os times por competições nacionais, como Brasileirão Séries A, B, C e D, excluindo agrupamentos de copas como Copa do Brasil, que reutilizam os clubes dessas divisões.
+- Lista de Times agrupada por país/divisão cadastrada, em ordem A→B→C→D, com título e quantidade em cada grupo. Clubes sem divisão nacional continuam acessíveis em grupo próprio; grupos vazios não aparecem. Cada clube aparece uma única vez, sem replicação por participação em copas/estaduais.
+- Filtro existente passa a identificar explicitamente as divisões nacionais; preservados busca, país, seleção de clube, elencos, perfil e negociações. Não alterar inscrições, dados, campeonatos ou saves.
+- Validação: 9 testes direcionados em 2 arquivos aprovados, lint, TypeScript, build e diff-check aprovados. Regressão nova cobre ordem de divisões, unicidade, ausência de grupo de copa, seleção, filtro e busca sem resultados. Sem inspeção visual em navegador.
