@@ -398,3 +398,28 @@ it("saves a synchronized catalog but leaves the active career squad untouched", 
     expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
   } finally { spy.mockRestore(); confirm.mockRestore(); }
 });
+
+it("saves a player photo in the active career and restores it after reload", async () => {
+  const photo = await import("@/lib/game/player-photo");
+  const processor = vi.spyOn(photo, "preparePlayerPhoto").mockResolvedValue("data:image/webp;base64,abc");
+  const view = render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Foto teste" } });
+  fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+  const roster = await screen.findByRole("region", { name: "Elenco do clube" });
+  const first = readLocalSaves("alice")[0].progress!.careerSquad![0];
+  fireEvent.doubleClick(within(roster).getByRole("button", { name: first.name }));
+  const profile = await screen.findByRole("dialog", { name: `Perfil de ${first.name}` });
+  fireEvent.change(within(profile).getByLabelText("Adicionar foto"), { target: { files: [new File(["foto"], "foto.png", { type: "image/png" })] } });
+  await waitFor(() => expect(readLocalSaves("alice")[0].progress?.careerSquad?.find((player) => player.id === first.id)?.photoDataUrl).toBe("data:image/webp;base64,abc"));
+  expect(readLocalSaves("alice")[0].progress?.careerSquad?.find((player) => player.id !== first.id)?.photoDataUrl).toBeFalsy();
+  view.unmount();
+  render(game());
+  const restoredRoster = await screen.findByRole("region", { name: "Elenco do clube" });
+  fireEvent.doubleClick(within(restoredRoster).getByRole("button", { name: first.name }));
+  const restored = await screen.findByRole("dialog", { name: `Perfil de ${first.name}` });
+  expect(within(restored).getByRole("img", { name: `Retrato de ${first.name}` }).getAttribute("src")).toBe("data:image/webp;base64,abc");
+  fireEvent.click(within(restored).getByRole("button", { name: "Remover foto" }));
+  await waitFor(() => expect(readLocalSaves("alice")[0].progress?.careerSquad?.find((player) => player.id === first.id)?.photoDataUrl).toBeNull());
+  processor.mockRestore();
+});
