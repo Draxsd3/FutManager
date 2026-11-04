@@ -16,7 +16,7 @@ beforeAll(() => {
   if (!window.PointerEvent)
     window.PointerEvent = MouseEvent as typeof PointerEvent;
 });
-function setup() {
+function setup({ chooseKit = false, club = "Flamengo" } = {}) {
   const place = vi.fn(),
     reset = vi.fn(),
     play = vi.fn(),
@@ -24,9 +24,12 @@ function setup() {
     reorder = vi.fn();
   function Wrapper() {
     const [selected, select] = useState<Player | null>(null);
+    const [kit, setKit] = useState<1 | 2 | 3>(1);
     return (
       <LineupScreen
-        club="Flamengo"
+        club={club}
+        kit={kit}
+        onKitChange={chooseKit ? setKit : undefined}
         coach="Renan"
         opponent="Palmeiras"
         competition="Série A"
@@ -443,4 +446,18 @@ it("uses the imported club shirt for starters and the entire bench, not a tinted
     expect(image.getAttribute("href")).toBe(clubKitAsset("Flamengo"));
     expect(image.hasAttribute("filter")).toBe(false);
   }
+});
+
+it("lets the manager preview all three imported shirts and applies the choice to starters and reserves", () => {
+  setup({ chooseKit: true });
+  for (const kit of [1, 2, 3] as const) {
+    fireEvent.click(screen.getByRole("button", { name: `Usar camisa ${kit}` }));
+    expect(screen.getByRole("button", { name: `Usar camisa ${kit}` }).getAttribute("aria-pressed")).toBe("true");
+    for (const image of document.querySelectorAll("svg image")) expect(image.getAttribute("href")).toBe(clubKitAsset("Flamengo", kit));
+  }
+  expect(document.querySelectorAll('[role="group"][aria-label="Camisa para a partida"] img')).toHaveLength(3);
+});
+it("does not offer imported shirts that the catalog does not have", () => {
+  setup({ chooseKit: true, club: "Clube sem uniforme importado" });
+  for (const kit of [1, 2, 3]) expect((screen.getByRole("button", { name: `Usar camisa ${kit}` }) as HTMLButtonElement).disabled).toBe(true);
 });

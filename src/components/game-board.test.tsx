@@ -573,3 +573,27 @@ it("connects jobs to the career, confirms a club change and restores it without 
   fireEvent.click(screen.getByRole("menuitem", { name: /Central de empregos/ }));
   expect(await screen.findByText("Contratação confirmada.")).toBeTruthy();
 }, 20000);
+
+it("saves the chosen imported shirt per career, restores it and carries it into match tactics", async () => {
+  const { clubKitAsset } = await import("@/lib/game/assets");
+  const view = render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Escolha de uniforme" } });
+  fireEvent.change(screen.getByLabelText("Seu clube"), { target: { value: "Flamengo" } });
+  fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /Escalar Time/i }));
+  fireEvent.click(await screen.findByRole("button", { name: "Usar camisa 3" }));
+  expect(screen.getByRole("button", { name: "Usar camisa 3" }).getAttribute("aria-pressed")).toBe("true");
+  await waitFor(() => expect(readLocalSaves("alice")[0].progress?.kit).toBe(3));
+  const club = readLocalSaves("alice")[0].clubName;
+  view.unmount();
+  render(game());
+  expect((await screen.findByRole("button", { name: "Usar camisa 3" })).getAttribute("aria-pressed")).toBe("true");
+  for (const image of screen.getByLabelText("Campo de escalação").querySelectorAll("svg image")) expect(image.getAttribute("href")).toBe(clubKitAsset(club, 3));
+  fireEvent.click(screen.getByRole("button", { name: /Ir para a partida/ }));
+  fireEvent.click(await screen.findByRole("button", { name: /Escalação e táticas/ }));
+  const dialog = await screen.findByRole("dialog", { name: "Táticas" });
+  expect(within(dialog).getByText("Uniforme 3")).toBeTruthy();
+  for (const image of dialog.querySelectorAll("svg image")) expect(image.getAttribute("href")).toBe(clubKitAsset(club, 3));
+  expect(readLocalSaves("alice")[0].progress?.kit).toBe(3);
+}, 15000);

@@ -33,6 +33,7 @@ export type CareerProgress = {
   division: DivisionKey;
   round: number;
   budget: number;
+  kit?: 1 | 2 | 3;
   formation: string;
   style: string;
   marking: string;

@@ -12,6 +12,7 @@ import styles from "./match-detail-screen.module.css";
 export type { MatchEvent } from "@/lib/game/live-match";
 
 type Props = {
+  kit?: 1 | 2 | 3;
   club: string;
   clubColors?: { primaryColor: string; secondaryColor: string };
   opponent: string;
@@ -48,7 +49,7 @@ type Props = {
 };
 
 /** Paused match tactics with the live lineup on a rendered pitch. */
-export function MatchDetailScreen({ club, clubColors, opponent, homeScore, awayScore, minute,
+export function MatchDetailScreen({ kit = 1, club, clubColors, opponent, homeScore, awayScore, minute,
   formation, setFormation, style, setStyle, marking, setMarking, focus, setFocus, statistics,
   manualPositions, onMovePlayers, startersData, bench, substitutionsLeft, selectedPlayer,
   substitutionOut, onSelectPlayer, onSubstitute, onClose, onStartSecondHalf, isHalftime, returnFocusTo, onPlacePlayer, onResetPositions, coach = "", competition = "Partida", round = 1 }: Props) {
@@ -92,7 +93,7 @@ export function MatchDetailScreen({ club, clubColors, opponent, homeScore, awayS
 
       <div className={styles.halftimeLineup}>
         <p id="match-tactics-description" className={styles.description}>{isHalftime ? "Intervalo. Ajuste a equipe antes do segundo tempo; confirme as substituições antes de continuar." : "Partida pausada. Ajuste a equipe e confirme as substituições antes de voltar ao jogo."}</p>
-        <LineupScreen club={club} coach={coach} opponent={opponent} competition={competition} round={round}
+        <LineupScreen kit={kit} club={club} coach={coach} opponent={opponent} competition={competition} round={round}
           formation={formation} setFormation={setFormation} style={style} setStyle={setStyle}
           marking={marking} setMarking={setMarking} focus={focus} setFocus={setFocus}
           startersData={startersData} bench={bench} onReorderBench={() => {}}

@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import { clubKitAsset } from "@/lib/game/assets";
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import type { Player } from "@/lib/game/mock-data";
 import type { ManualPosition } from "@/lib/game/career";
@@ -19,6 +21,8 @@ import { Crest } from "@/components/ui/club-sidebar";
 import styles from "./lineup-screen.module.css";
 
 type Props = {
+  kit?: 1 | 2 | 3;
+  onKitChange?: (kit: 1 | 2 | 3) => void;
   club: string;
   coach: string;
   opponent: string;
@@ -56,6 +60,8 @@ type Props = {
 
 export function LineupScreen(props: Props) {
   const {
+    kit = 1,
+    onKitChange,
     club,
     coach,
     opponent,
@@ -366,6 +372,15 @@ export function LineupScreen(props: Props) {
             </div>
           </div>
           <div className={styles.headerActions}>
+            {onKitChange && !match ? <div className={styles.kitChoice} role="group" aria-label="Camisa para a partida">
+              <span>Camisa</span>
+              {([1, 2, 3] as const).map(number => {
+                const asset = clubKitAsset(club, number);
+                return <button key={number} type="button" aria-label={`Usar camisa ${number}`} aria-pressed={kit === number} disabled={!asset} title={asset ? `Uniforme ${number}` : `Uniforme ${number} não importado`} onClick={() => onKitChange(number)}>
+                  {asset && <Image src={asset} alt="" width={26} height={30} unoptimized />}<span>{number}</span>
+                </button>;
+              })}
+            </div> : match && <span className={styles.kitLabel}>Uniforme {kit}</span>}
             {!match && <button className={styles.backButton} onClick={onBack}>← <span>Voltar ao clube</span></button>}
             <button
               className={styles.primary}
@@ -468,7 +483,7 @@ export function LineupScreen(props: Props) {
                   style={{ left: `clamp(44px, ${positions[index].left}%, calc(100% - 44px))`, top: `clamp(36px, ${positions[index].top}%, calc(100% - 47px))` }}
                   onClick={() => select(player.id)}
                 >
-                  <PlayerJersey club={club} player={player} />
+                  <PlayerJersey kit={kit} club={club} player={player} />
                   <b>{player.name}</b>
                   <small>{fifaPosition(player)} · {Math.max(1, player.overall - fits[index].penalty)} <span className={fits[index].label === "Natural" ? styles.natural : styles.warning}>{fits[index].label}</span></small>
                   <i className={styles.energy} aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(100, player.energy))}%`, backgroundColor: player.energy < 40 ? "#ef6969" : player.energy < 65 ? "#f1ca62" : "#8ed09a" }} /></i>
@@ -501,7 +516,7 @@ export function LineupScreen(props: Props) {
                   aria-pressed={selectedPlayer?.id === player.id}
                   className={`${styles.reserve} ${selectedPlayer?.id === player.id ? styles.reserveSelected : ""} ${holdingId === player.id ? styles.reserveHolding : ""} ${dragId === player.id ? styles.reserveDragging : ""}`}
                 >
-                  <span data-player={player.id} className={styles.handle} title="Arrastar jogador"><PlayerJersey club={club} player={player} /></span>
+                  <span data-player={player.id} className={styles.handle} title="Arrastar jogador"><PlayerJersey kit={kit} club={club} player={player} /></span>
                   <span className={styles.reserveInfo}><b>{player.name}</b><small>{fifaPosition(player)} · ENERGIA {player.energy}%{!match && index >= 12 ? " · FORA DO BANCO" : ""}</small></span>
                   <strong>{player.overall}</strong>
                 </button>)}
@@ -554,7 +569,7 @@ export function LineupScreen(props: Props) {
         </section>
       </div>}
       <div ref={ghost} className={styles.ghost} style={{ visibility: dragId === null ? "hidden" : "visible" }} aria-hidden="true">
-        {active && <><PlayerJersey club={club} player={active} /><b>{active.name}</b></>}
+        {active && <><PlayerJersey kit={kit} club={club} player={active} /><b>{active.name}</b></>}
       </div>
     </section>
   );

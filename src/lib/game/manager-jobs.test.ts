@@ -79,15 +79,18 @@ describe("central de empregos na carreira", () => {
   });
   it("preserva resultados conhecidos e permite retorno ao clube com a economia e elenco daquele clube", () => {
     const { database, market, club, target, save } = setup();
+    save.progress!.kit = 3;
     const known = save.progress!.competitionSeason!.fixtures.find(f => f.type === "league")!;
     Object.assign(known, { status: "played", homeScore: 4, awayScore: 2 });
     save.progress!.managerMarket = applyForManagerJob(market, database, club.id, target.id, save.inGameDate).market;
     const switched = acceptManagerJob(save, database, save.progress!.managerMarket.applications![0].id).save!;
+    expect(switched.progress!.kit).toBe(1);
     expect(switched.progress!.competitionSeason!.fixtures.find(f => f.id === known.id)).toEqual(known);
     const returnedOffer = applyForManagerJob(switched.progress!.managerMarket!, database, target.id, club.id, save.inGameDate).market;
     switched.progress!.managerMarket = returnedOffer;
     const returned = acceptManagerJob(switched, database, returnedOffer.applications![0].id).save!;
     expect(returned.clubId).toBe(club.id);
+    expect(returned.progress!.kit).toBe(3);
     expect(returned.budget).toBe(9000);
     expect(returned.progress!.careerSquad).toEqual(save.progress!.careerSquad);
     expect(returned.progress!.managerAppointments).toHaveLength(3);
