@@ -317,3 +317,10 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Removido corte de 35 para importação/persistência/elenco: guarda técnica de 200, alinhada ao esquema de coleta; fonte acima disso falha explicitamente, nunca corta silenciosamente. Migração `20261103235900_complete_imported_squads.sql` preparada para elevar a trava Supabase; aplicação remota pendente.
 - Publicação de competição é integral: se algum clube falhar, fica só prévia/relatório e não substitui o snapshot publicado. Saves permanecem intactos e o botão em Configurações aplica a coleta publicada, sem fingir coleta ao vivo.
 - Busca real por brasileirão foi tentada novamente e falhou no transporte TLS do serviço público. Nenhuma carga real obtida nesta execução; imagens são referência, não dados estruturados completos. Execução efetiva ainda depende de acesso à fonte.
+
+### 40. Modelar a carga inicial antes de importar — 04/11/2026
+- Pedido atual: modelar a importação antes da carga em massa. Primeira carga restrita às Séries A/B/C/D profissionais, clubes e jogadores com força, valor e atributos de jogo. Manter temporada 2026 previamente escolhida.
+- Referência de conferência: 20/20/20/96 clubes (156); validar na fonte antes da publicação. Não importar outras competições nesta fase nem excluir automaticamente os demais clubes já existentes.
+- Separar dados reais de estimativas: Transfermarkt não fornece overall/salário do jogo. Força deve ser individual, determinística e calibrada, não a mesma nota para todo o clube; EUR→BRL exige cotação datada, e valor ausente não equivale a zero.
+- `docs/transfermarkt-modelo-inicial.md` registra proposta de faixas com sobreposição entre divisões, tratamento de idade/posição, finanças, identidade/proveniência, preservação de saves e revisão por prévia. Faixas/fórmulas não estão aprovadas ou implantadas como regra final.
+- Nesta etapa não executar coleta, `--apply`, migração remota nem carga em massa. Pendências anteriores (acesso à API, migração Supabase, IDs externos e calibração) permanecem explícitas.

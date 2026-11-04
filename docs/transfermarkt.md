@@ -1,5 +1,7 @@
 # Fluxo atual: competição → clubes → todos os jogadores
 
+**Antes da primeira carga:** ver [Modelo inicial da importação nacional](transfermarkt-modelo-inicial.md). A etapa atual é de modelagem/revisão, sem executar carga em massa.
+
 **Atualização de escopo:** o usuário autorizou criar clubes que não existem no jogo. O fluxo atual é o v2 abaixo; as seções de lista permitida/v1 mais adiante são documentação do modo legado, não uma restrição ao novo fluxo.
 
 ```bash
