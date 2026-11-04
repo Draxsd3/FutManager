@@ -1,7 +1,9 @@
+import { isLoanAtClub, type LoanContract } from "./loans";
 import { clubThemes, clubs, squad, type DivisionKey, type Player, type PositionCode } from "./mock-data";
 import type { ManualPosition, PlayerCareerRecord } from "./career";
 
 export type TransfermarktOrigin = {
+  loan?: LoanContract;
   manualCorrection?: { fields: string[]; correctedAt: string };
   id: string; collectedAt: string; season: string;
   marketValueEur?: number | null; dateOfBirth?: string | null;
@@ -29,6 +31,7 @@ export type EditorClub = {
 export type EditorPlayerMarketStatus = "normal" | "sale" | "loan";
 
 export type EditorPlayer = {
+  loan?: LoanContract;
   transfermarkt?: TransfermarktOrigin;
   id: string;
   marketStatus: EditorPlayerMarketStatus;
@@ -220,10 +223,10 @@ export function upgradeEditorDatabase(database: EditorDatabase): EditorDatabase 
   return { clubs: clubsData, players };
 }
 
-export function buildSquadFromDatabase(database: EditorDatabase, clubName: string): Player[] | null {
+export function buildSquadFromDatabase(database: EditorDatabase, clubName: string, allowIncomplete = false): Player[] | null {
   const selectedClub = database.clubs.find((club) => club.name === clubName);
-  const players = database.players.filter((player) => player.clubId === selectedClub?.id).slice(0, MAX_CLUB_SQUAD_SIZE);
-  if (players.length < 11) return null;
+  const players = database.players.filter((player) => (player.loan ? isLoanAtClub(player.loan, selectedClub?.id ?? "") : player.clubId === selectedClub?.id)).slice(0, MAX_CLUB_SQUAD_SIZE);
+  if (!selectedClub || (!allowIncomplete && players.length < 11)) return null;
   return players.map((player, index) => ({
     id: index + 1,
     sourceId: player.id,
@@ -243,6 +246,9 @@ export function buildSquadFromDatabase(database: EditorDatabase, clubName: strin
     age: player.age,
     avgRating: player.averageRating,
     contractUntil: player.contractEndsOn,
+    loan: player.loan,
+    acquisitionType: player.loan ? player.loan.status === "active" ? "loan" : "permanent" : undefined,
+    loanExpiresOn: player.loan?.status === "active" ? player.loan.endsOn ?? undefined : undefined,
     marketValue: Number((player.marketValueBrl / 1_000_000).toFixed(1)),
     marketAvailability: player.marketStatus ?? "normal",
   }));

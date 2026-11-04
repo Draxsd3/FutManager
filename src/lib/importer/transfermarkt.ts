@@ -1,9 +1,11 @@
+import { loanContractSchema } from "@/lib/game/loans";
 import { z } from "zod";
 import type { EditorClub, EditorDatabase, EditorPlayer } from "@/lib/game/editor-data";
 import { normalizeName } from "./matching";
 
 const numericId = z.string().regex(/^[1-9]\d*$/);
 const playerSchema = z.object({
+  loan: loanContractSchema.nullable().optional(),
   manualCorrection: z.object({ fields: z.array(z.string()), correctedAt: z.iso.datetime({ offset: true }) }).optional(),
   id: numericId, name: z.string().trim().min(1).max(250), dateOfBirth: z.iso.date().nullable().optional(),
   age: z.number().int().min(14).max(65), position: z.enum(["G", "L", "Z", "M", "A"]),
@@ -95,6 +97,7 @@ export function applyTransfermarktSnapshot(
     const previous = database.players.filter((player) => player.clubId === club.id);
     const senior = [...incoming.players].sort((a, b) => Number(b.position === "G") - Number(a.position === "G"));
     const reused = new Set<string>();
+    const resolveClub = (externalId?: string) => [...targets].find(([, incoming]) => incoming.id === externalId)?.[0] ?? baseClubs.find(item => item.transfermarkt?.id === externalId)?.id;
     const roster = senior.map((player, index): EditorPlayer => {
       // Name matching is only used for game defaults, never for approving a club/link.
       const linked = database.players.filter(old => old.transfermarkt?.id === player.id);
@@ -110,6 +113,7 @@ export function applyTransfermarktSnapshot(
       const overall = old?.overall ?? Math.max(35, Math.min(90, base + identityOffset + ageOffset + valueOffset));
       return {
         id: old?.id ?? crypto.randomUUID(), clubId: club.id, name: player.name,
+        ...(player.loan ? { loan: { ...player.loan, owner: { ...player.loan.owner, clubId: resolveClub(player.loan.owner.externalId) }, borrower: { ...player.loan.borrower, clubId: resolveClub(player.loan.borrower.externalId) } } } : {}),
         transfermarkt: { id: player.id, collectedAt: incoming.fetchedAt, season: snapshot.seasonId ?? "2026",
           manualCorrection: player.manualCorrection, marketValueEur: player.marketValueEur, dateOfBirth: player.dateOfBirth ?? null, modelVersion: "provisional-national-v1",
           estimatedFields: ["overall", "salaryMonthlyBrl", "marketValueBrl", ...(!player.foot ? ["preferredFoot"] : []), ...(!player.contractEndsOn ? ["contractEndsOn"] : []), ...(!player.shirtNumber ? ["shirtNumber"] : [])] },

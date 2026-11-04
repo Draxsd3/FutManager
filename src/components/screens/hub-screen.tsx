@@ -9,7 +9,9 @@ import { PlayerJersey } from "@/components/ui/player-jersey";
 import { TRAINING_DAYS, trainingDrillLabel, trainingWeekSessions, type TrainingSessionRecord } from "@/lib/game/training";
 import styles from "./hub-screen.module.css";
 
-export function HubScreen({ club, coach, budget, opponent, round, competition, squad, starters, selectedPlayer, playerCareers = {}, confidence = null, trainingSessions = [], trainingWeek = round, season = 2026, isHome = true, hasNextMatch = true, roundLabel, onSelectPlayer, onOpenPlayer, onEscalar, onQuickAction }: {
+export function HubScreen({ club, coach, budget, opponent, round, competition, squad, starters, selectedPlayer, playerCareers = {}, confidence = null, trainingSessions = [], trainingWeek = round, season = 2026, isHome = true, hasNextMatch = true, roundLabel, loanReminder = 0, onLoans, onSelectPlayer, onOpenPlayer, onEscalar, onQuickAction }: {
+  loanReminder?: number;
+  onLoans?: () => void;
   club: string; coach: string; budget: number; opponent: string; round: number; competition: string;
   squad: Player[]; starters: number[]; selectedPlayer: Player | null; playerCareers?: Record<number, PlayerCareerRecord>; trainingSessions?: TrainingSessionRecord[];
   confidence?: ClubConfidence | null;
@@ -23,7 +25,8 @@ export function HubScreen({ club, coach, budget, opponent, round, competition, s
   return <div className={styles.workspace}>
     <ClubSidebar confidence={confidence} club={club} coach={coach} budget={budget} opponent={opponent} competition={competition} roundLabel={roundLabel ?? `${round}ª rodada`} isHome={isHome} hasNextMatch={hasNextMatch} squadSize={squad.length} ctaLabel="Escalar Time" onCta={onEscalar} onQuickAction={onQuickAction} />
     <section className={styles.roster} aria-label="Elenco do clube">
-      <div className={styles.toolbar}><div className={styles.rosterTitle}><b>Plantel</b><span>{squad.length} atletas · temporada {season}</span></div><span className={styles.weekBadge}>SEMANA {trainingWeek}</span></div>
+      <div className={styles.toolbar}><div className={styles.rosterTitle}><b>Plantel</b><span>{squad.length} atletas · temporada {season}</span></div>{onLoans && <button type="button" className={styles.weekBadge} onClick={onLoans}>Empréstimos</button>}<span className={styles.weekBadge}>SEMANA {trainingWeek}</span></div>
+      {loanReminder > 0 && <p role="status" className="px-4 py-2 text-xs font-bold text-amber-800">{loanReminder} empréstimo(s) vence(m) nas próximas quatro semanas. Abra Empréstimos para propor a prorrogação antes da devolução.</p>}
       <div className={styles.rosterBody}>
         <div className={styles.tableScroll}>
           <table className={styles.table}>
@@ -31,7 +34,7 @@ export function HubScreen({ club, coach, budget, opponent, round, competition, s
             <tbody>{squad.map((player) => {
               const record = playerCareers[player.id];
               const market = record?.marketStatus ?? player.marketAvailability ?? "normal";
-              const marketLabel = ({ sale: "À venda", loan: "Empréstimo", retiring: "Aposentadoria", normal: "—" } as Record<string, string>)[market] ?? "—";
+              const marketLabel = player.acquisitionType === "loan" ? "Emprestado" : ({ sale: "À venda", loan: "Disponível p/ empréstimo", retiring: "Aposentadoria", normal: "—" } as Record<string, string>)[market] ?? "—";
               const current = record?.seasons.find((item) => item.season === season && item.club === club);
               return <tr key={player.id} onClick={() => onSelectPlayer(player.id)} onDoubleClick={() => onOpenPlayer(player.id)} className={selectedPlayer?.id === player.id ? styles.selected : undefined}>
                 <td>{fifaPosition(player)}</td><td className={styles.name}><button type="button" onClick={(event) => { event.stopPropagation(); onSelectPlayer(player.id); }} onDoubleClick={(event) => { event.stopPropagation(); onOpenPlayer(player.id); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); onOpenPlayer(player.id); } }} title="Selecione ou dê dois cliques para abrir a ficha">{player.name}</button>{starters.includes(player.id) && <span className={styles.starter} title="Titular">XI</span>}</td>

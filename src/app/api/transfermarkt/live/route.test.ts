@@ -34,3 +34,12 @@ it("reports upstream failure instead of returning a successful empty catalog", a
   expect(response.status).toBe(502);
   expect((await response.json()).error).toContain("429");
 });
+
+it("enriches loans from a single authenticated fixed-host history query, not a guessed contract end", async () => {
+  const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: "1", transfers: [{ clubFrom: { id: "10", name: "Origem" }, clubTo: { id: "20", name: "Destino" }, date: "2025-07-01", transferType: "loan", contractUntil: "2030-12-31" }] })));
+  vi.stubGlobal("fetch", fetcher);
+  const response = await POST(request({ action: "loans", player: "1" }));
+  expect(response.status).toBe(200); expect((await response.json()).loan.endsOn).toBeNull();
+  expect(fetcher).toHaveBeenCalledWith("https://transfermarkt-api-umber.vercel.app/players/1/transfers", expect.objectContaining({ redirect: "error" }));
+  expect((await POST(request({ action: "loans", player: "../secret" }))).status).toBe(400);
+});
