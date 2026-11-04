@@ -13,7 +13,7 @@ it("uses the exact imported primary, reserve and third artwork without dyeing or
     expect(image.getAttribute("href")).toBe(clubKitAsset("Flamengo", kit));
     expect(image.hasAttribute("filter")).toBe(false);
     expect(image.getAttribute("preserveAspectRatio")).toBe("xMidYMid meet");
-    expect(container.querySelector("text")?.textContent).toBe(String(squad[0].shirtNumber ?? squad[0].id));
+    expect(container.querySelector("text")).toBeNull();
     unmount();
   }
 });
@@ -23,7 +23,7 @@ it("uses the managed club for every player, including goalkeepers, and updates o
   rerender(<PlayerJersey player={squad[0]} club="Palmeiras" />);
   expect(container.querySelector("image")?.getAttribute("href")).toBe(clubKitAsset("Palmeiras"));
 });
-it("keeps a numbered fabric fallback only for absent or broken assets, without leaking a failure to another club", () => {
+it("keeps a fabric fallback only for absent or broken assets, without leaking a failure to another club", () => {
   const { container, rerender } = render(<PlayerJersey player={squad[0]} club="Clube sem arte importada" />);
   expect(container.querySelector("image")?.getAttribute("href")).toBe(KIT_TEMPLATE.image);
   expect(container.querySelector("image")?.hasAttribute("filter")).toBe(true);
