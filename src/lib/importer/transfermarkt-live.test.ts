@@ -60,12 +60,16 @@ it("keeps validated progress after failure and resumes without re-fetching compl
   });
   const save = async (value: LiveCheckpoint | null) => { saved = structuredClone(value); };
   await expect(collectNationalSnapshot({ request, save })).rejects.toThrow("retomar");
-  expect(saved!.snapshot.clubs).toHaveLength(2);
+  expect(saved!.snapshot.clubs).toHaveLength(155);
+  expect(saved!.issues).toEqual([{ clubId: "3", clubName: "Club 3", message: "HTTP 503" }]);
+  const attempted = request.mock.calls.filter(([body]) => body.action === "club").map(([body]) => body.action === "club" ? body.club : "");
+  expect(attempted.slice(-2)).toEqual(["396", "3"]);
   const resumed = source();
   const snapshot = await collectNationalSnapshot({ request: resumed, load: async () => saved, save });
   expect(snapshot.clubs).toHaveLength(156);
   expect(resumed.mock.calls[0][0]).toEqual({ action: "club", club: "3", season: "2025" });
-  expect(resumed).toHaveBeenCalledTimes(154);
+  expect(resumed).toHaveBeenCalledTimes(1);
+  expect(saved!.issues).toEqual([]);
 });
 it("honors cancellation before requests without publishing anything", async () => {
   const controller = new AbortController(); controller.abort();
@@ -97,4 +101,46 @@ it("uses state and the source short name to distinguish Botafogo-PB from Botafog
   expect(result.clubs).toHaveLength(2);
   expect(result.players.every(player => player.clubId === "pb")).toBe(true);
   expect(result.clubs.find(club => club.id === "rj")).toEqual(database.clubs[0]);
+});
+
+it("defers an incomplete player until all other clubs finish, then succeeds if the final retry resolves it", async () => {
+  const good = source(), progress = vi.fn();
+  let failedOnce = false;
+  const request = vi.fn(async (body: LiveRequest) => {
+    if (body.action === "club" && body.club === "201" && !failedOnce) {
+      failedOnce = true;
+      throw new Error("Figueirense / Maiky: idade/nascimento ou posição não informados.");
+    }
+    return good(body);
+  });
+  const result = await collectNationalSnapshot({ request, progress });
+  expect(result.clubs).toHaveLength(156);
+  const attempts = request.mock.calls.filter(([body]) => body.action === "club");
+  expect(attempts).toHaveLength(157);
+  expect(attempts.at(-1)?.[0]).toEqual({ action: "club", club: "201", season: "2025" });
+  expect(progress.mock.calls.some(([message]) => message.includes("separado para revisão"))).toBe(true);
+});
+it("reports all persistent failures together and keeps healthy clubs staged without returning a partial snapshot", async () => {
+  const good = source(); let saved: LiveCheckpoint | null = null;
+  const request = vi.fn(async (body: LiveRequest) => {
+    if (body.action === "club" && ["1", "201"].includes(body.club)) throw new Error(`Player ${body.club}: missing birth date`);
+    return good(body);
+  });
+  await expect(collectNationalSnapshot({ request, save: async value => { saved = structuredClone(value); } })).rejects.toThrow(/154\/156.*2 clube/);
+  expect(saved!.snapshot.clubs).toHaveLength(154);
+  expect(saved!.issues?.map(issue => issue.clubId)).toEqual(["1", "201"]);
+  const attempts = request.mock.calls.filter(([body]) => body.action === "club").map(([body]) => body.action === "club" ? body.club : "");
+  expect(attempts.slice(-2)).toEqual(["1", "201"]);
+});
+it("stops immediately on pause during a club request without misclassifying it as a pending club", async () => {
+  const controller = new AbortController(), good = source();
+  let saved: LiveCheckpoint | null = null;
+  const request = vi.fn(async (body: LiveRequest) => {
+    if (body.action === "club" && body.club === "2") { controller.abort(); controller.signal.throwIfAborted(); }
+    return good(body);
+  });
+  await expect(collectNationalSnapshot({ request, signal: controller.signal, save: async value => { saved = structuredClone(value); } })).rejects.toThrow();
+  expect(saved!.snapshot.clubs).toHaveLength(1);
+  expect(saved!.issues).toEqual([]);
+  expect(request.mock.calls.filter(([body]) => body.action === "club")).toHaveLength(2);
 });

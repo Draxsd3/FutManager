@@ -334,3 +334,11 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Persistir origem externa e EUR/nascimento/data, priorizar vínculo externo em novas sincronizações; clube novo usa cores disponíveis. Modelo de força individual determinístico provisório, não scouting oficial: bases por divisão, diversidade simulada de ID/idade/mercado; manter notas existentes. BRL e salário permanecem estimativas do jogo, sem EUR ficticiamente convertido.
 - Migrações de guarda 200 e novas colunas JSONB `transfermarkt` foram preparadas; NÃO aplicadas remotamente nesta sessão. Se falhar a nuvem, salvar local/IndexedDB e indicar pendência claramente. Não afirmar carga real de 156 clubes ou sync remoto sem executá-los. Consultas reais representativas funcionaram; suíte usa fixtures para validar carga completa.
 - Validação desta entrega: 244 testes Vitest/58 arquivos, 10 testes Python, lint e build aprovados. Carga integral autenticada de produção e aplicação remota das migrações não executadas.
+
+
+### 42. Deixar pendências de jogadores/clubes para o fim — 04/11/2026
+- Usuário encontrou Figueirense / Maiky sem idade/nascimento ou posição e pediu que erros assim ficassem para corrigir por último, sem travar a coleta dos outros clubes.
+- Coletar os demais membros mesmo quando um clube falhar; guardar clube/nome/motivo em `issues` no checkpoint por conta e mostrar contagem de pendências no progresso. Fazer uma única passagem final automática apenas pelos clubes com erro, depois de tentar todos os demais.
+- Ao persistirem erros, mostrar relatório consolidado com todos os clubes pendentes. Rodar novamente retoma somente os clubes ainda não validados, aproveitando os já salvos (inclusive checkpoints da versão anterior).
+- Não inventar dados do Maiky ou excluir jogadores/elencos silenciosamente. Coleta dos clubes válidos é preservada em staging; aplicação do catálogo continua integral, depois de corrigir pendências e validar. Não tratar coleta incompleta como sucesso nem alterar carreira ativa.
+- Pausar/cancelar deve interromper imediatamente, sem virar pendência de clube; falha no armazenamento interrompe em vez de afirmar que o progresso foi salvo. Pendências anteriores de migração remota Supabase permanecem sem alteração.

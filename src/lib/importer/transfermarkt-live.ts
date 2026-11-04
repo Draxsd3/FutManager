@@ -72,7 +72,8 @@ export function normalizeLiveClub(profileInput: unknown, squadInput: unknown, cl
 }
 
 export type ImportProgress = (message: string) => void;
-export type LiveCheckpoint = { snapshot: TransfermarktSnapshot; members: { id: string; name: string; competitionId: string }[] };
+export type LiveCollectionIssue = { clubId: string; clubName: string; message: string };
+export type LiveCheckpoint = { snapshot: TransfermarktSnapshot; members: { id: string; name: string; competitionId: string }[]; issues?: LiveCollectionIssue[] };
 export type LiveOptions = {
   request: (body: LiveRequest, signal?: AbortSignal) => Promise<unknown>;
   progress?: ImportProgress; signal?: AbortSignal;
@@ -116,19 +117,43 @@ export async function collectNationalSnapshot(options: LiveOptions) {
     if (new Set(checkpoint.members.map(member => member.id)).size !== 156) throw new Error("Clube duplicado entre divisões. Nada foi aplicado.");
     await options.save?.(checkpoint);
   }
-  for (const member of checkpoint.members) {
-    if (checkpoint.snapshot.clubs.some(club => club.id === member.id)) continue;
-    const competition = checkpoint.snapshot.competitions!.find(c => c.id === member.competitionId);
+  // Rebuild the pending list on every run; older checkpoints need no migration.
+  const issues = new Map<string, LiveCollectionIssue>();
+  const saveProgress = async () => {
+    checkpoint!.issues = [...issues.values()];
+    await options.save?.(checkpoint!);
+  };
+  const collectMember = async (member: LiveCheckpoint["members"][number], finalAttempt = false) => {
+    options.signal?.throwIfAborted();
+    const competition = checkpoint!.snapshot.competitions!.find(c => c.id === member.competitionId);
     if (!competition) throw new Error("Manifesto de competições inválido. Reinicie a coleta.");
-    progress(`${checkpoint.snapshot.clubs.length}/156 clubes — ${competition.division}: ${member.name}…`);
+    progress(`${checkpoint!.snapshot.clubs.length}/156 clubes válidos · ${issues.size} pendência(s) — ${finalAttempt ? "Revisão final" : competition.division}: ${member.name}…`);
     try {
       const club = transfermarktSnapshotSchema.shape.clubs.element.parse(await request({ action: "club", club: member.id, season: competition.seasonId }));
+      options.signal?.throwIfAborted();
       if (club.id !== member.id) throw new Error("Identidade do clube divergente.");
-      checkpoint.snapshot.clubs.push({ ...club, competitionId: competition.id, division: competition.division, country: "Brasil" });
-      await options.save?.(checkpoint);
+      checkpoint!.snapshot.clubs.push({ ...club, competitionId: competition.id, division: competition.division, country: "Brasil" });
+      issues.delete(member.id);
     } catch (error) {
-      throw new Error(`${member.name}: ${error instanceof Error ? error.message : "consulta falhou"} Clique em Rodar para retomar a coleta. O catálogo não foi alterado.`);
+      // A pause is not a source-data problem and must stop immediately.
+      options.signal?.throwIfAborted();
+      issues.set(member.id, { clubId: member.id, clubName: member.name,
+        message: (error instanceof Error ? error.message : "Consulta falhou.").slice(0, 1000) });
+      progress(`${checkpoint!.snapshot.clubs.length}/156 clubes válidos · ${issues.size} pendência(s). ${member.name} separado para revisão; continuando a coleta…`);
     }
+    // Storage failure is fatal, not another club issue: never pretend progress was saved.
+    await saveProgress();
+  };
+  for (const member of checkpoint.members) {
+    if (checkpoint.snapshot.clubs.some(club => club.id === member.id)) continue;
+    await collectMember(member);
+  }
+  // One bounded final pass, only after every remaining club has been attempted.
+  const pending = checkpoint.members.filter(member => issues.has(member.id));
+  for (const member of pending) await collectMember(member, true);
+  if (issues.size) {
+    const details = [...issues.values()].map(issue => `• ${issue.clubName}: ${issue.message}`).join("\n");
+    throw new Error(`Coleta concluída com pendências: ${checkpoint.snapshot.clubs.length}/156 clubes válidos, ${issues.size} clube(s) pendente(s). Os clubes válidos foram salvos para retomar, mas o catálogo ainda não foi alterado.\n${details}\nClique em Rodar para retomar somente os clubes pendentes após corrigir os dados na fonte.`);
   }
   progress("156/156 clubes coletados. Validando identidades e elencos completos…");
   return transfermarktSnapshotSchema.parse(checkpoint.snapshot);
