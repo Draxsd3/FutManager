@@ -2,8 +2,8 @@
 @media(max-width:1000px){.brand{min-width:112px}.brandCopy strong{font-size:10px;letter-spacing:.1em}.navButton{gap:5px;padding-inline:10px}.navButton span:not(.chevron){font-size:9px}}
 @media(max-width:650px){.topbar{height:58px;gap:8px;padding-inline:8px}.brand{min-width:92px}.brandCopy strong{font-size:9px;letter-spacing:.08em}.nav{gap:0}.navButton{flex-direction:column;gap:3px;min-width:48px;padding:0 5px;font-size:8px}.navButton svg{width:17px;height:17px}.navButton[data-active=true]::after{right:7px;left:7px}.date{padding-left:7px}.date span{font-size:6px}.date b{font-size:8px}}
 @media(prefers-reduced-motion:reduce){.navButton,.navButton svg{transition:none}}
-.topbar { background: #102c1e; border-color: #315641; }
-.menu { background: #173527; border-color: #416650; }
+.topbar { background: #191b1d; border-color: #363a3b; }
+.menu { background: #242728; border-color: #464c49; }
 
 /* Keep navigation actions visible instead of hiding them off the horizontal edge. */
 .topbar { height: auto; min-height: 68px; }

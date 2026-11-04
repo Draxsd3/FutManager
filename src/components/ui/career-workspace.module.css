@@ -1,13 +1,13 @@
 .workspace{height:100dvh}.overlay{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:74px 20px 20px;background:#08090ec9;color:#edf3e9;font:11px var(--font-geist-sans),Arial,sans-serif;backdrop-filter:blur(12px)}.window{display:flex;flex-direction:column;width:min(1480px,100%);height:min(900px,100%);min-height:0;overflow:hidden;border:1px solid #ffffff22;border-radius:13px;background:#111218;box-shadow:0 30px 100px #000c}.header{display:flex;flex:0 0 46px;align-items:center;justify-content:space-between;gap:12px;padding:0 13px 0 18px;border-bottom:1px solid #ffffff12;background:linear-gradient(90deg,#1d1e26,#14151b);color:#edf3e9;font-size:11px;font-weight:850;letter-spacing:.03em}.header::before{width:6px;height:6px;margin-right:9px;border-radius:50%;background:var(--team-accent, #d4ad64);box-shadow:0 0 10px var(--team-accent, #d4ad64);content:""}.header span{margin-right:auto}.header button{width:30px;height:28px;border:1px solid #ffffff18;border-radius:6px;background:#ffffff07;color:#aab6aa;font-size:20px;line-height:1;cursor:pointer;transition:all .15s}.header button:hover{border-color:#fa775f66;background:#fa775f14;color:#ff9b84}.header button:focus-visible{outline:2px solid var(--game-accent, #a2dfb2);outline-offset:2px}.content{position:relative;flex:1;min-height:0;overflow:auto;background:#0d0e13;color:#edf3e9}@media(max-width:640px),(max-height:550px){.overlay{padding:7px}.window{border-radius:9px}.header{flex-basis:40px}.content{overscroll-behavior:contain}}
 /* The window frames every screen; screen components own their text and surface colors. */
-.overlay { background: #071b11d9; }
-.window { border-color: #486454; background: #edf4ee; }
-.header { background: #173b29; border-color: #315945; color: #f1f8f2; }
+.overlay { background: #0c0e0fd9; }
+.window { border-color: #505653; background: #f3f4f2; }
+.header { background: #242827; border-color: #444b47; color: #f3f5f3; }
 .header::before { background: var(--team-accent, #a4e0b1); box-shadow: none; }
-.header button { color: #e7f2e9; border-color: #719581; }
-.content { background: #edf4ee; color: #203b2a; color-scheme: light; }
+.header button { color: #ecf0ed; border-color: #68736c; }
+.content { background: #f3f4f2; color: #252b27; color-scheme: light; }
 
-.classicContent { background: #90a08e; color: #1c281c; }
+.classicContent { background: #e1e4df; color: #252b27; }
 
 /* Use the available viewport for controls before falling back to scrolling. */
 .window { height: min(980px, 100%); }

@@ -7,7 +7,7 @@
   height: 100dvh;
   overflow: hidden;
   color: #eff0f2;
-  background: radial-gradient(ellipse at 50% 0%, #244d35, transparent 58%), linear-gradient(145deg, #102c1c, #081b10);
+  background: radial-gradient(ellipse at 50% 0%, #2c3034, transparent 58%), linear-gradient(145deg, #1a1c1e, #101113);
   font-family: var(--font-geist-sans), Arial, sans-serif;
 }
 .shell::before {
