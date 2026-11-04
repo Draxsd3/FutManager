@@ -23,6 +23,7 @@ export function archiveChampionships(history: ChampionshipRecord[], season: Care
     const id = `${season.season}:${competitionId}`;
     if (next.some(record => record.id === id)) continue;
     const fixtures = season.fixtures.filter(f => f.competitionId === competitionId);
+    if (season.priorAppointmentFixtureIds && fixtures.every(f => season.priorAppointmentFixtureIds!.includes(f.id))) continue;
     const first = fixtures[0];
     let championId: string | undefined, runnerUpId: string | undefined;
     if (first.type === "cup") {

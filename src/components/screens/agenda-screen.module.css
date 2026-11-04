@@ -178,3 +178,9 @@
   .screen { overflow: auto; }
   .container { min-height: 430px; }
 }
+
+.jobConfirmation { margin: 12px 16px; padding: 14px; border: 1px solid #b7ccbc; border-radius: 6px; background: #f2f7f2; font-size: 12px; }
+.jobConfirmation p { margin: 8px 0 12px; line-height: 1.6; }
+.jobActions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.jobConfirmation button { padding: 8px 12px; border: 1px solid #bdcebf; border-radius: 5px; background: white; color: #245e39; cursor: pointer; }
+.jobActions button:disabled, .textButton:disabled { opacity: .5; cursor: default; }

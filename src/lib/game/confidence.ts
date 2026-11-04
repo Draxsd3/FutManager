@@ -9,7 +9,7 @@ export function mergeConfidenceHistory(history: ConfidenceMatch[], season: Caree
   const results = new Map(history.map((match) => [`${match.clubId}|${match.id}`, match]));
   if (!season?.clubId || !Array.isArray(season.fixtures)) return [...results.values()];
   for (const f of season.fixtures) {
-    if (f.status !== "played" || (f.homeClubId !== season.clubId && f.awayClubId !== season.clubId)
+    if (season.priorAppointmentFixtureIds?.includes(f.id) || f.status !== "played" || (f.homeClubId !== season.clubId && f.awayClubId !== season.clubId)
       || !Number.isInteger(f.homeScore) || f.homeScore! < 0 || !Number.isInteger(f.awayScore) || f.awayScore! < 0) continue;
     const home = f.homeClubId === season.clubId;
     const scored = home ? f.homeScore! : f.awayScore!;

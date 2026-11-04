@@ -10,6 +10,7 @@ import { ClassicIcon } from "@/components/ui/classic-icon";
 import { InterfaceIcon } from "@/components/ui/interface-icon";
 import { Crest } from "@/components/ui/club-sidebar";
 import { StadiumScreen } from "./stadium-screen";
+import type { ManagerJobsProps } from "./manager-jobs";
 import { AgendaScreen, type AgendaView } from "./agenda-screen";
 import { canJoinTraining, sessionEnergyDelta, TRAINING_DAYS, TRAINING_DRILLS, trainingDrillLabel, trainingWeekSessions, type TrainingDay, type TrainingDrillId, type TrainingIntensity, type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
 import trainingStyles from "./training-center.module.css";
@@ -19,6 +20,7 @@ export type ClubSection = "agenda" | "stadium" | "juniors" | "teams" | "search" 
 export function ClubSectionScreen({
   section,
   championHistory = [],
+  jobs,
   database,
   club,
   coach,
@@ -41,6 +43,7 @@ export function ClubSectionScreen({
   trainingSeason = 2026,
 }: {
   championHistory?: ChampionshipRecord[];
+  jobs?: ManagerJobsProps;
   agendaView?: AgendaView;
   onAgendaViewChange?: (view: AgendaView) => void;
   onPrepare?: () => void;
@@ -93,7 +96,7 @@ export function ClubSectionScreen({
 
   if (section === "stadium") return <StadiumScreen key={club} club={currentClub} budget={budget} payroll={monthlyPayroll} onBack={onBack} onAgenda={onAgenda} />;
 
-  if (section === "agenda") return <AgendaScreen club={club} coach={coach} competition={competition} inGameDate={inGameDate} round={round} season={season} database={database} view={agendaView} onViewChange={onAgendaViewChange ?? (() => undefined)} onBack={onBack} onPrepare={onPrepare ?? onBack} />;
+  if (section === "agenda") return <AgendaScreen jobs={jobs} club={club} coach={coach} competition={competition} inGameDate={inGameDate} round={round} season={season} database={database} view={agendaView} onViewChange={onAgendaViewChange ?? (() => undefined)} onBack={onBack} onPrepare={onPrepare ?? onBack} />;
 
   return (
     <div className="h-full min-h-0 overflow-hidden bg-[linear-gradient(rgba(247,247,242,.72),rgba(247,247,242,.8)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center p-4 text-[#26382a]">

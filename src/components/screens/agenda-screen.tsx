@@ -1,6 +1,7 @@
 "use client";
 
 import { brazilianCalendarPeriods, formatCalendarDate } from "@/lib/game/brazilian-calendar";
+import { ManagerJobs, type ManagerJobsProps } from "./manager-jobs";
 import { useState } from "react";
 import { nextCareerFixture, type CareerSeason, type SeasonFixture } from "@/lib/game/season";
 import type { EditorDatabase } from "@/lib/game/editor-data";
@@ -14,7 +15,8 @@ export const agendaOptions: { id: AgendaView; label: string; description: string
   { id: "jobs", label: "Central de empregos", description: "Sua carreira como treinador" },
 ];
 
-export function AgendaScreen({ club, coach, competition, inGameDate, round, season, database, view, onViewChange, onBack, onPrepare }: {
+export function AgendaScreen({ club, coach, competition, inGameDate, round, season, database, view, onViewChange, onBack, onPrepare, jobs }: {
+  jobs?: ManagerJobsProps;
   club: string; coach: string; competition: string; inGameDate: string; round: number; season?: CareerSeason; database: EditorDatabase;
   view: AgendaView; onViewChange: (view: AgendaView) => void; onBack: () => void; onPrepare: () => void;
 }) {
@@ -61,7 +63,7 @@ export function AgendaScreen({ club, coach, competition, inGameDate, round, seas
             {(season?.season ?? 2026) === 2026 && <p>Série A: interrupção após as 18 primeiras rodadas, retorno em 22/07. Série B: sem pausa para a Copa; playoffs previstos em 21 e 28/11. Datas FIFA e seleções não incluídas.</p>}</div>
           </details>
         </section>
-      </> : <section className={styles.emptySection} aria-labelledby="agenda-section-title"><p className={styles.eyebrow}>{view === "friendlies" ? "PREPARAÇÃO DO ELENCO" : "CARREIRA DO TREINADOR"}</p><h2 id="agenda-section-title">{title.label}</h2><div className={styles.emptySymbol} aria-hidden="true">{view === "friendlies" ? "⚽" : "◎"}</div><h3>{view === "friendlies" ? "Agendamento ainda indisponível" : "Ofertas ainda indisponíveis"}</h3><p>{view === "friendlies" ? "O agendamento de amistosos ainda não está disponível. É necessário integrar a disponibilidade dos clubes e a negociação ao calendário da carreira." : `Você está no comando do ${club}. As ofertas ainda não estão disponíveis: o mercado de técnicos precisa ser integrado à carreira.`}</p><button onClick={() => onViewChange("matches")}>Ver jogos do seu time →</button></section>}
+      </> : view === "jobs" && jobs ? <ManagerJobs {...jobs} /> : <section className={styles.emptySection} aria-labelledby="agenda-section-title"><p className={styles.eyebrow}>{view === "friendlies" ? "PREPARAÇÃO DO ELENCO" : "CARREIRA DO TREINADOR"}</p><h2 id="agenda-section-title">{title.label}</h2><div className={styles.emptySymbol} aria-hidden="true">{view === "friendlies" ? "⚽" : "◎"}</div><h3>{view === "friendlies" ? "Agendamento ainda indisponível" : "Ofertas ainda indisponíveis"}</h3><p>{view === "friendlies" ? "O agendamento de amistosos ainda não está disponível. É necessário integrar a disponibilidade dos clubes e a negociação ao calendário da carreira." : `Você está no comando do ${club}. As ofertas ainda não estão disponíveis: o mercado de técnicos precisa ser integrado à carreira.`}</p><button onClick={() => onViewChange("matches")}>Ver jogos do seu time →</button></section>}
       <footer className={styles.footer}><span>FUTMANAGER / TEMPORADA {date.getFullYear()}</span><span>{club} · {title.label}</span></footer>
     </div>
   </section>;
