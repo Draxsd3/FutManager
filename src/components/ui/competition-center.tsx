@@ -1,4 +1,5 @@
 "use client";
+import { SERIES_A_2026_ZONES, standingsZone } from "@/lib/game/standings-zones";
 import { CompetitionBracket, CompetitionGroups, CompetitionRounds, recentMatches } from "./competition-results";
 import { ManagementIcon } from "@/components/ui/management-header";
 
@@ -14,6 +15,7 @@ import type {
 
 export type CareerCompetitionView = {
   type: "league" | "state" | "cup";
+  seasonYear?: number;
   groups?: { name: string; table: TableRow[] }[];
   table: TableRow[];
   fixtures: RoundFixture[];
@@ -127,7 +129,7 @@ export function CompetitionCenter({
   const isKnockout = careerData?.type === "cup" || selected?.id === "national:Copa do Brasil";
   const visibleScope = scope === "table" && isKnockout ? (careerData?.groups?.length ? "groups" : "bracket") : scope;
   const rows = selected
-    ? [...selected.clubs]
+    ? [...(careerData?.type === "league" && careerData.table.length ? careerData.table.map(row => row.club) : selected.clubs)]
         .map((name) => ({
           club: name,
           result: isActive ? effectiveTable.find((row) => row.club === name) : undefined,
@@ -139,9 +141,12 @@ export function CompetitionCenter({
             (b.result?.goalsFor ?? 0) -
               (b.result?.goalsAgainst ?? 0) -
               ((a.result?.goalsFor ?? 0) - (a.result?.goalsAgainst ?? 0)) ||
+            (b.result?.goalsFor ?? 0) - (a.result?.goalsFor ?? 0) ||
             a.club.localeCompare(b.club, "pt-BR"),
         )
     : [];
+  const zoneFor = (index: number) => standingsZone(selected?.id ?? "", careerData?.seasonYear, careerData?.table.length ?? 0, !!careerData?.table.some(row => row.played > 0), index + 1);
+  const showZones = !!zoneFor(0);
   const scorers = isActive
     ? effectiveScorers.filter((player) => player.goals > 0 && player.played > 0)
     : [];
@@ -275,7 +280,7 @@ export function CompetitionCenter({
                         {isActive && isKnockout ? (
                           <CompetitionBracket fixtures={effectiveFixtures} />
                         ) : rows.length ? (
-                          <div className={styles.tableWrap}>
+                          <div className={`${styles.tableWrap} ${styles.standingsTable}`} role="region" aria-label="Tabela de classificação" tabIndex={0}>
                             <table>
                               <caption className={styles.srOnly}>
                                 Classificação de {selected.name}
@@ -290,10 +295,7 @@ export function CompetitionCenter({
                                     "V",
                                     "E",
                                     "D",
-                                    "GP",
-                                    "GC",
-                                    "SG",
-                                    "Últimas 5",
+                                    "Desemp.",
                                   ].map((title) => (
                                     <th key={title} scope="col">
                                       {title}
@@ -305,15 +307,16 @@ export function CompetitionCenter({
                                 {rows.map((row, index) => (
                                   <tr
                                     key={row.club}
+                                    data-zone={zoneFor(index)}
                                     className={
                                       row.club === club ? styles.ownClub : ""
                                     }
                                   >
-                                    <td>{isActive ? index + 1 : "—"}</td>
+                                    <td>{isActive ? index + 1 : "—"}{zoneFor(index) && <span className={styles.srOnly}> · {SERIES_A_2026_ZONES.find(zone => zone.id === zoneFor(index))?.label} (faixa-base)</span>}</td>
                                     <th scope="row">
                                       <span>
                                         <Crest club={row.club} size="sm" />
-                                        {row.club}
+                                        <span title={row.result ? `Gols pró ${row.result.goalsFor} · contra ${row.result.goalsAgainst} · saldo ${row.result.goalsFor - row.result.goalsAgainst}` : undefined}>{row.club}{row.result && <span className={styles.srOnly}>{` · Gols pró ${row.result.goalsFor}, contra ${row.result.goalsAgainst}, saldo ${row.result.goalsFor - row.result.goalsAgainst}`}</span>}</span>
                                         {row.club === club && (
                                           <small>SEU CLUBE</small>
                                         )}
@@ -325,12 +328,6 @@ export function CompetitionCenter({
                                       row.result?.wins,
                                       row.result?.draws,
                                       row.result?.losses,
-                                      row.result?.goalsFor,
-                                      row.result?.goalsAgainst,
-                                      row.result
-                                        ? row.result.goalsFor -
-                                          row.result.goalsAgainst
-                                        : undefined,
                                     ].map((value, i) => (
                                       <td key={i}>{value ?? "—"}</td>
                                     ))}
@@ -340,7 +337,7 @@ export function CompetitionCenter({
                                         const other = match.home === row.club ? match.awayScore : match.homeScore;
                                         const result = own === other ? "E" : own > other ? "V" : "D";
                                         const label = `${result === "V" ? "Vitória" : result === "D" ? "Derrota" : "Empate"}: ${match.home} ${match.homeScore} × ${match.awayScore} ${match.away}, ${match.roundLabel ?? "rodada registrada"}`;
-                                        return <button key={index} data-result={result} title={label} aria-label={label} onClick={() => { setFormClub(row.club); setSelectedRound(match.roundLabel ?? "Rodada registrada"); }}>{result === "V" ? "✓" : result === "D" ? "×" : "−"}</button>;
+                                        return <button key={index} data-result={result} data-latest={index === recentMatches(effectiveFixtures, row.club).length - 1 || undefined} title={label} aria-label={label} onClick={() => { setFormClub(row.club); setSelectedRound(match.roundLabel ?? "Rodada registrada"); }}>{result === "V" ? "✓" : result === "D" ? "×" : "−"}</button>;
                                       })}
                                       {(!isActive || !recentMatches(effectiveFixtures, row.club).length) && <span aria-label="Sem partidas concluídas">—</span>}
                                     </div></td>
@@ -355,7 +352,9 @@ export function CompetitionCenter({
                             text="Participantes, fases e grupos desta competição ainda não foram cadastrados na carreira. Não há classificação para exibir."
                           />
                         )}
+                        {showZones && <div className={styles.zoneLegend} aria-label="Legenda das faixas de classificação">{SERIES_A_2026_ZONES.map(zone => <span key={zone.id}><i data-zone={zone.id} aria-hidden="true" />{zone.label}</span>)}</div>}
                         <p className={styles.disclaimer}>
+                          {showZones && "Faixas-base projetadas para a Série A de 2026. Vagas podem mudar por outras competições; não representam classificação confirmada nem garantem implementação no jogo. "}
                           {isActive
                             ? "Últimas 5: ✓ vitória · × derrota · − empate (da mais antiga à mais recente). Clique em um resultado para abrir a rodada ao lado. Classificação acumulada somente de partidas concluídas."
                             : "Clubes de outras divisões podem ser consultados. Pontuação, grupos e resultados só aparecem quando registrados para a competição."}
