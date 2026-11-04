@@ -44,3 +44,15 @@ it("closes on an outside click", () => {
   fireEvent.pointerDown(document.body);
   expect(screen.queryByRole("menu")).toBeNull();
 });
+
+it("uses supplied artwork decoratively and retains the classic icon fallback", () => {
+  render(<TopNav date="22/01/2026" items={[
+    { icon: "calendar", image: "/icons/navigation/agenda.webp", label: "Agenda", onClick: open },
+    { icon: "user_suit", label: "Técnicos", onClick: open },
+  ]} />);
+  const agenda = screen.getByRole("button", { name: "Agenda" });
+  const artwork = agenda.querySelector("img");
+  expect(artwork?.getAttribute("src")).toBe("/icons/navigation/agenda.webp");
+  expect(artwork?.getAttribute("alt")).toBe("");
+  expect(screen.getByRole("button", { name: "Técnicos" }).querySelector("img")).toBeNull();
+});

@@ -497,13 +497,13 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   const nav: NavItem[] = [
-    { icon: "house", label: "Principal", active: page === "hub", onClick: () => navigate("hub") },
-    { icon: "calendar", label: "Agenda", active: page === "agenda", onClick: () => navigate("agenda"), children: agendaOptions.map((option) => ({ label: option.label, description: option.description, onClick: () => { setAgendaView(option.id); navigate("agenda"); } })) },
-    { icon: "data_table", label: "Tabelas", active: standingsOpen, onClick: () => setStandingsOpen(true) },
-    { icon: "sport", label: "Estádio", active: page === "stadium", onClick: () => navigate("stadium") },
-    { icon: "user_green", label: "Juniores", active: page === "juniors", onClick: () => navigate("juniors") },
-    { icon: "t_shirt_print", label: "Times", active: page === "teams", onClick: () => navigate("teams") },
-    { icon: "magnifier", label: "Mercado", active: page === "search", onClick: () => navigate("search") },
+    { icon: "house", label: "Principal", image: "/icons/navigation/tela-inicial.webp", active: page === "hub", onClick: () => navigate("hub") },
+    { icon: "calendar", label: "Agenda", image: "/icons/navigation/agenda.webp", active: page === "agenda", onClick: () => navigate("agenda"), children: agendaOptions.map((option) => ({ label: option.label, description: option.description, onClick: () => { setAgendaView(option.id); navigate("agenda"); } })) },
+    { icon: "data_table", label: "Tabelas", image: "/icons/navigation/tabela.webp", active: standingsOpen, onClick: () => setStandingsOpen(true) },
+    { icon: "sport", label: "Estádio", image: "/icons/navigation/estadio.webp", active: page === "stadium", onClick: () => navigate("stadium") },
+    { icon: "user_green", label: "Juniores", image: "/icons/navigation/juniores.webp", active: page === "juniors", onClick: () => navigate("juniors") },
+    { icon: "t_shirt_print", label: "Times", image: "/icons/navigation/times.webp", active: page === "teams", onClick: () => navigate("teams") },
+    { icon: "magnifier", label: "Mercado", image: "/icons/navigation/mercado.webp", active: page === "search", onClick: () => navigate("search") },
     { icon: "user_suit", label: "Técnicos", active: page === "coaches", onClick: () => navigate("coaches") },
     { icon: "clock_history_frame", label: "História", active: page === "history", onClick: () => navigate("history"), children: historyOptions.map((option) => ({ label: option.label, description: option.description, onClick: () => { setHistoryView(option.id); navigate("history"); } })) },
     { icon: "door_out", label: "Configurações", active: page === "settings", onClick: () => navigate("settings") },

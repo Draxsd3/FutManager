@@ -15,3 +15,7 @@
   .navButton { min-height: 44px; height: auto; }
   .date { margin-left: auto; }
 }
+
+/* Illustrated navigation icons keep their original colors and transparent edges. */
+.navImage { width: 28px; height: 28px; flex: none; object-fit: contain; }
+@media (max-width: 650px) { .navImage { width: 25px; height: 25px; } }
