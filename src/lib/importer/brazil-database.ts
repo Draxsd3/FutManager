@@ -1,3 +1,4 @@
+import { applyBundledTransfermarkt } from "./transfermarkt";
 import type { EditorClub, EditorDatabase, EditorPlayer } from "@/lib/game/editor-data";
 import type { DivisionKey, PositionCode } from "@/lib/game/mock-data";
 
@@ -34,6 +35,6 @@ export async function importBrazilDatabase(existing?: EditorDatabase): Promise<E
         goals: 0, assists: 0, ownGoals: 0, averageRating: null, contractEndsOn: "2027-12-31", marketStatus: "normal" });
     }
   }
-  return { clubs: [...(existing?.clubs.filter(club => !replaced.has(club.id)) ?? []), ...clubs],
-    players: [...(existing?.players.filter(player => !replaced.has(player.clubId)) ?? []), ...players] };
+  return applyBundledTransfermarkt({ clubs: [...(existing?.clubs.filter(club => !replaced.has(club.id)) ?? []), ...clubs],
+    players: [...(existing?.players.filter(player => !replaced.has(player.clubId)) ?? []), ...players] });
 }
