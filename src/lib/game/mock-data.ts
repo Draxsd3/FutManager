@@ -141,6 +141,7 @@ export type RoundFixture = {
   homeScore: number;
   awayScore: number;
   live?: boolean;
+  managed?: boolean;
   played?: boolean;
   roundLabel?: string;
 };

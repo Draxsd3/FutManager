@@ -413,3 +413,29 @@ it("lifts a held reserve and cancels safely without a drop", () => {
     expect(player.className).not.toContain("reserveDragging");
   } finally { vi.useRealTimers(); }
 });
+
+it("exposes each starter's energy and renders its bar", () => {
+  setup();
+  for (const [index, player] of starters.entries()) {
+    const shirt = starterButton(index);
+    expect(shirt.getAttribute("aria-label")).toContain(`energia ${player.energy}%`);
+    const bar = shirt.querySelector('i[aria-hidden="true"] span') as HTMLElement;
+    expect(bar.style.width).toBe(`${player.energy}%`);
+  }
+});
+
+it("draws complete pitch markings and keeps player labels and energy attached to each shirt", () => {
+  setup();
+  const field = screen.getByLabelText("Campo de escalação");
+  const markings = field.querySelector('svg[viewBox="0 0 100 100"]')!;
+  expect(markings.querySelectorAll("rect")).toHaveLength(5);
+  expect(markings.querySelectorAll("ellipse")).toHaveLength(4);
+  expect(markings.querySelectorAll("path")).toHaveLength(2);
+  for (const [index, player] of starters.entries()) {
+    const shirt = starterButton(index);
+    expect(shirt.querySelector("b")?.textContent).toBe(player.name);
+    expect(shirt.querySelector('i[aria-hidden="true"] span')).toBeTruthy();
+    expect(shirt.style.left).toContain("44px");
+    expect(shirt.hasAttribute("data-name-align")).toBe(false);
+  }
+});

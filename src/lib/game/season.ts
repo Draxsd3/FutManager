@@ -231,15 +231,20 @@ function fixtureSeed(fixture: SeasonFixture) {
   return seed >>> 0;
 }
 
-function simulateFixture(database: EditorDatabase, fixture: SeasonFixture): SeasonFixture {
-  const [homeScore, awayScore] = otherScore(
+/** The same deterministic goal sequence is used live and when a fixture is settled. */
+export function backgroundFixtureScore(fixture: SeasonFixture, minute: number, homeStrength: number, awayStrength: number): [number, number] {
+  return otherScore(
     fixture.home,
     fixture.away,
     fixtureSeed(fixture),
-    90,
-    clubStrength(database, fixture.homeClubId),
-    clubStrength(database, fixture.awayClubId),
+    minute,
+    homeStrength,
+    awayStrength,
   );
+}
+
+function simulateFixture(database: EditorDatabase, fixture: SeasonFixture): SeasonFixture {
+  const [homeScore, awayScore] = backgroundFixtureScore(fixture, 90, clubStrength(database, fixture.homeClubId), clubStrength(database, fixture.awayClubId));
   const winnerClubId = fixture.type === "cup"
     ? homeScore > awayScore ? fixture.homeClubId : awayScore > homeScore ? fixture.awayClubId : seededRandom(`${fixture.id}|penalties`)() < 0.5 ? fixture.homeClubId : fixture.awayClubId
     : undefined;
