@@ -25,11 +25,26 @@ it("keeps undecided entrants private and shows only an explicitly decided champi
   const { rerender } = render(<CompetitionBracket fixtures={[fixture({ participantsPending: true, played: false, roundLabel: "Final" })]} />);
   expect(screen.getAllByText("A definir")).toHaveLength(2);
   expect(screen.queryByText("Flamengo")).toBeNull();
-  expect(screen.queryByText("CAMPEÃO")).toBeNull();
+  expect(screen.queryByText("Campeão:")).toBeNull();
   rerender(<CompetitionBracket fixtures={[fixture({ roundLabel: "Final", homeScore: 1, awayScore: 1 })]} />);
-  expect(screen.queryByText("CAMPEÃO")).toBeNull();
+  expect(screen.queryByText("Campeão:")).toBeNull();
   rerender(<CompetitionBracket fixtures={[fixture({ roundLabel: "Final", homeScore: 1, awayScore: 1, winner: "Flamengo" })]} />);
-  expect(screen.getByText("CAMPEÃO")).toBeTruthy();
+  expect(screen.getByText("Campeão:")).toBeTruthy();
+});
+
+it("lists one phase at a time, exposes all matches and keeps unconfirmed scores hidden", () => {
+  const first = Array.from({ length: 25 }, (_, i) => fixture({ home: `Clube ${i}`, away: `Visitante ${i}`, played: false, roundLabel: "Primeira fase" }));
+  render(<CompetitionBracket fixtures={[...first, fixture({ home: "Finalista", participantsPending: true, played: true, roundLabel: "Final" })]} />);
+  expect(screen.getByRole("combobox", { name: "Fase do mata-mata" })).toBeTruthy();
+  const list = screen.getByRole("region", { name: "Confrontos de Primeira fase" });
+  expect(list.querySelectorAll("article")).toHaveLength(25);
+  expect(list.getAttribute("tabindex")).toBe("0");
+  expect(within(list).getByText("Clube 24")).toBeTruthy();
+  fireEvent.change(screen.getByRole("combobox", { name: "Fase do mata-mata" }), { target: { value: "Final" } });
+  expect(screen.getAllByText("A definir")).toHaveLength(2);
+  expect(screen.queryByText("Finalista")).toBeNull();
+  expect(screen.getByText("— × —")).toBeTruthy();
+  expect(screen.queryByText("2 × 1")).toBeNull();
 });
 it("renders separate real group standings without mixing points into the knockout", () => {
   render(<CompetitionGroups groups={[{ name: "Grupo A", table: [{ club: "Flamengo", points: 3, played: 1, wins: 1, draws: 0, losses: 0, goalsFor: 2, goalsAgainst: 1 }] }, { name: "Grupo B", table: [] }]} />);

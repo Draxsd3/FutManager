@@ -588,22 +588,27 @@
 .roundMatch > span { display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center; }
 .roundMatch small { grid-column:1/-1; text-align:center; color:#5f705e; font-size:10px; }
 .closeRounds { margin:10px; padding:6px; font-size:11px; cursor:pointer; }
-.bracket { display:flex; overflow-x:auto; gap:32px; padding:18px; min-height:300px; }
-.bracketPhase { flex:0 0 220px; display:flex; flex-direction:column; }
-.bracketPhase h3 { font-weight:700; font-size:12px; margin-bottom:16px; }
-.bracketPhase > div { display:flex; flex:1; flex-direction:column; justify-content:space-around; gap:18px; }
-.tie { position:relative; background:#fff; border:1px solid #d2ddd0; border-radius:7px; padding:8px 10px; }
-.tie > div { display:flex; align-items:center; gap:7px; font-size:11px; padding:5px 0; }
-.tie span { flex:1; }
-.tie small { color:#5f705e; font-size:9px; }
 .groupGrid { display:grid; gap:18px; padding:12px; }
 .groupGrid h3 { font-weight:700; margin:8px; }
 @media(max-width:1100px) { .dataGrid { grid-template-columns:minmax(0,1fr); } .sidebar { display:block; } }
 @media(max-width:650px) { .overlay { padding:0; } .content { padding:10px; } .header h1 { font-size:14px; } .metrics { gap:6px 12px; } }
-.bracket { position:relative; isolation:isolate; }
-.bracketLines { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; z-index:-1; }
-.bracketLines path { fill:none; stroke:#91a58f; stroke-width:1.5; }
-.tie > div[data-winner=true] { color:#246f45; font-weight:750; }
-.champion { align-self:center; flex:0 0 160px; display:flex; flex-direction:column; align-items:center; gap:14px; padding:24px; text-align:center; color:#315f40; }
-.champion > span { font-size:10px; letter-spacing:.16em; }
 .metrics strong { margin:0; }
+
+/* Compact, vertically scrolling fixture list rather than a clipped horizontal bracket. */
+.knockoutHeading { display:flex; align-items:end; justify-content:space-between; gap:12px; padding:12px 16px 8px; }
+.knockoutHeading label { display:grid; gap:5px; color:#526c59; font-size:11px; font-weight:700; }
+.knockoutHeading select { min-width:180px; max-width:100%; padding:7px 9px; border:1px solid #cbd8ca; border-radius:5px; background:#fff; color:#26392f; font:inherit; }
+.knockoutHeading > span { color:#5f705e; font-size:10px; }
+.knockoutList { max-height: min(55vh, 510px); overflow:auto; overscroll-behavior:contain; margin:0 16px; border:1px solid #dce3da; border-radius:6px; scrollbar-width:thin; }
+.knockoutList:focus-visible, .knockoutHeading select:focus-visible { outline:2px solid #3e7952; outline-offset:2px; }
+.knockoutMatch { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid #e2e9e0; background:#fff; font-size:11px; }
+.knockoutMatch:last-child { border-bottom:0; }
+.knockoutTeam { display:flex; align-items:center; gap:7px; min-width:0; }
+.knockoutTeam img, .knockoutTeam [role="img"] { width:27px; height:30px; flex:none; object-fit:contain; }
+.knockoutTeam span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.knockoutTeam[data-winner="true"] { color:#246f45; font-weight:750; }
+.knockoutAway { flex-direction:row-reverse; text-align:right; }
+.knockoutScore { min-width:42px; text-align:center; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.knockoutMatch > small { grid-column:1 / -1; color:#5f705e; font-size:10px; text-align:center; }
+.knockoutChampion { margin:0 16px 8px; padding:8px; border-radius:5px; background:#e8f1e5; color:#315f40; font-size:11px; }
+@media(max-width:600px) { .knockoutHeading { padding:10px 8px 8px; } .knockoutHeading select { min-width:0; } .knockoutList { margin:0 8px; max-height:50vh; } .knockoutMatch { padding:8px 6px; gap:4px; font-size:10px; } .knockoutTeam img, .knockoutTeam [role="img"] { width:22px; height:25px; } }
