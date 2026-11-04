@@ -55,7 +55,7 @@ function NavButton({ item }: { item: NavItem }) {
     <button ref={button} type="button" onClick={toggle} title={item.label} aria-haspopup={item.children ? "menu" : undefined} aria-expanded={item.children ? !!position : undefined} aria-controls={position ? id : undefined} aria-current={item.active ? "page" : undefined}
       onKeyDown={(event) => { if (item.children && (event.key === "ArrowDown" || event.key === "ArrowUp")) { event.preventDefault(); if (!position) toggle(); } }}
       className={styles.navButton} data-active={item.active || !!position || undefined}>
-      {item.image ? <Image src={item.image} alt="" aria-hidden="true" width={28} height={28} className={styles.navImage} unoptimized /> : <ClassicIcon name={item.icon} size={19} />}<span>{item.label}</span>{item.children && <span aria-hidden="true" className={styles.chevron}>⌄</span>}
+      {item.image ? <Image src={item.image} alt="" aria-hidden="true" width={40} height={40} className={styles.navImage} unoptimized /> : <ClassicIcon name={item.icon} size={28} />}<span className={styles.navLabel}>{item.label}{item.children && <span aria-hidden="true" className={styles.chevron}>⌄</span>}</span>
     </button>
     {position && createPortal(<div ref={menu} id={id} role="menu" aria-label={item.label} style={{ position: "fixed", top: position.top, left: position.left, width: "min(300px, calc(100vw - 16px))", zIndex: 200 }} className={styles.menu}
       onKeyDown={(event) => {
