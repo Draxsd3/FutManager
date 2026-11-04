@@ -468,7 +468,7 @@ export function LineupScreen(props: Props) {
                   data-slot={index}
                   data-name-align={positions[index].left < 15 ? "left" : positions[index].left > 85 ? "right" : "center"}
                   title={`${player.name} · ${fifaPosition(player)} · Energia ${player.energy}%`}
-                  aria-label={`${player.name}, camisa ${player.shirtNumber ?? player.id}, titular, ${fits[index].label}`}
+                  aria-label={`${player.name}, camisa ${player.shirtNumber ?? player.id}, titular, ${fits[index].label}, energia ${player.energy}%`}
                   aria-pressed={selectedPlayer?.id === player.id}
                   className={`${styles.player} ${selectedPlayer?.id === player.id ? styles.selected : ""} ${dragId === player.id ? styles.source : ""} ${hoverSlot === index ? styles.hovered : ""}`}
                   style={{ left: `clamp(25px, ${positions[index].left}%, calc(100% - 25px))`, top: `clamp(32px, ${positions[index].top}%, calc(100% - 32px))` }}
@@ -477,7 +477,7 @@ export function LineupScreen(props: Props) {
                   <PlayerJersey player={player} />
                   <b>{player.name}</b>
                   <small>{fifaPosition(player)} · {Math.max(1, player.overall - fits[index].penalty)} <span className={fits[index].label === "Natural" ? styles.natural : styles.warning}>{fits[index].label}</span></small>
-                  <i className={styles.energy}><span style={{ width: `${player.energy}%` }} /></i>
+                  <i className={styles.energy} aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(100, player.energy))}%`, backgroundColor: player.energy < 40 ? "#ef6969" : player.energy < 65 ? "#f1ca62" : "#8ed09a" }} /></i>
                 </button>)}
               </div>
             </div>

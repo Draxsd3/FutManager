@@ -413,3 +413,13 @@ it("lifts a held reserve and cancels safely without a drop", () => {
     expect(player.className).not.toContain("reserveDragging");
   } finally { vi.useRealTimers(); }
 });
+
+it("exposes each starter's energy and renders its bar", () => {
+  setup();
+  for (const [index, player] of starters.entries()) {
+    const shirt = starterButton(index);
+    expect(shirt.getAttribute("aria-label")).toContain(`energia ${player.energy}%`);
+    const bar = shirt.querySelector('i[aria-hidden="true"] span') as HTMLElement;
+    expect(bar.style.width).toBe(`${player.energy}%`);
+  }
+});
