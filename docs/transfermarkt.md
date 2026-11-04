@@ -136,3 +136,11 @@ como sincronização pendente, não como salvamento remoto concluído. O catálo
 carregado pela carreira continua em memória sem alterações; a versão atualizada
 fica disponível ao retornar ao menu inicial. Elenco, escalação, negociações e
 progresso salvos da carreira não são reimportados.
+
+## Arquivo brasileiro 2026 enviado pelo usuário
+
+`src/data/transfermarkt/brasileirao-2026.json` preserva os 156 clubes e 4.497 jogadores do anexo original. O botão Rodar agora aproveita esse arquivo antes de consultar a API: 74 elencos completos validados (2.222 jogadores) entram no staging; somente os 82 clubes pendentes precisam de consultas adicionais. Não são 82 clubes importados parcialmente: nenhum jogador incompleto é apagado para forçar validação.
+
+Auditoria: 202 jogadores sem posição, 1 sem idade/nascimento; ABECAT com apenas 7 atletas. `/api/transfermarkt/seed?report=1` expõe o relatório de todos os jogadores e clubes pendentes. A data upstream não veio no arquivo e permanece desconhecida; `processedAt` é a data do processamento do anexo, não uma garantia de atualização dos elencos na fonte.
+
+Manifesto/IDs/duplicidades e campos de cada atleta são validados antes de usar o arquivo. Checkpoint existente compatível mantém seus clubes já validados na API e recebe apenas os clubes válidos que faltam no arquivo. Manifesto divergente bloqueia a mesclagem. Sem perfis de clubes no arquivo, não se fabricam estádio, técnico ou cores: valores ausentes continuam nulos na origem.

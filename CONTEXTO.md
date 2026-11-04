@@ -342,3 +342,11 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Ao persistirem erros, mostrar relatório consolidado com todos os clubes pendentes. Rodar novamente retoma somente os clubes ainda não validados, aproveitando os já salvos (inclusive checkpoints da versão anterior).
 - Não inventar dados do Maiky ou excluir jogadores/elencos silenciosamente. Coleta dos clubes válidos é preservada em staging; aplicação do catálogo continua integral, depois de corrigir pendências e validar. Não tratar coleta incompleta como sucesso nem alterar carreira ativa.
 - Pausar/cancelar deve interromper imediatamente, sem virar pendência de clube; falha no armazenamento interrompe em vez de afirmar que o progresso foi salvo. Pendências anteriores de migração remota Supabase permanecem sem alteração.
+
+### 43. Aproveitar o arquivo brasileiro 2026 enviado — 04/11/2026
+- Usuário enviou `brasileirao-2026.json` e autorizou integrar a base ao importador, deixando os casos incompletos para correção no final.
+- Arquivo original preservado em `src/data/transfermarkt/brasileirao-2026.json` (156 clubes, 4.497 IDs de jogadores únicos, temporadas internas 2025 correspondentes ao ano 2026 autorizado).
+- Auditoria determinística: 74 clubes / 2.222 jogadores passam integralmente; 82 clubes pendentes. Há 203 jogadores com dados obrigatórios ausentes (202 sem posição, 1 sem idade/nascimento); ABECAT tem somente 7 atletas. Preservar todos no arquivo, sem descartar/inventar dados.
+- `/api/transfermarkt/seed` prepara staging validado do arquivo sem consultar fonte externa; `?report=1` apresenta relatório de jogadores/clubes pendentes. Identificar processamento do arquivo separadamente da data de coleta upstream, que não foi informada.
+- Rodar aproveita os clubes válidos do arquivo e consulta somente os clubes ainda pendentes. Checkpoints anteriores são preservados/mesclados por IDs e manifesto compatível; coleta ao vivo validada já salva tem prioridade sobre o arquivo. O restante das validações, tentativas finais e proteção de carreira permanecem.
+- Arquivo contém elencos, não perfis de clubes: não inventar estádio/técnico/cores; conservar fatos existentes do catálogo e defaults de simulação para novos clubes. Nenhuma migração remota Supabase aplicada e nenhuma aplicação automática parcial à carreira/catálogo.
