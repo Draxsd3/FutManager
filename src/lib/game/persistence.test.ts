@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
+import { CURRENT_CAREER_RULESET } from "./career-rules";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { deleteCloudSave, readLocalSaves, writeCloudSave, writeLocalSaves } from "./persistence";
 import type { CareerSave } from "./editor-data";
 
 const client = vi.hoisted(() => ({ getUser: vi.fn(), from: vi.fn(), upsert: vi.fn(), remove: vi.fn(), eq: vi.fn() }));
 vi.mock("@/lib/supabase/client", () => ({ createBrowserSupabaseClient: () => ({ auth: { getUser: client.getUser }, from: client.from }) }));
-const save = (round = 1): CareerSave => ({ id: "career", name: "Minha carreira", managerName: "Alice", clubId: "club", clubName: "Flamengo", division: "Série A", round, budget: 12624, inGameDate: "2026-01-22", updatedAt: "2026-10-29T15:00:00Z" });
+const save = (round = 1): CareerSave => ({ careerRuleset: CURRENT_CAREER_RULESET, id: "career", name: "Minha carreira", managerName: "Alice", clubId: "club", clubName: "Flamengo", division: "Série A", round, budget: 12624, inGameDate: "2026-01-22", updatedAt: "2026-10-29T15:00:00Z" });
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
@@ -86,4 +87,43 @@ it("reads every cloud page and uploads imported players in bounded batches", asy
   await writeCloudDatabase(database,"alice");
   expect(client.upsert.mock.calls.every(([rows])=>rows.length<=250)).toBe(true);
   expect(client.upsert.mock.calls.flatMap(([rows])=>rows).every(row=>row.owner_id==="alice")).toBe(true);
+});
+
+it("blocks old careers from being uploaded by the current client", async () => {
+  const old = { ...save(), careerRuleset: undefined };
+  await expect(writeCloudSave(old, "alice")).rejects.toThrow(/calendário CBF/);
+  expect(client.upsert).not.toHaveBeenCalled();
+  writeLocalSaves([old, save()], "alice");
+  expect(readLocalSaves("alice")).toEqual([save()]);
+});
+
+it("reads all cloud pages before removing retired careers, scoped to the authenticated owner", async () => {
+  const { readCloudSaves } = await import("./persistence");
+  const row = (id: string, current: boolean) => ({ id, state: current ? { careerRuleset: CURRENT_CAREER_RULESET } : {}, name: id });
+  const rows = Array.from({ length: 1002 }, (_, i) => row(`c-${i}`, i === 1001));
+  const ranges: number[] = [], removed: string[] = [], owners: string[] = [];
+  client.from.mockImplementation((table: string) => {
+    expect(table).toBe("game_saves");
+    return {
+      select: () => ({ eq: (key: string, value: string) => {
+        expect([key, value]).toEqual(["owner_id", "alice"]);
+        return { order: () => ({ range: (from: number, to: number) => {
+          ranges.push(from); return Promise.resolve({ data: rows.slice(from, to + 1), error: null });
+        } }) };
+      } }),
+      delete: () => ({ eq: (key: string, owner: string) => {
+        expect(key).toBe("owner_id"); owners.push(owner);
+        return { in: (key: string, ids: string[]) => {
+          expect(key).toBe("id"); expect(ranges).toEqual([0, 500, 1000]);
+          expect(ids.length).toBeLessThanOrEqual(100); removed.push(...ids);
+          return Promise.resolve({ error: null });
+        } };
+      } }),
+    };
+  });
+  const current = await readCloudSaves("alice");
+  expect(current.map(save => save.id)).toEqual(["c-1001"]);
+  expect(removed).toHaveLength(1001);
+  expect(removed).not.toContain("c-1001");
+  expect(new Set(owners)).toEqual(new Set(["alice"]));
 });

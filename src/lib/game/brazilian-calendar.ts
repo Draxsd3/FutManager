@@ -1,7 +1,7 @@
 import type { CareerSeason, SeasonFixture } from "./season";
 
 /** CBF 2026 planning windows, NOT the official fixture list. Other years are projections. */
-export const BRAZILIAN_CALENDAR_VERSION = 1;
+export const BRAZILIAN_CALENDAR_VERSION = 2;
 export const BRAZILIAN_REFERENCE_SEASON = 2026;
 export const BRAZILIAN_CALENDAR_SOURCES = [
   "https://www.cbf.com.br/a-cbf/noticias/informes/a/cbf-oficializa-datas-do-calendario-do-futebol-do-brasil-profissional-masculino-de-2026",
@@ -104,6 +104,9 @@ export function applyBrazilianCalendar(season: CareerSeason, notBefore?: string)
       return { fixtures, ...window };
     });
   }).sort((a, b) => a.target - b.target || a.fixtures[0].competitionId.localeCompare(b.fixtures[0].competitionId));
+  // Reserve the Copa slot for every eligible club, including projected/byed ties.
+  // A different human club must not change national/state dates via a different cup path.
+  const domesticClubIds = new Set(season.fixtures.filter(f => f.type !== "cup").flatMap(f => [f.homeClubId, f.awayClubId]));
   const occupied = new Map<string, number[]>();
   const lastRound = new Map<string, number>();
   const dated = new Map<string, SeasonFixture>();
@@ -124,7 +127,7 @@ export function applyBrazilianCalendar(season: CareerSeason, notBefore?: string)
     // Prefer the planned day; search closest alternatives inside the same competition window.
     const candidates = Array.from({ length: Math.max(0, group.end - min + 1) }, (_, i) => min + i)
       .sort((a, b) => Math.abs(a - desired) - Math.abs(b - desired) || a - b);
-    const clubs = new Set(pending.flatMap(f => [f.homeClubId, f.awayClubId]));
+    const clubs = pending[0].type === "cup" ? new Set([...domesticClubIds, ...pending.flatMap(f => [f.homeClubId, f.awayClubId])]) : new Set(pending.flatMap(f => [f.homeClubId, f.awayClubId]));
     const chosen = candidates.find(day => [...clubs].every(id => (occupied.get(id) ?? []).every(other => Math.abs(other - day) >= MIN_CALENDAR_REST_DAYS)));
     if (chosen === undefined) {
       issues.add(pending[0].competitionName);

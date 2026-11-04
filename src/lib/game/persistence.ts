@@ -1,3 +1,4 @@
+import { currentCareerSaves, isCurrentCareerSave } from "./career-rules";
 import { cacheCareerSaves } from "@/lib/importer/database-cache";
 import { accountStorageKey } from "./save-utils";
 import { createBrowserSupabaseClient, type ClubRow, type PlayerRow } from "@/lib/supabase/client";
@@ -35,13 +36,14 @@ export function readLocalSaves(userId: string): CareerSave[] {
   try {
     const value = localStorage.getItem(accountStorageKey(SAVES_KEY, userId));
     const parsed = value ? JSON.parse(value) : [];
-    return Array.isArray(parsed) ? parsed as CareerSave[] : [];
+    return Array.isArray(parsed) ? currentCareerSaves(parsed as CareerSave[]) : [];
   } catch {
     return [];
   }
 }
 
 export function writeLocalSaves(saves: CareerSave[], userId: string) {
+  saves = currentCareerSaves(saves);
   void cacheCareerSaves(saves, userId).catch(() => undefined);
   try {
     localStorage.setItem(accountStorageKey(SAVES_KEY, userId), JSON.stringify(saves));
@@ -215,26 +217,35 @@ async function performCloudDatabaseWrite(database: EditorDatabase, expectedUserI
 
 export async function readCloudSaves(userId: string): Promise<CareerSave[]> {
   const { client } = await authenticatedClient(userId);
-  const { data, error } = await client.from("game_saves").select("*").order("updated_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    name: row.name,
-    managerName: row.manager_name,
-    clubId: String(row.state?.clubId ?? ""),
-    clubName: row.club_name ?? "Clube",
-    division: row.division ?? "Série A",
-    round: row.round,
-    budget: Number(row.budget_brl),
-    inGameDate: row.in_game_date,
-    updatedAt: row.updated_at,
-    progress: row.state?.progress,
-    playerCareers: row.state?.playerCareers ?? {},
-    manualPositions: row.state?.manualPositions ?? {},
+  // Read every page BEFORE deleting: deleting while paging by offset skips rows.
+  const rows = [];
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await client.from("game_saves").select("*").eq("owner_id", userId)
+      .order("id", { ascending: true }).range(offset, offset + 499);
+    if (error) throw error;
+    rows.push(...(data ?? []));
+    if (!data || data.length < 500) break;
+  }
+  const saves = rows.map((row) => ({
+    id: row.id, name: row.name, managerName: row.manager_name,
+    careerRuleset: row.state?.careerRuleset,
+    clubId: String(row.state?.clubId ?? ""), clubName: row.club_name ?? "Clube",
+    division: row.division ?? "Série A", round: row.round, budget: Number(row.budget_brl),
+    inGameDate: row.in_game_date, updatedAt: row.updated_at, progress: row.state?.progress,
+    playerCareers: row.state?.playerCareers ?? {}, manualPositions: row.state?.manualPositions ?? {},
   })) as CareerSave[];
+  const retired = saves.filter(save => !isCurrentCareerSave(save));
+  // RLS and explicit owner scope: never delete another account through a browser session.
+  for (let offset = 0; offset < retired.length; offset += 100) {
+    const { error } = await client.from("game_saves").delete().eq("owner_id", userId)
+      .in("id", retired.slice(offset, offset + 100).map(save => save.id));
+    if (error) throw error; // Retry on the next login; never merge old careers back in.
+  }
+  return currentCareerSaves(saves);
 }
 
 async function performCloudSave(save: CareerSave, expectedUserId: string) {
+  if (!isCurrentCareerSave(save)) throw new Error("Esta carreira foi encerrada na atualização do calendário CBF. Inicie uma nova carreira.");
   const { client, userId } = await authenticatedClient(expectedUserId);
   const { error } = await client.from("game_saves").upsert({
     id: save.id,
@@ -247,6 +258,7 @@ async function performCloudSave(save: CareerSave, expectedUserId: string) {
     budget_brl: save.budget,
     in_game_date: save.inGameDate,
     state: {
+      careerRuleset: save.careerRuleset,
       clubId: save.clubId,
       progress: save.progress,
       playerCareers: save.playerCareers ?? {},

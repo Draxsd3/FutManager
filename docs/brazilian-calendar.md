@@ -26,7 +26,7 @@ Esta implementação data os confrontos que o motor de carreira já gera. **Não
 
 `CareerSeason.version` permanece 1. Campos opcionais `calendarVersion`, `calendarIssues`, `scheduledDate`, `dateSource` não exigem migração SQL. Ao carregar saves sem calendário, datar somente jogos não concluídos, sem reconstruir IDs, chaves, resultados ou contribuições. Partidas já disputadas ficam intocadas. Rodadas atrasadas da Série A de saves antigos podem ser remanejadas após 22/07. Se não couberem no ano, avisar em vez de avançar artificialmente ao próximo ano.
 
-Versão do calendário: 1. Reaplicar a mesma versão é idempotente. Anos posteriores são identificados como **projeção da referência 2026**, não calendário oficial desses anos. A interrupção excepcional de 2026 não é repetida automaticamente.
+Versão do calendário: 2. Reaplicar a mesma versão é idempotente. Anos posteriores são identificados como **projeção da referência 2026**, não calendário oficial desses anos. A interrupção excepcional de 2026 não é repetida automaticamente.
 
 ## Fontes oficiais consultadas
 
@@ -40,3 +40,19 @@ Versão do calendário: 1. Reaplicar a mesma versão é idempotente. Anos poster
 - Série D, abertura em 04/04 na tabela detalhada: https://www.cbf.com.br/futebol-brasileiro/noticias/campeonato-brasileiro/a/cbf-divulga-tabela-da-serie-d
 
 Os PDFs de tabela básica alertam que não são a programação definitiva de dias, horários e estádios. Não copiar o anúncio inicial de pausa da Série B: a tabela publicada posteriormente tem partidas durante a Copa. As referências de regionais, Supercopa e mercado são informativas na agenda e não inscrevem clubes nem impõem uma regra nova de negociação.
+
+
+## Reinício e calendário compartilhado — 04/11/2026
+
+Por solicitação explícita do usuário, as carreiras anteriores foram aposentadas na versão `cbf-2026-reset-20261104`. A regra anterior de preservar/migrar todas as carreiras não se aplica a este reinício. Cada nova carreira recebe `careerRuleset`, persistido localmente e em `game_saves.state`. Não usar `updatedAt` como corte: dispositivos antigos podem reenviar dados antigos com uma data de atualização nova. O marcador não muda a cada deploy e as novas carreiras não são apagadas ao reabrir o jogo.
+
+O planejamento agora é calculado sobre **todas as divisões nacionais e todos os estaduais disponíveis no catálogo**, antes de selecionar as competições da carreira. Os períodos da Copa são reservados também aos possíveis classificados. Assim, mudar o clube escolhido, seu estado ou o caminho projetado na Copa não altera as datas das rodadas comuns. O save armazena apenas as competições pertinentes, e não uma cópia desnecessária de todas as partidas do mundo. Mesmo catálogo e ano produzem o mesmo planejamento; catálogos editados podem ter participantes e números de rodadas diferentes.
+
+As janelas são as documentadas acima: estaduais jan–mar; A jan–dez com interrupção e retorno em 22/07; B mar–nov; C abr–out; D abr–set; Copa até 06/12. Todas as novas carreiras começam na referência 2026 e a passagem do tempo continua vinculada às datas dos jogos. Esta mudança não transforma o formato simplificado das competições na tabela oficial da CBF: inclusive a antiga limitação de formatos excessivos e jogos sem data continua explicitamente indicada, em vez de inventar datas fora dos períodos. Não foi importada uma tabela oficial de confrontos.
+
+### Exclusão e operação
+
+- No carregamento da conta, filtrar o IndexedDB/localStorage, sobrescrever ambos com somente carreiras da nova regra e remover a sessão da carreira antiga, mesmo offline.
+- A fusão com a nuvem também filtra carreiras aposentadas; o cliente atualizado recusa reenviá-las.
+- Ao conectar uma conta, ler todas as páginas do Supabase e excluir suas carreiras aposentadas em lotes, com escopo explícito de proprietário e RLS. Chaves estrangeiras removem os dados derivados por cascata. Falha de rede não ressuscita as carreiras; a limpeza será tentada novamente.
+- Para exclusão **global imediata**, aplicar `supabase/migrations/20261104160000_reset_careers_cbf_calendar.sql`. A migração remove todas as carreiras antigas de todas as contas e impede que clientes antigos as recriem. Não afeta contas, editor, catálogo, uniformes ou checkpoints de importação. **Não confundir deploy Vercel com execução da migração.** Nesta sessão o conector Supabase retornou `disconnected`: a migração foi preparada, mas não foi executada remotamente. Sem a migração, a exclusão física na nuvem ocorre por conta ao acessá-la.
