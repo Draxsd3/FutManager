@@ -38,7 +38,7 @@ export function ClubSidebar({ club, coach, budget, opponent, competition, roundL
     <div className={styles.club}><Crest club={club} size="sm"/><div><small>SEU CLUBE</small><h1>{club}</h1><p>Treinador · {coach}</p></div></div>
     <div className={styles.balance}><span>CAIXA DISPONÍVEL</span><b>R$ {(budget / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <small>mi</small></b></div>
     <div className={styles.trust}><span>Confiança diretoria <b>—</b></span><span>Confiança torcida <b>—</b></span></div>
-    <button type="button" onClick={onCta} className={styles.cta}><ClassicIcon name="sport_soccer" size={20}/>{ctaLabel}</button>
+    <button type="button" onClick={onCta} className={styles.cta}><Image src="/icons/navigation/taticas.webp" alt="" aria-hidden="true" width={52} height={52} className={styles.tacticsIcon} unoptimized /><span><small>PREPARE SUA EQUIPE</small><strong>{ctaLabel}</strong></span><b aria-hidden="true">↗</b></button>
     <section className={styles.match} aria-label="Confronto">
       <div className={styles.matchHeader}><span>PRÓXIMO APITO</span><b>{hasNextMatch ? competition : "SEM JOGO AGENDADO"}</b></div>
       {hasNextMatch ? <>
@@ -50,10 +50,11 @@ export function ClubSidebar({ club, coach, budget, opponent, competition, roundL
         </div>
       </> : <p className={styles.noFixture}>A temporada aguarda o próximo confronto.</p>}
     </section>
-    <div className={styles.quick} aria-label="Ações do clube"><Quick icon="group" label="Elenco" onClick={() => onQuickAction("roster")} /><Quick icon="money" label="Finanças" onClick={() => onQuickAction("finances")} /><Quick icon="medal_award_gold" label="Troféus" onClick={() => onQuickAction("trophies")} /><Quick icon="chart_bar" label="Treino" onClick={() => onQuickAction("training")} /><span>{squadSize}/35</span></div>
+    <div className={styles.quickHeading}><span>GESTÃO DO CLUBE</span><span>{squadSize}/35 atletas</span></div>
+    <div className={styles.quick} role="group" aria-label="Ações do clube"><Quick icon="group" label="Elenco" onClick={() => onQuickAction("roster")} /><Quick icon="money" label="Finanças" onClick={() => onQuickAction("finances")} /><Quick icon="medal_award_gold" label="Troféus" onClick={() => onQuickAction("trophies")} /><Quick icon="chart_bar" label="Treino" onClick={() => onQuickAction("training")} /></div>
   </aside>;
 }
 
 function Quick({ icon, label, onClick }: { icon: ClassicIconName; label: string; onClick: () => void }) {
-  return <button type="button" title={label} aria-label={label} onClick={onClick}><ClassicIcon name={icon} size={23}/></button>;
+  return <button type="button" title={label} aria-label={label} onClick={onClick}><ClassicIcon name={icon} size={21}/><span>{label}</span></button>;
 }

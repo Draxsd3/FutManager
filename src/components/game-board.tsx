@@ -504,7 +504,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     { icon: "user_green", label: "Juniores", image: "/icons/navigation/juniores.webp", active: page === "juniors", onClick: () => navigate("juniors") },
     { icon: "t_shirt_print", label: "Times", image: "/icons/navigation/times.webp", active: page === "teams", onClick: () => navigate("teams") },
     { icon: "magnifier", label: "Mercado", image: "/icons/navigation/mercado.webp", active: page === "search", onClick: () => navigate("search") },
-    { icon: "user_suit", label: "Técnicos", active: page === "coaches", onClick: () => navigate("coaches") },
+    { icon: "user_suit", label: "Técnicos", image: "/icons/navigation/tecnicos.webp", active: page === "coaches", onClick: () => navigate("coaches") },
     { icon: "clock_history_frame", label: "História", active: page === "history", onClick: () => navigate("history"), children: historyOptions.map((option) => ({ label: option.label, description: option.description, onClick: () => { setHistoryView(option.id); navigate("history"); } })) },
     { icon: "door_out", label: "Configurações", active: page === "settings", onClick: () => navigate("settings") },
   ];

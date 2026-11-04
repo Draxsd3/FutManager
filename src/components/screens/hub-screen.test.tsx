@@ -17,7 +17,7 @@ it("preserves the original compact roster and its player and management actions"
   expect(screen.queryByRole("button",{name:"Desempenho"})).toBeNull();
   expect(screen.getByRole("region", { name: `Prévia de ${squad[0].name}` })).toBeTruthy();
   expect(screen.getByRole("region", { name: "Confronto" })).toBeTruthy();
-  expect(screen.getByRole("button", { name: "Escalar Time" }).compareDocumentPosition(screen.getByRole("region", { name: "Confronto" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(screen.getByRole("button", { name: /Escalar Time/ }).compareDocumentPosition(screen.getByRole("region", { name: "Confronto" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(screen.getByRole("region", { name: "Confronto" }).compareDocumentPosition(screen.getByRole("button", { name: "Elenco" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(screen.getByRole("complementary", { name: "Resumo do elenco" })).toBeTruthy();
   expect(screen.getByRole("heading", { name: "Semana 1" })).toBeTruthy();
@@ -30,7 +30,10 @@ it("preserves the original compact roster and its player and management actions"
   const row = screen.getByRole("cell",{name:new RegExp(squad[0].name)}).closest("tr")!;
   fireEvent.click(row); expect(select).toHaveBeenCalledWith(squad[0].id);
   fireEvent.doubleClick(row); expect(open).toHaveBeenCalledWith(squad[0].id);
-  fireEvent.click(screen.getByRole("button",{name:"Escalar Time"})); expect(lineup).toHaveBeenCalledOnce();
+  const lineupButton = screen.getByRole("button",{name:/Escalar Time/});
+  expect(lineupButton.querySelector("img")?.getAttribute("src")).toBe("/icons/navigation/taticas.webp");
+  expect(lineupButton.querySelector("img")?.getAttribute("alt")).toBe("");
+  fireEvent.click(lineupButton); expect(lineup).toHaveBeenCalledOnce();
   fireEvent.click(screen.getByRole("button", { name: /Abrir centro de treino/ })); expect(quick).toHaveBeenCalledWith("training");
   for (const [label, action] of [["Elenco","roster"],["Finanças","finances"],["Troféus","trophies"],["Treino","training"]]) {
     fireEvent.click(screen.getByRole("button",{name:label})); expect(quick).toHaveBeenCalledWith(action);
