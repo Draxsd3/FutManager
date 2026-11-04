@@ -384,7 +384,7 @@ export function LineupScreen(props: Props) {
                 </button>;
               })}
             </div> : match && <span className={styles.kitLabel}>Uniforme {kit}</span>}
-            {!match && <button className={styles.backButton} onClick={onBack}>← <span>Voltar ao clube</span></button>}
+            {!match && !embedded && <button className={styles.backButton} onClick={onBack}>← <span>Voltar ao clube</span></button>}
             <button
               className={styles.primary}
               onClick={() => { void onPlay(); }}

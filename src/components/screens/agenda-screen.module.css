@@ -187,9 +187,9 @@
 
 /* Training-centre visual language: one canvas, sections separated by rules. */
 .screen { background:#f5f6f3; color:#26392f; }
-.container { max-width:1400px; padding:24px 28px; }
+.container { max-width:1400px; padding:10px 24px 16px; }
 .tabs { margin-top:0; }
-.hero { border:0; border-top:1px solid #dce3da; border-radius:0; background:transparent; color:#26392f; box-shadow:none; padding:20px 0; }
+.hero { border:0; border-radius:0; background:transparent; color:#26392f; box-shadow:none; padding:20px 0; }
 .hero .kicker,.hero .competition,.hero .heroBottom span,.heroEmpty { color:#5f705e; }
 .heroBadge { background:#e5eedf; color:#46634f; border-color:#d2ddd0; }
 .heroBottom button { background:linear-gradient(#3a7350,#2d5e40); color:#fff; border-color:#285039; }

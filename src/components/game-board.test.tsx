@@ -263,7 +263,9 @@ it("preserves the custom lineup when reopening tactics and after a saved-career 
   fireEvent.click(screen.getByRole("button", { name: "Posicionar em Meia esquerda" }));
   await waitFor(() => expect(readLocalSaves("alice")[0].manualPositions?.[id]).toEqual({ left: 10, top: 43 }));
   const xi = readLocalSaves("alice")[0].progress?.starters;
-  fireEvent.click(screen.getByRole("button", { name: /Voltar ao clube/ }));
+  expect(screen.queryByRole("button", { name: /Voltar ao clube/ })).toBeNull();
+  expect(document.querySelector("[data-window-header] [data-window-date]")?.textContent).toMatch(/de 2026$/);
+  fireEvent.click(screen.getByRole("button", { name: "Fechar Escalação" }));
   fireEvent.click(await screen.findByRole("button", { name: /Escalar Time/i }));
   expect(document.querySelector(`[data-player="${id}"][data-slot]`)?.getAttribute("style")).toContain("10%");
   expect(readLocalSaves("alice")[0].progress?.starters).toEqual(xi);

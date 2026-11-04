@@ -657,7 +657,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   function renderStandings() {
     if (!standingsOpen || !database) return null;
-    return <CompetitionCenter database={database} fixtures={fixtures} club={club} competition={division} activeCompetitionId={centerCompetitionId} roundLabel={competitionRoundLabel} careerCompetitionData={careerCompetitionData} table={centerTable} topScorers={centerTopScorers} topRatings={centerTopRatings} round={competitionRound} onClose={() => setStandingsOpen(false)} />;
+    return <CompetitionCenter database={database} fixtures={fixtures} club={club} competition={division} activeCompetitionId={centerCompetitionId} roundLabel={competitionRoundLabel} careerCompetitionData={careerCompetitionData} table={centerTable} topScorers={centerTopScorers} topRatings={centerTopRatings} round={competitionRound} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onClose={() => setStandingsOpen(false)} />;
   }
 
   async function synchronizeTransfermarkt(progress: (message: string) => void, signal: AbortSignal, resume = false) {
@@ -1431,7 +1431,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           const player = squad.find((item) => item.id === profilePlayer);
           if (!player) return null;
           const record = playerCareers[profilePlayer] ?? createPlayerCareer(player, club);
-          return <CareerPlayerProfile key={player.id} player={player} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onPhotoChange={(photo) => setPlayerPhoto(player.id, photo)} onClose={() => setProfilePlayer(null)} />;
+          return <CareerPlayerProfile key={player.id} player={player} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onPhotoChange={(photo) => setPlayerPhoto(player.id, photo)} onClose={() => setProfilePlayer(null)} />;
         })()}
       </>
     );
@@ -1483,7 +1483,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           const player = squad.find((item) => item.id === profilePlayer);
           if (!player) return null;
           const record = playerCareers[profilePlayer] ?? createPlayerCareer(player, club);
-          return <CareerPlayerProfile key={player.id} player={player} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onPhotoChange={(photo) => setPlayerPhoto(player.id, photo)} onClose={() => setProfilePlayer(null)} />;
+          return <CareerPlayerProfile key={player.id} player={player} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onPhotoChange={(photo) => setPlayerPhoto(player.id, photo)} onClose={() => setProfilePlayer(null)} />;
         })()}
       </>
     );
@@ -1592,6 +1592,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             coach={coach}
             competition={competitionName}
             round={competitionRound}
+            date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"}
             onResetPositions={resetManualPositions}
             onPlacePlayer={(id, slot, point) => {
               if (!starters.includes(id)) {
