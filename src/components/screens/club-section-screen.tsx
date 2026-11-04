@@ -1,4 +1,7 @@
 "use client";
+import { ManagementHeader } from "@/components/ui/management-header";
+import surface from "@/components/ui/management-surface.module.css";
+
 
 import { TrophyGallery } from "@/components/ui/championship-history";
 import type { ChampionshipRecord } from "@/lib/game/honours";
@@ -107,12 +110,9 @@ export function ClubSectionScreen({
   if (section === "training") return <TrainingCenter squad={squad} starters={starters} week={trainingWeek} season={trainingSeason} sessions={trainingSessions} onTrain={onTrainPlayers} />;
 
   return (
-    <div className="h-full min-h-0 overflow-hidden bg-[linear-gradient(rgba(247,247,242,.72),rgba(247,247,242,.8)),url('/game-assets/backgrounds/stadium.jpg')] bg-cover bg-center p-4 text-[#26382a]">
-      <section className="mx-auto h-full max-w-[1180px] overflow-auto border border-[#c6d7c7] bg-white/95 shadow-xl">
-        <header className="flex items-center justify-between border-b border-[#215b39] bg-[#215b39] px-4 py-3 text-white">
-          <b className="text-[13px]">{title}</b>
-          <button onClick={onBack} className="rounded border border-white/60 bg-white/90 px-3 py-1 text-[11px] font-bold text-[#17351d] hover:bg-white">VOLTAR AO CLUBE</button>
-        </header>
+    <div className={surface.screen} data-management-surface={section}>
+      <section className={surface.content}>
+        <ManagementHeader title={title} eyebrow="FutManager / gestão do clube" icon={section === "finances" ? "money" : section === "trophies" ? "trophy" : "group"} actions={<button onClick={onBack}>← Voltar ao clube</button>} />
 
 
 
@@ -137,7 +137,7 @@ export function ClubSectionScreen({
         )}
 
         {section === "finances" && (
-          <div className="grid gap-4 p-4 lg:grid-cols-[1fr_1.2fr]">
+          <div className={surface.grid}>
             <Panel title="RESUMO FINANCEIRO"><div className="mb-5 flex items-center gap-3"><ClassicIcon name="money" size={32}/><div><p className="text-[11px] text-[#68757b]">SALDO DISPONÍVEL</p><b className="text-2xl text-[#07552f]">R$ {(budget / 1000).toFixed(2)} milhões</b></div></div><Info label="Folha salarial mensal" value={`R$ ${monthlyPayroll.toLocaleString("pt-BR")}`}/><Info label="Valor de mercado do elenco" value={`R$ ${squadValue.toFixed(1)} milhões`}/><Info label="Jogadores sob contrato" value={String(squad.length)}/></Panel>
             <Panel title="PROJEÇÃO DO MÊS"><Info label="Bilheteria líquida estimada (jogo em casa)" value={`R$ ${projectStadiumGate(stadiumCapacity(currentClub?.stadiumCapacity ?? 0, stadium ?? newStadium(), inGameDate), (stadium ?? newStadium()).prices).net.toLocaleString("pt-BR")}`}/><Info label="Patrocínios" value="R$ 450.000"/><Info label="Salários" value={`- R$ ${monthlyPayroll.toLocaleString("pt-BR")}`}/><Info label="Manutenção do estádio" value={`- R$ ${Math.round((currentClub?.stadiumCapacity ?? 15000) * 2.4).toLocaleString("pt-BR")}`}/><p className="mt-4 border-t pt-3 text-[11px] text-[#68757b]">Somente a bilheteria líquida de jogos em casa é creditada ao fim da partida. Patrocínios, salários e manutenção acima são projeções.</p></Panel>
           </div>
@@ -151,7 +151,7 @@ export function ClubSectionScreen({
   );
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) { return <section className="border border-[#c9d9ca] bg-[#fbfdfb]"><h2 className="border-b border-[#d9e5d9] bg-[#215b39] px-3 py-2 text-[11px] font-bold text-white">{title}</h2><div className="p-4">{children}</div></section>; }
+function Panel({ title, children }: { title: string; children: React.ReactNode }) { return <section className={surface.panel}><h2 className={surface.panelTitle}>{title}</h2><div>{children}</div></section>; }
 function Info({ label, value }: { label: string; value: string }) { return <div className="flex justify-between border-b border-[#dce7dc] py-2"><b>{label}</b><span>{value}</span></div>; }
 function DataTable({ headers, children }: { headers: string[]; children: React.ReactNode }) { return <div className="overflow-auto border border-[#c9d9ca]"><table className="w-full border-collapse text-left"><thead className="bg-[#215b39] text-white"><tr>{headers.map((header) => <th key={header} className="border-r border-white/20 px-3 py-2 text-[11px]">{header}</th>)}</tr></thead><tbody>{children}</tbody></table></div>; }
 function Cell({ children }: { children: React.ReactNode }) { return <td className="px-3 py-2">{children}</td>; }

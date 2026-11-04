@@ -29,3 +29,25 @@
 .footer button,.continueButton{background:var(--game-accent,#a2dfb2);color:var(--game-accent-text,#10291a)}
 /* The continue action remains available while reviewing long match reports. */
 .footer { position: sticky; bottom: 0; z-index: 3; }
+
+/* Match report uses the same light management canvas; pitch artwork is intact. */
+.page { background:#f5f6f3; color:#26392f; }
+.matchCard,.fixturesPanel { background:transparent; border:0; border-radius:0; box-shadow:none; }
+.header,.scoreboard,.matchMeta,.tabs,.tabPanel,.timeline,.footer,.fixturesPanel>header { background:transparent; border-color:#dce3da; }
+.header h1,.scoreTeam b,.scoreCenter strong,.fixtureTeams,.formationClub h3,.eventCard p { color:#26392f; }
+.eyebrow,.dateLabel,.scoreTeam small,.scoreCenter span,.matchMeta,.scoreCenter i,.note,.empty,.fixture small,.statFootnote,.noEvents,.noFixtures,.footer p,.fixturesPanel>header p { color:#5f705e; }
+.tabs button { color:#5f705e; }
+.tabs button[aria-selected=true] { background:#e5eedf; color:#315f40; border-color:#3e7952; }
+.timeline:before { background:#d2ddd0; }
+.eventRow>time,.neutralRow>time { background:#eaf0e5; border-color:#c5d5bf; color:#3e7952; }
+.eventCard,.goalEvent { background:#fafbf8; border-color:#dce3da; box-shadow:none; }
+.eventCard b,.awayEvent b,.currentFixture small { color:#3e7952; }
+.homeEvent { border-right-color:#3e7952; }
+.neutralRow:after { background:#f5f6f3; }
+.formationCard,.ratingsPanel { background:transparent; border-color:#dce3da; border-radius:6px; }
+.formationCard>header { border-color:#dce3da; color:#5f705e; }
+.ratingsPanel h2,.ratingRow b { color:#3e7952; }
+.ratingRow { background:#eaf0e5; color:#354c3b; }
+.footer button,.continueButton { background:linear-gradient(#3a7350,#2d5e40); border-color:#285039; color:#fff; }
+.fixture { border-color:#dce3da; }
+.currentFixture { background:#eaf0e5; border-left-color:#3e7952; }

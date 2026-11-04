@@ -1,4 +1,5 @@
 "use client";
+import { ManagementIcon } from "@/components/ui/management-header";
 
 import { useMemo, useState, useEffect, useRef, type CSSProperties } from "react";
 import Image from "next/image";
@@ -133,7 +134,7 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack }: 
   if (!selectedClub) return <main className={styles.screen}><button onClick={addClub}>Adicionar primeira equipe</button><button disabled={importing} onClick={() => void importBase()}>Importar base brasileira 2026</button><button onClick={onBack}>Início</button></main>;
 
   return <main className={styles.screen} style={clubThemeStyle(selectedClub.name, selectedClub)}>
-    <header className={styles.pageHeader}><div><p>FUTMANAGER / PERSONALIZAÇÃO</p><h1>Editor de clubes<span>.</span></h1><p>Identidade, elenco e novos uniformes. Seu futebol, do seu jeito.</p></div><button onClick={onBack}>← Voltar ao início</button></header>
+    <header className={styles.pageHeader}><div><p>FUTMANAGER / PERSONALIZAÇÃO</p><h1><ManagementIcon name="pencil" />Editor de clubes<span>.</span></h1><p>Identidade, elenco e novos uniformes. Seu futebol, do seu jeito.</p></div><button onClick={onBack}>← Voltar ao início</button></header>
     <section className={styles.teamPanel}>
       <div className={styles.teamTableHeader}><span>Time</span><span>País</span><span>Nível</span></div>
       <div className={styles.teamList}>{visibleClubs.map((club) => <button key={club.id} aria-label={`${club.name}, ${club.country}, nível ${club.level}`} aria-pressed={club.id === selectedClub.id} className={club.id === selectedClub.id ? styles.teamSelected : ""} onClick={() => { setSelectedClubId(club.id); setSelectedPlayerId(""); }}><span>{club.name}</span><span><i className={styles.flag} />{club.country}</span><span>{club.level}</span></button>)}</div>

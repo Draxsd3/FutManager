@@ -1,9 +1,9 @@
 "use client";
+import { ManagementHeader } from "@/components/ui/management-header";
 
 import { useState } from "react";
 import type { EditorClub } from "@/lib/game/editor-data";
 import { EXPANSIONS, finishConstruction, newStadium, projectStadiumGate, stadiumCapacity, type StadiumSector, type StadiumState } from "@/lib/game/stadium";
-import { Crest } from "@/components/ui/club-sidebar";
 import styles from "./stadium-screen.module.css";
 
 const money = (value: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value);
@@ -33,10 +33,7 @@ export function StadiumScreen({ club, budget, onBack, onAgenda, date = "2026-01-
   const name = club?.stadiumName || "Estádio não cadastrado";
   return <section className={styles.screen} aria-labelledby="stadium-title">
     <div className={styles.container}>
-      <header className={styles.header}>
-        <div className={styles.identity}>{club && <Crest club={club.name} size="sm" />}<div><span className={styles.eyebrow}>GESTÃO DO ESTÁDIO · {club?.name ?? "CLUBE"}</span><h1 id="stadium-title">{name}</h1></div></div>
-        <div className={styles.actions}>{onAgenda && <button type="button" onClick={onAgenda}>Agenda</button>}<button type="button" onClick={onBack}>Voltar</button></div>
-      </header>
+      <ManagementHeader id="stadium-title" title={name} eyebrow={`Gestão do estádio · ${club?.name ?? "Clube"}`} icon="sport" actions={<>{onAgenda && <button type="button" onClick={onAgenda}>Agenda</button>}<button type="button" onClick={onBack}>Voltar</button></>} />
       <div className={styles.summary}>
         <div><span>CAPACIDADE ATUAL</span><strong>{number(capacity)} <small>lugares</small></strong></div>
         <div><span>CAIXA DO CLUBE</span><strong>{money(budget * 1000)}</strong></div>

@@ -1,0 +1,27 @@
+/* Shared with the training centre: the modal is the only outer card. */
+.screen { min-height:100%; min-width:0; padding:24px 28px; background:#f5f6f3; color:#26392f; color-scheme:light; font:12px var(--font-geist-sans),Arial,sans-serif; }
+.content { min-width:0; max-width:1400px; margin:0 auto; }
+.header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; padding:0 0 20px; margin-bottom:20px; border-bottom:1px solid #dce3dc; color:#26392f; background:transparent; }
+.identity { display:flex; align-items:center; gap:13px; min-width:0; }
+.title { display:flex; align-items:center; gap:10px; margin:5px 0; font-size:23px; font-weight:750; letter-spacing:-.045em; line-height:1.25; }
+.eyebrow { margin:0; color:#5f705e; font-size:9px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+.description { max-width:680px; margin:5px 0 0; color:#5f705e; font-size:11px; line-height:1.7; }
+.actions { display:flex; flex-wrap:wrap; align-items:center; gap:10px; color:#46634f; font-size:11px; }
+.actions button,.secondary { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:35px; padding:8px 12px; border:1px solid #d2ddd0; border-radius:6px; background:#fafbf8; color:#354c3b; font:650 11px var(--font-geist-sans),Arial,sans-serif; cursor:pointer; }
+.actions button:hover,.secondary:hover { background:#eaf1e4; border-color:#8aaa91; }
+.icon { position:relative; display:inline-grid; place-items:center; flex:none; width:44px; height:44px; margin:3px 3px 5px 0; border:1px solid #699777; border-radius:11px; background:linear-gradient(140deg,#b2d9b8 0%,#6fa781 35%,#37694c 88%); color:#f7f9ef; box-shadow:inset 1px 1px 0 #ffffff8c,inset -2px -3px 0 #254a3b55,2px 4px 0 #315e44,3px 7px 10px #2c573522; transform:rotate(-6deg); }
+.icon svg { filter:drop-shadow(1px 2px 0 #244c3b88); transform:rotate(6deg); }
+.panel { min-width:0; padding:18px 0; border:0; border-top:1px solid #dce3da; border-radius:0; background:transparent; box-shadow:none; }
+.panel h2 { font-size:16px; font-weight:750; }
+.panelTitle { display:flex; align-items:center; gap:9px; padding-bottom:12px; color:#304a37; font-size:12px; font-weight:750; }
+.grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:28px; }
+.primary { min-height:36px; border:1px solid #285039; border-radius:6px; padding:8px 14px; background:linear-gradient(#3a7350,#2d5e40); color:white; font-size:11px; font-weight:750; cursor:pointer; }
+.screen :where(button,input,select,textarea):focus-visible,.header button:focus-visible { outline:2px solid #438657; outline-offset:3px; }
+.screen :where(button:disabled) { cursor:not-allowed; }
+.screen :where(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),select,textarea) { border-color:#d2ddd0; border-radius:6px; color:#354c3b; background:#fff; }
+.screen :where(table) { font-size:11px; }
+.screen :where(th) { color:#536b59; background:#eaf0e5; font-weight:700; }
+.screen :where(td,th) { border-color:#dce3da; }
+@media(max-width:700px) { .screen { padding:18px 14px; } .title { font-size:20px; } .header { gap:13px; padding-bottom:16px; margin-bottom:16px; } .grid { grid-template-columns:1fr; gap:12px; } .icon { width:38px; height:38px; border-radius:9px; } }
+@media(prefers-reduced-motion:reduce) { .screen * { scroll-behavior:auto; } }
+.icon[data-management-icon] { color:#f7f9ef; }

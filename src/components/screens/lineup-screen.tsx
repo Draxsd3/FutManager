@@ -1,4 +1,5 @@
 "use client";
+import { ManagementIcon } from "@/components/ui/management-header";
 
 import Image from "next/image";
 import { clubKitAsset } from "@/lib/game/assets";
@@ -362,7 +363,7 @@ export function LineupScreen(props: Props) {
         <header className={styles.header}>
           <div className={styles.titleBlock}>
             <p className={styles.eyebrow}>FUTMANAGER <span>/</span> {competition} · {round}ª RODADA</p>
-            <h1>{`ESCALAR TIME · ${formation}`}</h1>
+            <h1><ManagementIcon name="tactics" />{`ESCALAR TIME · ${formation}`}</h1>
             <div className={styles.fixture}>
               <span><Crest club={club} size="sm" />{club}</span>
               <b>VS</b>

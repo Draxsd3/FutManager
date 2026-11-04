@@ -650,3 +650,10 @@
 .screen{background:radial-gradient(ellipse at 80% -20%,color-mix(in srgb,var(--team-primary,#68707f) 14%,#1c1d25) 0%,#111218 48%,#090a0f 100%)}
 /* Keep editor actions available when the list of clubs is long. */
 .footerButtons { position: sticky; bottom: 0; z-index: 2; }
+
+/* Training-centre chrome; the editor's tools and kit studio stay unchanged. */
+.screen { background:#f5f6f3; color:#26392f; padding:24px 28px; }
+.pageHeader { padding-bottom:20px; border-bottom:1px solid #dce3da; }
+.pageHeader h1 { display:flex; align-items:center; gap:12px; font-size:23px; letter-spacing:-.045em; }
+.pageHeader p:first-child,.pageHeader p:last-child { color:#5f705e; }
+@media(max-width:700px) { .screen { padding:18px 14px; } .pageHeader h1 { font-size:20px; } }

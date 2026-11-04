@@ -1,4 +1,5 @@
 "use client";
+import { ManagementIcon } from "@/components/ui/management-header";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -161,7 +162,7 @@ export function CompetitionCenter({
         <header className={styles.header}>
           <div>
             <p>CENTRAL DE COMPETIÇÕES / 2026</p>
-            <h1 id="competitions-title">
+            <h1 id="competitions-title"><ManagementIcon name="data_table" />
               O futebol além do seu clube<span>.</span>
             </h1>
           </div>
