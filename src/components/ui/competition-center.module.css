@@ -622,3 +622,18 @@
 .competitionHeader h2 { font-size:17px; margin:1px 0; }
 .competitionHeader p:not(.eyebrow) { margin:2px 0; }
 .headerTrophy { width:30px; height:38px; }
+
+/* Minimal competition chrome: dark title bar, a plain close glyph and opt-in search. */
+.header { background:#242827; border-color:#444b47; color:#f3f5f3; }
+.header h1 { color:#f3f5f3; }
+.header p { color:#b0bdb4; }
+.header button.closeButton { display:grid; place-items:center; flex:none; width:32px; height:32px; padding:0; border:0; border-radius:4px; background:transparent; color:#ecf0ed; cursor:pointer; }
+.header button.closeButton span { margin:0; font-size:25px; line-height:1; }
+.header button.closeButton:hover { background:#ffffff12; color:#fff; }
+.competitionHeader { justify-content:flex-start; gap:10px; margin-bottom:8px; }
+.headerTrophy { display:grid; place-items:center; flex:none; }
+.searchTools { display:flex; align-items:center; gap:8px; margin-bottom:10px; min-width:0; }
+.searchToggle { display:grid; place-items:center; flex:none; width:32px; height:32px; padding:0; border:0; border-radius:5px; background:transparent; color:#46634f; cursor:pointer; }
+.searchToggle:hover { background:#e5eedf; }
+.searchTools input { min-width:0; width:100%; padding:8px; border:1px solid #d2ddd0; border-radius:5px; background:white; color:#26392f; font:inherit; }
+.searchTools input[hidden] { display:none; }
