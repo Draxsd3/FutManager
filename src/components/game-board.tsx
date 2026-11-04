@@ -1,8 +1,9 @@
 "use client";
 
+import { applyBrazilianCalendar, BRAZILIAN_REFERENCE_SEASON, careerCalendarDate, formatCalendarDate } from "@/lib/game/brazilian-calendar";
 import { archiveChampionships, type ChampionshipRecord } from "@/lib/game/honours";
 import { LoanManager } from "@/components/ui/loan-manager";
-import { databaseWithLoans, expireLoans, loanExpiryReminders, nextCareerDate, proposeLoanExtension, reconcileLoanSquad, recoverCareerLoans, type CareerLoans } from "@/lib/game/loans";
+import { databaseWithLoans, expireLoans, loanExpiryReminders, proposeLoanExtension, reconcileLoanSquad, recoverCareerLoans, type CareerLoans } from "@/lib/game/loans";
 
 import { clubConfidence, mergeConfidenceHistory, type ConfidenceMatch } from "@/lib/game/confidence";
 
@@ -728,7 +729,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     if (!coach.trim()) return;
     const selectedClub = database?.clubs.find((item) => item.name === club);
     if (!selectedClub || !database) return;
-    const newSeason = createCareerSeason(database, selectedClub.id, new Date().getFullYear()) ?? undefined;
+    const newSeason = createCareerSeason(database, selectedClub.id, BRAZILIAN_REFERENCE_SEASON) ?? undefined;
     const firstFixture = nextCareerFixture(newSeason);
     if (!newSeason || !firstFixture) {
       setSyncLabel("Cadastre ao menos dois clubes na divisão, Copa ou estadual para iniciar uma temporada jogável.");
@@ -744,7 +745,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       division,
       round: 1,
       budget: 12624,
-      inGameDate: "2026-01-22",
+      inGameDate: firstFixture.scheduledDate ?? "2026-01-11",
       updatedAt: now,
       playerCareers: {},
       manualPositions: {},
@@ -792,6 +793,17 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   async function loadCareer(save: CareerSave): Promise<boolean> {
+    const clubId = database?.clubs.find((item) => item.name === save.clubName)?.id ?? save.clubId;
+    const storedSeason = save.progress?.competitionSeason ?? (database && clubId ? createCareerSeason(database, clubId, Number(save.inGameDate.slice(0, 4)) || 2026) ?? undefined : undefined);
+    const restoredSeason = storedSeason ? applyBrazilianCalendar(save.progress?.competitionSeason ? storedSeason : { ...storedSeason, calendarVersion: undefined }, save.inGameDate) : undefined;
+    const resumingMatch = save.progress?.page === "result" || save.progress?.page === "matchOverview";
+    const loadingFixture = resumingMatch ? restoredSeason?.fixtures.find(f => f.id === save.progress?.activeFixtureId) : nextCareerFixture(restoredSeason);
+    save = { ...save, inGameDate: careerCalendarDate(save.inGameDate, undefined, loadingFixture),
+      ...(save.progress ? { progress: { ...save.progress, competitionSeason: restoredSeason } } : {}) };
+    // Keep the civil date in the same account-local snapshot used by autosave and loan expiry.
+    const normalizedSaves = savesRef.current.map(item => item.id === save.id ? save : item);
+    savesRef.current = normalizedSaves;
+    setSaves(normalizedSaves);
     if (save.progress?.careerSquad && database) {
       const loans = expireLoans(recoverCareerLoans(save.progress.careerSquad ?? [], save.progress.transferNegotiations ?? [], database, save.progress.loanContracts), save.inGameDate);
       const ownClubId = database.clubs.find(item => item.name === save.clubName)?.id ?? save.clubId;
@@ -825,8 +837,6 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setMatchRunning(false);
     setMatchPreparation(null);
     setMatchRulesError(null);
-    const clubId = database?.clubs.find((item) => item.name === save.clubName)?.id ?? save.clubId;
-    const restoredSeason = save.progress?.competitionSeason ?? (database && clubId ? createCareerSeason(database, clubId, Number(save.inGameDate.slice(0, 4)) || 2026) ?? undefined : undefined);
     setCompetitionSeason(restoredSeason);
     setChampionHistory(database ? archiveChampionships(save.progress?.championHistory ?? [], restoredSeason, database, save.managerName) : save.progress?.championHistory ?? []);
     setConfidenceHistory(mergeConfidenceHistory(save.progress?.confidenceHistory ?? [], restoredSeason));
@@ -1267,7 +1277,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   const workspace = {
     nav, teamName: club, clubColors: database.clubs.find((item) => item.name === club),
-    date: "22/01/2026", onClose: () => navigate("hub"),
+    date: formatCalendarDate(saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"), onClose: () => navigate("hub"),
     background: (
           <HubScreen
             club={club}
@@ -1525,7 +1535,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         const nextFixture = nextCareerFixture(competitionSeason);
         setRound(nextRound);
         setActiveFixtureId(nextFixture?.id);
-        const date = nextCareerDate(savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-22");
+        const date = careerCalendarDate(savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11", competitionSeason, nextFixture);
         const nextLoans = expireLoans(loanContracts, date);
         const ownClubId = database?.clubs.find(item => item.name === club)?.id ?? "";
         const nextDatabase = careerDatabase ? databaseWithLoans(careerDatabase, nextLoans) : null;

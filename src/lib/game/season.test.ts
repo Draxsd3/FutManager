@@ -24,15 +24,15 @@ describe("calendário persistente de competições", () => {
     const club = database.clubs.find((item) => item.name === "Flamengo")!;
     const season = createCareerSeason(database, club.id, 2026)!;
     const first = nextCareerFixture(season)!;
-    expect(first.type).toBe("league");
+    expect(first.type).toBe("state");
     const completed = completeCareerFixture(season, first.id, { home: 2, away: 1 }, database);
     const repeated = completeCareerFixture(completed, first.id, { home: 2, away: 1 }, database);
     expect(repeated).toEqual(completed);
     const rows = getCompetitionStandings(completed.fixtures, first.competitionId);
-    expect(rows.reduce((total, row) => total + row.played, 0)).toBe(4);
+    expect(rows.reduce((total, row) => total + row.played, 0)).toBe(2);
     expect(rows.find((row) => row.clubId === first.homeClubId)?.goalsFor).toBeGreaterThanOrEqual(2);
     expect(rows.reduce((total, row) => total + row.points, 0)).toBeGreaterThan(0);
-    expect(completed.fixtures.filter((fixture) => fixture.competitionId === first.competitionId && fixture.competitionRound === first.competitionRound && fixture.status === "played")).toHaveLength(2);
+    expect(completed.fixtures.filter((fixture) => fixture.competitionId === first.competitionId && fixture.competitionRound === first.competitionRound && fixture.status === "played")).toHaveLength(1);
   });
 
   it("registra estaduais, Copa do Brasil e autores de gols/assistências a partir das partidas concluídas", () => {
