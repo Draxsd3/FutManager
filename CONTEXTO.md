@@ -297,3 +297,9 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Pedido explícito: táticas durante a partida e no intervalo devem ser IDÊNTICAS à tela do início, com o mesmo conceito, não um campo alternativo.
 - Reutilizar sempre `LineupScreen`, com o mesmo campo, camisas, guias detalhadas, resumo, plano de jogo, banco, filtros e análise. Removido o caminho antigo que renderizava `Pitch` durante a partida e o cabeçalho duplicado do modal.
 - Diferenças apenas contextuais: placar/minuto, saldo de substituições, confirmação/cancelamento e botão de retomar/iniciar segundo tempo. Manter pausa, autosave, limites e reposicionamento livre.
+
+### 37. Estrutura de atualização via Transfermarkt — 03/11/2026
+- Pedido: analisar felipeall/transfermarkt-api e preparar atualização de jogadores/times somente dos clubes já cadastrados. Lista permitida: catálogo brasileiro existente, sem adicionar novos participantes nem alterar divisões 2026.
+- Coleta administrativa offline via `scripts/transfermarkt/sync.py`: descoberta de candidatos, aprovação manual por source/ID com evidência, perfil/elenco v4 camelCase, cache, limite de chamadas, retries, validação, dry-run, relatório e publicação atômica do snapshot. Não vincular homônimos automaticamente.
+- Aplicação validada em `src/lib/importer/transfermarkt.ts`, integrada à inicialização/importação do catálogo. Manter IDs/identidade/cores/uniformes e contas/saves existentes; não atualizar carreiras em andamento. Valores EUR não são BRL e habilidades/salários continuam simulação.
+- Consulta ao serviço público falhou no transporte TLS neste ambiente; snapshot inicial vazio e 706 vínculos pendentes, sem inventar dados atualizados. Carga real depende de acesso à API e aprovação dos vínculos. Operação/limites/termos documentados em `docs/transfermarkt.md`.

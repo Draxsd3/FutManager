@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# External-data collection cache, previews and reports
+/.cache/
+
+# Python importer bytecode
+__pycache__/
+*.pyc

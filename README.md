@@ -295,3 +295,10 @@ O catálogo da Central de Competições inclui apenas Brasileirão Séries A, B,
 706 clubes brasileiros, 15.992 atletas ativos (máximo de 35 por clube), 704 escudos e 637 imagens de uniformes foram extraídos dos arquivos fornecidos. A/B/C têm 20 clubes cada; a D tem 88 encontrados e oito participantes ausentes. Os demais ficam como **Sem divisão nacional**. Elencos/imagens são os da origem, não uma atualização factual de 2026; campos financeiros e força individual usam padrões explícitos da simulação.
 
 Contas novas recebem a base automaticamente. Em contas existentes: **Editor de clubes → Importar base brasileira 2026**, confirmando a substituição dos cadastros/elencos reconhecidos. Saves e clubes personalizados são preservados; inicie nova carreira para usar os novos elencos. Aplicar `supabase/migrations/20261031100000_allow_state_only_clubs.sql` no Supabase para sincronizar clubes sem divisão nacional; até lá os dados ficam no dispositivo e a sincronização aparece como pendente. [Detalhes, reprodução, fontes e limitações](docs/import-brazil-2026.md).
+
+### Atualização controlada via Transfermarkt
+
+Coletor, vínculos dos clubes cadastrados, validações e integração do snapshot:
+[docs/transfermarkt.md](docs/transfermarkt.md). Comandos: `npm run transfermarkt:discover`,
+`npm run transfermarkt:sync` (simulação por padrão) e `npm run transfermarkt:test`.
+A carga só utiliza vínculos aprovados; não adiciona clubes e não altera saves em andamento.
