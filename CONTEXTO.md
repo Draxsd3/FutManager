@@ -438,3 +438,8 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Explicação da sobreposição no planejamento já existente da agenda, preservando a estética/modal e navegação. Aviso de formatos excessivos informa a limitação estadual explicitamente.
 - **Pendência não resolvida:** estaduais ainda são gerados por estado em turno único, misturando clubes de níveis estaduais diferentes. O limite de 11 datas não equivale a implementar o regulamento/participantes da FPF. Não anunciar calendário completo oficial ou formatos estaduais corrigidos. Documentar e comunicar esse limite, mantendo o escopo brasileiro e as camisas/saves.
 - Validação desta revisão: **347 testes / 75 arquivos aprovados**, lint, TypeScript, build de produção e `git diff --check` aprovados. Regressões cobrem as 38 janelas, prioridade da abertura, sobreposição, capacidade estadual, bloqueio de jogos sem data, preservação v2→v3 e remanejamento sem invadir a interrupção.
+
+### 53. Manter a sobreposição prevista no calendário oficial — 04/11/2026
+
+- Após comparar 2025, 2026 e o calendário anunciado de 2027, o usuário confirmou: **“Perfeito, então mantenha como no calendario oficial”**. Manter a sobreposição entre Série A e estaduais quando prevista pela CBF; não adiar o Brasileiro para depois do Paulista por preferência ou por assumir que janeiro foi exclusivo da Copa de 2026.
+- Usar as referências oficiais de cada temporada quando implementadas e disponíveis. Não apresentar a projeção atual dos anos posteriores a 2026 como calendário oficial já integrado, nem alegar que os formatos estaduais simplificados foram corrigidos. Esta confirmação não solicita novo reset, mudança de confrontos ou alteração adicional do motor.
