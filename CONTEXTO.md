@@ -443,3 +443,10 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 
 - Após comparar 2025, 2026 e o calendário anunciado de 2027, o usuário confirmou: **“Perfeito, então mantenha como no calendario oficial”**. Manter a sobreposição entre Série A e estaduais quando prevista pela CBF; não adiar o Brasileiro para depois do Paulista por preferência ou por assumir que janeiro foi exclusivo da Copa de 2026.
 - Usar as referências oficiais de cada temporada quando implementadas e disponíveis. Não apresentar a projeção atual dos anos posteriores a 2026 como calendário oficial já integrado, nem alegar que os formatos estaduais simplificados foram corrigidos. Esta confirmação não solicita novo reset, mudança de confrontos ou alteração adicional do motor.
+
+### 54. Refinar o centro de treinamento e seus ícones — 04/11/2026
+
+- Pedido: **“Refine essa tela de treino, adicione icons 3d, o card geral dentro de outro card esta zoado, refine o maximo possivel”**. A janela modal existente deve ser o único enquadramento externo: remover do treino o wrapper genérico com fundo de estádio, padding, borda/sombra e card branco aninhado, sem alterar as demais subtelas.
+- Treino ocupa diretamente a superfície do modal, com tons claros neutros/verde, hierarquia tipográfica, espaços consistentes, controles responsivos e resumo lateral separado por linha, não por outro card geral. Ícones vetoriais locais com volume, gradientes, faces e sombras para os seis tipos de treino; decorativos e com IDs SVG exclusivos, sem dependência de imagem externa.
+- Preservar regras/payload, dias, intensidade, seleção e elegibilidade dos atletas, bloqueio de sessão concluída, histórico e persistência. Melhorar barras de energia, foco de teclado, progresso acessível, busca sem resultados e estado inicial do diário. Sem novas abas, modais ou mudanças de navegação, calendário, camisas ou saves.
+- Validação: **351 testes / 75 arquivos aprovados**, build de produção, lint, TypeScript e diff-check aprovados. Regressões verificam superfície sem wrapper aninhado, seis ícones/IDs únicos, progresso, filtros/estado vazio, bloqueio do dia concluído e payload de recuperação.
