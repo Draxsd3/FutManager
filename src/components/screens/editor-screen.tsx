@@ -1,6 +1,10 @@
 "use client";
 import { WindowHeader } from "@/components/ui/window-header";
 import { ManagementIcon } from "@/components/ui/management-header";
+import { TransfermarktSettings, type TransfermarktSyncResult } from "./transfermarkt-settings";
+import { prepareNationalSeed } from "@/lib/importer/transfermarkt-seed";
+import { COLLECTION_VERSION } from "@/lib/importer/transfermarkt-live";
+import { saveTransfermarktCheckpoint } from "@/lib/importer/database-cache";
 
 import { useMemo, useState, useEffect, useRef, type CSSProperties } from "react";
 import Image from "next/image";
@@ -19,7 +23,25 @@ type EditorModal = "club" | "player" | null;
 const positions: PositionCode[] = ["G", "L", "Z", "M", "A"];
 const qualities = ["Armação", "Cabeceio", "Colocação", "Cruzamento", "Desarme", "Finalização", "Marcação", "Passe", "Reflexo", "Resistência", "Velocidade"];
 
-export function EditorScreen({ database, userId, syncLabel, onChange, onBack }: { userId: string; database: EditorDatabase; syncLabel: string; onChange: (database: EditorDatabase) => void; onBack: () => void }) {
+export function EditorScreen({ database, userId, syncLabel, onChange, onBack, onSynchronize }: { userId: string; database: EditorDatabase; syncLabel: string; onSynchronize?: (progress: (message: string) => void, signal: AbortSignal, resume?: boolean) => Promise<TransfermarktSyncResult>; onChange: (database: EditorDatabase) => void; onBack: () => void }) {
+  const [section, setSection] = useState<"overview" | "clubs" | "data">("overview");
+  const [apiBusy, setApiBusy] = useState(false);
+  const [fileBusy, setFileBusy] = useState(false);
+  const [fileMessage, setFileMessage] = useState("");
+  const fileInput = useRef<HTMLInputElement>(null);
+  async function importJson(file: File | undefined) {
+    if (!file) return;
+    if (file.size > 30 * 1024 * 1024) { setFileMessage("Arquivo muito grande. O limite é 30 MB."); return; }
+    setFileBusy(true); setFileMessage("");
+    try {
+      const input: unknown = JSON.parse(await file.text());
+      const { checkpoint, report } = prepareNationalSeed(input, `arquivo-${crypto.randomUUID()}`);
+      if (!window.confirm(`Arquivo validado: ${report.clubs} clubes e ${report.players} jogadores; ${report.pendingClubs} clubes com pendências. Preparar este arquivo para a coleta da API? Isso substitui qualquer progresso de coleta anterior, mas não altera o catálogo nem as carreiras.`)) { setFileMessage("Importação cancelada. Nenhum dado foi alterado."); return; }
+      await saveTransfermarktCheckpoint(userId, { ...checkpoint, collectionVersion: COLLECTION_VERSION });
+      setFileMessage(`Arquivo preparado: ${report.validClubs} clubes válidos e ${report.pendingClubs} com pendências. Use Retomar coleta para consultar os dados faltantes, empréstimos e títulos. O catálogo só muda após a confirmação final.`);
+    } catch (error) { setFileMessage(`Não foi possível preparar o JSON. Nenhum dado foi alterado. ${error instanceof Error && !(error instanceof SyntaxError) && error.name !== "ZodError" ? error.message : "Confira se é uma coleta brasileira compatível."}`); }
+    finally { setFileBusy(false); if (fileInput.current) fileInput.current.value = ""; }
+  }
   const [importing, setImporting] = useState(false);
   const [importMessage, setImportMessage] = useState("");
   async function importBase() {
@@ -72,7 +94,7 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack }: 
 
   function updateClub(patch: Partial<EditorClub>) {
     if (!selectedClub) return;
-    onChange({ ...database, clubs: database.clubs.map((club) => club.id === selectedClub.id ? { ...club, ...patch } : club) });
+    onChange({ ...database, clubs: database.clubs.map((club) => club.id === selectedClub?.id ? { ...club, ...patch } : club) });
   }
 
   function updatePlayer(patch: Partial<EditorPlayer>) {
@@ -132,24 +154,36 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack }: 
     }
   }
 
-  if (!selectedClub) return <main className={styles.screen}><button onClick={addClub}>Adicionar primeira equipe</button><button disabled={importing} onClick={() => void importBase()}>Importar base brasileira 2026</button><button onClick={onBack}>Início</button></main>;
-
-  return <main className={styles.screen} style={clubThemeStyle(selectedClub.name, selectedClub)}>
-    <header className={styles.pageHeader}><div><p>FUTMANAGER / PERSONALIZAÇÃO</p><h1><ManagementIcon name="pencil" />Editor de clubes<span>.</span></h1><p>Identidade, elenco e novos uniformes. Seu futebol, do seu jeito.</p></div><button onClick={onBack}>← Voltar ao início</button></header>
+  return <main className={styles.screen} style={selectedClub ? clubThemeStyle(selectedClub.name, selectedClub) : undefined}>
+    <header className={styles.pageHeader}><div><p>FUTMANAGER / BANCO DE DADOS</p><h1><ManagementIcon name="pencil" />Editar universo</h1><p>Configure a base de dados para suas próximas carreiras.</p></div><button disabled={apiBusy || fileBusy || importing} onClick={onBack}>← Voltar ao início</button></header>
+    <nav className={styles.mainNav} aria-label="Áreas do universo">{([["overview", "Visão geral"], ["clubs", "Clubes e jogadores"], ["data", "Dados e importação"]] as const).map(([id, title]) => <button key={id} aria-current={section === id ? "page" : undefined} disabled={apiBusy || fileBusy || importing} onClick={() => setSection(id)}>{title}</button>)}</nav>
+    {section === "overview" && <section className={styles.overview} aria-label="Visão geral do universo">
+      <div className={styles.hero}><div><p className={styles.eyebrow}>SEU UNIVERSO, SUAS REGRAS</p><h2>Seu futebol começa aqui.</h2><p>Gerencie os clubes e jogadores ou atualize os dados que serão usados nas novas carreiras.</p></div><span aria-hidden="true" className={styles.heroMark}>✦</span></div>
+      <div className={styles.metrics}><div><span>Clubes cadastrados</span><strong>{database.clubs.length.toLocaleString("pt-BR")}</strong></div><div><span>Jogadores cadastrados</span><strong>{database.players.length.toLocaleString("pt-BR")}</strong></div><div><span>Estado do catálogo</span><strong className={styles.statusText}>{syncLabel}</strong></div></div>
+      <div className={styles.actionGrid}><button onClick={() => setSection("clubs")}><span className={styles.actionIcon}>▦</span><strong>Clubes e jogadores</strong><small>Edite elencos, times e uniformes.</small><b>Explorar clubes →</b></button><button onClick={() => setSection("data")}><span className={styles.actionIcon}>↥</span><strong>Dados e importação</strong><small>Importe um JSON ou consulte a API.</small><b>Gerenciar dados →</b></button></div>
+      <p className={styles.safetyNote}>Alterações no universo são usadas em novas carreiras. Suas carreiras salvas e uniformes personalizados são preservados.</p>
+    </section>}
+    <section hidden={section !== "data"} className={styles.dataPage} aria-label="Dados e importação">
+      <div className={styles.dataIntro}><div><p className={styles.eyebrow}>CENTRAL DE DADOS</p><h2>Atualize seu universo</h2><p>Escolha uma fonte e revise os dados antes de aplicar ao catálogo.</p></div></div>
+      <div className={styles.dataCards}><article className={styles.dataCard}><span className={styles.cardIndex}>01 / ARQUIVO</span><h3>Importar JSON</h3><p>Selecione uma coleta brasileira do Transfermarkt com as competições Séries A, B, C e D. O arquivo é validado e preparado; a API completa pendências antes da aplicação. Retome a coleta em até 24 horas.</p><input ref={fileInput} type="file" accept=".json,application/json" aria-label="Selecionar JSON do Transfermarkt" disabled={fileBusy || apiBusy} onChange={event => void importJson(event.target.files?.[0])} /><p role="status">{fileMessage}</p></article>
+      <article className={styles.dataCard}><span className={styles.cardIndex}>02 / BASE INCLUÍDA</span><h3>Base brasileira 2026</h3><p>Usar os clubes e elencos incluídos no jogo. Os dados de força e finanças são estimativas.</p><button className={styles.outlineButton} disabled={importing || apiBusy || fileBusy} onClick={() => void importBase()}>{importing ? "Importando…" : "Importar base incluída"}</button><p role="status">{importMessage}</p></article></div>
+      <div className={styles.apiPanel}><span className={styles.cardIndex}>03 / SINCRONIZAÇÃO</span>{onSynchronize ? <TransfermarktSettings userId={userId} onSynchronize={onSynchronize} onBusyChange={setApiBusy} disabled={fileBusy || importing} /> : <p>Sincronização da API indisponível nesta tela.</p>}</div>
+    </section>
+    {section === "clubs" && <div className={styles.editorLayout}>
     <section className={styles.teamPanel}>
       <div className={styles.teamTableHeader}><span>Time</span><span>País</span><span>Nível</span></div>
-      <div className={styles.teamList}>{visibleClubs.map((club) => <button key={club.id} aria-label={`${club.name}, ${club.country}, nível ${club.level}`} aria-pressed={club.id === selectedClub.id} className={club.id === selectedClub.id ? styles.teamSelected : ""} onClick={() => { setSelectedClubId(club.id); setSelectedPlayerId(""); }}><span>{club.name}</span><span><i className={styles.flag} />{club.country}</span><span>{club.level}</span></button>)}</div>
+      <div className={styles.teamList}>{visibleClubs.map((club) => <button key={club.id} aria-label={`${club.name}, ${club.country}, nível ${club.level}`} aria-pressed={club.id === selectedClub?.id} className={club.id === selectedClub?.id ? styles.teamSelected : ""} onClick={() => { setSelectedClubId(club.id); setSelectedPlayerId(""); }}><span>{club.name}</span><span><i className={styles.flag} />{club.country}</span><span>{club.level}</span></button>)}</div>
       <div className={styles.teamActions}><ClassicButton label="adicionar" icon="add" onClick={addClub} /><ClassicButton label="editar" icon="pencil" onClick={() => setModal("club")} /><ClassicButton label="deletar" icon="delete" onClick={removeClub} /></div>
       <div className={styles.searchBox}>
         <label><strong>Procurar time:</strong><input value={teamSearch} onChange={(event) => setTeamSearch(event.target.value)} /><button aria-label="Procurar time"><ClassicIcon name="magnifier" /></button></label>
         <label><strong>Procurar jogador:</strong><input value={playerSearch} onChange={(event) => setPlayerSearch(event.target.value)} /><button aria-label="Procurar jogador"><ClassicIcon name="magnifier" /></button></label>
-        <strong>Mostrar times:</strong><div><button onClick={() => showDiagnostic("crest")}>sem escudo</button><button onClick={() => showDiagnostic("kits")}>sem camisas</button><button onClick={() => showDiagnostic("duplicates")}>jogadores duplicados</button></div>
+        <strong>Mostrar times:</strong><div><button onClick={() => showDiagnostic("crest")}>sem sigla</button><button onClick={() => showDiagnostic("kits")}>sem cor principal</button><button onClick={() => showDiagnostic("duplicates")}>jogadores duplicados</button></div>
       </div>
-      <div className={styles.footerButtons}><button type="button" className={styles.importBase} disabled={importing} onClick={() => void importBase()}>{importing ? "Importando..." : "Importar base brasileira 2026"}</button><ClassicButton label="início" icon="house" onClick={onBack} /><ClassicButton label="sair editor" icon="door_out" onClick={onBack} /></div>
+
     </section>
 
-    <section className={styles.clubPanel} style={{ "--club-color": selectedClub.primaryColor, "--club-secondary": selectedClub.secondaryColor } as CSSProperties}>
-      <p className={styles.importNote} role="status">{importMessage || "Base de arquivos: elencos e camisas não atualizados para 2026. Força, valores, numeração e contratos importados usam padrões de simulação; fundação 0 = não informada."}</p>
+    {selectedClub ? <section className={styles.clubPanel} style={{ "--club-color": selectedClub.primaryColor, "--club-secondary": selectedClub.secondaryColor } as CSSProperties}>
+
       <header className={styles.clubHeader}>
         <div className={styles.clubFacts}><strong>{selectedClub.name}</strong><span>{selectedClub.division}</span><b className={styles.level}>{selectedClub.level}</b><span><i className={styles.flag} /> {selectedClub.country}</span><span><ClassicIcon name="sport" /> {selectedClub.stadiumName}</span><span>{selectedClub.stadiumCapacity.toLocaleString("pt-BR")} lugares</span><span><ClassicIcon name="user_suit" /> {selectedClub.coachName}</span></div>
         <ClubCrest club={selectedClub} /><div className={styles.kits}><Shirt club={selectedClub} tone="primary" /><Shirt club={selectedClub} tone="secondary" /><Shirt club={selectedClub} tone="third" /></div>
@@ -157,12 +191,13 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack }: 
       <nav className={styles.editorTabs} aria-label="Áreas do editor"><button aria-pressed={tab === "squad"} onClick={() => setTab("squad")}>Elenco e jogadores <span>{totalClubPlayerCount}</span></button><button aria-pressed={tab === "kits"} onClick={() => setTab("kits")}>✦ Estúdio de uniformes</button></nav>
       {tab === "kits" ? <KitStudio key={`${userId}:${selectedClub.id}`} club={selectedClub} userId={userId} /> : <>
       <div className={styles.squadTabs}><button className={!juniors ? styles.activeSquadTab : ""} onClick={() => setJuniors(false)}><ClassicIcon name="bullet_green" /> Principal</button><button className={juniors ? styles.activeSquadTab : ""} onClick={() => setJuniors(true)}><ClassicIcon name="user_green" /> Juniores</button></div>
-      <div className={styles.playerTableWrap}><table className={styles.playerTable}><thead><tr><th>★</th><th>Nº</th><th>Nome</th><th>Posição</th><th>2ª pos.</th><th>Força</th><th>Qualidades</th><th>Idade</th><th>Lado</th></tr></thead><tbody>{clubPlayers.map((player) => <tr key={player.id} className={player.id === selectedPlayer?.id ? styles.playerSelected : ""} onClick={() => setSelectedPlayerId(player.id)} onDoubleClick={() => { setSelectedPlayerId(player.id); setModal("player"); }}><td className={styles.stars}>{"★".repeat(player.starRating)}<span>{"☆".repeat(5 - player.starRating)}</span></td><td>{player.shirtNumber}</td><td>{player.name}</td><td>{positionName(player.primaryPosition)}</td><td>{player.secondaryPosition ? positionName(player.secondaryPosition) : "—"}</td><td><b>{player.overall}</b></td><td>{shortQuality(player.qualityPrimary)}/{shortQuality(player.qualitySecondary)}</td><td>{player.age}</td><td>{player.preferredFoot}</td></tr>)}</tbody></table></div>
-      <footer className={styles.squadFooter}><span title="Limite de elenco"><ClassicIcon name="group" /> {totalClubPlayerCount}/{MAX_CLUB_SQUAD_SIZE}</span><span><ClassicIcon name="star" /> {clubPlayers.filter((player) => player.starRating >= 4).length}</span><div className={styles.iconActions}><button onClick={() => addPlayer(false)} disabled={squadIsFull} title={squadIsFull ? "Limite técnico de 200 jogadores atingido" : "Adicionar jogador"}><ClassicIcon name="user_add" /></button><button onClick={() => selectedPlayer && setModal("player")} disabled={!selectedPlayer} title="Editar jogador"><ClassicIcon name="user_edit" /></button><button onClick={removePlayer} disabled={!selectedPlayer} title="Remover jogador"><ClassicIcon name="user_delete" /></button></div><button className={styles.randomButton} onClick={() => addPlayer(true)} disabled={squadIsFull} title={squadIsFull ? "Limite técnico de 200 jogadores atingido" : "Criar jogador aleatório"}><ClassicIcon name="user_add" /> Criar aleatório</button><select value={positionFilter} onChange={(event) => setPositionFilter(event.target.value as "Todos" | PositionCode)}><option>Todos</option>{positions.map((position) => <option key={position} value={position}>{positionName(position)}</option>)}</select></footer>
+      <div className={styles.playerTableWrap}><table className={styles.playerTable}><thead><tr><th>★</th><th>Nº</th><th>Nome</th><th>Posição</th><th>2ª pos.</th><th>Força</th><th>Qualidades</th><th>Idade</th><th>Lado</th></tr></thead><tbody>{clubPlayers.map((player) => <tr key={player.id} className={player.id === selectedPlayer?.id ? styles.playerSelected : ""} onClick={() => setSelectedPlayerId(player.id)} onDoubleClick={() => { setSelectedPlayerId(player.id); setModal("player"); }} tabIndex={0} aria-label={`Selecionar jogador ${player.name}`} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedPlayerId(player.id); if (event.key === "Enter") setModal("player"); } }}><td className={styles.stars}>{"★".repeat(player.starRating)}<span>{"☆".repeat(5 - player.starRating)}</span></td><td>{player.shirtNumber}</td><td>{player.name}</td><td>{positionName(player.primaryPosition)}</td><td>{player.secondaryPosition ? positionName(player.secondaryPosition) : "—"}</td><td><b>{player.overall}</b></td><td>{shortQuality(player.qualityPrimary)}/{shortQuality(player.qualitySecondary)}</td><td>{player.age}</td><td>{player.preferredFoot}</td></tr>)}</tbody></table></div>
+      <footer className={styles.squadFooter}><span title="Limite de elenco"><ClassicIcon name="group" /> {totalClubPlayerCount}/{MAX_CLUB_SQUAD_SIZE}</span><span><ClassicIcon name="star" /> {clubPlayers.filter((player) => player.starRating >= 4).length}</span><div className={styles.iconActions}><button aria-label="Adicionar jogador" onClick={() => addPlayer(false)} disabled={squadIsFull} title={squadIsFull ? "Limite técnico de 200 jogadores atingido" : "Adicionar jogador"}><ClassicIcon name="user_add" /></button><button aria-label="Editar jogador" onClick={() => selectedPlayer && setModal("player")} disabled={!selectedPlayer} title="Editar jogador"><ClassicIcon name="user_edit" /></button><button aria-label="Remover jogador" onClick={removePlayer} disabled={!selectedPlayer} title="Remover jogador"><ClassicIcon name="user_delete" /></button></div><button className={styles.randomButton} onClick={() => addPlayer(true)} disabled={squadIsFull} title={squadIsFull ? "Limite técnico de 200 jogadores atingido" : "Criar jogador aleatório"}><ClassicIcon name="user_add" /> Criar aleatório</button><select aria-label="Filtrar posição" value={positionFilter} onChange={(event) => setPositionFilter(event.target.value as "Todos" | PositionCode)}><option>Todos</option>{positions.map((position) => <option key={position} value={position}>{positionName(position)}</option>)}</select></footer>
       </>}
-    </section>
+    </section> : <section className={styles.emptyState}><h2>Nenhum clube cadastrado</h2><p>Adicione uma equipe ou importe uma base na área de dados.</p><button onClick={addClub}>Adicionar equipe</button></section>}
+    </div>}
 
-    {modal && <div className={styles.modalBackdrop} onMouseDown={() => setModal(null)}><section ref={dialog} role="dialog" aria-modal="true" aria-label={modal === "club" ? "Editar equipe" : "Editar jogador"} className={styles.modal} onKeyDown={(event) => { if(event.key === "Escape") setModal(null); }} onMouseDown={(event) => event.stopPropagation()}><WindowHeader level={2} title={modal === "club" ? "Editar equipe" : "Editar jogador"} onClose={() => setModal(null)} closeLabel="Fechar editor" />{modal === "club" ? <ClubForm club={selectedClub} onChange={updateClub} /> : <PlayerForm player={selectedPlayer} onChange={updatePlayer} />}<footer><button onClick={() => setModal(null)}>Salvar e fechar</button></footer></section></div>}
+    {modal && selectedClub && <div className={styles.modalBackdrop} onMouseDown={() => setModal(null)}><section ref={dialog} role="dialog" aria-modal="true" aria-label={modal === "club" ? "Editar equipe" : "Editar jogador"} className={styles.modal} onKeyDown={(event) => { if(event.key === "Escape") setModal(null); }} onMouseDown={(event) => event.stopPropagation()}><WindowHeader level={2} title={modal === "club" ? "Editar equipe" : "Editar jogador"} onClose={() => setModal(null)} closeLabel="Fechar editor" />{modal === "club" ? <ClubForm club={selectedClub} onChange={updateClub} /> : <PlayerForm player={selectedPlayer} onChange={updatePlayer} />}<footer><button onClick={() => setModal(null)}>Salvar e fechar</button></footer></section></div>}
     <div className={styles.syncStatus}>{syncLabel}</div>
   </main>;
 }

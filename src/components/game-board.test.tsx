@@ -175,7 +175,7 @@ it("reloads directly into the last career screen without going through the start
   expect(screen.queryByRole("button", { name: /CONTINUAR JOGANDO/ })).toBeNull();
 });
 
-it("returns to the redesigned menu from new career, saves and both editor exit buttons", async () => {
+it("returns to the redesigned menu from new career, saves and the universe editor", async () => {
   render(game());
   const assertCurrentMenu = async () => {
     const title = await screen.findByRole("heading", { level: 1 });
@@ -191,11 +191,9 @@ it("returns to the redesigned menu from new career, saves and both editor exit b
   fireEvent.click(screen.getByRole("button", { name: /CONTINUAR JOGANDO/ }));
   fireEvent.click(await screen.findByRole("button", { name: "Voltar ao menu" }));
   await assertCurrentMenu();
-  for (const exit of ["início", "sair editor"]) {
-    fireEvent.click(screen.getByRole("button", { name: /EDITAR O UNIVERSO/ }));
-    fireEvent.click(await screen.findByRole("button", { name: exit }));
-    await assertCurrentMenu();
-  }
+  fireEvent.click(screen.getByRole("button", { name: /EDITAR O UNIVERSO/ }));
+  fireEvent.click(await screen.findByRole("button", { name: "← Voltar ao início" }));
+  await assertCurrentMenu();
 });
 
 it("keeps club navigation internal and the top Menu inicial button returns to the new menu", async () => {
