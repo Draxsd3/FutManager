@@ -56,3 +56,22 @@ it("handles a missing season without inventing fixtures or enabling match prepar
   expect(screen.getByText(/Calendário brasileiro · 2026/)).toBeTruthy();
   expect(screen.queryByText("Candidato hipotético")).toBeNull();
  });
+
+it("keeps the fixture list in a keyboard-focusable scrolling region and preserves calendar details", () => {
+  render(<AgendaScreen {...props} />);
+  const list = screen.getByRole("region", { name: "Lista de jogos" });
+  expect(list.getAttribute("tabindex")).toBe("0");
+  expect(within(list).getByRole("table")).toBeTruthy();
+  const details = screen.getByText(/Calendário brasileiro · 2026/).closest("details")!;
+  expect(details.open).toBe(false);
+  fireEvent.click(within(details).getByText(/Calendário brasileiro · 2026/));
+  expect(details.open).toBe(true);
+  expect(within(details).getByText(/Períodos de referência/)).toBeTruthy();
+});
+
+it.each(["friendlies", "jobs"] as const)("explains when %s is not implemented rather than showing fake offers", (view) => {
+  render(<AgendaScreen {...props} view={view} />);
+  expect(screen.getByText(/ainda não est[áã]o disponíveis|ainda não está disponível/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: /Ver jogos do seu time/ }));
+  expect(props.onViewChange).toHaveBeenCalledWith("matches");
+});
