@@ -1,5 +1,5 @@
 "use client";
-import { SERIES_A_2026_ZONES, standingsZone } from "@/lib/game/standings-zones";
+import { standingsZones, standingsZone } from "@/lib/game/standings-zones";
 import { CompetitionBracket, CompetitionGroups, CompetitionRounds, recentMatches } from "./competition-results";
 import { WindowHeader } from "./window-header";
 
@@ -145,8 +145,9 @@ export function CompetitionCenter({
             a.club.localeCompare(b.club, "pt-BR"),
         )
     : [];
-  const zoneFor = (index: number) => standingsZone(selected?.id ?? "", careerData?.seasonYear, careerData?.table.length ?? 0, !!careerData?.table.some(row => row.played > 0), index + 1);
-  const showZones = !!zoneFor(0);
+  const zones = standingsZones(selected?.id ?? "", careerData?.seasonYear, careerData?.table.length ?? 0);
+  const zoneFor = (index: number) => standingsZone(selected?.id ?? "", careerData?.seasonYear, careerData?.table.length ?? 0, index + 1);
+  const showZones = zones.length > 0;
   const scorers = isActive
     ? effectiveScorers.filter((player) => player.goals > 0 && player.played > 0)
     : [];
@@ -280,7 +281,11 @@ export function CompetitionCenter({
                                     "V",
                                     "E",
                                     "D",
-                                    "Desemp.",
+                                    "GP",
+                                    "GC",
+                                    "SG",
+                                    "%",
+                                    "Recentes",
                                   ].map((title) => (
                                     <th key={title} scope="col">
                                       {title}
@@ -297,7 +302,7 @@ export function CompetitionCenter({
                                       row.club === club ? styles.ownClub : ""
                                     }
                                   >
-                                    <td>{isActive ? index + 1 : "—"}{zoneFor(index) && <span className={styles.srOnly}> · {SERIES_A_2026_ZONES.find(zone => zone.id === zoneFor(index))?.label} (faixa-base)</span>}</td>
+                                    <td>{isActive ? index + 1 : "—"}{zoneFor(index) && <span className={styles.srOnly}> · {zones.find(zone => zone.id === zoneFor(index))?.label} (faixa-base)</span>}</td>
                                     <th scope="row">
                                       <span>
                                         <Crest club={row.club} size="sm" />
@@ -313,6 +318,10 @@ export function CompetitionCenter({
                                       row.result?.wins,
                                       row.result?.draws,
                                       row.result?.losses,
+                                      row.result?.goalsFor,
+                                      row.result?.goalsAgainst,
+                                      row.result ? row.result.goalsFor - row.result.goalsAgainst : undefined,
+                                      row.result?.played ? Math.round(row.result.points / (row.result.played * 3) * 100) : undefined,
                                     ].map((value, i) => (
                                       <td key={i}>{value ?? "—"}</td>
                                     ))}
@@ -322,7 +331,7 @@ export function CompetitionCenter({
                                         const other = match.home === row.club ? match.awayScore : match.homeScore;
                                         const result = own === other ? "E" : own > other ? "V" : "D";
                                         const label = `${result === "V" ? "Vitória" : result === "D" ? "Derrota" : "Empate"}: ${match.home} ${match.homeScore} × ${match.awayScore} ${match.away}, ${match.roundLabel ?? "rodada registrada"}`;
-                                        return <button key={index} data-result={result} data-latest={index === recentMatches(effectiveFixtures, row.club).length - 1 || undefined} title={label} aria-label={label} onClick={() => { setFormClub(row.club); setSelectedRound(match.roundLabel ?? "Rodada registrada"); }}>{result === "V" ? "✓" : result === "D" ? "×" : "−"}</button>;
+                                        return <button key={index} data-result={result} data-latest={index === recentMatches(effectiveFixtures, row.club).length - 1 || undefined} title={label} aria-label={label} onClick={() => { setFormClub(row.club); setSelectedRound(match.roundLabel ?? "Rodada registrada"); }}>{result}</button>;
                                       })}
                                       {(!isActive || !recentMatches(effectiveFixtures, row.club).length) && <span aria-label="Sem partidas concluídas">—</span>}
                                     </div></td>
@@ -337,11 +346,11 @@ export function CompetitionCenter({
                             text="Participantes, fases e grupos desta competição ainda não foram cadastrados na carreira. Não há classificação para exibir."
                           />
                         )}
-                        {showZones && <div className={styles.zoneLegend} aria-label="Legenda das faixas de classificação">{SERIES_A_2026_ZONES.map(zone => <span key={zone.id}><i data-zone={zone.id} aria-hidden="true" />{zone.label}</span>)}</div>}
+                        {showZones && <div className={styles.zoneLegend} aria-label="Legenda das faixas de classificação">{zones.map(zone => <span key={zone.id}><i data-zone={zone.id} aria-hidden="true" />{zone.label}</span>)}</div>}
                         <p className={styles.disclaimer}>
-                          {showZones && "Faixas-base projetadas para a Série A de 2026. Vagas podem mudar por outras competições; não representam classificação confirmada nem garantem implementação no jogo. "}
+                          {showZones && (selected.id === "league:Brasil:Série A" ? "Faixas-base projetadas para a Série A de 2026. Vagas podem mudar por outras competições; não representam classificação confirmada nem garantem implementação no jogo. " : "Faixas projetadas para a Série B de 2026: 1º e 2º sobem diretamente, 3º ao 6º disputam playoffs e os quatro últimos são rebaixados. As faixas não garantem implementação desses desfechos no jogo. ")}
                           {isActive
-                            ? "Últimas 5: ✓ vitória · × derrota · − empate (da mais antiga à mais recente). Clique em um resultado para abrir a rodada ao lado. Classificação acumulada somente de partidas concluídas."
+                            ? "Recentes: V vitória · D derrota · E empate (da mais antiga à mais recente). Clique em um resultado para abrir a rodada ao lado. Classificação acumulada somente de partidas concluídas."
                             : "Clubes de outras divisões podem ser consultados. Pontuação, grupos e resultados só aparecem quando registrados para a competição."}
                         </p>
                       </>
