@@ -144,6 +144,9 @@ export type RoundFixture = {
   managed?: boolean;
   played?: boolean;
   roundLabel?: string;
+  scheduledDate?: string;
+  participantsPending?: boolean;
+  winner?: string;
 };
 
 const formationRoles: Record<string, PositionCode[]> = {
