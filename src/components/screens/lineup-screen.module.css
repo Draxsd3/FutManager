@@ -570,8 +570,8 @@
 }
 .screen[data-layout="classic"] .pitchLines { stroke: #f3f5eac0; stroke-width: .28; }
 .screen[data-layout="classic"] .pitchLines .centerSpot { fill: #f3f5eadd; }
-.screen[data-layout="classic"] .player { width: 58px; min-height: 58px; max-width: 24%; }
-.screen[data-layout="classic"] .player > svg { width: 54px; height: 54px; }
+.screen[data-layout="classic"] .player { width: 68px; min-height: 68px; max-width: 24%; }
+.screen[data-layout="classic"] .player > svg { width: 64px; height: 64px; max-width: 100%; }
 .screen[data-layout="classic"] .player > b {
   left: 50%;
   transform: translateX(-50%);
@@ -580,8 +580,8 @@
 }
 .screen[data-layout="classic"] .player > .energy { width: 42px; }
 @media (max-width: 560px) {
-  .screen[data-layout="classic"] .player { width: 50px; min-height: 50px; }
-  .screen[data-layout="classic"] .player > svg { width: 48px; height: 48px; }
+  .screen[data-layout="classic"] .player { width: 56px; min-height: 56px; }
+  .screen[data-layout="classic"] .player > svg { width: 54px; height: 54px; }
 }
 
 /* The roster is the only scrolling part of this panel; the other analysis stays visible. */
@@ -597,3 +597,6 @@
 .kitChoice button:focus-visible { outline: 2px solid var(--accent, #b4ce84); outline-offset: 2px; }
 .kitChoice img { width: 26px; height: 30px; object-fit: contain; }
 .kitChoice span, .kitLabel { font-size: 10px; font-weight: 700; }
+
+.shirtNumber { display: block; color: #fff; font-size: 9px; font-weight: 800; line-height: 1; }
+.screen[data-layout="classic"] .player > .shirtNumber { position: absolute; top: calc(100% + 17px); left: 50%; transform: translateX(-50%); text-shadow: 0 1px 2px #051b0c, 0 0 4px #051b0c; pointer-events: none; }
