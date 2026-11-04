@@ -42,22 +42,25 @@ const profileSchema = z.object({
   stadium: z.object({ addressLine2: z.string().nullable().optional(), countryName: z.string().nullable().optional(), name: z.string().nullable().optional(), capacity: z.number().nullable().optional() }).nullable().optional(),
   coach: z.object({ name: z.string().nullable().optional() }).nullable().optional(),
 });
+export function normalizeLivePlayer(input: unknown, clubName: string, collectedAt: string) {
+  const player = rawPlayerSchema.parse(input);
+  const reference = new Date(collectedAt);
+  const born = player.dateOfBirth ? new Date(`${player.dateOfBirth}T00:00:00Z`) : null;
+  const age = player.age ?? (born ? reference.getUTCFullYear() - born.getUTCFullYear() - Number(reference.toISOString().slice(5, 10) < player.dateOfBirth!.slice(5)) : null);
+  const position = player.position ? positions[player.position] : undefined;
+  if (age === null || !position) throw new Error(`${clubName} / ${player.name}: idade/nascimento ou posição não informados. Nada foi aplicado.`);
+  return { id: player.id, name: player.name, age, position, dateOfBirth: player.dateOfBirth ?? null,
+    shirtNumber: player.shirtNumber && player.shirtNumber > 0 ? player.shirtNumber : null,
+    foot: ({ left: "E", right: "D", both: "A" } as const)[player.foot as "left" | "right" | "both"] ?? null,
+    contractEndsOn: player.contract ?? null, marketValueEur: player.marketValue ?? null };
+}
+
 export function normalizeLiveClub(profileInput: unknown, squadInput: unknown, clubId: string, collectedAt = new Date().toISOString()) {
   const profile = profileSchema.parse(profileInput);
   const squad = z.object({ id: z.string(), updatedAt: z.string().nullable().optional(), players: z.array(rawPlayerSchema).min(11).max(200) }).parse(squadInput);
   if (profile.id !== clubId || squad.id !== clubId) throw new Error("A fonte retornou outro clube.");
   if (![profile.league?.countryName, profile.stadium?.countryName, profile.addressLine3].some(country => country === "Brazil" || country === "Brasil")) throw new Error(`${profile.name}: país brasileiro não confirmado.`);
-  const reference = new Date(collectedAt);
-  const players = squad.players.map(player => {
-    const born = player.dateOfBirth ? new Date(`${player.dateOfBirth}T00:00:00Z`) : null;
-    const age = player.age ?? (born ? reference.getUTCFullYear() - born.getUTCFullYear() - Number(reference.toISOString().slice(5, 10) < player.dateOfBirth!.slice(5)) : null);
-    const position = player.position ? positions[player.position] : undefined;
-    if (age === null || !position) throw new Error(`${profile.name} / ${player.name}: idade/nascimento ou posição não informados. Nada foi aplicado.`);
-    return { id: player.id, name: player.name, age, position, dateOfBirth: player.dateOfBirth ?? null,
-      shirtNumber: player.shirtNumber && player.shirtNumber > 0 ? player.shirtNumber : null,
-      foot: ({ left: "E", right: "D", both: "A" } as const)[player.foot as "left" | "right" | "both"] ?? null,
-      contractEndsOn: player.contract ?? null, marketValueEur: player.marketValue ?? null };
-  });
+  const players = squad.players.map(player => normalizeLivePlayer(player, profile.name, collectedAt));
   const states: Record<string, string> = { AC: "Acre", AL: "Alagoas", AP: "Amapá", AM: "Amazonas", BA: "Bahia", CE: "Ceará", DF: "Distrito Federal", ES: "Espírito Santo", GO: "Goiás", MA: "Maranhão", MT: "Mato Grosso", MS: "Mato Grosso do Sul", MG: "Minas Gerais", PA: "Pará", PB: "Paraíba", PR: "Paraná", PE: "Pernambuco", PI: "Piauí", RJ: "Rio de Janeiro", RN: "Rio Grande do Norte", RS: "Rio Grande do Sul", RO: "Rondônia", RR: "Roraima", SC: "Santa Catarina", SP: "São Paulo", SE: "Sergipe", TO: "Tocantins" };
   const suffix = `${profile.shortName ?? ""}`.match(/(?:[- (])([A-Z]{2})\)?$/)?.[1] ?? profile.name.match(/\(([A-Z]{2})\)$/)?.[1];
   const address = [profile.addressLine2, profile.stadium?.addressLine2].filter(Boolean).join(", ");
@@ -73,11 +76,12 @@ export function normalizeLiveClub(profileInput: unknown, squadInput: unknown, cl
 
 export type ImportProgress = (message: string) => void;
 export type LiveCollectionIssue = { clubId: string; clubName: string; message: string };
-export type LiveCheckpoint = { snapshot: TransfermarktSnapshot; members: { id: string; name: string; competitionId: string }[]; issues?: LiveCollectionIssue[] };
+export type LiveCheckpoint = { snapshot: TransfermarktSnapshot; members: { id: string; name: string; competitionId: string }[]; issues?: LiveCollectionIssue[]; seedId?: string };
 export type LiveOptions = {
   request: (body: LiveRequest, signal?: AbortSignal) => Promise<unknown>;
   progress?: ImportProgress; signal?: AbortSignal;
-  load?: () => Promise<LiveCheckpoint | null>; save?: (checkpoint: LiveCheckpoint | null) => Promise<void>;
+  load?: () => Promise<LiveCheckpoint | null>;
+  seed?: () => Promise<LiveCheckpoint>; save?: (checkpoint: LiveCheckpoint | null) => Promise<void>;
   pause?: () => Promise<void>;
 };
 /** Short, sequential requests. A failed club never publishes a partial catalog. */
@@ -101,6 +105,22 @@ export async function collectNationalSnapshot(options: LiveOptions) {
         new Set(checkpoint.snapshot.clubs.map(club => club.id)).size !== checkpoint.snapshot.clubs.length ||
         checkpoint.snapshot.clubs.some(club => !checkpoint!.members.some(member => member.id === club.id && member.competitionId === club.competitionId))) checkpoint = null;
     } catch { checkpoint = null; }
+  }
+  if (options.seed) {
+    options.signal?.throwIfAborted();
+    const seed = await options.seed();
+    if (!checkpoint) checkpoint = seed;
+    else if (checkpoint.seedId !== seed.seedId) {
+      if (!checkpoint.members.every(member => seed.members.some(other => other.id === member.id && other.competitionId === member.competitionId)) ||
+          !checkpoint.snapshot.competitions?.every(comp => seed.snapshot.competitions?.some(other => other.id === comp.id && other.seasonId === comp.seasonId))) {
+        throw new Error("O arquivo e a coleta salva têm participantes/temporadas diferentes. Nada foi alterado.");
+      }
+      const completed = new Set(checkpoint.snapshot.clubs.map(club => club.id));
+      checkpoint.snapshot.clubs.push(...seed.snapshot.clubs.filter(club => !completed.has(club.id)));
+      checkpoint.seedId = seed.seedId;
+    }
+    await options.save?.(checkpoint);
+    progress(`Arquivo brasileiro 2026 aproveitado: ${checkpoint.snapshot.clubs.length}/156 clubes válidos; consultando somente os pendentes…`);
   }
   if (!checkpoint) {
     checkpoint = { snapshot: { version: 2, seasonId: "2026", generatedAt: new Date().toISOString(), competitions: [], clubs: [] }, members: [] };
