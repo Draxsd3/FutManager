@@ -190,13 +190,13 @@ function TrainingCenter({ squad, starters, week, season, sessions, onTrain }: { 
   const currentDrill = TRAINING_DRILLS.find((item) => item.id === drill)!;
 
   return <div className={trainingStyles.center}>
-    <header className={trainingStyles.heading}>
-      {!embedded && <div><span>PLANEJAMENTO DA SEMANA</span><h2><TrainingIcon name="resistencia" size={48} /> Centro de treinamento</h2><p>Organize a carga, escolha os atletas e acompanhe o efeito de cada sessão.</p></div>}
+    {!embedded && <header className={trainingStyles.heading}>
+      <div><span>PLANEJAMENTO DA SEMANA</span><h2><TrainingIcon name="resistencia" size={48} /> Centro de treinamento</h2><p>Organize a carga, escolha os atletas e acompanhe o efeito de cada sessão.</p></div>
       <div className={trainingStyles.weekStamp}><ClassicIcon name="calendar" size={16} /><span>Semana {week} · {season}</span></div>
-    </header>
+    </header>}
     <div className={trainingStyles.layout}>
       <section className={trainingStyles.builder} aria-label="Configurar sessão de treino">
-        <div className={trainingStyles.sectionHead}><div><h3><ClassicIcon name="calendar" /> Escolha o dia</h3></div><small>{weekly.length}/6 concluídas</small></div>
+        <div className={trainingStyles.sectionHead}><div><h3><ClassicIcon name="calendar" /> Escolha o dia</h3></div><small>{embedded ? `Semana ${week} · ${season} · ` : ""}{weekly.length}/6 concluídas</small></div>
         <div className={trainingStyles.days}>{TRAINING_DAYS.map((item) => {
           const done = completedDays.has(item);
           return <button key={item} type="button" aria-pressed={day === item} data-done={done || undefined} className={day === item ? trainingStyles.dayActive : trainingStyles.day} onClick={() => { setDay(item); setMessage(""); }}><b>{item.slice(0, 3)}</b><small>{done ? "FEITO" : "LIVRE"}</small></button>;

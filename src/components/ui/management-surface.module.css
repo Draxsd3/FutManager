@@ -46,5 +46,5 @@
   .icon { width:30px; height:30px; }
 }
 
-.embeddedActions { justify-content:flex-end; margin-bottom:12px; }
+.content > .panel:first-child, .content > .srOnly + .panel, .grid > .panel { border-top:0; padding-top:4px; }
 .srOnly { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
