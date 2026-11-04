@@ -1,5 +1,6 @@
 "use client";
 
+import { CURRENT_CAREER_RULESET, currentCareerSaves, isCurrentCareerSave } from "@/lib/game/career-rules";
 import { applyBrazilianCalendar, BRAZILIAN_REFERENCE_SEASON, careerCalendarDate, formatCalendarDate } from "@/lib/game/brazilian-calendar";
 import { acceptManagerJob, applyForManagerJob, declineManagerJob, initializeCareerMarket, refreshJobOffers, updateCareerMarket, type JobClubSnapshot, type ManagerAppointment } from "@/lib/game/manager-jobs";
 import type { ManagerMarket } from "@/lib/game/manager-market";
@@ -130,7 +131,11 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       const pendingDatabaseSync = await hasPendingDatabaseSync(userId).catch(() => false);
       const localDatabase = upgradeEditorDatabase(await readCachedDatabase(userId).catch(() => null) ?? readLocalDatabase(userId) ?? await importBrazilDatabase());
       if (cancelled) return;
-      const localSaves = await readCachedCareerSaves(userId).catch(() => null) ?? readLocalSaves(userId);
+      const localSaves = currentCareerSaves(await readCachedCareerSaves(userId).catch(() => null) ?? readLocalSaves(userId));
+      // Replace both account-local stores even offline; the reset is not a recurring wipe.
+      writeLocalSaves(localSaves, userId);
+      const sessionId = readActiveCareerSession(userId);
+      if (sessionId && !localSaves.some(save => save.id === sessionId)) writeActiveCareerSession(userId, null);
       if (cancelled) return;
       savesRef.current = localSaves;
       setDatabase(localDatabase);
@@ -729,6 +734,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     }
     const now = new Date().toISOString();
     const save: CareerSave = {
+      careerRuleset: CURRENT_CAREER_RULESET,
       id: crypto.randomUUID(),
       name: `${club} — ${coach.trim()}`,
       managerName: coach.trim(),
@@ -786,6 +792,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   async function loadCareer(save: CareerSave): Promise<boolean> {
+    if (!isCurrentCareerSave(save)) return false;
     const clubId = database?.clubs.find((item) => item.name === save.clubName)?.id ?? save.clubId;
     const storedSeason = save.progress?.competitionSeason ?? (database && clubId ? createCareerSeason(database, clubId, Number(save.inGameDate.slice(0, 4)) || 2026) ?? undefined : undefined);
     const restoredSeason = storedSeason ? applyBrazilianCalendar(save.progress?.competitionSeason ? storedSeason : { ...storedSeason, calendarVersion: undefined }, save.inGameDate) : undefined;

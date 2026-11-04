@@ -330,26 +330,21 @@ export function createCareerSeason(database: EditorDatabase, clubId: string, sea
   const managedClub = database.clubs.find((club) => club.id === clubId);
   if (!managedClub || managedClub.division === "Sem divisão nacional") return null;
   const state = resolveClubState(managedClub);
-  const leagueId = `league:${managedClub.country}:${managedClub.division}`;
-  const leagueGroups = buildRoundRobinGroups({
-    clubs: database.clubs.filter((club) => club.division !== "Sem divisão nacional" && club.country.toLocaleLowerCase("pt-BR") === "brasil" && club.division === managedClub.division).map(({ id, name }) => ({ id, name })),
-    season,
-    competitionId: leagueId,
-    competitionName: `Brasileirão ${managedClub.division}`,
-    type: "league",
-    division: managedClub.division,
-    doubleRoundRobin: true,
-  });
-  const stateClubs = state ? database.clubs.filter((club) => club.division !== "Sem divisão nacional" && club.country.toLocaleLowerCase("pt-BR") === "brasil" && resolveClubState(club) === state).map(({ id, name }) => ({ id, name })) : [];
+  const brazilianClubs = database.clubs.filter(club => club.division !== "Sem divisão nacional" && club.country.toLocaleLowerCase("pt-BR") === "brasil");
+  const leagueId = `league:Brasil:${managedClub.division}`;
   const stateId = state ? `state:${state}` : "";
-  const stateGroups = state && stateClubs.length > 1 ? buildRoundRobinGroups({
-    clubs: stateClubs,
-    season,
-    competitionId: stateId,
-    competitionName: stateCompetitionName(state),
-    type: "state",
-    state,
-  }) : [];
+  // Plan the whole domestic world before selecting the manager's competitions.
+  // Otherwise selecting a different state changes league dates through local conflicts.
+  const leagueGroups = [...new Set(brazilianClubs.map(club => club.division))].sort().flatMap(division => buildRoundRobinGroups({
+    clubs: brazilianClubs.filter(club => club.division === division), season,
+    competitionId: `league:Brasil:${division}`, competitionName: `Brasileirão ${division}`,
+    type: "league", division, doubleRoundRobin: true,
+  }));
+  const states = [...new Set(brazilianClubs.map(resolveClubState).filter((value): value is string => !!value))].sort();
+  const stateGroups = states.flatMap(state => buildRoundRobinGroups({
+    clubs: brazilianClubs.filter(club => resolveClubState(club) === state), season,
+    competitionId: `state:${state}`, competitionName: stateCompetitionName(state), type: "state", state,
+  }));
   const cupGroups = buildCupGroups(database, clubId, season);
   const groups = [...leagueGroups, ...stateGroups, ...cupGroups].sort((a, b) => a.round - b.round || typePriority(a.type) - typePriority(b.type));
   const fixtures: SeasonFixture[] = [];
@@ -379,7 +374,10 @@ export function createCareerSeason(database: EditorDatabase, clubId: string, sea
       fixtures.push(scheduled);
     }
   }
-  return applyBrazilianCalendar({ version: 1, season, clubId, clubName: managedClub.name, division: managedClub.division, ...(state ? { state } : {}), fixtures });
+  const planned = applyBrazilianCalendar({ version: 1, season, clubId, clubName: managedClub.name, division: managedClub.division, ...(state ? { state } : {}), fixtures });
+  const careerFixtures = planned.fixtures.filter(f => f.competitionId === leagueId || f.competitionId === stateId || f.type === "cup");
+  const competitionNames = new Set(careerFixtures.map(f => f.competitionName));
+  return { ...planned, fixtures: careerFixtures, calendarIssues: planned.calendarIssues?.filter(name => competitionNames.has(name)) };
 }
 
 function typePriority(type: SeasonCompetitionType) {

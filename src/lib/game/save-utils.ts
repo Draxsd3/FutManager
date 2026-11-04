@@ -1,9 +1,10 @@
+import { currentCareerSaves } from "./career-rules";
 import type { CareerSave } from "./editor-data";
 
 /** Prefer the newest revision, including offline changes belonging to this account. */
 export function mergeCareerSaves(local: CareerSave[], cloud: CareerSave[]): CareerSave[] {
-  const byId = new Map(cloud.map((save) => [save.id, save]));
-  for (const save of local) {
+  const byId = new Map(currentCareerSaves(cloud).map((save) => [save.id, save]));
+  for (const save of currentCareerSaves(local)) {
     const remote = byId.get(save.id);
     if (!remote || Date.parse(save.updatedAt) > Date.parse(remote.updatedAt)) byId.set(save.id, save);
   }

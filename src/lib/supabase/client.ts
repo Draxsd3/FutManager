@@ -42,6 +42,7 @@ type SaveRow = {
   id: string; owner_id: string; name: string; manager_name: string; club_name: string | null;
   division: string | null; round: number; budget_brl: number; in_game_date: string;
   state: {
+    careerRuleset?: string;
     clubId?: string;
     progress?: import("@/lib/game/progress").CareerProgress;
     playerCareers?: Record<number, PlayerCareerRecord>;

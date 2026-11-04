@@ -26,7 +26,7 @@ it("shows the season's played and future matches, and prepares only the actual n
   expect(within(table).getByText("Condicionado")).toBeTruthy();
   expect(screen.queryByText("Candidato hipotético")).toBeNull();
   expect(within(table).getAllByRole("button", { name: /Escalar/ })).toHaveLength(1);
-  expect(screen.getByText(/Datas geradas pelo jogo nas janelas brasileiras/)).toBeTruthy();
+  expect(screen.getByText(/Calendário CBF compartilhado entre carreiras/)).toBeTruthy();
   expect(screen.queryByText("22/01")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: /Preparar equipe/ }));
   expect(props.onPrepare).toHaveBeenCalledOnce();

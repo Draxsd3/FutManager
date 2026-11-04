@@ -98,3 +98,24 @@ it("does not start an artificial 558-club national league for a state-only impor
  database.clubs[0].division="Sem divisão nacional";
  expect(createCareerSeason(database,database.clubs[0].id,2026)).toBeNull();
 });
+
+it("uses one domestic CBF plan regardless of the chosen club, state, cup path or database order", () => {
+  const database = createDefaultDatabase();
+  const careers = database.clubs.map(club => createCareerSeason(database, club.id, 2026)!);
+  const dates = new Map<string, string | undefined>();
+  for (const season of careers) {
+    expect(season.calendarVersion).toBe(2);
+    expect(season.season).toBe(2026);
+    for (const fixture of season.fixtures.filter(f => f.type !== "cup")) {
+      if (dates.has(fixture.id)) expect(fixture.scheduledDate).toBe(dates.get(fixture.id));
+      dates.set(fixture.id, fixture.scheduledDate);
+    }
+    for (const fixture of season.fixtures.filter(f => f.type === "cup")) {
+      const key = `cup:${fixture.competitionRound}`;
+      if (dates.has(key)) expect(fixture.scheduledDate).toBe(dates.get(key));
+      dates.set(key, fixture.scheduledDate);
+    }
+  }
+  const reverse = createCareerSeason({ ...database, clubs: [...database.clubs].reverse() }, database.clubs[0].id, 2026)!;
+  expect(reverse.fixtures.map(f => [f.id, f.scheduledDate])).toEqual(careers[0].fixtures.map(f => [f.id, f.scheduledDate]));
+});

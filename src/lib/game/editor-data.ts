@@ -78,6 +78,8 @@ export function enforceEditorSquadLimit(players: EditorPlayer[]) {
 }
 
 export type CareerSave = {
+  /** Absent on careers retired by the CBF calendar reset. */
+  careerRuleset?: string;
   progress?: import("./progress").CareerProgress;
   id: string;
   name: string;

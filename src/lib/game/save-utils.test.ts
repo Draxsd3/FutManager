@@ -1,8 +1,9 @@
+import { CURRENT_CAREER_RULESET } from "./career-rules";
 import { describe, expect, it } from "vitest";
 import { accountStorageKey, mergeCareerSaves } from "./save-utils";
 import type { CareerSave } from "./editor-data";
 
-const save = (id: string, updatedAt: string, round = 1): CareerSave => ({ id, updatedAt, round,
+const save = (id: string, updatedAt: string, round = 1): CareerSave => ({ careerRuleset: CURRENT_CAREER_RULESET, id, updatedAt, round,
   name: id, managerName: "Treinador", clubId: "club", clubName: "Flamengo", division: "Série A", budget: 100, inGameDate: "2026-01-22" });
 
 describe("account and career separation", () => {

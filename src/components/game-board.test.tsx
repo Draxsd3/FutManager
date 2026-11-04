@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { CURRENT_CAREER_RULESET } from "@/lib/game/career-rules";
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { cleanup, configure, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -63,10 +64,10 @@ it("creates independent careers, preserves the lineup on returning home and open
   fireEvent.click(screen.getByRole("button", { name: "Fechar Configurações" }));
   await screen.findByRole("button", { name: "Configurações" });
   await waitFor(() => expect(readLocalSaves("alice").find((save) => save.id === first.id)?.progress?.coach).toBe("Técnico Alice"));
-});
+}, 15000);
 
 it("does not expose another account's careers on the same browser", async () => {
-  localStorage.setItem("futmanager.saves.v1.alice", JSON.stringify([{ id: "private", name: "Carreira privada" }]));
+  localStorage.setItem("futmanager.saves.v1.alice", JSON.stringify([{ id: "private", name: "Carreira privada", careerRuleset: CURRENT_CAREER_RULESET }]));
   render(game("bob"));
   fireEvent.click(await screen.findByRole("button", { name: /CONTINUAR JOGANDO/ }));
   expect(await screen.findByText("Nenhuma carreira encontrada")).toBeTruthy();
@@ -463,7 +464,7 @@ it("advances the career date after a result and returns an expired incoming loan
   await waitFor(() => {
     const restored = readLocalSaves("alice")[0];
     expect(restored.inGameDate).toBe(expectedDate);
-    expect(restored.progress?.competitionSeason?.calendarVersion).toBe(1);
+    expect(restored.progress?.competitionSeason?.calendarVersion).toBe(2);
     expect(restored.progress?.loanContracts?.[player.sourceId!].status).toBe("returned");
     expect(restored.progress?.careerSquad?.some(item => item.id === player.id)).toBe(false);
     expect(restored.progress?.starters).not.toContain(player.id);
@@ -492,34 +493,34 @@ it("archives concluded competitions from an old save and persists champions sepa
   expect(await screen.findByRole("columnheader", { name: "Técnico campeão" })).toBeTruthy();
 }, 15000);
 
-it("migrates an undated legacy career in place and persists the calendar without rewriting results", async () => {
+it("removes pre-reset careers from IndexedDB/localStorage/session and cannot restore them from cloud", async () => {
+  const { IDBFactory } = await import("fake-indexeddb");
+  const { cacheCareerSaves, readCachedCareerSaves } = await import("@/lib/importer/database-cache");
+  const { accountStorageKey } = await import("@/lib/game/save-utils");
+  const persistence = await import("@/lib/game/persistence");
+  vi.stubGlobal("indexedDB", new IDBFactory());
   const view = render(game());
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
-  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Calendário legado" } });
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Carreira encerrada" } });
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
   await screen.findByRole("button", { name: "Empréstimos" });
-  const save = structuredClone(readLocalSaves("alice")[0]);
-  const season = save.progress!.competitionSeason!;
-  delete season.calendarVersion;
-  season.fixtures = season.fixtures.map((f, index) => ({ ...f, scheduledDate: undefined, dateSource: undefined, ...(index === 0 ? { status: "played" as const, homeScore: 3, awayScore: 1 } : {}) }));
-  const oldResult = structuredClone(season.fixtures[0]);
-  const ids = season.fixtures.map(f => f.id);
-  save.inGameDate = "2026-06-01";
-  save.progress!.page = "hub";
-  view.unmount(); sessionStorage.clear(); writeLocalSaves([save], "alice");
-  render(game());
-  fireEvent.click(await screen.findByRole("button", { name: /CONTINUAR JOGANDO/ }));
-  fireEvent.click(await screen.findByRole("button", { name: "CONTINUAR" }));
-  await screen.findByRole("button", { name: "Empréstimos" });
-  await waitFor(() => {
-    const restored = readLocalSaves("alice")[0];
-    expect(restored.progress?.competitionSeason?.calendarVersion).toBe(1);
-    expect(restored.inGameDate >= "2026-06-01").toBe(true);
-    expect(restored.progress?.competitionSeason?.fixtures.map(f => f.id)).toEqual(ids);
-    expect(restored.progress?.competitionSeason?.fixtures[0]).toEqual(oldResult);
-    expect(restored.progress?.competitionSeason?.fixtures.some(f => f.scheduledDate)).toBe(true);
-  });
-}, 15000);
+  const old = structuredClone(readLocalSaves("alice")[0]);
+  delete old.careerRuleset;
+  view.unmount();
+  // Raw seed emulates a browser/database written by a release before the reset.
+  localStorage.setItem(accountStorageKey("futmanager.saves.v1", "alice"), JSON.stringify([old]));
+  await cacheCareerSaves([old], "alice");
+  vi.mocked(persistence.readCloudSaves).mockResolvedValueOnce([old]);
+  const restored = render(game());
+  await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ });
+  expect(screen.queryByRole("button", { name: "Empréstimos" })).toBeNull();
+  expect(readLocalSaves("alice")).toEqual([]);
+  expect(await readCachedCareerSaves("alice")).toEqual([]);
+  fireEvent.click(screen.getByRole("button", { name: /CONTINUAR JOGANDO/ }));
+  expect(screen.queryByRole("button", { name: "CONTINUAR" })).toBeNull();
+  restored.unmount();
+});
+
 
 it("connects jobs to the career, confirms a club change and restores it without moving the old squad or money", async () => {
   const { IDBFactory } = await import("fake-indexeddb");
