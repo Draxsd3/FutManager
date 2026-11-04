@@ -336,6 +336,7 @@ it("opens finances, trophies and training as modal shortcuts without losing the 
     if (title === "Treino") {
       expect(within(dialog).getByRole("heading", { name: "Centro de treinamento" })).toBeTruthy();
       expect(within(dialog).getByRole("heading", { name: "Atletas da sessão" })).toBeTruthy();
+      expect(within(dialog).getByRole("region", { name: "Escolha os atletas" }).getAttribute("tabindex")).toBe("0");
     }
     fireEvent.keyDown(within(dialog).getByRole("button", { name: `Fechar ${title}` }), { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
