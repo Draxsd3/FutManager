@@ -131,7 +131,7 @@ it("restores focus and page scrolling on unmount and uses registered kit colors"
 
 it("handles an empty bench without allowing a substitution", () => {
   setup({ bench: [] });
-  expect(screen.getByText("Nenhum reserva para este filtro.")).toBeTruthy();
+  expect(screen.getByText("Nenhum reserva disponível.")).toBeTruthy();
   expect((screen.getByRole("button", { name: "Confirmar substituição" }) as HTMLButtonElement).disabled).toBe(true);
 });
 
