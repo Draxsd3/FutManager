@@ -96,3 +96,82 @@ it("reagenda rodadas pendentes de um save antigo após a pausa da A sem bloquear
   expect(dates(season)).toHaveLength(38);
   expect(dates(season).every(date => date >= "2026-07-22" && date <= "2026-12-02")).toBe(true);
 });
+
+it("usa as 38 janelas da tabela básica, não uma interpolação uniforme entre janeiro e dezembro", () => {
+  const season = applyBrazilianCalendar(league("Série A"));
+  expect(dates(season)).toEqual([
+    "01-28", "02-04", "02-11", "02-25", "03-11", "03-14", "03-18", "03-21",
+    "04-01", "04-04", "04-11", "04-18", "04-25", "05-02", "05-09", "05-16",
+    "05-23", "05-30", "07-22", "07-25", "07-29", "08-08", "08-15", "08-22",
+    "08-29", "09-05", "09-12", "09-19", "10-07", "10-10", "10-17", "10-24",
+    "10-28", "11-04", "11-18", "11-21", "11-28", "12-02",
+  ].map(date => `2026-${date}`));
+});
+
+function withOversizedState(): CareerSeason {
+  const season = league("Série A");
+  const state = buildRoundRobinGroups({
+    clubs: Array.from({ length: 22 }, (_, index) => ({ id: String(index), name: `Clube ${index}` })),
+    season: 2026, competitionId: "state:SP", competitionName: "Paulista", type: "state", state: "São Paulo",
+  }).flatMap(group => group.fixtures);
+  return { ...season, fixtures: [...season.fixtures, ...state] };
+}
+
+it("não deixa o estadual empurrar a abertura da A para 30/01 e mantém a sobreposição oficial de 2026", () => {
+  const season = applyBrazilianCalendar(withOversizedState());
+  const national = season.fixtures.filter(f => f.type === "league");
+  expect(new Set(national.filter(f => f.competitionRound === 1).map(f => f.scheduledDate))).toEqual(new Set(["2026-01-28"]));
+  expect(new Set(national.filter(f => f.competitionRound === 2).map(f => f.scheduledDate))).toEqual(new Set(["2026-02-04"]));
+  expect(new Set(national.filter(f => f.competitionRound === 3).map(f => f.scheduledDate))).toEqual(new Set(["2026-02-11"]));
+  expect(national.every(f => !!f.scheduledDate)).toBe(true);
+  expect(season.fixtures.some(f => f.type === "state" && f.scheduledDate && f.scheduledDate > "2026-01-28" && f.scheduledDate <= "2026-03-08")).toBe(true);
+  for (const id of ["0", "1", "19"]) {
+    const games = season.fixtures.filter(f => f.scheduledDate && [f.homeClubId, f.awayClubId].includes(id)).sort((a, b) => a.scheduledDate!.localeCompare(b.scheduledDate!));
+    for (let i = 1; i < games.length; i++) expect((Date.parse(games[i].scheduledDate!) - Date.parse(games[i - 1].scheduledDate!)) / 86400000).toBeGreaterThanOrEqual(3);
+  }
+});
+
+it("não comprime mais de onze rodadas estaduais em 2026, nem perde ou permite disputar os jogos excedentes", () => {
+  const original = withOversizedState();
+  const season = applyBrazilianCalendar(original);
+  const state = season.fixtures.filter(f => f.type === "state");
+  expect(season.fixtures.map(f => f.id)).toEqual(original.fixtures.map(f => f.id));
+  expect(state.filter(f => f.competitionRound > 11).every(f => !f.scheduledDate)).toBe(true);
+  expect(new Set(state.flatMap(f => f.scheduledDate ? [f.scheduledDate] : [])).size).toBeLessThanOrEqual(11);
+  expect(season.calendarIssues).toEqual(["Paulista"]);
+  const pending = { ...season, fixtures: state.filter(f => !f.scheduledDate) };
+  expect(nextCareerFixture(pending)).toBeNull();
+  expect(completeCareerFixture(pending, pending.fixtures[0].id, { home: 1, away: 0 }, createDefaultDatabase())).toBe(pending);
+});
+
+it("migra v2 com estadual jogado na véspera da abertura sem perder o resultado ou bloquear a liga", () => {
+  const original = withOversizedState();
+  original.calendarVersion = 2;
+  const played = original.fixtures.find(f => f.type === "state" && [f.homeClubId, f.awayClubId].includes("0"))!;
+  Object.assign(played, { status: "played", scheduledDate: "2026-01-27", homeScore: 2, awayScore: 1 });
+  const snapshot = structuredClone(played);
+  const season = applyBrazilianCalendar(original, "2026-01-27");
+  expect(season.calendarVersion).toBe(3);
+  expect(season.fixtures.find(f => f.id === played.id)).toEqual(snapshot);
+  const national = season.fixtures.filter(f => f.type === "league");
+  expect(national.every(f => !!f.scheduledDate && f.scheduledDate >= "2026-01-30")).toBe(true);
+  expect(season.calendarIssues).not.toContain("Série A");
+});
+
+it("não invade a interrupção ao remanejar uma liga atrasada antes de junho", () => {
+  const season = applyBrazilianCalendar(league("Série A"), "2026-05-01");
+  expect(season.calendarIssues).toEqual([]);
+  expect(dates(season)).toHaveLength(38);
+  expect(dates(season).every(date => date >= "2026-05-01" && !(date > "2026-06-01" && date < "2026-07-22"))).toBe(true);
+});
+
+it("não simula jogos de fundo sem data junto de outro compromisso", () => {
+  const season = applyBrazilianCalendar(league("Série A"));
+  const first = nextCareerFixture(season)!;
+  const undated = { ...first, id: "undated-state", competitionId: "state:SP", type: "state" as const, scheduledDate: undefined, calendarRound: 1, homeClubId: "2", awayClubId: "3" };
+  const cup = { ...undated, id: "undated-cup", competitionId: "cup", type: "cup" as const, status: "locked" as const };
+  const result = completeCareerFixture({ ...season, fixtures: [first, undated, cup] }, first.id, { home: 1, away: 0 }, createDefaultDatabase());
+  expect(result.fixtures.find(f => f.id === first.id)?.status).toBe("played");
+  expect(result.fixtures.find(f => f.id === undated.id)).toEqual(undated);
+  expect(result.fixtures.find(f => f.id === cup.id)).toEqual(cup);
+});

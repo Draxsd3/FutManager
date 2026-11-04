@@ -75,3 +75,10 @@ it.each(["friendlies", "jobs"] as const)("explains when %s is not implemented ra
   fireEvent.click(screen.getByRole("button", { name: /Ver jogos do seu time/ }));
   expect(props.onViewChange).toHaveBeenCalledWith("matches");
 });
+
+it("explica a sobreposição oficial de 2026 e identifica o limite do formato estadual sem mudar a navegação", () => {
+  render(<AgendaScreen {...props} season={{ ...season, calendarIssues: ["Paulista"] }} />);
+  expect(screen.getByText(/a Série A começa em 28\/01, durante os estaduais/)).toBeTruthy();
+  expect(screen.getByRole("status").textContent).toContain("até 11 datas");
+  expect(screen.getByRole("status").textContent).toContain("formatos simplificados");
+});

@@ -104,7 +104,7 @@ it("uses one domestic CBF plan regardless of the chosen club, state, cup path or
   const careers = database.clubs.map(club => createCareerSeason(database, club.id, 2026)!);
   const dates = new Map<string, string | undefined>();
   for (const season of careers) {
-    expect(season.calendarVersion).toBe(2);
+    expect(season.calendarVersion).toBe(3);
     expect(season.season).toBe(2026);
     for (const fixture of season.fixtures.filter(f => f.type !== "cup")) {
       if (dates.has(fixture.id)) expect(fixture.scheduledDate).toBe(dates.get(fixture.id));
