@@ -41,6 +41,7 @@ export function TeamDirectory({
   onBack: () => void;
 }) {
   const [query, setQuery] = useState("");
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [country, setCountry] = useState("");
   const [division, setDivision] = useState("");
   const [activeClubId, setActiveClubId] = useState("");
@@ -151,7 +152,7 @@ export function TeamDirectory({
       <section className={`${panel} p-3 sm:p-4`} aria-label="Filtros de clubes">
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(220px,1fr)_220px_220px_auto]">
           <label className="sr-only" htmlFor="team-directory-query">Buscar clube</label>
-          <input id="team-directory-query" className={control} placeholder="Buscar clube pelo nome" value={query} onChange={(event) => setQuery(event.target.value)} />
+          <input id="team-directory-query" className={control} placeholder="Buscar clube pelo nome" value={query} onChange={(event) => { setQuery(event.target.value); setExpandedGroups({}); }} />
           <label className="sr-only" htmlFor="team-directory-country">País</label>
           <select id="team-directory-country" className={control} value={country} onChange={(event) => { setCountry(event.target.value); setDivision(""); }}><option value="">Todos os países</option>{countryOptions.map((item) => <option key={item}>{item}</option>)}</select>
           <label className="sr-only" htmlFor="team-directory-division">Competição</label>
@@ -165,12 +166,17 @@ export function TeamDirectory({
         <aside className={`${panel} flex min-h-[250px] flex-col overflow-hidden xl:max-h-[calc(100vh-250px)]`} aria-label="Lista de clubes">
           <div className="flex items-center justify-between border-b border-[#e8eee9] px-4 py-3"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#718477]">Clubes cadastrados</p><p className="mt-0.5 text-sm font-extrabold">Universo do jogo</p></div><span className="rounded-lg bg-[#edf5ef] px-2.5 py-1 text-[11px] font-bold text-[#246e43]">{visibleClubs.length}</span></div>
           <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2">
-            {clubGroups.map(([key, group]) => <section key={key} aria-label={`${divisionLabel(group.division, group.country)} · ${group.country}`} className="mb-3 last:mb-0">
-              <h2 className="sticky top-0 z-10 mb-1 flex items-center justify-between gap-2 rounded-lg border-b border-[#dce3da] bg-[#f5f6f3] px-3 py-2 text-xs font-bold text-[#354d3c]">
-                <span>{divisionLabel(group.division, group.country)}{countryOptions.length > 1 && <small className="mt-1 block text-[10px] font-normal text-[#5f705e]">{group.country}</small>}</span>
-                <span className="rounded-md bg-[#e5eedf] px-2 py-1 text-[10px] tabular-nums" aria-label={`${group.clubs.length} clubes`}>{group.clubs.length}</span>
+            {clubGroups.map(([key, group]) => {
+              const expanded = expandedGroups[key] ?? !!query.trim();
+              return <section key={key} aria-label={`${divisionLabel(group.division, group.country)} · ${group.country}`} className="mb-3 last:mb-0">
+              <h2 className="sticky top-0 z-10 mb-1 rounded-lg border-b border-[#dce3da] bg-[#f5f6f3] text-xs font-bold text-[#354d3c]">
+                <button type="button" aria-expanded={expanded} onClick={() => setExpandedGroups(current => ({ ...current, [key]: !expanded }))} className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left hover:bg-[#eaf1e4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#438657]">
+                  <span className="min-w-0 flex-1">{divisionLabel(group.division, group.country)}{countryOptions.length > 1 && <small className="mt-1 block text-[10px] font-normal text-[#5f705e]">{group.country}</small>}</span>
+                  <span className="rounded-md bg-[#e5eedf] px-2 py-1 text-[10px] tabular-nums" aria-label={`${group.clubs.length} clubes`}>{group.clubs.length}</span>
+                  <span aria-hidden="true" className="text-[12px] text-[#5f705e]">{expanded ? "▾" : "▸"}</span>
+                </button>
               </h2>
-              {group.clubs.map((item) => {
+              {expanded && group.clubs.map((item) => {
               const isActive = activeClub?.id === item.id;
               const rosterCount = item.name === club ? squad.length : database.players.filter((player) => player.clubId === item.id && !completedTransfers.has(player.id)).length;
               return <button key={item.id} aria-pressed={isActive} onClick={() => chooseClub(item)} className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${isActive ? "border-[#81b48d] bg-[#eef7f0] shadow-sm" : "border-transparent hover:border-[#e3ece4] hover:bg-[#f7faf7]"}`}>
@@ -179,7 +185,7 @@ export function TeamDirectory({
                 <span className="text-[10px] font-bold text-[#789080]">{rosterCount}</span>
               </button>;
               })}
-            </section>)}
+            </section>; })}
             {!visibleClubs.length && <div className="p-4 text-sm text-[#718477]">Nenhum clube corresponde aos filtros.</div>}
           </div>
         </aside>
