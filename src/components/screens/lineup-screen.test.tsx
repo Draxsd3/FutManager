@@ -70,7 +70,8 @@ it("uses numbered shirts, not photos, and exposes every sector", () => {
   expect(starterButton(0).getAttribute("aria-label")).toContain(starters[0].name);
   expect(document.querySelector('input[type="file"]')).toBeNull();
   expect(document.querySelector('img[alt^="Foto"]')).toBeNull();
-  expect(starterButton(0).querySelector("svg text")?.textContent).toBe(
+  expect(starterButton(0).querySelector("svg text")).toBeNull();
+  expect(starterButton(0).querySelector("i[aria-hidden=\"true\"]")?.nextElementSibling?.textContent).toBe(
     String(starters[0].shirtNumber ?? starters[0].id),
   );
   expect(screen.queryByRole("button", { name: /Posicionar em/ })).toBeNull();

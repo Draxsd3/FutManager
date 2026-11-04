@@ -64,18 +64,6 @@ export function PlayerJersey({ player, club, kit = 1 }: { player: Player; club?:
         filter={imported ? undefined : `url(#${id})`}
         onError={imported ? () => setFailedAsset(imported) : undefined}
       />
-      <text
-        x="435"
-        y={imported ? "750" : "560"}
-        textAnchor="middle"
-        fill={imported ? "white" : player.position === "G" ? "#17231c" : "var(--team-text, white)"}
-        fontSize={imported ? 180 : 235}
-        fontFamily="Arial,sans-serif"
-        fontWeight="700"
-        style={{ paintOrder: "stroke", stroke: imported ? "#000000" : "#00000030", strokeWidth: imported ? 12 : 5 }}
-      >
-        {player.shirtNumber ?? player.id}
-      </text>
     </svg>
   );
 }
