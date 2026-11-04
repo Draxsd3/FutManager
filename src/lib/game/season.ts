@@ -1,3 +1,4 @@
+import { applyBrazilianCalendar } from "./brazilian-calendar";
 import type { EditorDatabase, EditorPlayer } from "./editor-data";
 import type { DivisionKey } from "./mock-data";
 import { otherScore, seededRandom } from "./live-match";
@@ -25,6 +26,9 @@ export type SeasonFixture = {
   season: number;
   competitionRound: number;
   calendarRound: number;
+  /** ISO civil date generated inside a CBF planning window, not an official fixture. */
+  scheduledDate?: string;
+  dateSource?: "cbf-window" | "projection";
   roundLabel: string;
   homeClubId: string;
   home: string;
@@ -40,6 +44,8 @@ export type SeasonFixture = {
 
 export type CareerSeason = {
   version: 1;
+  calendarVersion?: number;
+  calendarIssues?: string[];
   season: number;
   clubId: string;
   clubName: string;
@@ -350,12 +356,12 @@ export function createCareerSeason(database: EditorDatabase, clubId: string, sea
     if (key !== previousKey) calendarRound += 1;
     previousKey = key;
     for (const fixture of group.fixtures) {
-      let scheduled = { ...fixture, calendarRound };
+      const scheduled = { ...fixture, calendarRound };
       if (group.type === "cup") {
         const userTie = fixture.homeClubId === clubId || fixture.awayClubId === clubId;
         if (group.round < firstManagerCupRound) {
-          // A bye may mean the initial cup matches are already resolved before the manager enters.
-          scheduled = simulateFixture(database, scheduled);
+          // Background matches are settled when their calendar day is reached, never before kick-off.
+          scheduled.status = "scheduled";
         } else if (group.round === firstManagerCupRound) {
           scheduled.status = "scheduled";
         } else {
@@ -366,7 +372,7 @@ export function createCareerSeason(database: EditorDatabase, clubId: string, sea
       fixtures.push(scheduled);
     }
   }
-  return { version: 1, season, clubId, clubName: managedClub.name, division: managedClub.division, ...(state ? { state } : {}), fixtures };
+  return applyBrazilianCalendar({ version: 1, season, clubId, clubName: managedClub.name, division: managedClub.division, ...(state ? { state } : {}), fixtures });
 }
 
 function typePriority(type: SeasonCompetitionType) {

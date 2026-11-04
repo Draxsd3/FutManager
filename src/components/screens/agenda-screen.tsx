@@ -1,5 +1,6 @@
 "use client";
 
+import { brazilianCalendarPeriods, formatCalendarDate } from "@/lib/game/brazilian-calendar";
 import { useState } from "react";
 import { nextCareerFixture, type CareerSeason, type SeasonFixture } from "@/lib/game/season";
 import type { EditorDatabase } from "@/lib/game/editor-data";
@@ -35,7 +36,7 @@ export function AgendaScreen({ club, coach, competition, inGameDate, round, seas
       {view === "matches" ? <>
         <div className={styles.overview}>
           <article className={styles.hero}><div className={styles.heroTop}><span className={styles.kicker}>PRÓXIMO COMPROMISSO</span>{next && <span className={styles.heroBadge}>{next.roundLabel} · {isHome ? "Em casa" : "Fora de casa"}</span>}</div>
-            {next ? <><p className={styles.competition}>{next.competitionName}</p><div className={styles.versus}><div><Crest club={next.home} /><strong>{next.home}</strong></div><span>×</span><div><Crest club={next.away} /><strong>{next.away}</strong></div></div><div className={styles.heroBottom}><div><strong>Data a definir</strong><span>{stadium(next)}</span></div><button onClick={onPrepare}>Preparar equipe <span aria-hidden="true">→</span></button></div></> : <div className={styles.heroEmpty}>Nenhum próximo compromisso disponível.</div>}
+            {next ? <><p className={styles.competition}>{next.competitionName}</p><div className={styles.versus}><div><Crest club={next.home} /><strong>{next.home}</strong></div><span>×</span><div><Crest club={next.away} /><strong>{next.away}</strong></div></div><div className={styles.heroBottom}><div><strong>{formatCalendarDate(next.scheduledDate)}</strong><span>{stadium(next)}</span></div><button onClick={onPrepare}>Preparar equipe <span aria-hidden="true">→</span></button></div></> : <div className={styles.heroEmpty}>Nenhum próximo compromisso disponível.</div>}
           </article>
           <aside className={styles.summary}><span className={styles.kicker}>SEU PLANEJAMENTO</span><h2>Foco na próxima rodada</h2><div className={styles.summaryRow}><span>Competição</span><strong>{next?.competitionName ?? competition}</strong></div><div className={styles.summaryRow}><span>Próxima fase</span><strong>{next?.roundLabel ?? `${round}ª rodada`}</strong></div><div className={styles.summaryRow}><span>Treinador</span><strong>{coach}</strong></div><p className={styles.note}>Confira a escalação e a energia do elenco antes de entrar em campo.</p></aside>
         </div>
@@ -46,13 +47,19 @@ export function AgendaScreen({ club, coach, competition, inGameDate, round, seas
             const played = fixture.status === "played";
             const result = played && Number.isInteger(fixture.homeScore) && Number.isInteger(fixture.awayScore) ? `${fixture.homeScore} × ${fixture.awayScore}` : null;
             return <tr key={fixture.id}>
-              <td><strong>A definir</strong><small>Ordem {fixture.calendarRound} · {fixture.roundLabel}</small></td>
+              <td><strong>{formatCalendarDate(fixture.scheduledDate)}</strong><small>{fixture.roundLabel}{fixture.scheduledDate ? " · Prevista no jogo" : " · Sem data"}</small></td>
               <td><strong>{uncertain ? `${club} · adversário a definir` : <>{fixture.home} <span className={styles.muted}>×</span> {fixture.away}</>}</strong><small>{uncertain ? "Confronto condicionado à classificação" : stadium(fixture)}</small></td>
               <td>{fixture.competitionName}</td><td><span className={styles.pill}>{uncertain ? "A definir" : home ? "Casa" : "Fora"}</span></td>
               <td><span className={styles.upcoming}>{fixture.status === "cancelled" ? "Cancelado" : uncertain ? "Condicionado" : result ? `Finalizado · ${result}` : played ? "Finalizado · placar indisponível" : "A disputar"}</span></td>
               <td>{fixture.id === next?.id && <button className={styles.textButton} onClick={onPrepare}>Escalar →</button>}</td>
             </tr>;
-          }) : <tr><td colSpan={6} className={styles.emptyRow}>Nenhum jogo disponível para este filtro.</td></tr>}</tbody></table></div><p className={styles.tableFoot}>Temporada {season?.season ?? date.getFullYear()} · partidas em ordem do calendário. Datas ainda não são simuladas; fases condicionadas dependem da classificação.</p>
+          }) : <tr><td colSpan={6} className={styles.emptyRow}>Nenhum jogo disponível para este filtro.</td></tr>}</tbody></table></div><p className={styles.tableFoot}>Temporada {season?.season ?? date.getFullYear()} · partidas em ordem do calendário. Datas geradas pelo jogo nas janelas brasileiras, não a tabela oficial de confrontos. Fases condicionadas dependem da classificação.</p>
+          {!!season?.calendarIssues?.length && <p role="status" className={styles.tableFoot}>O formato atual excede as datas disponíveis em: {season.calendarIssues.join(", ")}. Esses jogos ficam sem data; não foram colocados fora do período da competição.</p>}
+          <details className={styles.tableFoot}><summary>Calendário brasileiro · {season?.season ?? 2026}{season?.season && season.season !== 2026 ? " (projeção da referência 2026)" : " (referência CBF 2026)"}</summary>
+            <p>Períodos de referência; esta lista não inscreve o clube em novas competições. Janelas de transferências são informativas, sem alterar as regras de negociação.</p>
+            <ul>{brazilianCalendarPeriods(season?.season ?? 2026).map(period => <li key={period.name}>{period.name}: {formatCalendarDate(period.start)} a {formatCalendarDate(period.end)}</li>)}</ul>
+            {(season?.season ?? 2026) === 2026 && <p>Série A: interrupção após as 18 primeiras rodadas, retorno em 22/07. Série B: sem pausa para a Copa; playoffs previstos em 21 e 28/11. Datas FIFA e seleções não incluídas.</p>}
+          </details>
         </section>
       </> : <section className={styles.emptySection} aria-labelledby="agenda-section-title"><p className={styles.eyebrow}>{view === "friendlies" ? "PREPARAÇÃO DO ELENCO" : "CARREIRA DO TREINADOR"}</p><h2 id="agenda-section-title">{title.label}</h2><div className={styles.emptySymbol} aria-hidden="true">{view === "friendlies" ? "⚽" : "◎"}</div><h3>{view === "friendlies" ? "Nenhum amistoso agendado" : "Nenhuma proposta de trabalho"}</h3><p>{view === "friendlies" ? "Os amistosos do clube ficarão reunidos aqui. O agendamento de novos amistosos ainda não está disponível." : `Você está no comando do ${club}. O sistema de ofertas de emprego ainda não está disponível nesta versão.`}</p><button onClick={() => onViewChange("matches")}>Ver jogos do seu time →</button></section>}
       <footer className={styles.footer}><span>FUTMANAGER / TEMPORADA {date.getFullYear()}</span><span>{club} · {title.label}</span></footer>

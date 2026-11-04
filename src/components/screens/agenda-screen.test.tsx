@@ -26,7 +26,7 @@ it("shows the season's played and future matches, and prepares only the actual n
   expect(within(table).getByText("Condicionado")).toBeTruthy();
   expect(screen.queryByText("Candidato hipotético")).toBeNull();
   expect(within(table).getAllByRole("button", { name: /Escalar/ })).toHaveLength(1);
-  expect(screen.getByText(/Datas ainda não são simuladas/)).toBeTruthy();
+  expect(screen.getByText(/Datas geradas pelo jogo nas janelas brasileiras/)).toBeTruthy();
   expect(screen.queryByText("22/01")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: /Preparar equipe/ }));
   expect(props.onPrepare).toHaveBeenCalledOnce();
@@ -48,3 +48,11 @@ it("handles a missing season without inventing fixtures or enabling match prepar
   expect(screen.queryByRole("button", { name: /Preparar equipe/ })).toBeNull();
   expect(screen.getByText("Nenhum jogo disponível para este filtro.")).toBeTruthy();
 });
+
+ it("exibe datas persistidas e a referência brasileira sem revelar adversários condicionados", () => {
+  const dated = { ...season, calendarVersion: 1, fixtures: season.fixtures.map(f => ({ ...f, scheduledDate: "2026-04-22", dateSource: "cbf-window" as const })) };
+  render(<AgendaScreen {...props} season={dated} />);
+  expect(screen.getAllByText("22/04/2026").length).toBeGreaterThan(1);
+  expect(screen.getByText(/Calendário brasileiro · 2026/)).toBeTruthy();
+  expect(screen.queryByText("Candidato hipotético")).toBeNull();
+ });
