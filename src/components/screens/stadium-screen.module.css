@@ -60,3 +60,24 @@
 .gateSummary div { border-radius:6px; background:#eaf0e5; }
 .project { border-radius:6px; background:#fafbf8; }
 @media(max-width:700px) { .container { padding:18px 14px; } .columns { gap:16px; } }
+
+/* Stadium art and small contextual badges bring match-day atmosphere without a tall hero. */
+.container { padding-top:16px; padding-bottom:16px; }
+.summary { gap:8px; margin-bottom:12px; }
+.summary > div { position:relative; min-height:54px; padding:8px 9px 8px 40px; border:1px solid #dce4db; border-radius:7px; background:#fbfcfa; }
+.summary > div > svg { position:absolute; left:11px; top:12px; color:#55785d; }
+.summary strong { font-size:15px; }
+.columns { gap:20px; }
+.panel { padding:12px 0; }
+.panelTitle { display:flex; align-items:center; gap:9px; min-width:0; }
+.panelIcon { display:grid; flex:none; place-items:center; width:36px; height:36px; border:1px solid #d6e0d3; border-radius:8px; background:linear-gradient(145deg,#f8fbf5,#e2ebdf); color:#4b7054; box-shadow:0 2px 4px #243a2310; }
+.stadiumImage { position:relative; display:flex; align-items:end; justify-content:space-between; gap:10px; min-height:108px; overflow:hidden; margin:9px 0; padding:11px; border:1px solid #24372d; border-radius:8px; background:linear-gradient(90deg,#0c1c17d9,#10201635),linear-gradient(0deg,#101b17b5,transparent 75%),url('/game-assets/backgrounds/stadium-management.webp') center 60% / cover; color:#fff; }
+.stadiumIdentity { display:flex; align-items:center; gap:8px; min-width:0; }
+.stadiumIdentity span { min-width:0; }
+.stadiumIdentity small { display:block; color:#d1ded2; font-size:8px; font-weight:750; letter-spacing:.12em; }
+.stadiumIdentity strong { display:block; overflow:hidden; color:white; font-size:15px; text-overflow:ellipsis; white-space:nowrap; text-shadow:0 1px 4px #000; }
+.imageCaption { flex:none; color:#e0e9df; font-size:8px; text-shadow:0 1px 3px #000; }
+.projectIcon { display:grid !important; flex:none; place-items:center; width:28px; height:28px; margin:0 !important; border-radius:6px; background:#e8efe5; color:#4c7656 !important; }
+.project > div { flex:1; min-width:0; }
+@media (max-height:750px) and (min-width:851px) { .stadiumImage { min-height:76px; } }
+@media (max-width:700px) { .container { padding:12px 14px; } .summary { gap:6px; } .summary > div { padding-left:34px; } .summary > div > svg { left:8px; } .stadiumImage { min-height:90px; } .imageCaption { font-size:7px; } }
