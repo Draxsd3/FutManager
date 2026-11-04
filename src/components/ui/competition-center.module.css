@@ -612,3 +612,13 @@
 .knockoutMatch > small { grid-column:1 / -1; color:#5f705e; font-size:10px; text-align:center; }
 .knockoutChampion { margin:0 16px 8px; padding:8px; border-radius:5px; background:#e8f1e5; color:#315f40; font-size:11px; }
 @media(max-width:600px) { .knockoutHeading { padding:10px 8px 8px; } .knockoutHeading select { min-width:0; } .knockoutList { margin:0 8px; max-height:50vh; } .knockoutMatch { padding:8px 6px; gap:4px; font-size:10px; } .knockoutTeam img, .knockoutTeam [role="img"] { width:22px; height:25px; } }
+
+/* The competition browser needs room for tables and fixtures, not a hero heading. */
+.header { padding:6px 14px; }
+.header p { margin:0 0 2px; font-size:8px; }
+.header h1 { font-size:16px; }
+.header button { padding:6px 10px; }
+.competitionHeader { gap:9px; margin-bottom:6px; }
+.competitionHeader h2 { font-size:17px; margin:1px 0; }
+.competitionHeader p:not(.eyebrow) { margin:2px 0; }
+.headerTrophy { width:30px; height:38px; }
