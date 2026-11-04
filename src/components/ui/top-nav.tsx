@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import Image from "next/image";
 import { createPortal } from "react-dom";
 import { ClassicIcon, type ClassicIconName } from "./classic-icon";
 import styles from "./top-nav.module.css";
 
-export type NavItem = { icon: ClassicIconName; label: string; onClick: () => void; active?: boolean; children?: { label: string; description: string; onClick: () => void }[] };
+export type NavItem = { icon: ClassicIconName; image?: string; label: string; onClick: () => void; active?: boolean; children?: { label: string; description: string; onClick: () => void }[] };
 
 export function TopNav({ items, date, classic = false }: { items: NavItem[]; date: string; classic?: boolean; teamName?: string }) {
   return (
@@ -54,7 +55,7 @@ function NavButton({ item }: { item: NavItem }) {
     <button ref={button} type="button" onClick={toggle} title={item.label} aria-haspopup={item.children ? "menu" : undefined} aria-expanded={item.children ? !!position : undefined} aria-controls={position ? id : undefined} aria-current={item.active ? "page" : undefined}
       onKeyDown={(event) => { if (item.children && (event.key === "ArrowDown" || event.key === "ArrowUp")) { event.preventDefault(); if (!position) toggle(); } }}
       className={styles.navButton} data-active={item.active || !!position || undefined}>
-      <ClassicIcon name={item.icon} size={19} /><span>{item.label}</span>{item.children && <span aria-hidden="true" className={styles.chevron}>⌄</span>}
+      {item.image ? <Image src={item.image} alt="" aria-hidden="true" width={28} height={28} className={styles.navImage} unoptimized /> : <ClassicIcon name={item.icon} size={19} />}<span>{item.label}</span>{item.children && <span aria-hidden="true" className={styles.chevron}>⌄</span>}
     </button>
     {position && createPortal(<div ref={menu} id={id} role="menu" aria-label={item.label} style={{ position: "fixed", top: position.top, left: position.left, width: "min(300px, calc(100vw - 16px))", zIndex: 200 }} className={styles.menu}
       onKeyDown={(event) => {
