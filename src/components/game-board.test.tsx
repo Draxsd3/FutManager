@@ -235,12 +235,12 @@ it("opens Agenda choices before navigating and routes each choice to its own sec
   expect(screen.queryByRole("heading", { name: "Cada jogo, um novo capítulo." })).toBeNull();
   expect(screen.getAllByRole("menuitem")).toHaveLength(3);
   fireEvent.click(screen.getByRole("menuitem", { name: /Jogos amistosos/ }));
-  expect(await screen.findByRole("heading", { name: "Nenhum amistoso agendado" })).toBeTruthy();
+  expect(await screen.findByRole("heading", { name: "Agendamento ainda indisponível" })).toBeTruthy();
   expect(screen.queryByRole("menu")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Fechar Agenda" }));
   fireEvent.click(screen.getByRole("button", { name: "Agenda" }));
   fireEvent.click(screen.getByRole("menuitem", { name: /Central de empregos/ }));
-  expect(await screen.findByRole("heading", { name: "Nenhuma proposta de trabalho" })).toBeTruthy();
+  expect(await screen.findByRole("heading", { name: "Ofertas ainda indisponíveis" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Fechar Agenda" }));
   fireEvent.click(screen.getByRole("button", { name: "Agenda" }));
   fireEvent.click(screen.getByRole("menuitem", { name: /Jogos do seu time/ }));
