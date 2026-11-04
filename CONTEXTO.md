@@ -484,3 +484,9 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Lista de Times agrupada por país/divisão cadastrada, em ordem A→B→C→D, com título e quantidade em cada grupo. Clubes sem divisão nacional continuam acessíveis em grupo próprio; grupos vazios não aparecem. Cada clube aparece uma única vez, sem replicação por participação em copas/estaduais.
 - Filtro existente passa a identificar explicitamente as divisões nacionais; preservados busca, país, seleção de clube, elencos, perfil e negociações. Não alterar inscrições, dados, campeonatos ou saves.
 - Validação: 9 testes direcionados em 2 arquivos aprovados, lint, TypeScript, build e diff-check aprovados. Regressão nova cobre ordem de divisões, unicidade, ausência de grupo de copa, seleção, filtro e busca sem resultados. Sem inspeção visual em navegador.
+
+### 60. Título de Times somente na barra superior — 04/11/2026
+
+- Pedido com referências: mover o título/ícone de Times do cabeçalho interno para a barra superior da janela e remover a repetição dentro da tela, deixando-a mais limpa.
+- Barra da janela Times recebe ícone compacto e título único (h1, mantendo nome acessível do diálogo). No conteúdo embutido, remover cabeçalho, breadcrumb e descrição redundantes; manter saldo/retorno em linha compacta, filtros e grupos por divisão. Uso isolado de Times mantém cabeçalho próprio. Sem mudar as demais telas, navegação, elencos ou negociações.
+- Validação: 17 testes direcionados em 4 arquivos aprovados, lint, TypeScript, build e diff-check aprovados. Duas regressões novas cobrem título/ícone na barra e ausência da duplicação no conteúdo com ações preservadas. Sem inspeção visual em navegador.
