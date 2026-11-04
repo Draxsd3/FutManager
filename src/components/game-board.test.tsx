@@ -266,7 +266,7 @@ it("preserves the custom lineup when reopening tactics and after a saved-career 
   expect(document.querySelector(`[data-player="${id}"][data-slot]`)?.getAttribute("style")).toContain("10%");
 });
 
-it("uses the compact in-match modal, confirms substitutions once and transfers custom positions into autosave", async () => {
+it("uses the shared pre-match tactics board, confirms substitutions once and transfers custom positions into autosave", async () => {
   render(game());
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
   fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Teste Táticas" } });
@@ -286,9 +286,9 @@ it("uses the compact in-match modal, confirms substitutions once and transfers c
   await waitFor(() => expect(readLocalSaves("alice")[0].progress?.detailOpen).toBe(true));
   const before = readLocalSaves("alice")[0].progress!;
   const id = before.starters[0];
-  expect(screen.getByRole("group", { name: "Campo tático" })).toBeTruthy();
+  expect(screen.getByLabelText("Campo de escalação")).toBeTruthy();
   expect(document.querySelector('[inert]')).toBeTruthy();
-  const shirt = () => document.querySelector<HTMLButtonElement>(`button[data-starter="${id}"]`)!;
+  const shirt = () => document.querySelector<HTMLButtonElement>(`button[data-player="${id}"][data-slot]`)!;
   const reserve = document.querySelector<HTMLButtonElement>('button[data-reserve]')!;
   const incoming = Number(reserve.dataset.reserve);
   fireEvent.click(shirt());
@@ -304,11 +304,11 @@ it("uses the compact in-match modal, confirms substitutions once and transfers c
   expect(after.manualPositions[id]).toBeUndefined();
   expect(after.minute).toBe(before.minute);
   expect(after.events.length).toBe(before.events.length + 1);
-  fireEvent.click(screen.getByRole("button", { name: /Voltar ao jogo/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Voltar ao jogo" }));
   expect(screen.queryByRole("dialog", { name: "Táticas da partida" })).toBeNull();
   expect(document.activeElement).toBe(tacticsTrigger);
   fireEvent.click(screen.getByRole("button", { name: /Escalação e táticas/ }));
-  expect(document.querySelector(`button[data-starter="${incoming}"]`)).toBeTruthy();
+  expect(document.querySelector(`button[data-player="${incoming}"][data-slot]`)).toBeTruthy();
   expect(readLocalSaves("alice")[0].progress?.manualPositions[incoming]).toEqual({ left: 38, top: 9 });
 });
 

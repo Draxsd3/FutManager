@@ -176,3 +176,9 @@
 .halftimeLineup { flex: 1; min-height: 0; overflow: auto; }
 
 .halftimeModal { height: calc(100dvh - 32px); }
+
+/* The exact pre-match board is shared by every in-match tactics entry point. */
+.unifiedModal { position: relative; }
+.modalClose { position: absolute; right: 8px; top: 8px; z-index: 5; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.unifiedModal .description { margin-right: 48px; }
