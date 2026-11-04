@@ -3,6 +3,7 @@ import { PlayerJersey } from "./player-jersey";
 
 export function Shirt({
   player,
+  club,
   selected,
   onClick,
   compact,
@@ -34,7 +35,7 @@ export function Shirt({
         selected ? "scale-105 drop-shadow-[0_0_6px_var(--accent)]" : "",
       ].join(" ")}
     >
-      <span className={compact ? "h-11 w-10 [&>svg]:h-full [&>svg]:w-full" : "h-12 w-11 [&>svg]:h-full [&>svg]:w-full"}><PlayerJersey player={player}/></span>
+      <span className={compact ? "h-11 w-10 [&>svg]:h-full [&>svg]:w-full" : "h-12 w-11 [&>svg]:h-full [&>svg]:w-full"}><PlayerJersey club={club} player={player}/></span>
       <span
         className={[
           "mt-1 max-w-full truncate font-bold text-white drop-shadow",

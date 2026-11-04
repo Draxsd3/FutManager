@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { afterEach, beforeAll, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { clubKitAsset } from "@/lib/game/assets";
 import { squad, buildStartingXI, type Player } from "@/lib/game/mock-data";
 import { LineupScreen } from "./lineup-screen";
 const ids = buildStartingXI("4-3-3", squad);
@@ -430,5 +431,15 @@ it("draws complete pitch markings and keeps player labels and energy attached to
     expect(shirt.querySelector('i[aria-hidden="true"] span')).toBeTruthy();
     expect(shirt.style.left).toContain("44px");
     expect(shirt.hasAttribute("data-name-align")).toBe(false);
+  }
+});
+
+it("uses the imported club shirt for starters and the entire bench, not a tinted generic mold", () => {
+  setup();
+  const shirts = document.querySelectorAll('svg image');
+  expect(shirts.length).toBeGreaterThanOrEqual(starters.length + bench.length);
+  for (const image of shirts) {
+    expect(image.getAttribute("href")).toBe(clubKitAsset("Flamengo"));
+    expect(image.hasAttribute("filter")).toBe(false);
   }
 });

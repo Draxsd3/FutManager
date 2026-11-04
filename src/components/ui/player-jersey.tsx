@@ -1,9 +1,15 @@
-import { useId } from "react";
+"use client";
+
+import { useId, useState } from "react";
 import type { Player } from "@/lib/game/mock-data";
+import { clubKitAsset } from "@/lib/game/assets";
 import { KIT_TEMPLATE } from "@/lib/kits/template";
 
-/** Photographic fabric, never a player portrait. All numbered jerseys share the exact mold. */
-export function PlayerJersey({ player }: { player: Player }) {
+/** Use the very same imported artwork as the club/editor; never recolor or crop it. */
+export function PlayerJersey({ player, club, kit = 1 }: { player: Player; club?: string; kit?: 1 | 2 | 3 }) {
+  const [failedAsset, setFailedAsset] = useState<string | null>(null);
+  const asset = club ? clubKitAsset(club, kit) : null;
+  const imported = asset && asset !== failedAsset ? asset : null;
   const id = useId();
   const color =
     player.position === "G" ? "#c7a451" : "var(--team-primary, #287354)";
@@ -51,20 +57,22 @@ export function PlayerJersey({ player }: { player: Player }) {
         </filter>
       </defs>
       <image
-        href={KIT_TEMPLATE.image}
+        href={imported ?? KIT_TEMPLATE.image}
         width="870"
         height="1000"
-        filter={`url(#${id})`}
+        preserveAspectRatio="xMidYMid meet"
+        filter={imported ? undefined : `url(#${id})`}
+        onError={imported ? () => setFailedAsset(imported) : undefined}
       />
       <text
         x="435"
-        y="560"
+        y={imported ? "750" : "560"}
         textAnchor="middle"
-        fill={player.position === "G" ? "#17231c" : "var(--team-text, white)"}
-        fontSize="235"
+        fill={imported ? "white" : player.position === "G" ? "#17231c" : "var(--team-text, white)"}
+        fontSize={imported ? 180 : 235}
         fontFamily="Arial,sans-serif"
         fontWeight="700"
-        style={{ paintOrder: "stroke", stroke: "#00000030", strokeWidth: 5 }}
+        style={{ paintOrder: "stroke", stroke: imported ? "#000000" : "#00000030", strokeWidth: imported ? 12 : 5 }}
       >
         {player.shirtNumber ?? player.id}
       </text>
