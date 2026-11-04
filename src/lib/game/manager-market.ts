@@ -5,6 +5,7 @@ import type { CareerSeason, SeasonFixture } from "./season";
 /** Values are R$ thousands, matching the managed club's budget and player salaries. */
 export type ManagerClub = {
   clubId: string;
+  vacancyVersion?: number;
   coach: string | null;
   budget: number;
   startingBudget: number;
@@ -12,7 +13,8 @@ export type ManagerClub = {
   history: ConfidenceMatch[];
   processedFixtures: string[];
 };
-export type ManagerMarket = { clubs: Record<string, ManagerClub>; dismissals: { clubId: string; coach: string; fixtureId: string; board: number; fans: number }[] };
+export type ManagerApplication = { id: string; clubId: string; vacancyVersion: number; appliedOn: string; expiresOn: string; status: "offered" | "rejected" | "declined" | "accepted" | "expired" | "cancelled"; message: string };
+export type ManagerMarket = { applications?: ManagerApplication[]; clubs: Record<string, ManagerClub>; dismissals: { clubId: string; coach: string; fixtureId: string; board: number; fans: number }[] };
 
 /** Until a club economy exists, every AI club starts with the same cash as a new human career.
  * Existing results are marked processed: we cannot reconstruct previous managers or finances.
@@ -30,7 +32,7 @@ export function createManagerMarket(database: EditorDatabase, season: CareerSeas
  * clubConfidence and the same dismissal limits. AI cash is a simplified match credit of
  * R$151k minus one quarter of monthly payroll; actual human cash is supplied by the caller.
  * Managers need five games before being dismissed. */
-export function applyManagerFixture(market: ManagerMarket, season: CareerSeason, fixture: SeasonFixture, human?: { clubId: string; budget: number; payroll: number }): ManagerMarket {
+export function applyManagerFixture(market: ManagerMarket, season: CareerSeason, fixture: SeasonFixture, human?: { clubId: string; budget: number; payroll: number; allowDismissal?: boolean }): ManagerMarket {
   if (fixture.status !== "played" || !Number.isInteger(fixture.homeScore) || !Number.isInteger(fixture.awayScore) || fixture.homeScore! < 0 || fixture.awayScore! < 0) return market;
   const clubs = { ...market.clubs };
   const dismissals = [...market.dismissals];
@@ -43,11 +45,11 @@ export function applyManagerFixture(market: ManagerMarket, season: CareerSeason,
     const budget = isHuman ? human.budget : old.budget + 151 - old.payroll / 4;
     const payroll = isHuman ? human.payroll : old.payroll;
     const confidence = clubConfidence({ ...season, clubId, fixtures: [] }, history, budget, payroll, old.startingBudget);
-    const fired = old.coach !== null && confidence !== null && confidence.matches >= 5 && (confidence.fans <= 30 || confidence.board <= 20);
+    const fired = (!isHuman || human.allowDismissal !== false) && old.coach !== null && confidence !== null && confidence.matches >= 5 && (confidence.fans <= 30 || confidence.board <= 20);
     if (fired) dismissals.push({ clubId, coach: old.coach!, fixtureId: fixture.id, board: confidence!.board, fans: confidence!.fans });
-    clubs[clubId] = { ...old, coach: fired ? null : old.coach, budget, payroll, history, processedFixtures: [...old.processedFixtures, fixture.id] };
+    clubs[clubId] = { ...old, vacancyVersion: (old.vacancyVersion ?? 0) + Number(fired), coach: fired ? null : old.coach, budget, payroll, history, processedFixtures: [...old.processedFixtures, fixture.id] };
   }
-  return { clubs, dismissals };
+  return { ...market, clubs, dismissals };
 }
 
 /** A new appointment starts a new tenure while retaining the club's simulated finances.

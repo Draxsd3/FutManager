@@ -1,6 +1,8 @@
 "use client";
 
 import { applyBrazilianCalendar, BRAZILIAN_REFERENCE_SEASON, careerCalendarDate, formatCalendarDate } from "@/lib/game/brazilian-calendar";
+import { acceptManagerJob, applyForManagerJob, declineManagerJob, initializeCareerMarket, refreshJobOffers, updateCareerMarket, type JobClubSnapshot, type ManagerAppointment } from "@/lib/game/manager-jobs";
+import type { ManagerMarket } from "@/lib/game/manager-market";
 import { archiveChampionships, type ChampionshipRecord } from "@/lib/game/honours";
 import { LoanManager } from "@/components/ui/loan-manager";
 import { databaseWithLoans, expireLoans, loanExpiryReminders, proposeLoanExtension, reconcileLoanSquad, recoverCareerLoans, type CareerLoans } from "@/lib/game/loans";
@@ -195,6 +197,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [manualPositions, setManualPositions] = useState<Record<number, ManualPosition>>({});
   const [championHistory, setChampionHistory] = useState<ChampionshipRecord[]>([]);
   const [competitionSeason, setCompetitionSeason] = useState<CareerSeason | undefined>();
+  const [managerMarket, setManagerMarket] = useState<ManagerMarket | undefined>();
+  const [jobClubSnapshots, setJobClubSnapshots] = useState<Record<string, JobClubSnapshot>>({});
+  const [managerAppointments, setManagerAppointments] = useState<ManagerAppointment[]>([]);
   const [confidenceHistory, setConfidenceHistory] = useState<ConfidenceMatch[]>([]);
   const [confidenceStartBudget, setConfidenceStartBudget] = useState<number | undefined>();
   const [activeFixtureId, setActiveFixtureId] = useState<string>();
@@ -227,7 +232,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore,
     events, participation, matchBenchIds, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
-    competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
+    managerMarket, jobClubSnapshots, managerAppointments, competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
 
   };
   const progressRef = useRef(progress);
@@ -247,7 +252,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     pendingCloudSave.current = next;
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, formation, style, marking, focus,
     starters, careerSquad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore, events,
-    participation, matchBenchIds, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, userId]);
+    participation, matchBenchIds, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, managerMarket, jobClubSnapshots, managerAppointments, userId]);
 
 
   useEffect(() => {
@@ -274,6 +279,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }, [userId]);
 
   const divisionClubNames = useMemo(() => database?.clubs.filter((item) => item.country.toLocaleLowerCase("pt-BR") === "brasil" && item.division === division).map((item) => item.name) ?? [], [database, division]);
+  const managementDatabase = useMemo(() => database ? { ...database, clubs: database.clubs.map(item => ({ ...item, coachName: managerMarket?.clubs[item.id] ? managerMarket.clubs[item.id].coach ?? "" : item.coachName })) } : null, [database, managerMarket]);
   const managedClubRecord = database?.clubs.find((item) => item.name === club);
   const scheduledFixture = nextCareerFixture(competitionSeason);
   const activeFixture = competitionSeason?.fixtures.find((item) => item.id === activeFixtureId) ?? scheduledFixture;
@@ -427,6 +433,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             : undefined;
           const completedSeason = completeCareerFixture(competitionSeason, activeFixture.id, { home: actualHome, away: actualAway, winnerClubId, playerContributions: contributions }, careerDatabase!);
           setCompetitionSeason(completedSeason);
+          setManagerMarket(current => updateCareerMarket(current ?? initializeCareerMarket(careerDatabase!, competitionSeason, coach, budget), completedSeason, { clubId: managedClubRecord!.id, budget: budget + 151, payroll: squad.reduce((total, player) => total + (playerCareers[player.id]?.salary ?? player.salary), 0) }, savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"));
           setChampionHistory(history => archiveChampionships(history, completedSeason, careerDatabase!, coach));
           setConfidenceHistory((current) => mergeConfidenceHistory(current, completedSeason));
         }
@@ -445,7 +452,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       }
     }, 700 / matchSpeed);
     return () => window.clearTimeout(timer);
-  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, opponentFormation, opponentStarters, page, startersData, formation, manualPositions, style, marking, focus, matchPreparation, events, participation, starters, squad, club, round, homeScore, awayScore, userIsHome, activeFixture, competitionSeason, database, careerDatabase, managedClubRecord, matchKey, coach]);
+  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, opponentFormation, opponentStarters, page, startersData, formation, manualPositions, style, marking, focus, matchPreparation, events, participation, starters, squad, club, round, homeScore, awayScore, userIsHome, activeFixture, competitionSeason, database, careerDatabase, managedClubRecord, matchKey, coach, budget, activeSaveId, playerCareers]);
 
   useEffect(() => {
     if (page !== "matchOverview" || minute !== 90 || detailOpen) return;
@@ -565,6 +572,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   function handleTransferAction(id: string, action: TransferNegotiationAction): string {
     const negotiation = transferNegotiations.find((item) => item.id === id);
     if (!negotiation) return "Negociação não encontrada.";
+    if (negotiation.buyerClubId !== managedClubRecord?.id) return "Esta negociação pertence a outro clube.";
     if (action.type !== "complete") {
       const result = respondToTransferNegotiation(negotiation, action);
       setTransferNegotiations((current) => current.map((item) => item.id === id ? result.negotiation : item));
@@ -742,9 +750,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       round: 1, budget: 12624, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
       careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, trainingSessions: [], manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
-      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, confidenceHistory: [], confidenceStartBudget: 12624, activeFixtureId: firstFixture?.id, transferNegotiations: [], loanContracts: initialLoans, championHistory: [] };
+      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, confidenceHistory: [], confidenceStartBudget: 12624, managerMarket: initializeCareerMarket(database, newSeason, coach.trim(), 12624), jobClubSnapshots: {}, managerAppointments: [{ clubId: selectedClub.id, club: selectedClub.name, startedOn: save.inGameDate }], activeFixtureId: firstFixture?.id, transferNegotiations: [], loanContracts: initialLoans, championHistory: [] };
     setActiveSaveId(save.id);
     setCompetitionSeason(newSeason);
+    setManagerMarket(save.progress.managerMarket); setJobClubSnapshots({}); setManagerAppointments(save.progress.managerAppointments ?? []);
     setChampionHistory([]);
     setConfidenceHistory([]);
     setConfidenceStartBudget(12624);
@@ -822,6 +831,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setMatchPreparation(null);
     setMatchRulesError(null);
     setCompetitionSeason(restoredSeason);
+    setManagerMarket(restoredSeason && database ? refreshJobOffers(save.progress?.managerMarket ?? initializeCareerMarket(database, restoredSeason, save.managerName, save.budget), save.inGameDate) : undefined);
+    setJobClubSnapshots(save.progress?.jobClubSnapshots ?? {});
+    setManagerAppointments(save.progress?.managerAppointments ?? []);
     setChampionHistory(database ? archiveChampionships(save.progress?.championHistory ?? [], restoredSeason, database, save.managerName) : save.progress?.championHistory ?? []);
     setConfidenceHistory(mergeConfidenceHistory(save.progress?.confidenceHistory ?? [], restoredSeason));
     setConfidenceStartBudget(save.progress?.confidenceStartBudget);
@@ -981,6 +993,40 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     let index = 0;
     const nextSquad = squad.map((player) => starters.includes(player.id) ? player : reordered[index++]);
     setCareerSquad(nextSquad);
+  }
+
+  const jobActionInProgress = useRef(false);
+  function storeManagerMarket(next: ManagerMarket) {
+    setManagerMarket(next);
+    const current = savesRef.current.find(save => save.id === activeSaveId);
+    if (current) void persistSave({ ...current, progress: { ...progressRef.current, managerMarket: next }, updatedAt: new Date().toISOString() });
+  }
+  function applyToManagerJob(clubId: string): string | undefined {
+    if (!managerMarket || !careerDatabase || !managedClubRecord) return "Mercado indisponível.";
+    const date = savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11";
+    const result = applyForManagerJob(managerMarket, careerDatabase, managedClubRecord.id, clubId, date);
+    storeManagerMarket(result.market);
+    return result.error;
+  }
+  function declineJob(id: string) {
+    if (!managerMarket) return;
+    storeManagerMarket(declineManagerJob(managerMarket, id, savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"));
+  }
+  async function acceptJob(id: string): Promise<string | undefined> {
+    if (jobActionInProgress.current) return "Aguarde a confirmação em andamento.";
+    const current = savesRef.current.find(save => save.id === activeSaveId);
+    if (!current || !careerDatabase) return "Carreira indisponível.";
+    jobActionInProgress.current = true;
+    try {
+      const result = acceptManagerJob({ ...current, budget, playerCareers, manualPositions, progress: { ...progressRef.current, managerMarket } }, careerDatabase, id);
+      if (!result.save) return result.error;
+      // Write the account-local snapshot first and prevent autosave of the outgoing club.
+      setCareerLoaded(false);
+      void persistSave(result.save);
+      const loaded = await loadCareer(result.save);
+      if (!loaded) return "Não foi possível carregar o clube.";
+
+    } finally { jobActionInProgress.current = false; }
   }
 
   function openLineup() {
@@ -1330,7 +1376,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return (
       <>
         <CareerWorkspace {...workspace} title={windowTitles[page]}>
-          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens championHistory={championHistory} section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
+          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens championHistory={championHistory} section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={managementDatabase ?? database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations.filter(deal => deal.buyerClubId === managedClubRecord?.id)} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
+            jobs={managerMarket && careerDatabase && managedClubRecord ? { market: managerMarket, database: careerDatabase, currentClubId: managedClubRecord.id, date: saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11", appointments: managerAppointments, onApply: applyToManagerJob, onDecline: declineJob, onAccept: acceptJob } : undefined}
             championHistory={championHistory}
             section={managementSection}
             agendaView={agendaView}
@@ -1520,6 +1567,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         setRound(nextRound);
         setActiveFixtureId(nextFixture?.id);
         const date = careerCalendarDate(savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11", competitionSeason, nextFixture);
+        const nextManagerMarket = managerMarket ? refreshJobOffers(managerMarket, date) : undefined;
+        setManagerMarket(nextManagerMarket);
         const nextLoans = expireLoans(loanContracts, date);
         const ownClubId = database?.clubs.find(item => item.name === club)?.id ?? "";
         const nextDatabase = careerDatabase ? databaseWithLoans(careerDatabase, nextLoans) : null;
@@ -1530,7 +1579,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         const nextPositions = Object.fromEntries(Object.entries(manualPositions).filter(([id]) => remaining.has(Number(id))));
         setLoanContracts(nextLoans); setCareerSquad(nextSquad); setStarters(nextStarters); setMatchBenchIds(nextBench); setManualPositions(nextPositions);
         setProfilePlayer(null); setSelectedPlayer(null);
-        saveCurrentCareer(nextRound, { activeFixtureId: nextFixture?.id, loanContracts: nextLoans, careerSquad: nextSquad, starters: nextStarters, matchBenchIds: nextBench, manualPositions: nextPositions }, date);
+        saveCurrentCareer(nextRound, { managerMarket: nextManagerMarket, activeFixtureId: nextFixture?.id, loanContracts: nextLoans, careerSquad: nextSquad, starters: nextStarters, matchBenchIds: nextBench, manualPositions: nextPositions }, date);
         setPage("hub");
       }}
     />

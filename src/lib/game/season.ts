@@ -45,6 +45,8 @@ export type SeasonFixture = {
 export type CareerSeason = {
   version: 1;
   calendarVersion?: number;
+  /** Results earned under a previous manager, excluded from this appointment's confidence. */
+  priorAppointmentFixtureIds?: string[];
   calendarIssues?: string[];
   season: number;
   clubId: string;
@@ -536,4 +538,17 @@ export function playerContributionsFromMatch(input: {
     result.set(key, current);
   }
   return [...result.values()];
+}
+
+/** Simulate the new club's earlier games under its former coach, never replay them for the user. */
+export function advanceSeasonBeforeDate(season: CareerSeason, date: string, database: EditorDatabase): CareerSeason {
+  let next = season;
+  for (let attempts = 0; attempts < season.fixtures.length; attempts++) {
+    const due = next.fixtures.filter(f => f.status === "scheduled" && f.scheduledDate && f.scheduledDate < date)
+      .sort((a, b) => a.calendarRound - b.calendarRound || a.id.localeCompare(b.id))[0];
+    if (!due) break;
+    const score = simulateFixture(database, due);
+    next = completeCareerFixture(next, due.id, { home: score.homeScore!, away: score.awayScore!, winnerClubId: score.winnerClubId, playerContributions: score.playerContributions }, database);
+  }
+  return next;
 }

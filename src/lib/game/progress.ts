@@ -1,3 +1,5 @@
+import type { ManagerMarket } from "./manager-market";
+import type { JobClubSnapshot, ManagerAppointment } from "./manager-jobs";
 import type { ChampionshipRecord } from "./honours";
 import type { CareerLoans } from "./loans";
 import type { ConfidenceMatch } from "./confidence";
@@ -18,6 +20,9 @@ export type MatchPreparation = {
 };
 
 export type CareerProgress = {
+  managerMarket?: ManagerMarket;
+  jobClubSnapshots?: Record<string, JobClubSnapshot>;
+  managerAppointments?: ManagerAppointment[];
   championHistory?: ChampionshipRecord[];
   loanContracts?: CareerLoans;
   page: string;
