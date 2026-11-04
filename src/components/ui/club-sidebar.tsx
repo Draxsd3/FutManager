@@ -46,9 +46,9 @@ export function ClubSidebar({ confidence, club, coach, budget, opponent, competi
       {hasNextMatch ? <>
         <p className={styles.round}>{roundLabel}</p>
         <div className={styles.teams}>
-          <div className={styles.team}><Crest club={homeClub} size="sm"/><span>{homeClub}<small>CASA</small></span></div>
+          <div className={styles.team}><Crest club={homeClub} size="sm"/><span><strong className={styles.teamName}>{homeClub}</strong><small>CASA</small></span></div>
           <b className={styles.versus}>VS</b>
-          <div className={`${styles.team} ${styles.away}`}><Crest club={awayClub} size="sm"/><span>{awayClub}<small>FORA</small></span></div>
+          <div className={`${styles.team} ${styles.away}`}><Crest club={awayClub} size="sm"/><span><strong className={styles.teamName}>{awayClub}</strong><small>FORA</small></span></div>
         </div>
       </> : <p className={styles.noFixture}>A temporada aguarda o próximo confronto.</p>}
     </section>

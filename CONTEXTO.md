@@ -471,3 +471,9 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Correção explícita do usuário: **“Tela de escalação deixe escura como era antes.”** A escalação é exceção à padronização clara da seção 55. Manter seu acabamento escuro original, também no quadro compartilhado de táticas durante a partida e no intervalo.
 - Removidos apenas os overrides claros da escalação e da moldura do quadro compartilhado. Restabelecidos fundo, painéis, textos, controles, reservas e diálogos escuros já definidos no CSS original; demais telas claras não mudam. Preservar campo, coordenadas, setores, siglas, camisas, drag livre, escalação e funcionalidades.
 - Validação: 33 testes direcionados em 3 arquivos aprovados (incluindo 2 regressões novas de tema), lint, TypeScript, build de produção e diff-check aprovados. Sem inspeção visual em navegador.
+
+### 58. Harmonizar o card Próximo apito — 04/11/2026
+
+- Pedido: **“Mantenha harmoniosos os elementos”**, com referência ao confronto compacto da barra lateral. Distribuir os dois clubes simetricamente: escudos de mesma dimensão acima dos nomes, VS central alinhado aos escudos, nomes completos com quebra e altura mínima equivalente, CASA/FORA discretos e alinhados. Regularizar respiros, hierarquia e entrelinhas; permitir quebra do campeonato em vez de corte.
+- Alteração restrita ao card, sem mudar o tema escuro, a ordem mandante/visitante, adversário, calendário ou ações da barra. Estado sem próximo jogo preservado.
+- Validação: 3 testes direcionados aprovados (mandante, visitante e ausência de jogo), lint, TypeScript, build e diff-check aprovados. Sem inspeção visual em navegador.
