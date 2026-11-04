@@ -41,6 +41,8 @@ export type CareerProgress = {
   awayScore: number;
   events: MatchEvent[];
   participation?: MatchParticipation;
+  /** Reservas inscritos no início da partida; ausente em saves antigos. */
+  matchBenchIds?: number[];
   substitutionsLeft: number;
   detailOpen: boolean;
   matchRunning: boolean;

@@ -42,6 +42,7 @@ import {
   type TableRow,
   type TopScorer,
   type TopRating,
+  type Player,
 } from "@/lib/game/mock-data";
 import { buildSquadFromDatabase, upgradeEditorDatabase, type CareerSave, type EditorDatabase } from "@/lib/game/editor-data";
 import { createPlayerCareer, recordPlayerMatch, applyNegotiation, type MarketAction, type MatchParticipation, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
@@ -204,6 +205,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
   const [events, setEvents] = useState<MatchEvent[]>([]);
+  const [matchBenchIds, setMatchBenchIds] = useState<number[] | undefined>();
   const [participation, setParticipation] = useState<MatchParticipation>({});
   const [substitutionsLeft, setSubstitutionsLeft] = useState(5);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -222,8 +224,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const progress: CareerProgress = {
     page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore,
-    events, participation, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
+    events, participation, matchBenchIds, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
     competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
+
   };
   const progressRef = useRef(progress);
   useEffect(() => { progressRef.current = progress; });
@@ -242,7 +245,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     pendingCloudSave.current = next;
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, formation, style, marking, focus,
     starters, careerSquad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore, events,
-    participation, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, userId]);
+    participation, matchBenchIds, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, userId]);
+
 
   useEffect(() => {
     if (!hydrationDone) return;
@@ -292,6 +296,13 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     () => squad.filter((p) => !starters.includes(p.id)),
     [starters, squad],
   );
+  // Old saves have no nominated bench; recover the first eligible reserves deterministically.
+  const eligibleMatchBench = (matchBenchIds ?? bench.filter((p) => !participation[p.id]).slice(0, 12).map((p) => p.id))
+    .map((id) => squad.find((p) => p.id === id))
+    .filter((p): p is Player => !!p && !starters.includes(p.id) && !participation[p.id]);
+  const matchStarters = matchPreparation ? matchEnergyAfter(startersData,
+    Object.fromEntries(startersData.map((p) => [p.id, Math.max(0, minute - (participation[p.id]?.entered ?? 0))])),
+    minute, matchPreparation.weather, marking, matchPreparation.rules) : startersData;
   const selectedPlayerData = squad.find((p) => p.id === selectedPlayer) ?? null;
 
   const matchKey = `${activeSaveId ?? "career"}|${activeFixture?.id ?? `${round}|${club}|${opponent}`}`;
@@ -787,7 +798,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       const restoredDatabase = databaseWithLoans(databaseWithCompletedTransfers({ ...database, players: database.players.map(player => ({ ...player, loan: undefined })) }, save.progress.transferNegotiations ?? []), loans);
       const restoredSquad = reconcileLoanSquad(save.progress.careerSquad ?? [], buildSquadFromDatabase(restoredDatabase, save.clubName, true) ?? [], loans, ownClubId, Object.keys(save.progress.playerCareers).map(Number));
       const remaining = new Set(restoredSquad.map(player => player.id));
-      save = { ...save, progress: { ...save.progress, loanContracts: loans, careerSquad: restoredSquad, starters: save.progress.starters.filter(id => remaining.has(id)), manualPositions: Object.fromEntries(Object.entries(save.progress.manualPositions).filter(([id]) => remaining.has(Number(id)))) } };
+      save = { ...save, progress: { ...save.progress, loanContracts: loans, careerSquad: restoredSquad, starters: save.progress.starters.filter(id => remaining.has(id)), matchBenchIds: save.progress.matchBenchIds?.filter(id => remaining.has(id)), manualPositions: Object.fromEntries(Object.entries(save.progress.manualPositions).filter(([id]) => remaining.has(Number(id)))) } };
     }
     sessionRestoreVersion.current += 1;
     const restoreVersion = sessionRestoreVersion.current;
@@ -837,6 +848,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       setAwayScore(state.awayScore);
       setEvents(state.events);
       setParticipation(state.participation ?? {});
+      setMatchBenchIds(state.matchBenchIds);
       setSubstitutionsLeft(state.substitutionsLeft);
       setHalftimeWaiting(state.halftimeWaiting);
       setMatchSpeed(state.matchSpeed);
@@ -1085,6 +1097,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     if (!rules) return;
     setMatchPreparation(createPreparation(rules));
     setParticipation(Object.fromEntries(starters.map((id) => [id, { entered: 0 }])));
+    setMatchBenchIds(bench.slice(0, 12).map((player) => player.id));
     setMinute(0);
     setHomeScore(0);
     setAwayScore(0);
@@ -1131,6 +1144,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   function moveMatchPlayers(changes: Record<number, ManualPosition>) {
     const nextPositions = { ...manualPositions, ...changes };
+    delete nextPositions[starters[10]];
     setManualPositions(nextPositions);
     void persistCareerExtras(playerCareers, nextPositions);
   }
@@ -1174,7 +1188,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   function substitute(id: number, point?: ManualPosition) {
-    if (substitutionOut === null || substitutionsLeft <= 0 || starters.includes(id)) return;
+    if (substitutionOut === null || substitutionsLeft <= 0 || !eligibleMatchBench.some((player) => player.id === id) || !starters.includes(substitutionOut)) return;
     const outgoing = squad.find((player) => player.id === substitutionOut)?.name ?? "Jogador";
     const incoming = squad.find((player) => player.id === id)?.name ?? "Jogador";
     const result = deployLineupPlayer(starters, squad, formation, manualPositions, id, starters.indexOf(substitutionOut), point);
@@ -1445,8 +1459,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             statistics={matchStats}
             manualPositions={manualPositions}
             onMovePlayers={moveMatchPlayers}
-            startersData={startersData}
-            bench={bench}
+            startersData={matchStarters}
+            bench={eligibleMatchBench}
             substitutionsLeft={substitutionsLeft}
             selectedPlayer={selectedPlayer}
             substitutionOut={substitutionOut}
@@ -1462,7 +1476,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             onResetPositions={resetManualPositions}
             onPlacePlayer={(id, slot, point) => {
               if (!starters.includes(id)) {
-                if (substitutionsLeft <= 0) return;
+                if (substitutionsLeft <= 0 || !eligibleMatchBench.some((player) => player.id === id)) return;
                 setSubstitutionOut(starters[slot]);
                 setSelectedPlayer(id);
                 return;
@@ -1518,10 +1532,11 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         const nextSquad = reconcileLoanSquad(squad, nextDatabase ? buildSquadFromDatabase(nextDatabase, club, true) ?? [] : [], nextLoans, ownClubId, Object.keys(playerCareers).map(Number));
         const remaining = new Set(nextSquad.map(player => player.id));
         const nextStarters = starters.filter(id => remaining.has(id));
+        const nextBench = matchBenchIds?.filter(id => remaining.has(id));
         const nextPositions = Object.fromEntries(Object.entries(manualPositions).filter(([id]) => remaining.has(Number(id))));
-        setLoanContracts(nextLoans); setCareerSquad(nextSquad); setStarters(nextStarters); setManualPositions(nextPositions);
+        setLoanContracts(nextLoans); setCareerSquad(nextSquad); setStarters(nextStarters); setMatchBenchIds(nextBench); setManualPositions(nextPositions);
         setProfilePlayer(null); setSelectedPlayer(null);
-        saveCurrentCareer(nextRound, { activeFixtureId: nextFixture?.id, loanContracts: nextLoans, careerSquad: nextSquad, starters: nextStarters, manualPositions: nextPositions }, date);
+        saveCurrentCareer(nextRound, { activeFixtureId: nextFixture?.id, loanContracts: nextLoans, careerSquad: nextSquad, starters: nextStarters, matchBenchIds: nextBench, manualPositions: nextPositions }, date);
         setPage("hub");
       }}
     />

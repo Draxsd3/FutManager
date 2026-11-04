@@ -84,34 +84,13 @@ it("exposes distinct options for all lanes, midfield lines and goal", () => {
   expect(fieldSectors.some((s) => s.name === "Goleiro")).toBe(true);
 });
 
-it("allows keepers in attack, outfield players in goal, and swaps across all functions", () => {
-  const result = deployLineupPlayer(
-    starters,
-    squad,
-    "4-3-3",
-    {},
-    starters[10],
-    0,
-  )!;
-  expect(result.starters[0]).toBe(starters[10]);
-  expect(result.starters[10]).toBe(starters[0]);
-  expect(new Set(result.starters).size).toBe(11);
-  const free = deployLineupPlayer(
-    starters,
-    squad,
-    "4-3-3",
-    {},
-    starters[10],
-    10,
-    { left: 3, top: 4 },
-  )!;
-  expect(free.positions[starters[10]]).toEqual({ left: 3, top: 4 });
-  expect(
-    deployLineupPlayer(starters, squad, "4-3-3", {}, starters[0], 0, {
-      left: 0,
-      top: 100,
-    })!.positions[starters[0]],
-  ).toEqual({ left: 0, top: 100 });
+it("keeps the goalkeeper in the fixed goal slot and permits a reserve goalkeeper", () => {
+  expect(deployLineupPlayer(starters, squad, "4-3-3", {}, starters[10], 0)).toBeNull();
+  expect(deployLineupPlayer(starters, squad, "4-3-3", {}, starters[0], 10)).toBeNull();
+  const fixed = deployLineupPlayer(starters, squad, "4-3-3", {}, starters[10], 10, { left: 3, top: 4 })!;
+  expect(fixed.positions[starters[10]]).toBeUndefined();
+  const keeper = squad.find((p) => p.position === "G" && !starters.includes(p.id))!;
+  expect(deployLineupPlayer(starters, squad, "4-3-3", {}, keeper.id, 10)?.starters[10]).toBe(keeper.id);
 });
 
 it("tiles the whole pitch without gaps or overlapping interiors", () => {

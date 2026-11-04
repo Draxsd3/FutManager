@@ -7,7 +7,7 @@ import { MatchDetailScreen } from "./match-detail-screen";
 
 const ids = buildStartingXI("4-3-3", squad);
 const starters = ids.map((id) => squad.find((player) => player.id === id)!);
-const bench = squad.filter((player) => !ids.includes(player.id));
+const bench = squad.filter((player) => !ids.includes(player.id)).sort((a, b) => Number(a.position === "G") - Number(b.position === "G"));
 const stats = {
   home: { possession: 55, shots: 4, shotsOnTarget: 2, passes: 16, passesCompleted: 13, tackles: 3, fouls: 1, offsides: 0, yellowCards: 1, redCards: 0 },
   away: { possession: 45, shots: 3, shotsOnTarget: 1, passes: 14, passesCompleted: 9, tackles: 2, fouls: 2, offsides: 1, yellowCards: 0, redCards: 0 },
@@ -133,4 +133,12 @@ it("handles an empty bench without allowing a substitution", () => {
   setup({ bench: [] });
   expect(screen.getByText("Nenhum reserva para este filtro.")).toBeTruthy();
   expect((screen.getByRole("button", { name: "Confirmar substituição" }) as HTMLButtonElement).disabled).toBe(true);
+});
+
+it("blocks a goalkeeper replacing an outfield player", () => {
+  const { substitute } = setup();
+  fireEvent.click(starter());
+  fireEvent.click(reserve(bench.findIndex((player) => player.position === "G")));
+  expect((screen.getByRole("button", { name: "Confirmar substituição" }) as HTMLButtonElement).disabled).toBe(true);
+  expect(substitute).not.toHaveBeenCalled();
 });

@@ -127,13 +127,13 @@ const skillAliases: Record<string, string[]> = {
 function playerRole(player: Player, index: number, team: MatchTeamInput): PositionCode {
   const slots = formationSlots[team.formation] ?? formationSlots["4-3-3"];
   const roleList = formationSlotRoles[team.formation] ?? formationSlotRoles["4-3-3"];
-  const position = team.positions[player.id] ?? slots[index] ?? { left: 50, top: 50 };
+  const position = (index === 10 ? slots[10] : team.positions[player.id] ?? slots[index]) ?? { left: 50, top: 50 };
   return playerFitAtPosition(player, team.formation, position, index).role ?? roleList[index] ?? player.position;
 }
 
 function fitPenalty(player: Player, index: number, team: MatchTeamInput) {
   const slots = formationSlots[team.formation] ?? formationSlots["4-3-3"];
-  const position = team.positions[player.id] ?? slots[index] ?? { left: 50, top: 50 };
+  const position = (index === 10 ? slots[10] : team.positions[player.id] ?? slots[index]) ?? { left: 50, top: 50 };
   return playerFitAtPosition(player, team.formation, position, index).penalty;
 }
 
@@ -179,9 +179,14 @@ function profile(team: MatchTeamInput, minute: number, weather: MatchWeather): T
   const players = entries.map((entry) => entry.player);
   const roles = entries.map(({ player, index }) => playerRole(player, index, team));
   const manpowerPenalty = (11 - entries.length) * 2.4;
-  const overall = weightedMean(entries.map(({ player, index }) => ({
-    value: clamp(player.overall - fitPenalty(player, index, team) + (player.energy - 70) * .045, 25, 100), weight: 1,
-  })), 68) - manpowerPenalty;
+  const overall = weightedMean(entries.map(({ player, index }) => {
+    const played = team.minutesPlayed?.[player.id] ?? minute;
+    const rate = team.rules ? team.rules.baseFatiguePerMinute
+      + (team.tactics.marking === "Pesada" ? team.rules.heavyPressFatiguePerMinute : team.tactics.marking === "Normal" ? team.rules.heavyPressFatiguePerMinute * .45 : 0)
+      + Math.max(0, weather.temperatureC - 24) * team.rules.heatFatiguePerDegree : .24;
+    const energy = Math.max(15, player.energy - played * rate);
+    return { value: clamp(player.overall - fitPenalty(player, index, team) + (energy - 70) * .045 - Math.max(0, 70 - energy) * .16, 25, 100), weight: 1 };
+  }), 68) - manpowerPenalty;
   const passing = entries.map(({ player, index }) => athleteSkill(player, index, team, "passing", minute, weather));
   const finishing = entries.map(({ player, index }) => athleteSkill(player, index, team, "finishing", minute, weather));
   const defending = entries.map(({ player, index }) => athleteSkill(player, index, team, "defending", minute, weather));
