@@ -358,6 +358,7 @@ it("draws merged role outlines and a single label per role while preserving all 
 it("opens a compact reserve card's details with double click or keyboard and closes on Escape", () => {
   setup();
   const button = screen.getByRole("button", { name: new RegExp(bench[0].name + ",") });
+  expect(screen.queryByRole("button", { name: "Ver ficha do reserva selecionado" })).toBeNull();
   fireEvent.doubleClick(button);
   const dialog = screen.getByRole("dialog", { name: bench[0].name });
   expect(dialog.textContent).toContain(`${bench[0].energy}%`);

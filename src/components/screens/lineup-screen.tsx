@@ -488,7 +488,6 @@ export function LineupScreen(props: Props) {
                 <div><p className={styles.eyebrow}>ELENCO DISPONÍVEL</p><h2>Banco de reservas</h2></div>
                 <span title="Os 12 primeiros reservas serão inscritos para a partida; reordene antes do início." className={styles.count}>{match ? `${bench.length} disponíveis` : `${Math.min(bench.length, 12)} inscritos / ${bench.length} no elenco`}</span>
               </div>
-              <button className={styles.detailButton} disabled={!selectedPlayer || !bench.some((p) => p.id === selectedPlayer.id)} onClick={(event) => { detailOrigin.current = event.currentTarget; setDetailPlayer(selectedPlayer); }}>Ver ficha do reserva selecionado</button>
               <div className={styles.bench} role="region" aria-label="Lista de reservas" tabIndex={0}>
                 {bench.map((player, index) => <button
                   key={player.id}
