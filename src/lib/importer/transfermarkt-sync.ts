@@ -30,7 +30,7 @@ export async function prepareLiveTransfermarktSync(database: EditorDatabase, use
   const [{ collectNationalSnapshot }, { createBrowserSupabaseClient }, { readTransfermarktCheckpoint, saveTransfermarktCheckpoint }] = await Promise.all([
     import("./transfermarkt-live"), import("@/lib/supabase/client"), import("./database-cache"),
   ]);
-  const snapshot = await collectNationalSnapshot({ progress, signal,
+  const snapshot = await collectNationalSnapshot({ progress, signal, enrichLoans: true,
     seed: async () => {
       progress("Validando o arquivo brasileiro 2026 enviado…");
       const [{ readTransfermarktCorrections }, { fetchCorrectedSeed }] = await Promise.all([import("./database-cache"), import("./transfermarkt-corrections")]);

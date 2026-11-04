@@ -1,6 +1,8 @@
+import type { LoanContract } from "./loans";
 export type PositionCode = "G" | "L" | "Z" | "M" | "A";
 
 export type Player = {
+  loan?: LoanContract;
   id: number;
   sourceId?: string;
   shirtNumber?: number;

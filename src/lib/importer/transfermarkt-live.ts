@@ -1,3 +1,4 @@
+import { loanContractSchema } from "@/lib/game/loans";
 import { z } from "zod";
 import { transfermarktSnapshotSchema, type TransfermarktSnapshot } from "./transfermarkt";
 
@@ -8,6 +9,7 @@ export const nationalCompetitions = [
   { id: "BRA4", division: "Série D", expected: 96 },
 ] as const;
 export const liveRequestSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("loans"), player: z.string().regex(/^[1-9]\d{0,9}$/) }),
   z.object({ action: z.literal("seasons"), competition: z.enum(["BRA1", "BRA2", "BRA3", "BRA4"]) }),
   z.object({ action: z.literal("members"), competition: z.enum(["BRA1", "BRA2", "BRA3", "BRA4"]), season: z.string().regex(/^\d{4}$/) }),
   z.object({ action: z.literal("club"), club: z.string().regex(/^[1-9]\d{0,9}$/), season: z.string().regex(/^\d{4}$/) }),
@@ -77,8 +79,9 @@ export function normalizeLiveClub(profileInput: unknown, squadInput: unknown, cl
 
 export type ImportProgress = (message: string) => void;
 export type LiveCollectionIssue = { clubId: string; clubName: string; message: string };
-export type LiveCheckpoint = { snapshot: TransfermarktSnapshot; members: { id: string; name: string; competitionId: string }[]; issues?: LiveCollectionIssue[]; seedId?: string };
+export type LiveCheckpoint = { loanChecks?: string[]; snapshot: TransfermarktSnapshot; members: { id: string; name: string; competitionId: string }[]; issues?: LiveCollectionIssue[]; seedId?: string };
 export type LiveOptions = {
+  enrichLoans?: boolean;
   request: (body: LiveRequest, signal?: AbortSignal) => Promise<unknown>;
   progress?: ImportProgress; signal?: AbortSignal;
   load?: () => Promise<LiveCheckpoint | null>;
@@ -116,11 +119,14 @@ export async function collectNationalSnapshot(options: LiveOptions) {
           !checkpoint.snapshot.competitions?.every(comp => seed.snapshot.competitions?.some(other => other.id === comp.id && other.seasonId === comp.seasonId))) {
         throw new Error("O arquivo e a coleta salva têm participantes/temporadas diferentes. Nada foi alterado.");
       }
+      const verifiedLoans = new Map(checkpoint.snapshot.clubs.flatMap(club => club.players).filter(player => checkpoint!.loanChecks?.includes(player.id) && player.loan !== undefined).map(player => [player.id, player.loan]));
       const revised = new Set(seed.snapshot.clubs.filter(club => club.players.some(player => player.manualCorrection)).map(club => club.id));
       checkpoint.snapshot.clubs = checkpoint.snapshot.clubs.filter(club => !revised.has(club.id) && !club.players.some(player => player.manualCorrection));
       const completed = new Set(checkpoint.snapshot.clubs.map(club => club.id));
       checkpoint.snapshot.clubs.push(...seed.snapshot.clubs.filter(club => !completed.has(club.id)));
       checkpoint.seedId = seed.seedId;
+      for (const club of checkpoint.snapshot.clubs) for (const player of club.players) if (verifiedLoans.has(player.id)) player.loan = verifiedLoans.get(player.id);
+      checkpoint.loanChecks = [...verifiedLoans.keys()];
     }
     await options.save?.(checkpoint);
     progress(`Arquivo brasileiro 2026 aproveitado: ${checkpoint.snapshot.clubs.length}/156 clubes válidos; consultando somente os pendentes…`);
@@ -174,6 +180,31 @@ export async function collectNationalSnapshot(options: LiveOptions) {
   // One bounded final pass, only after every remaining club has been attempted.
   const pending = checkpoint.members.filter(member => issues.has(member.id));
   for (const member of pending) await collectMember(member, true);
+  // Verify every collected identity, even while other clubs remain pending. Missing facts
+  // are deferred, never confused with "not on loan". Resumes skip confirmed identities.
+  const loanIssues: string[] = [];
+  if (options.enrichLoans) {
+    const players = [...new Map(checkpoint.snapshot.clubs.flatMap(club => club.players).map(player => [player.id, player])).values()];
+    const checked = new Set((checkpoint.loanChecks ?? []).filter(id => players.some(player => player.id === id && player.loan !== undefined)));
+    for (const player of players) {
+      if (checked.has(player.id)) continue;
+      progress(`Contratos de empréstimo na abertura de 2026: ${checked.size}/${players.length} jogadores verificados. Consultando ${player.name}…`);
+      let failed = false;
+      try {
+        const response = z.object({ loan: loanContractSchema.nullable() }).parse(await request({ action: "loans", player: player.id }));
+        for (const club of checkpoint.snapshot.clubs) for (const other of club.players) if (other.id === player.id) other.loan = response.loan;
+        checked.add(player.id);
+      } catch (error) {
+        if (options.signal?.aborted) { checkpoint.loanChecks = [...checked]; await options.save?.(checkpoint); throw error; }
+        failed = true;
+        loanIssues.push(`${player.name}: ${error instanceof Error ? error.message : "consulta falhou"}`);
+      }
+      checkpoint.loanChecks = [...checked];
+      if (checked.size % 10 === 0 || failed) await options.save?.(checkpoint);
+    }
+    await options.save?.(checkpoint);
+  }
+  if (loanIssues.length) throw new Error(`Contratos ainda não confirmados (${loanIssues.length}); ${issues.size} clube(s) com pendências de elenco. O progresso foi salvo; clique em Rodar para retomar somente os pendentes. Nada foi aplicado.\n${loanIssues.slice(0, 20).join("\n")}`);
   if (issues.size) {
     const details = [...issues.values()].map(issue => `• ${issue.clubName}: ${issue.message}`).join("\n");
     throw new Error(`Coleta concluída com pendências: ${checkpoint.snapshot.clubs.length}/156 clubes válidos, ${issues.size} clube(s) pendente(s). Os clubes válidos foram salvos para retomar, mas o catálogo ainda não foi alterado.\n${details}\nClique em Rodar para retomar somente os clubes pendentes após corrigir os dados na fonte.`);

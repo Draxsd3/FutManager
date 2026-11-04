@@ -21,8 +21,9 @@ export function recruitPlayer(
   terms?: RecruitmentTerms,
 ): { squad: Player[]; budget: number; message: string } {
   const source = database.players.find((player) => player.id === sourceId);
+  const borrower = database.clubs.find(item => item.name === club);
   const sourceClub = source && database.clubs.find((item) => item.id === source.clubId);
-  if (!source || !sourceClub || sourceClub.name === club || squad.some((player) => player.sourceId === sourceId)) {
+  if (!source || !sourceClub || !borrower || source.loan?.status === "active" || sourceClub.name === club || squad.some((player) => player.sourceId === sourceId)) {
     return { squad, budget, message: "Jogador indisponível para contratação." };
   }
   if (source.marketStatus !== "sale" && source.marketStatus !== "loan") return { squad, budget, message: "Jogador não está à venda nem disponível para empréstimo." };
@@ -63,7 +64,7 @@ export function recruitPlayer(
     marketValue: source.marketValueBrl / 1e6,
     marketAvailability: "normal",
     acquisitionType: kind === "loan" ? "loan" : "permanent",
-    ...(loanExpiresOn ? { loanExpiresOn } : {}),
+    ...(loanExpiresOn ? { loanExpiresOn, loan: { owner: { clubId: sourceClub.id, name: sourceClub.name }, borrower: { clubId: borrower.id, name: borrower.name }, startsOn: terms?.gameDate ?? new Date().toISOString().slice(0, 10), endsOn: loanExpiresOn, status: "active", source: "game", wageSharePercent } as const } : {}),
   };
   const action = kind === "loan" ? `emprestado por ${loanMonths} meses` : "contratado em definitivo";
   return {

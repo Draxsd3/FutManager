@@ -14,6 +14,7 @@ function source() {
       return { id: body.competition, name: body.competition, seasonId: body.season,
         clubs: Array.from({ length: nationalCompetitions[index].expected }, (_, i) => ({ id: String(index * 100 + i + 1), name: `Club ${index * 100 + i + 1}` })) };
     }
+    if (body.action === "loans") return { loan: null };
     return club(body.club, 11);
   });
 }
@@ -143,4 +144,29 @@ it("stops immediately on pause during a club request without misclassifying it a
   expect(saved!.snapshot.clubs).toHaveLength(1);
   expect(saved!.issues).toEqual([]);
   expect(request.mock.calls.filter(([body]) => body.action === "club")).toHaveLength(2);
+});
+
+it("checks all loan contracts automatically, defers failures and resumes only unverified identities", async () => {
+  const good = source(); let saved: LiveCheckpoint | null = null;
+  const request = vi.fn(async (body: LiveRequest) => {
+    if (body.action === "loans" && body.player === "1001") throw new Error("API indisponível");
+    return good(body);
+  });
+  const options = { request, enrichLoans: true, save: async (value: LiveCheckpoint | null) => { saved = structuredClone(value); } };
+  await expect(collectNationalSnapshot(options)).rejects.toThrow("Contratos ainda não confirmados (1)");
+  expect(request.mock.calls.filter(([body]) => body.action === "loans")).toHaveLength(1716);
+  expect(saved!.loanChecks).toHaveLength(1715);
+  const resumed = source();
+  const snapshot = await collectNationalSnapshot({ ...options, request: resumed, load: async () => saved });
+  expect(resumed).toHaveBeenCalledTimes(1); expect(resumed).toHaveBeenCalledWith({ action: "loans", player: "1001" }, undefined);
+  expect(snapshot.clubs.every(club => club.players.every(player => player.loan === null))).toBe(true);
+});
+it("resolves loan owner/borrower local IDs without creating foreign clubs or mixing ordinary contracts", () => {
+  const incoming = club("614", 11);
+  incoming.players[0].loan = { owner: { externalId: "999", name: "Proprietário estrangeiro" }, borrower: { externalId: "614", name: incoming.name }, startsOn: "2025-07-01", endsOn: "2026-06-30", status: "active", source: "transfermarkt" };
+  const db = applyTransfermarktSnapshot({ clubs: [], players: [] }, { version: 2, seasonId: "2026", generatedAt: incoming.fetchedAt, clubs: [{ ...incoming, competitionId: "BRA1", division: "Série A", country: "Brasil" }], competitions: [{ id: "BRA1", name: "A", division: "Série A", seasonId: "2025" }] }, [], {});
+  expect(db.clubs).toHaveLength(1);
+  expect(db.players[0].loan).toMatchObject({ owner: { externalId: "999" }, borrower: { clubId: db.clubs[0].id }, endsOn: "2026-06-30" });
+  expect(db.players[0].loan?.owner.clubId).toBeUndefined();
+  expect(db.players[0].contractEndsOn).not.toBe("2026-06-30");
 });

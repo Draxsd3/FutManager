@@ -1,3 +1,4 @@
+import type { CareerLoans } from "./loans";
 import type { ConfidenceMatch } from "./confidence";
 import type { DivisionKey, Player } from "./mock-data";
 import type { ManualPosition, PlayerCareerRecord, MatchParticipation } from "./career";
@@ -16,6 +17,7 @@ export type MatchPreparation = {
 };
 
 export type CareerProgress = {
+  loanContracts?: CareerLoans;
   page: string;
   matchPreparation?: MatchPreparation;
   activeSaveId: string | null;

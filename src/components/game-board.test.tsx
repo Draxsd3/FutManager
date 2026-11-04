@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, configure, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { GameBoard } from "./game-board";
 import * as transfermarktSync from "@/lib/importer/transfermarkt-sync";
-import { readLocalSaves } from "@/lib/game/persistence";
+import { readLocalSaves, writeLocalSaves } from "@/lib/game/persistence";
 
 vi.mock("@/lib/game/persistence", async (importOriginal) => ({
   ...await importOriginal<typeof import("@/lib/game/persistence")>(),
@@ -15,6 +15,8 @@ vi.mock("@/lib/game/persistence", async (importOriginal) => ({
   writeCloudSave: vi.fn().mockResolvedValue(undefined),
   deleteCloudSave: vi.fn().mockResolvedValue(undefined),
 }));
+
+configure({ asyncUtilTimeout: 5000 });
 
 const matchRulesMarkdown = readFileSync("public/game-assets/match-engine-rules.md", "utf8");
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
@@ -427,4 +429,34 @@ it("saves a player photo in the active career and restores it after reload", asy
   fireEvent.click(within(restored).getByRole("button", { name: "Remover foto" }));
   await waitFor(() => expect(readLocalSaves("alice")[0].progress?.careerSquad?.find((player) => player.id === first.id)?.photoDataUrl).toBeNull());
   processor.mockRestore();
+});
+
+it("advances the career date after a result and returns an expired incoming loan without keeping its lineup slot", async () => {
+  const view = render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Teste Empréstimos" } });
+  fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+  await screen.findByRole("button", { name: "Empréstimos" });
+  await waitFor(() => expect(readLocalSaves("alice")[0]?.progress?.careerSquad?.length).toBeGreaterThan(10));
+  const save = structuredClone(readLocalSaves("alice")[0]), state = save.progress!;
+  const player = state.careerSquad![0];
+  const loan = { owner: { name: "Origem externa", externalId: "99999999" }, borrower: { name: save.clubName, clubId: save.clubId }, startsOn: "2026-01-01", endsOn: "2026-01-25", status: "active" as const, source: "transfermarkt" as const };
+  player.loan = loan; player.acquisitionType = "loan"; player.loanExpiresOn = loan.endsOn;
+  state.loanContracts = { [player.sourceId!]: loan }; state.page = "result"; state.minute = 90;
+  state.starters = [player.id, ...state.starters.filter(id => id !== player.id)].slice(0, 11);
+  state.manualPositions = { [player.id]: { left: 50, top: 50 } };
+  view.unmount(); sessionStorage.clear(); writeLocalSaves([save], "alice");
+  render(game());
+  fireEvent.click(await screen.findByRole("button", { name: /CONTINUAR JOGANDO/ }));
+  fireEvent.click(await screen.findByRole("button", { name: "CONTINUAR" }));
+  fireEvent.click(await screen.findByRole("button", { name: /Voltar ao hub/ }));
+  await screen.findByRole("button", { name: "Empréstimos" });
+  await waitFor(() => {
+    const restored = readLocalSaves("alice")[0];
+    expect(restored.inGameDate).toBe("2026-01-29");
+    expect(restored.progress?.loanContracts?.[player.sourceId!].status).toBe("returned");
+    expect(restored.progress?.careerSquad?.some(item => item.id === player.id)).toBe(false);
+    expect(restored.progress?.starters).not.toContain(player.id);
+    expect(restored.progress?.manualPositions[player.id]).toBeUndefined();
+  });
 });
