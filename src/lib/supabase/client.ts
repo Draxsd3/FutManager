@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { ManualPosition, PlayerCareerRecord } from "@/lib/game/career";
 
 export type ClubRow = {
+  transfermarkt?: import("@/lib/game/editor-data").TransfermarktOrigin | null;
   id: string; owner_id: string; name: string; short_name: string; division: string; state: string | null;
   founded_year: number | null; primary_color: string; secondary_color: string;
   stadium_name: string; stadium_capacity: number; created_at: string; updated_at: string;
@@ -9,6 +10,7 @@ export type ClubRow = {
 };
 
 export type PlayerRow = {
+  transfermarkt?: import("@/lib/game/editor-data").TransfermarktOrigin | null;
   id: string; owner_id: string; club_id: string; name: string; shirt_number: number;
   primary_position: string; secondary_position: string | null; overall: number; age: number;
   preferred_foot: string; created_at: string; updated_at: string;

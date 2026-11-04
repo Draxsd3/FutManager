@@ -363,19 +363,21 @@ it("offers Transfermarkt synchronization in Settings without changing the active
   fireEvent.click(await screen.findByRole("button", { name: "Configurações" }));
   expect(screen.getByRole("heading", { name: "Transfermarkt" })).toBeTruthy();
   const before = structuredClone(readLocalSaves("alice")[0].progress);
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ snapshot: { version: 1, generatedAt: null, seasonId: null, clubs: [] } }) }));
-  fireEvent.click(screen.getByRole("button", { name: "Sincronizar Transfermarkt" }));
+  const failedSync = vi.spyOn(transfermarktSync, "prepareLiveTransfermarktSync").mockRejectedValue(new Error("Nenhuma coleta válida. Catálogo não alterado."));
+  fireEvent.click(screen.getByRole("button", { name: "Rodar importação — Séries A/B/C/D" }));
   expect((await screen.findByRole("alert")).textContent).toContain("Nenhuma coleta");
   expect(readLocalSaves("alice")[0].progress?.careerSquad).toEqual(before?.careerSquad);
   expect(readLocalSaves("alice")[0].progress?.starters).toEqual(before?.starters);
   expect(screen.getByRole("dialog", { name: "Configurações" })).toBeTruthy();
+  failedSync.mockRestore();
 });
 
 
 it("saves a synchronized catalog but leaves the active career squad untouched", async () => {
   const { IDBFactory } = await import("fake-indexeddb");
   vi.stubGlobal("indexedDB", new IDBFactory());
-  const spy = vi.spyOn(transfermarktSync, "prepareTransfermarktSync").mockImplementation(async (database) => ({
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+  const spy = vi.spyOn(transfermarktSync, "prepareLiveTransfermarktSync").mockImplementation(async (database) => ({
     database: { ...database, players: database.players.map(player => ({ ...player, name: `Atualizado ${player.name}` })) },
     clubs: database.clubs.length, players: database.players.length, collectedAt: "2026-11-03T12:00:00Z",
   }));
@@ -386,7 +388,7 @@ it("saves a synchronized catalog but leaves the active career squad untouched", 
     fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Configurações" }));
     const before = structuredClone(readLocalSaves("sync-success")[0].progress);
-    fireEvent.click(screen.getByRole("button", { name: "Sincronizar Transfermarkt" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rodar importação — Séries A/B/C/D" }));
     await waitFor(() => expect(screen.getByText(/jogadores sincronizados no catálogo/)).toBeTruthy(), { timeout: 5000 });
     const { readCachedDatabase } = await import("@/lib/importer/database-cache");
     expect((await readCachedDatabase("sync-success"))?.players[0].name).toMatch(/^Atualizado /);
@@ -394,5 +396,5 @@ it("saves a synchronized catalog but leaves the active career squad untouched", 
     expect(readLocalSaves("sync-success")[0].progress?.starters).toEqual(before?.starters);
     fireEvent.click(screen.getByRole("button", { name: "Voltar ao menu inicial" }));
     expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
-  } finally { spy.mockRestore(); }
+  } finally { spy.mockRestore(); confirm.mockRestore(); }
 });

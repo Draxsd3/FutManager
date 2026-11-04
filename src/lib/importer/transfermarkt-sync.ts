@@ -24,3 +24,40 @@ export async function prepareTransfermarktSync(database: EditorDatabase) {
     players: eligible.reduce((total, club) => total + club.players.length, 0),
     collectedAt: snapshot.generatedAt! };
 }
+
+/** Live, resumable collection. Browser coordinates short same-origin authenticated requests. */
+export async function prepareLiveTransfermarktSync(database: EditorDatabase, userId: string, progress: import("./transfermarkt-live").ImportProgress, signal?: AbortSignal) {
+  const [{ collectNationalSnapshot }, { createBrowserSupabaseClient }, { readTransfermarktCheckpoint, saveTransfermarktCheckpoint }] = await Promise.all([
+    import("./transfermarkt-live"), import("@/lib/supabase/client"), import("./database-cache"),
+  ]);
+  const snapshot = await collectNationalSnapshot({ progress, signal,
+    load: () => readTransfermarktCheckpoint(userId), save: value => saveTransfermarktCheckpoint(userId, value),
+    pause: () => new Promise(resolve => setTimeout(resolve, 1600)),
+    request: async (body, signal) => {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        signal?.throwIfAborted();
+        const client = createBrowserSupabaseClient();
+        const { data } = await client.auth.getSession();
+        if (!data.session || data.session.user.id !== userId) throw new Error("Sua sessão expirou. Entre novamente.");
+        let response: Response;
+        try {
+          response = await fetch("/api/transfermarkt/live", { method: "POST", cache: "no-store",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
+            body: JSON.stringify(body), signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(55_000)]) : AbortSignal.timeout(55_000) });
+        } catch (error) {
+          if (signal?.aborted || attempt === 2) throw error;
+          await new Promise(resolve => setTimeout(resolve, 3000 * (attempt + 1))); continue;
+        }
+        const result = await response.json().catch(() => ({ error: `Falha HTTP ${response.status} na coleta.` }));
+        if (response.ok) return result;
+        if (![429, 502, 503, 504].includes(response.status) || attempt === 2) throw new Error(result.error ?? "Não foi possível consultar o Transfermarkt.");
+        progress(`Fonte temporariamente indisponível. Tentativa ${attempt + 2}/3…`);
+        await new Promise(resolve => setTimeout(resolve, 3000 * (attempt + 1)));
+      }
+      throw new Error("Não foi possível consultar o Transfermarkt.");
+    },
+  });
+  const [{ default: catalog }, { default: links }] = await Promise.all([import("@/data/brazil-clubs.json"), import("../../../scripts/transfermarkt/clubs.json")]);
+  const updated = applyTransfermarktSnapshot(database, snapshot, catalog, links);
+  return { database: updated, clubs: snapshot.clubs.length, players: snapshot.clubs.reduce((sum, club) => sum + club.players.length, 0), collectedAt: snapshot.generatedAt! };
+}

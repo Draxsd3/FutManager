@@ -3,10 +3,10 @@
 import { clubConfidence, mergeConfidenceHistory, type ConfidenceMatch } from "@/lib/game/confidence";
 
 import { TransfermarktSettings } from "@/components/screens/transfermarkt-settings";
-import { prepareTransfermarktSync } from "@/lib/importer/transfermarkt-sync";
+import { prepareLiveTransfermarktSync } from "@/lib/importer/transfermarkt-sync";
 
 import { importBrazilDatabase } from "@/lib/importer/brazil-database";
-import { readCachedDatabase, cacheDatabase, hasPendingDatabaseSync, readCachedCareerSaves } from "@/lib/importer/database-cache";
+import { readCachedDatabase, cacheDatabase, hasPendingDatabaseSync, readCachedCareerSaves, saveTransfermarktCheckpoint } from "@/lib/importer/database-cache";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CareerWorkspace } from "@/components/ui/career-workspace";
@@ -611,12 +611,15 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return <CompetitionCenter database={database} fixtures={fixtures} club={club} competition={division} activeCompetitionId={centerCompetitionId} roundLabel={competitionRoundLabel} careerCompetitionData={careerCompetitionData} table={centerTable} topScorers={centerTopScorers} topRatings={centerTopRatings} round={competitionRound} onClose={() => setStandingsOpen(false)} />;
   }
 
-  async function synchronizeTransfermarkt() {
+  async function synchronizeTransfermarkt(progress: (message: string) => void, signal: AbortSignal) {
     if (!database || transfermarktSyncRunning.current) throw new Error("Sincronização indisponível. Aguarde e tente novamente.");
     transfermarktSyncRunning.current = true;
     const startedRevision = databaseRevision.current;
     try {
-      const result = await prepareTransfermarktSync(synchronizedCatalog.current ?? database);
+      const result = await prepareLiveTransfermarktSync(synchronizedCatalog.current ?? database, userId, progress, signal);
+      signal.throwIfAborted();
+      if (!window.confirm(`Coleta concluída: ${result.clubs} clubes das Séries A/B/C/D de 2026 e ${result.players} jogadores. Aplicar ao catálogo para novas carreiras? A carreira atual será preservada. Força, salário e valores BRL são estimativas de simulação; não são dados oficiais do Transfermarkt.`)) throw new Error("Aplicação cancelada. Coleta preservada para retomar; catálogo não alterado.");
+      progress("Salvando catálogo completo neste dispositivo e tentando sincronizar com a nuvem…");
       if (startedRevision !== databaseRevision.current) throw new Error("O catálogo mudou durante a sincronização. Tente novamente.");
       ++databaseRevision.current;
       const localSaved = writeLocalDatabase(result.database, userId);
@@ -634,6 +637,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         await writeCloudDatabase(result.database, userId);
         await cacheDatabase(result.database, userId, false).catch(() => undefined);
       } catch { cloudPending = true; }
+      await saveTransfermarktCheckpoint(userId, null).catch(() => undefined);
       setSyncLabel(cloudPending ? "Transfermarkt salvo localmente — nuvem pendente" : "Catálogo Transfermarkt sincronizado");
       return { clubs: result.clubs, players: result.players, collectedAt: result.collectedAt, cloudPending };
     } finally { transfermarktSyncRunning.current = false; }

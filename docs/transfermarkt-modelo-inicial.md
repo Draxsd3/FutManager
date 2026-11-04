@@ -1,6 +1,8 @@
 # Modelo inicial da importação nacional — proposta para validação
 
-Data: 04/11/2026. **Modelagem, não execução de carga.**
+Data: 04/11/2026. **Documento original de modelagem.**
+
+Atualização: usuário aprovou a execução e forneceu API própria online. O botão ao vivo, identidade persistente e modelo provisório foram implementados depois desta proposta; consultar [fluxo atual](transfermarkt.md). As lacunas abaixo descrevem o momento da proposta e não substituem o estado atual. Calibração de scouting e conversão EUR→BRL com cotação real continuam pendentes.
 
 Este documento delimita a primeira importação e propõe como transformar dados reais em atributos do FutManager. As faixas e métodos de simulação abaixo ainda precisam de calibração em uma prévia antes de virar regra do importador. Nenhuma cotação ou habilidade foi obtida da fonte nesta etapa.
 
