@@ -15,6 +15,9 @@ const panel = "min-w-0 border-t border-[#dce3da] bg-transparent";
 const control = "rounded-xl border border-[#d5e0d8] bg-white px-3 py-2.5 text-sm text-[#263d30] outline-none transition focus:border-[#438458] focus:ring-2 focus:ring-[#438458]/15";
 const primaryButton = "inline-flex items-center justify-center gap-2 rounded-xl bg-[#216b43] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#175735] disabled:cursor-not-allowed disabled:opacity-50";
 const secondaryButton = "inline-flex items-center justify-center gap-2 rounded-xl border border-[#d5e0d8] bg-white px-4 py-2.5 text-sm font-bold text-[#354d3c] transition hover:bg-[#f4f8f5]";
+const nationalDivisionOrder = ["Série A", "Série B", "Série C", "Série D", "Sem divisão nacional"];
+const divisionRank = (division: string) => { const index = nationalDivisionOrder.indexOf(division); return index < 0 ? nationalDivisionOrder.length : index; };
+const divisionLabel = (division: string, country: string) => country === "Brasil" && /^Série [ABCD]$/.test(division) ? `Brasileirão · ${division}` : division;
 const positionOrder: Record<PositionCode, number> = { G: 0, L: 1, Z: 2, M: 3, A: 4 };
 
 type TeamPlayer = {
@@ -51,8 +54,18 @@ export function TeamDirectory({
   const visibleClubs = useMemo(() => database.clubs
     .filter((item) => (!country || item.country === country) && (!division || item.division === division)
       && item.name.toLocaleLowerCase("pt-BR").includes(query.trim().toLocaleLowerCase("pt-BR")))
-    .sort((a, b) => a.country.localeCompare(b.country) || a.division.localeCompare(b.division) || a.name.localeCompare(b.name)),
+    .sort((a, b) => a.country.localeCompare(b.country) || divisionRank(a.division) - divisionRank(b.division) || a.division.localeCompare(b.division) || a.name.localeCompare(b.name, "pt-BR")),
   [database.clubs, country, division, query]);
+  const clubGroups = useMemo(() => {
+    const groups = new Map<string, { country: string; division: string; clubs: EditorClub[] }>();
+    for (const item of visibleClubs) {
+      const key = JSON.stringify([item.country, item.division]);
+      const group = groups.get(key) ?? { country: item.country, division: item.division, clubs: [] };
+      group.clubs.push(item);
+      groups.set(key, group);
+    }
+    return [...groups.entries()];
+  }, [visibleClubs]);
   const activeClub = visibleClubs.find((item) => item.id === activeClubId) ?? visibleClubs[0] ?? null;
   const completedTransfers = useMemo(() => new Map(negotiations
     .filter((item) => item.status === "completed")
@@ -88,7 +101,7 @@ export function TeamDirectory({
   }, [activeClub, club, completedTransfers, database.players, records, squad]);
   const selected = teamPlayers.find((item) => item.profile.id === selectedPlayerId) ?? teamPlayers[0] ?? null;
   const countryOptions = [...new Set(database.clubs.map((item) => item.country).filter(Boolean))].sort();
-  const divisionOptions = [...new Set(database.clubs.filter((item) => !country || item.country === country).map((item) => item.division))].sort();
+  const divisionOptions = [...new Set(database.clubs.filter((item) => !country || item.country === country).map((item) => item.division))].sort((a, b) => divisionRank(a) - divisionRank(b) || a.localeCompare(b));
   const averageOverall = teamPlayers.length ? Math.round(teamPlayers.reduce((sum, item) => sum + item.profile.overall, 0) / teamPlayers.length) : 0;
   const listedPlayers = teamPlayers.filter((item) => item.profile.marketStatus === "sale" || item.profile.marketStatus === "loan").length;
   const currentNegotiation = selected && !selected.careerPlayer
@@ -142,16 +155,22 @@ export function TeamDirectory({
           <label className="sr-only" htmlFor="team-directory-country">País</label>
           <select id="team-directory-country" className={control} value={country} onChange={(event) => { setCountry(event.target.value); setDivision(""); }}><option value="">Todos os países</option>{countryOptions.map((item) => <option key={item}>{item}</option>)}</select>
           <label className="sr-only" htmlFor="team-directory-division">Competição</label>
-          <select id="team-directory-division" className={control} value={division} onChange={(event) => setDivision(event.target.value)}><option value="">Todas as competições</option>{divisionOptions.map((item) => <option key={item}>{item}</option>)}</select>
+          <select id="team-directory-division" className={control} value={division} onChange={(event) => setDivision(event.target.value)}><option value="">Todas as divisões nacionais</option>{divisionOptions.map((item) => <option key={item} value={item}>{/^Série [ABCD]$/.test(item) ? `Brasileirão · ${item}` : item}</option>)}</select>
           <div className="flex items-center justify-between rounded-xl bg-[#f3f7f3] px-3 py-2 text-xs sm:col-span-2 lg:col-span-1"><span className="text-[#718477]">Clubes</span><b className="text-sm text-[#246e43]">{visibleClubs.length}</b></div>
         </div>
+        <p className="mt-3 text-xs leading-relaxed text-[#5f705e]">Clubes separados por divisão nacional. Copas, como a Copa do Brasil, não formam grupos separados: seus participantes continuam nas respectivas divisões.</p>
       </section>
 
       <div className="grid min-h-0 gap-4 xl:grid-cols-[270px_minmax(0,1fr)]">
         <aside className={`${panel} flex min-h-[250px] flex-col overflow-hidden xl:max-h-[calc(100vh-250px)]`} aria-label="Lista de clubes">
           <div className="flex items-center justify-between border-b border-[#e8eee9] px-4 py-3"><div><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#718477]">Clubes cadastrados</p><p className="mt-0.5 text-sm font-extrabold">Universo do jogo</p></div><span className="rounded-lg bg-[#edf5ef] px-2.5 py-1 text-[11px] font-bold text-[#246e43]">{visibleClubs.length}</span></div>
           <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2">
-            {visibleClubs.map((item) => {
+            {clubGroups.map(([key, group]) => <section key={key} aria-label={`${divisionLabel(group.division, group.country)} · ${group.country}`} className="mb-3 last:mb-0">
+              <h2 className="sticky top-0 z-10 mb-1 flex items-center justify-between gap-2 rounded-lg border-b border-[#dce3da] bg-[#f5f6f3] px-3 py-2 text-xs font-bold text-[#354d3c]">
+                <span>{divisionLabel(group.division, group.country)}{countryOptions.length > 1 && <small className="mt-1 block text-[10px] font-normal text-[#5f705e]">{group.country}</small>}</span>
+                <span className="rounded-md bg-[#e5eedf] px-2 py-1 text-[10px] tabular-nums" aria-label={`${group.clubs.length} clubes`}>{group.clubs.length}</span>
+              </h2>
+              {group.clubs.map((item) => {
               const isActive = activeClub?.id === item.id;
               const rosterCount = item.name === club ? squad.length : database.players.filter((player) => player.clubId === item.id && !completedTransfers.has(player.id)).length;
               return <button key={item.id} aria-pressed={isActive} onClick={() => chooseClub(item)} className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${isActive ? "border-[#81b48d] bg-[#eef7f0] shadow-sm" : "border-transparent hover:border-[#e3ece4] hover:bg-[#f7faf7]"}`}>
@@ -159,7 +178,8 @@ export function TeamDirectory({
                 <span className="min-w-0 flex-1"><b className="block truncate text-[13px]">{item.name}</b><small className="mt-0.5 block truncate text-[10px] text-[#718477]">{item.country} · {item.division}</small></span>
                 <span className="text-[10px] font-bold text-[#789080]">{rosterCount}</span>
               </button>;
-            })}
+              })}
+            </section>)}
             {!visibleClubs.length && <div className="p-4 text-sm text-[#718477]">Nenhum clube corresponde aos filtros.</div>}
           </div>
         </aside>
