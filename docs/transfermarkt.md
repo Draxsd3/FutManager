@@ -144,3 +144,11 @@ progresso salvos da carreira não são reimportados.
 Auditoria: 202 jogadores sem posição, 1 sem idade/nascimento; ABECAT com apenas 7 atletas. `/api/transfermarkt/seed?report=1` expõe o relatório de todos os jogadores e clubes pendentes. A data upstream não veio no arquivo e permanece desconhecida; `processedAt` é a data do processamento do anexo, não uma garantia de atualização dos elencos na fonte.
 
 Manifesto/IDs/duplicidades e campos de cada atleta são validados antes de usar o arquivo. Checkpoint existente compatível mantém seus clubes já validados na API e recebe apenas os clubes válidos que faltam no arquivo. Manifesto divergente bloqueia a mesclagem. Sem perfis de clubes no arquivo, não se fabricam estádio, técnico ou cores: valores ausentes continuam nulos na origem.
+
+## Corrigir pendências manualmente
+
+Em **Configurações → Transfermarkt → Corrigir pendências**, pesquise o clube/jogador, veja o nascimento/posição originais e preencha somente os campos desejados. Disponíveis: nascimento **ou** idade, posição, camisa, pé e fim do contrato. Campos vazios mantêm a origem. Salvar valida a prévia e informa novas contagens; depois feche o modal e clique em Rodar para continuar. Remover correção manual restaura a fonte na próxima revalidação.
+
+Os overlays são guardados por conta no IndexedDB **deste dispositivo**, não na API e não no arquivo original. Os campos/data da intervenção acompanham a proveniência do jogador quando o catálogo for aplicado. Não afirmar que o que foi digitado é fato oficial do Transfermarkt. Datas inválidas/futuras ou fora de 14–65 anos, posições desconhecidas, identidades de fora do arquivo e duplicidades são rejeitadas.
+
+O POST do seed só calcula uma prévia com o conjunto de correções enviado; não publica ou grava dados remotamente. A revisão muda quando as correções mudam: o coletor revalida clubes corrigidos e descarta o staging manual removido, sem perder os outros clubes. A lista de edição cobre as pendências do arquivo enviado e intervenções já salvas. Elencos com menos de 11 atletas continuam pendentes de coleta real; corrigir data não completa elenco e não autoriza excluir/jogar fora jogadores.

@@ -23,7 +23,7 @@ export function CareerWorkspace({ background, title, onClose, children, classicC
   </>;
 }
 
-function CareerWindow({ title, onClose, children, style, classicContent }: { title: string; onClose: () => void; children: ReactNode; style: CSSProperties; classicContent: boolean }) {
+export function CareerWindow({ title, onClose, children, style, classicContent }: { title: string; onClose: () => void; children: ReactNode; style: CSSProperties; classicContent: boolean }) {
   const label = useId();
   const panel = useRef<HTMLElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);

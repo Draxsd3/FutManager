@@ -30,6 +30,7 @@ const positions: Record<string, "G" | "L" | "Z" | "M" | "A"> = {
   "Left Winger": "A", "Right Winger": "A", "Second Striker": "A", "Centre-Forward": "A",
 };
 const rawPlayerSchema = z.object({
+  manualCorrection: z.object({ fields: z.array(z.string()), correctedAt: z.iso.datetime({ offset: true }) }).optional(),
   id: z.string(), name: z.string(), position: z.string().nullable(),
   age: z.number().int().nullable().optional(), dateOfBirth: z.iso.date().nullable().optional(),
   shirtNumber: z.number().int().nullable().optional(), foot: z.string().nullable().optional(),
@@ -49,7 +50,7 @@ export function normalizeLivePlayer(input: unknown, clubName: string, collectedA
   const age = player.age ?? (born ? reference.getUTCFullYear() - born.getUTCFullYear() - Number(reference.toISOString().slice(5, 10) < player.dateOfBirth!.slice(5)) : null);
   const position = player.position ? positions[player.position] : undefined;
   if (age === null || !position) throw new Error(`${clubName} / ${player.name}: idade/nascimento ou posição não informados. Nada foi aplicado.`);
-  return { id: player.id, name: player.name, age, position, dateOfBirth: player.dateOfBirth ?? null,
+  return { manualCorrection: player.manualCorrection, id: player.id, name: player.name, age, position, dateOfBirth: player.dateOfBirth ?? null,
     shirtNumber: player.shirtNumber && player.shirtNumber > 0 ? player.shirtNumber : null,
     foot: ({ left: "E", right: "D", both: "A" } as const)[player.foot as "left" | "right" | "both"] ?? null,
     contractEndsOn: player.contract ?? null, marketValueEur: player.marketValue ?? null };
@@ -115,6 +116,8 @@ export async function collectNationalSnapshot(options: LiveOptions) {
           !checkpoint.snapshot.competitions?.every(comp => seed.snapshot.competitions?.some(other => other.id === comp.id && other.seasonId === comp.seasonId))) {
         throw new Error("O arquivo e a coleta salva têm participantes/temporadas diferentes. Nada foi alterado.");
       }
+      const revised = new Set(seed.snapshot.clubs.filter(club => club.players.some(player => player.manualCorrection)).map(club => club.id));
+      checkpoint.snapshot.clubs = checkpoint.snapshot.clubs.filter(club => !revised.has(club.id) && !club.players.some(player => player.manualCorrection));
       const completed = new Set(checkpoint.snapshot.clubs.map(club => club.id));
       checkpoint.snapshot.clubs.push(...seed.snapshot.clubs.filter(club => !completed.has(club.id)));
       checkpoint.seedId = seed.seedId;

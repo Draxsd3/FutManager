@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { manualCorrectionsSchema, correctionFields, type ManualCorrection } from "./transfermarkt-corrections";
 import { nationalCompetitions, normalizeLiveClub, normalizeLivePlayer, type LiveCheckpoint } from "./transfermarkt-live";
 import { transfermarktSnapshotSchema } from "./transfermarkt";
 
@@ -10,8 +11,20 @@ const fileSchema = z.object({ competitions: z.array(z.object({
 export type SeedPlayerIssue = { clubId: string; clubName: string; playerId: string; playerName: string; message: string };
 
 /** User-supplied 2026 collection. Processing date is NOT the unknown upstream collection date. */
-export function prepareNationalSeed(input: unknown, seedId: string, processedAt = new Date().toISOString()) {
+export function prepareNationalSeed(input: unknown, seedId: string, processedAt = new Date().toISOString(), correctionsInput: ManualCorrection[] = []) {
   const file = fileSchema.parse(input);
+  const corrections = manualCorrectionsSchema.parse(correctionsInput);
+  for (const correction of corrections) {
+    const club = file.competitions.flatMap(comp => comp.clubs).find(club => club.id === correction.clubId);
+    const index = club?.players.findIndex(raw => (raw as { id?: string }).id === correction.playerId) ?? -1;
+    if (!club || index < 0) throw new Error("Jogador/clube da correção não pertence ao arquivo.");
+    const { correctedAt, ...identityAndFields } = correction;
+    const fields = { ...identityAndFields } as Partial<ManualCorrection>;
+    delete fields.clubId; delete fields.playerId;
+    club.players[index] = { ...(club.players[index] as object), ...fields,
+      ...(fields.dateOfBirth ? { age: null } : {}),
+      manualCorrection: { fields: correctionFields(correction), correctedAt } };
+  }
   if (new Set(file.competitions.map(comp => comp.id)).size !== 4) throw new Error("Competições duplicadas no arquivo.");
   const checkpoint: LiveCheckpoint = { seedId, snapshot: { version: 2, generatedAt: processedAt, seasonId: "2026", competitions: [], clubs: [] }, members: [], issues: [] };
   const playerIssues: SeedPlayerIssue[] = [], clubIds = new Set<string>(), playerIds = new Set<string>();

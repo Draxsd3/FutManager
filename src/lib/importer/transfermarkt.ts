@@ -4,6 +4,7 @@ import { normalizeName } from "./matching";
 
 const numericId = z.string().regex(/^[1-9]\d*$/);
 const playerSchema = z.object({
+  manualCorrection: z.object({ fields: z.array(z.string()), correctedAt: z.iso.datetime({ offset: true }) }).optional(),
   id: numericId, name: z.string().trim().min(1).max(250), dateOfBirth: z.iso.date().nullable().optional(),
   age: z.number().int().min(14).max(65), position: z.enum(["G", "L", "Z", "M", "A"]),
   shirtNumber: z.number().int().min(1).max(999).nullable(),
@@ -110,7 +111,7 @@ export function applyTransfermarktSnapshot(
       return {
         id: old?.id ?? crypto.randomUUID(), clubId: club.id, name: player.name,
         transfermarkt: { id: player.id, collectedAt: incoming.fetchedAt, season: snapshot.seasonId ?? "2026",
-          marketValueEur: player.marketValueEur, dateOfBirth: player.dateOfBirth ?? null, modelVersion: "provisional-national-v1",
+          manualCorrection: player.manualCorrection, marketValueEur: player.marketValueEur, dateOfBirth: player.dateOfBirth ?? null, modelVersion: "provisional-national-v1",
           estimatedFields: ["overall", "salaryMonthlyBrl", "marketValueBrl", ...(!player.foot ? ["preferredFoot"] : []), ...(!player.contractEndsOn ? ["contractEndsOn"] : []), ...(!player.shirtNumber ? ["shirtNumber"] : [])] },
         shirtNumber: player.shirtNumber ?? old?.shirtNumber ?? index + 1,
         age: player.age, primaryPosition: player.position, secondaryPosition: null,

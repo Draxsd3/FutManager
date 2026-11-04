@@ -1,10 +1,12 @@
 "use client";
 
+import { TransfermarktCorrections } from "./transfermarkt-corrections";
 import { useEffect, useRef, useState } from "react";
 
 export type TransfermarktSyncResult = { clubs: number; players: number; collectedAt: string; cloudPending: boolean };
 
-export function TransfermarktSettings({ onSynchronize }: { onSynchronize: (progress: (message: string) => void, signal: AbortSignal) => Promise<TransfermarktSyncResult> }) {
+export function TransfermarktSettings({ onSynchronize, userId }: { userId?: string; onSynchronize: (progress: (message: string) => void, signal: AbortSignal) => Promise<TransfermarktSyncResult> }) {
+  const [correctionsOpen, setCorrectionsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [failed, setFailed] = useState(false);
@@ -35,6 +37,8 @@ export function TransfermarktSettings({ onSynchronize }: { onSynchronize: (progr
       <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 7v5h-5M4 17v-5h5" /><path d="M6.1 7a7 7 0 0 1 11.5-1L20 9M4 15l2.4 3A7 7 0 0 0 17.9 17" /></svg>
       {busy ? "Coletando Transfermarkt…" : "Rodar importação — Séries A/B/C/D"}
     </button>
+    {userId && <button type="button" disabled={busy} onClick={() => setCorrectionsOpen(true)} className="ml-3 mt-4 rounded-lg border border-[#246e43] px-4 py-2 text-xs font-bold text-[#246e43] disabled:opacity-60">Corrigir pendências</button>}
+    {correctionsOpen && userId && <TransfermarktCorrections userId={userId} onClose={() => setCorrectionsOpen(false)} />}
     {busy && <><p role="status" className="mt-3 text-sm">{progress}</p><button type="button" className="mt-2 text-sm underline" onClick={() => controller.current?.abort()}>Pausar coleta</button></>}
     {message && <p role={failed ? "alert" : "status"} className={`mt-3 whitespace-pre-wrap break-words text-sm ${failed ? "text-[#a33333]" : "text-[#246e43]"}`}>{message}</p>}
   </section>;
