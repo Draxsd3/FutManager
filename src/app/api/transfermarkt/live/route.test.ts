@@ -43,3 +43,20 @@ it("enriches loans from a single authenticated fixed-host history query, not a g
   expect(fetcher).toHaveBeenCalledWith("https://transfermarkt-api-umber.vercel.app/players/1/transfers", expect.objectContaining({ redirect: "error" }));
   expect((await POST(request({ action: "loans", player: "../secret" }))).status).toBe(400);
 });
+
+it("queries achievements on the fixed host and keeps unnamed trophies explicit", async () => {
+  const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: "1023", achievements: [{ title: "", count: 1, details: [{ season: { id: "1950", name: null } }] }] })));
+  vi.stubGlobal("fetch", fetcher);
+  const response = await POST(request({ action: "honours", club: "1023" }));
+  expect(response.status).toBe(200);
+  expect((await response.json())[0].title).toBe("Título não identificado na fonte");
+  expect(fetcher).toHaveBeenCalledWith("https://transfermarkt-api-umber.vercel.app/clubs/1023/achievements", expect.objectContaining({ redirect: "error", cache: "no-store" }));
+});
+it("reapplies explicitly marked manual corrections to freshly fetched squads, not the old seed", async () => {
+  const players = Array.from({ length: 11 }, (_, i) => ({ id: String(i + 1), name: `Player ${i}`, position: i ? "Central Midfield" : null, age: 23, foot: null, shirtNumber: i + 1, contract: null, marketValue: null }));
+  vi.stubGlobal("fetch", vi.fn(async (url: string) => new Response(JSON.stringify(url.includes("/profile") ? { id: "1023", name: "Clube", league: { countryName: "Brazil" } } : { id: "1023", players }))));
+  const response = await POST(request({ action: "club", club: "1023", season: "2025", corrections: [{ clubId: "1023", playerId: "1", correctedAt: "2026-11-04T12:00:00Z", position: "Goalkeeper" }] }));
+  expect(response.status).toBe(200);
+  const result = await response.json();
+  expect(result.players[0]).toMatchObject({ position: "G", manualCorrection: { fields: ["position"] } });
+});

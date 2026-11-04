@@ -26,20 +26,20 @@ export async function prepareTransfermarktSync(database: EditorDatabase) {
 }
 
 /** Live, resumable collection. Browser coordinates short same-origin authenticated requests. */
-export async function prepareLiveTransfermarktSync(database: EditorDatabase, userId: string, progress: import("./transfermarkt-live").ImportProgress, signal?: AbortSignal) {
-  const [{ collectNationalSnapshot }, { createBrowserSupabaseClient }, { readTransfermarktCheckpoint, saveTransfermarktCheckpoint }] = await Promise.all([
+export async function prepareLiveTransfermarktSync(database: EditorDatabase, userId: string, progress: import("./transfermarkt-live").ImportProgress, signal?: AbortSignal, resume = false) {
+  const [{ collectNationalSnapshot, COLLECTION_VERSION }, { createBrowserSupabaseClient }, { readTransfermarktCheckpoint, saveTransfermarktCheckpoint }] = await Promise.all([
     import("./transfermarkt-live"), import("@/lib/supabase/client"), import("./database-cache"),
   ]);
-  const snapshot = await collectNationalSnapshot({ progress, signal, enrichLoans: true,
-    seed: async () => {
-      progress("Validando o arquivo brasileiro 2026 enviado…");
-      const [{ readTransfermarktCorrections }, { fetchCorrectedSeed }] = await Promise.all([import("./database-cache"), import("./transfermarkt-corrections")]);
-      const { checkpoint } = await fetchCorrectedSeed(await readTransfermarktCorrections(userId), signal);
-      return { ...checkpoint, snapshot: transfermarktSnapshotSchema.parse(checkpoint.snapshot) };
-    },
-    load: () => readTransfermarktCheckpoint(userId), save: value => saveTransfermarktCheckpoint(userId, value),
+  const { readTransfermarktCorrections } = await import("./database-cache");
+  const corrections = await readTransfermarktCorrections(userId);
+  // Rodar is always a fresh full refresh. Only the separate resume action reuses staging.
+  if (!resume) await saveTransfermarktCheckpoint(userId, null);
+  const snapshot = await collectNationalSnapshot({ progress, signal, enrichLoans: true, enrichHonours: true,
+    load: async () => { const checkpoint = await readTransfermarktCheckpoint(userId); return checkpoint?.collectionVersion === COLLECTION_VERSION ? checkpoint : null; },
+    save: value => saveTransfermarktCheckpoint(userId, value),
     pause: () => new Promise(resolve => setTimeout(resolve, 1600)),
     request: async (body, signal) => {
+      if (body.action === "club") { const clubId = body.club; body = { ...body, corrections: corrections.filter(item => item.clubId === clubId) }; }
       for (let attempt = 0; attempt < 3; attempt++) {
         signal?.throwIfAborted();
         const client = createBrowserSupabaseClient();

@@ -1,7 +1,8 @@
 "use client";
 
+import { TrophyGallery } from "@/components/ui/championship-history";
+import type { ChampionshipRecord } from "@/lib/game/honours";
 import { useMemo, useState, type ComponentProps } from "react";
-import Image from "next/image";
 import type { CareerSeason } from "@/lib/game/season";
 import type { EditorDatabase } from "@/lib/game/editor-data";
 import type { Player, RoundFixture } from "@/lib/game/mock-data";
@@ -10,7 +11,6 @@ import { InterfaceIcon } from "@/components/ui/interface-icon";
 import { Crest } from "@/components/ui/club-sidebar";
 import { StadiumScreen } from "./stadium-screen";
 import { AgendaScreen, type AgendaView } from "./agenda-screen";
-import { competitionTrophies } from "@/lib/game/assets";
 import { canJoinTraining, sessionEnergyDelta, TRAINING_DAYS, TRAINING_DRILLS, trainingDrillLabel, trainingWeekSessions, type TrainingDay, type TrainingDrillId, type TrainingIntensity, type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
 import trainingStyles from "./training-center.module.css";
 
@@ -18,6 +18,7 @@ export type ClubSection = "agenda" | "stadium" | "juniors" | "teams" | "search" 
 
 export function ClubSectionScreen({
   section,
+  championHistory = [],
   database,
   club,
   coach,
@@ -39,6 +40,7 @@ export function ClubSectionScreen({
   trainingWeek = 1,
   trainingSeason = 2026,
 }: {
+  championHistory?: ChampionshipRecord[];
   agendaView?: AgendaView;
   onAgendaViewChange?: (view: AgendaView) => void;
   onPrepare?: () => void;
@@ -130,12 +132,7 @@ export function ClubSectionScreen({
           </div>
         )}
 
-        {section === "trophies" && (
-          <div className="grid gap-4 p-4 lg:grid-cols-[320px_1fr]">
-            <Panel title="TÍTULOS DA CARREIRA"><div className="grid min-h-64 place-items-center text-center"><Image src="/game-assets/trophies/brasileirao.png" alt="Troféu do Brasileirão" width={86} height={121} unoptimized className="h-28 w-20 object-contain opacity-45 grayscale"/><div><b className="mt-3 block text-lg">Nenhum título conquistado</b><p className="mt-1 text-[#68757b]">A temporada de 2026 está em andamento.</p></div></div></Panel>
-            <Panel title="HISTÓRICO EM COMPETIÇÕES"><DataTable headers={["Competição", "Temporada", "Situação", "Melhor campanha"]}><tr className="border-b"><Cell>Campeonato Estadual</Cell><Cell>2026</Cell><Cell><b className="text-[#07552f]">Em andamento</b></Cell><Cell>{round}ª rodada</Cell></tr></DataTable><div className="mt-5 grid grid-cols-5 gap-2 border border-[#c5b56c] bg-[#fff9d9] p-3">{competitionTrophies.map((trophy) => <div key={trophy.name} className="text-center"><Image src={trophy.asset} alt={`Troféu ${trophy.name}`} width={86} height={121} unoptimized className="mx-auto h-16 w-12 object-contain"/><b className="mt-1 block text-[9px]">{trophy.name}</b></div>)}</div><div className="mt-3 border-l-4 border-[#c8a929] bg-[#fff9d9] p-4"><b>{coach} · {club}</b><p className="mt-1">Títulos, vice-campeonatos e campanhas serão registrados automaticamente ao término de cada competição.</p></div></Panel>
-          </div>
-        )}
+        {section === "trophies" && <TrophyGallery database={database} club={club} records={championHistory}/>}
 
         {section === "training" && (
           <TrainingCenter squad={squad} starters={starters} week={trainingWeek} season={trainingSeason} sessions={trainingSessions} onTrain={onTrainPlayers} />

@@ -1,3 +1,4 @@
+import { historicalHonourSchema } from "@/lib/game/honours";
 import { loanContractSchema } from "@/lib/game/loans";
 import { z } from "zod";
 import type { EditorClub, EditorDatabase, EditorPlayer } from "@/lib/game/editor-data";
@@ -16,6 +17,7 @@ const playerSchema = z.object({
 });
 const divisionSchema = z.enum(["Série A", "Série B", "Série C", "Série D"]);
 const clubSchema = z.object({
+  honours: z.array(historicalHonourSchema).optional(),
   competitionId: z.string().optional(), division: divisionSchema.optional(), country: z.literal("Brasil").optional(),
   state: z.string().min(1).max(100).optional(), shortName: z.string().optional(), colors: z.array(z.string().regex(/^#[a-f\d]{6}$/i)).optional(),
   source: z.string().min(1), id: numericId, name: z.string().trim().min(1).max(250),
@@ -130,7 +132,7 @@ export function applyTransfermarktSnapshot(
       };
     });
     playersByClub.set(club.id, roster);
-    return { ...club, state: club.state ?? incoming.state, transfermarkt: { id: incoming.id, collectedAt: incoming.fetchedAt, season: snapshot.seasonId ?? "2026" }, division: snapshot.version === 2 ? incoming.division! : club.division, stadiumName: incoming.stadiumName ?? club.stadiumName,
+    return { ...club, honours: incoming.honours ?? club.honours, state: club.state ?? incoming.state, transfermarkt: { id: incoming.id, collectedAt: incoming.fetchedAt, season: snapshot.seasonId ?? "2026", honours: incoming.honours ?? club.honours }, division: snapshot.version === 2 ? incoming.division! : club.division, stadiumName: incoming.stadiumName ?? club.stadiumName,
       stadiumCapacity: incoming.stadiumCapacity ?? club.stadiumCapacity,
       coachName: incoming.coachName ?? club.coachName };
   });

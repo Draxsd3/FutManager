@@ -1,8 +1,10 @@
+import type { HistoricalHonour } from "./honours";
 import { isLoanAtClub, type LoanContract } from "./loans";
 import { clubThemes, clubs, squad, type DivisionKey, type Player, type PositionCode } from "./mock-data";
 import type { ManualPosition, PlayerCareerRecord } from "./career";
 
 export type TransfermarktOrigin = {
+  honours?: HistoricalHonour[];
   loan?: LoanContract;
   manualCorrection?: { fields: string[]; correctedAt: string };
   id: string; collectedAt: string; season: string;
@@ -10,6 +12,7 @@ export type TransfermarktOrigin = {
   modelVersion?: string; estimatedFields?: string[];
 };
 export type EditorClub = {
+  honours?: HistoricalHonour[];
   transfermarkt?: TransfermarktOrigin;
   id: string;
   name: string;

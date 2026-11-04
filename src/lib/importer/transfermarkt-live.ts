@@ -1,7 +1,10 @@
+import { historicalHonourSchema } from "@/lib/game/honours";
+import { manualCorrectionSchema } from "./transfermarkt-corrections";
 import { loanContractSchema } from "@/lib/game/loans";
 import { z } from "zod";
 import { transfermarktSnapshotSchema, type TransfermarktSnapshot } from "./transfermarkt";
 
+export const COLLECTION_VERSION = 2;
 export const nationalCompetitions = [
   { id: "BRA1", division: "Série A", expected: 20 },
   { id: "BRA2", division: "Série B", expected: 20 },
@@ -9,10 +12,11 @@ export const nationalCompetitions = [
   { id: "BRA4", division: "Série D", expected: 96 },
 ] as const;
 export const liveRequestSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("honours"), club: z.string().regex(/^[1-9]\d{0,9}$/) }),
   z.object({ action: z.literal("loans"), player: z.string().regex(/^[1-9]\d{0,9}$/) }),
   z.object({ action: z.literal("seasons"), competition: z.enum(["BRA1", "BRA2", "BRA3", "BRA4"]) }),
   z.object({ action: z.literal("members"), competition: z.enum(["BRA1", "BRA2", "BRA3", "BRA4"]), season: z.string().regex(/^\d{4}$/) }),
-  z.object({ action: z.literal("club"), club: z.string().regex(/^[1-9]\d{0,9}$/), season: z.string().regex(/^\d{4}$/) }),
+  z.object({ action: z.literal("club"), club: z.string().regex(/^[1-9]\d{0,9}$/), season: z.string().regex(/^\d{4}$/), corrections: z.array(manualCorrectionSchema).max(200).optional() }),
 ]);
 export type LiveRequest = z.infer<typeof liveRequestSchema>;
 const memberSchema = z.object({ id: z.string().regex(/^[1-9]\d*$/), name: z.string().min(1) });
@@ -79,9 +83,10 @@ export function normalizeLiveClub(profileInput: unknown, squadInput: unknown, cl
 
 export type ImportProgress = (message: string) => void;
 export type LiveCollectionIssue = { clubId: string; clubName: string; message: string };
-export type LiveCheckpoint = { loanChecks?: string[]; snapshot: TransfermarktSnapshot; members: { id: string; name: string; competitionId: string }[]; issues?: LiveCollectionIssue[]; seedId?: string };
+export type LiveCheckpoint = { collectionVersion?: number; loanChecks?: string[]; snapshot: TransfermarktSnapshot; members: { id: string; name: string; competitionId: string }[]; issues?: LiveCollectionIssue[]; seedId?: string };
 export type LiveOptions = {
   enrichLoans?: boolean;
+  enrichHonours?: boolean;
   request: (body: LiveRequest, signal?: AbortSignal) => Promise<unknown>;
   progress?: ImportProgress; signal?: AbortSignal;
   load?: () => Promise<LiveCheckpoint | null>;
@@ -132,7 +137,7 @@ export async function collectNationalSnapshot(options: LiveOptions) {
     progress(`Arquivo brasileiro 2026 aproveitado: ${checkpoint.snapshot.clubs.length}/156 clubes válidos; consultando somente os pendentes…`);
   }
   if (!checkpoint) {
-    checkpoint = { snapshot: { version: 2, seasonId: "2026", generatedAt: new Date().toISOString(), competitions: [], clubs: [] }, members: [] };
+    checkpoint = { collectionVersion: COLLECTION_VERSION, snapshot: { version: 2, seasonId: "2026", generatedAt: new Date().toISOString(), competitions: [], clubs: [] }, members: [] };
     for (const competition of nationalCompetitions) {
       progress(`Verificando ${competition.division} — temporada 2026…`);
       const season = resolveSeason(await request({ action: "seasons", competition: competition.id }), competition.id);
@@ -180,6 +185,14 @@ export async function collectNationalSnapshot(options: LiveOptions) {
   // One bounded final pass, only after every remaining club has been attempted.
   const pending = checkpoint.members.filter(member => issues.has(member.id));
   for (const member of pending) await collectMember(member, true);
+  const honourIssues: string[] = [];
+  if (options.enrichHonours) for (const club of checkpoint.snapshot.clubs) {
+    if (club.honours !== undefined) continue;
+    progress(`Consultando história e galeria de títulos: ${club.name}…`);
+    try { club.honours = z.array(historicalHonourSchema).parse(await request({ action: "honours", club: club.id })); }
+    catch (error) { options.signal?.throwIfAborted(); honourIssues.push(`${club.name}: ${error instanceof Error ? error.message : "consulta falhou"}`); }
+    await options.save?.(checkpoint);
+  }
   // Verify every collected identity, even while other clubs remain pending. Missing facts
   // are deferred, never confused with "not on loan". Resumes skip confirmed identities.
   const loanIssues: string[] = [];
@@ -204,10 +217,11 @@ export async function collectNationalSnapshot(options: LiveOptions) {
     }
     await options.save?.(checkpoint);
   }
-  if (loanIssues.length) throw new Error(`Contratos ainda não confirmados (${loanIssues.length}); ${issues.size} clube(s) com pendências de elenco. O progresso foi salvo; clique em Rodar para retomar somente os pendentes. Nada foi aplicado.\n${loanIssues.slice(0, 20).join("\n")}`);
+  if (honourIssues.length) throw new Error(`Galerias pendentes (${honourIssues.length}); ${issues.size} clube(s) pendente(s). Progresso salvo. Use Retomar coleta para tentar os pendentes.\n${honourIssues.join("\n")}`);
+  if (loanIssues.length) throw new Error(`Contratos ainda não confirmados (${loanIssues.length}); ${issues.size} clube(s) com pendências de elenco. O progresso foi salvo; use Retomar coleta para tentar somente os pendentes. Nada foi aplicado.\n${loanIssues.slice(0, 20).join("\n")}`);
   if (issues.size) {
     const details = [...issues.values()].map(issue => `• ${issue.clubName}: ${issue.message}`).join("\n");
-    throw new Error(`Coleta concluída com pendências: ${checkpoint.snapshot.clubs.length}/156 clubes válidos, ${issues.size} clube(s) pendente(s). Os clubes válidos foram salvos para retomar, mas o catálogo ainda não foi alterado.\n${details}\nClique em Rodar para retomar somente os clubes pendentes após corrigir os dados na fonte.`);
+    throw new Error(`Coleta concluída com pendências: ${checkpoint.snapshot.clubs.length}/156 clubes válidos, ${issues.size} clube(s) pendente(s). Os clubes válidos foram salvos para retomar, mas o catálogo ainda não foi alterado.\n${details}\nUse Retomar coleta para tentar somente os clubes pendentes após corrigir os dados na fonte.`);
   }
   progress("156/156 clubes coletados. Validando identidades e elencos completos…");
   return transfermarktSnapshotSchema.parse(checkpoint.snapshot);

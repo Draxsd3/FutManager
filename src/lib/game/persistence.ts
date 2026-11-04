@@ -83,6 +83,7 @@ export async function readCloudDatabase(userId: string): Promise<EditorDatabase 
     clubs: clubRows.map((row) => ({
       id: row.id,
       transfermarkt: row.transfermarkt ?? undefined,
+      honours: row.transfermarkt?.honours,
       name: row.name,
       shortName: row.short_name,
       division: row.division,

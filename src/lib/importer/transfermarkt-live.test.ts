@@ -15,6 +15,7 @@ function source() {
         clubs: Array.from({ length: nationalCompetitions[index].expected }, (_, i) => ({ id: String(index * 100 + i + 1), name: `Club ${index * 100 + i + 1}` })) };
     }
     if (body.action === "loans") return { loan: null };
+    if (body.action === "honours") return [];
     return club(body.club, 11);
   });
 }
@@ -169,4 +170,19 @@ it("resolves loan owner/borrower local IDs without creating foreign clubs or mix
   expect(db.players[0].loan).toMatchObject({ owner: { externalId: "999" }, borrower: { clubId: db.clubs[0].id }, endsOn: "2026-06-30" });
   expect(db.players[0].loan?.owner.clubId).toBeUndefined();
   expect(db.players[0].contractEndsOn).not.toBe("2026-06-30");
+});
+
+it("collects every club gallery, defers a failure and resumes just the missing history", async () => {
+  const good = source(); let saved: LiveCheckpoint | null = null;
+  const request = vi.fn(async (body: LiveRequest) => {
+    if (body.action === "honours" && body.club === "1") throw new Error("Fonte indisponível");
+    return good(body);
+  });
+  const save = async (value: LiveCheckpoint | null) => { saved = structuredClone(value); };
+  await expect(collectNationalSnapshot({ request, save, enrichHonours: true })).rejects.toThrow("Galerias pendentes (1)");
+  expect(request.mock.calls.filter(([body]) => body.action === "honours")).toHaveLength(156);
+  const resumed = source();
+  const snapshot = await collectNationalSnapshot({ request: resumed, save, load: async () => saved, enrichHonours: true });
+  expect(resumed).toHaveBeenCalledTimes(1);
+  expect(snapshot.clubs.every(club => Array.isArray(club.honours))).toBe(true);
 });
