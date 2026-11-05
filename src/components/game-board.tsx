@@ -1,6 +1,7 @@
 "use client";
-import { ManagementHeader } from "@/components/ui/management-header";
-import surface from "@/components/ui/management-surface.module.css";
+import { SettingsScreen } from "@/components/screens/settings-screen";
+import { applyStructuralDatabaseUpdates, createCareerUniverseSnapshot } from "@/lib/game/career-universe";
+
 
 
 import { newStadium, recordGate, setSectorPrice, startExpansion, type StadiumSector, type StadiumState } from "@/lib/game/stadium";
@@ -14,7 +15,7 @@ import { databaseWithLoans, expireLoans, loanExpiryReminders, proposeLoanExtensi
 
 import { clubConfidence, mergeConfidenceHistory, type ConfidenceMatch } from "@/lib/game/confidence";
 
-import { TransfermarktSettings } from "@/components/screens/transfermarkt-settings";
+
 import { prepareLiveTransfermarktSync } from "@/lib/importer/transfermarkt-sync";
 
 import { importBrazilDatabase } from "@/lib/importer/brazil-database";
@@ -64,7 +65,7 @@ import {
 } from "@/lib/game/session";
 import { agendaOptions, type AgendaView } from "@/components/screens/agenda-screen";
 import { generateYouthTeam, promoteYouth, type YouthTeam } from "@/lib/game/youth";
-import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+
 import type { CareerProgress, MatchPreparation } from "@/lib/game/progress";
 import { applyTrainingSession, type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
 import { calculateMatchStatistics, calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, recoverSquadBetweenMatches, resolveMatchPlayerRole, seededRandom, simulateAction } from "@/lib/game/live-match";
@@ -121,6 +122,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const databaseRevision = useRef(0);
   const synchronizedCatalog = useRef<EditorDatabase | null>(null);
   const transfermarktSyncRunning = useRef(false);
+  const universeSnapshot = useRef<EditorDatabase | undefined>(undefined);
   const [round, setRound] = useState(1);
   const [budget, setBudget] = useState(12624);
   const [stadiums, setStadiums] = useState<Record<string, StadiumState>>({});
@@ -145,7 +147,11 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       const localDatabase = upgradeEditorDatabase(await readCachedDatabase(userId).catch(() => null) ?? readLocalDatabase(userId) ?? (await (await import("@/lib/importer/november-database")).applyNovemberDatabase(await importBrazilDatabase())).database);
       if (cancelled) return;
       const localSaves = currentCareerSaves(await readCachedCareerSaves(userId).catch(() => null) ?? readLocalSaves(userId))
-        .map((save) => reconcileCareerSaveWithDatabase(save, localDatabase).save);
+        .map((save) => {
+          const snapshot = save.progress?.universeSnapshot ?? createCareerUniverseSnapshot(localDatabase);
+          const reconciled = reconcileCareerSaveWithDatabase(save, snapshot).save;
+          return reconciled.progress ? { ...reconciled, progress: { ...reconciled.progress, universeSnapshot: snapshot } } : reconciled;
+        });
       // Replace both account-local stores even offline; the reset is not a recurring wipe.
       writeLocalSaves(localSaves, userId);
       const sessionId = readActiveCareerSession(userId);
@@ -179,8 +185,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         }
         const reconciledSaveIds = new Set<string>();
         const merged = mergeCareerSaves(localSaves, cloudSaves).map((save) => {
-          const reconciled = reconcileCareerSaveWithDatabase(save, effectiveDatabase);
-          if (reconciled.changed) {
+          const snapshot = save.progress?.universeSnapshot ?? createCareerUniverseSnapshot(effectiveDatabase);
+          const reconciled = reconcileCareerSaveWithDatabase(save, snapshot);
+          if (reconciled.save.progress) reconciled.save = { ...reconciled.save, progress: { ...reconciled.save.progress, universeSnapshot: snapshot } };
+          if (reconciled.changed || (save.progress && !save.progress.universeSnapshot)) {
             reconciledSaveIds.add(save.id);
             return { ...reconciled.save, updatedAt: new Date().toISOString() };
           }
@@ -263,7 +271,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [standingsOpen, setStandingsOpen] = useState(false);
 
   const progress: CareerProgress = {
-    page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, kit, formation, style, marking, focus,
+    universeSnapshot: universeSnapshot.current, page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore,
     events, participation, matchBenchIds, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
     stadiums, managerMarket, jobClubSnapshots, managerAppointments, youthTeams, competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
@@ -320,25 +328,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     let cancelled = false;
     const team = managedClubRecord;
     async function loadYouth() {
-      let result = generateYouthTeam(team, activeSaveId!, team.transfermarkt?.id ? "Base simulada: não foi possível confirmar dados reais na API." : "Base simulada: clube sem identificação Transfermarkt.");
-      if (team.transfermarkt?.id) {
-        try {
-          const client = createBrowserSupabaseClient();
-          const { data } = await client.auth.getSession();
-          if (!data.session) throw new Error("Sem sessão");
-          const reply = await fetch("/api/transfermarkt/youth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ club: team.transfermarkt.id }), signal: AbortSignal.timeout(55000) });
-          if (!reply.ok) throw new Error("API indisponível");
-          const source: { players: { id: string; name: string; age: number; position: "G" | "L" | "Z" | "M" | "A"; ageEstimated?: boolean; positionEstimated?: boolean }[]; collectedAt?: string; missing?: number } = await reply.json();
-          const professionals = new Set(database?.players.map(player => player.transfermarkt?.id));
-          const seen = new Set<string>();
-          const players = source.players.filter(player => !professionals.has(player.id) && !seen.has(player.id) && !!seen.add(player.id)).map(player => ({ id: `transfermarkt:${player.id}`, externalId: player.id, name: player.name, position: player.position, age: player.age, ageEstimated: player.ageEstimated, positionEstimated: player.positionEstimated, nationality: null, overall: Math.min(75, Math.max(35, 39 + team.level)), origin: "transfermarkt" as const }));
-          if (players.length) {
-            const names = new Set(players.map(player => player.name.toLocaleLowerCase("pt-BR")));
-            const simulated = generateYouthTeam(team, activeSaveId!).players.filter(player => !names.has(player.name.toLocaleLowerCase("pt-BR"))).slice(0, Math.max(0, 20 - players.length));
-            result = { players: [...players, ...simulated], origin: "transfermarkt", collectedAt: source.collectedAt, note: `Elenco atual da API; força estimada.${simulated.length ? ` ${simulated.length} jogadores fictícios completam a base.` : ""}${source.missing ? ` ${source.missing} registros incompletos não puderam ser importados.` : ""} Não representa necessariamente o início de 2026.` };
-          }
-        } catch { /* Keep generated roster, explicitly identified as simulated. */ }
-      }
+      const result = generateYouthTeam(team, activeSaveId!, "Base simulada para esta carreira. Consultas externas ficam no Editor de Universo.");
       if (!cancelled) {
         setYouthTeams(current => {
           const previous = current[team.id];
@@ -679,6 +669,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       setDatabase(synchronizedCatalog.current);
       synchronizedCatalog.current = null;
     }
+    universeSnapshot.current = undefined;
     setPage(nextPage);
   }
 
@@ -770,7 +761,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   async function synchronizeTransfermarkt(progress: (message: string) => void, signal: AbortSignal, resume = false) {
-    if (!database || transfermarktSyncRunning.current) throw new Error("Sincronização indisponível. Aguarde e tente novamente.");
+    if (page !== "editor" || careerLoaded || !database || transfermarktSyncRunning.current) throw new Error("Sincronização indisponível. Aguarde e tente novamente.");
     transfermarktSyncRunning.current = true;
     const startedRevision = databaseRevision.current;
     try {
@@ -880,6 +871,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     if (!coach.trim()) return;
     const selectedClub = database?.clubs.find((item) => item.name === club);
     if (!selectedClub || !database) return;
+    universeSnapshot.current = createCareerUniverseSnapshot(database);
+    synchronizedCatalog.current = database;
     const newSeason = createCareerSeason(database, selectedClub.id, BRAZILIAN_REFERENCE_SEASON) ?? undefined;
     const firstFixture = nextCareerFixture(newSeason);
     if (!newSeason || !firstFixture) {
@@ -908,7 +901,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setLoanContracts(initialLoans);
     setLoansOpen(false);
     const initialStarters = buildStartingXI("4-3-3", baseSquad);
-    save.progress = { ...progressRef.current, page: "hub", matchPreparation: undefined, activeSaveId: save.id, coach: coach.trim(),
+    save.progress = { ...progressRef.current, universeSnapshot: universeSnapshot.current, page: "hub", matchPreparation: undefined, activeSaveId: save.id, coach: coach.trim(),
       round: 1, budget: 12624, stadiums: {}, kit: 1, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
       careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, trainingSessions: [], manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
@@ -949,9 +942,19 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setPage("hub");
   }
 
+  function currentCatalog() { return database; }
+
   async function loadCareer(save: CareerSave): Promise<boolean> {
     if (!isCurrentCareerSave(save)) return false;
-    if (database) save = reconcileCareerSaveWithDatabase(save, database).save;
+    const catalog = synchronizedCatalog.current ?? currentCatalog();
+    const database = catalog ? applyStructuralDatabaseUpdates(save.progress?.universeSnapshot ?? createCareerUniverseSnapshot(catalog), catalog).database : null;
+    if (database) {
+      synchronizedCatalog.current = catalog;
+      universeSnapshot.current = database;
+      setDatabase(database);
+      save = reconcileCareerSaveWithDatabase(save, database).save;
+      if (save.progress) save = { ...save, progress: { ...save.progress, universeSnapshot: database } };
+    }
     const clubId = database?.clubs.find((item) => item.name === save.clubName)?.id ?? save.clubId;
     const storedSeason = save.progress?.competitionSeason ?? (database && clubId ? createCareerSeason(database, clubId, Number(save.inGameDate.slice(0, 4)) || 2026) ?? undefined : undefined);
     const restoredSeason = storedSeason ? applyBrazilianCalendar(save.progress?.competitionSeason ? storedSeason : { ...storedSeason, calendarVersion: undefined }, save.inGameDate) : undefined;
@@ -1603,7 +1606,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       </>
     );
 
-  if (page === "settings") return <CareerWorkspace {...workspace} title="Configurações"><section className={surface.screen} data-management-surface="settings"><div className={`${surface.content} space-y-4`}><ManagementHeader title="Configurações" eyebrow="Carreira / preferências" icon="pencil" description="Personalize sua experiência ou volte ao menu inicial." /><div className={surface.panel}><h2 className="text-lg font-black">Partida</h2><label className="mt-4 block text-sm font-bold">Velocidade padrão para novas partidas <select value={defaultMatchSpeed} onChange={(e) => setDefaultMatchSpeed(Number(e.target.value) as 1 | 2 | 4)} className="ml-3 rounded-lg border border-[#d5e0d8] bg-white p-2"><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option></select></label><p className="mt-2 text-xs text-[#718477]">Salva na carreira; pode ser alterada durante cada jogo.</p></div><TransfermarktSettings userId={userId} onSynchronize={synchronizeTransfermarkt} /><div className={surface.panel}><h2 className="text-lg font-black">Sessão</h2><p className="mt-1 text-sm text-[#718477]">A carreira é salva antes de voltar ao menu inicial.</p><button onClick={() => leaveActiveCareer("menu")} className="mt-4 rounded-lg bg-[#246e43] px-4 py-2 text-xs font-bold text-white">Voltar ao menu inicial</button></div></div></section></CareerWorkspace>;
+  if (page === "settings") return <CareerWorkspace {...workspace} title="Configurações"><SettingsScreen club={club} coach={coach} speed={defaultMatchSpeed} onSpeedChange={setDefaultMatchSpeed} onBackToClub={() => navigate("hub")} onMenu={() => leaveActiveCareer("menu")} /></CareerWorkspace>;
 
   const windowTitles: Partial<Record<Page, string>> = {
     agenda: "Agenda", stadium: "Estádio", juniors: "Juniores", teams: "Times",
@@ -1615,7 +1618,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return (
       <>
         <CareerWorkspace {...workspace} title={windowTitles[page]} titleIcon={managementSection === "teams" ? "group" : undefined}>
-          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens youthTeam={managedClubRecord ? youthTeams[managedClubRecord.id] : undefined} youthLoading={!!managedClubRecord && (!youthTeams[managedClubRecord.id] || retryYouthClub === managedClubRecord.id)} onRetryYouth={() => { if (managedClubRecord) setRetryYouthClub(managedClubRecord.id); }} onPromoteYouth={promoteJunior} embedded championHistory={championHistory} section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={managementDatabase ?? database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations.filter(deal => deal.buyerClubId === managedClubRecord?.id)} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
+          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens youthTeam={managedClubRecord ? youthTeams[managedClubRecord.id] : undefined} youthLoading={!!managedClubRecord && (!youthTeams[managedClubRecord.id] || retryYouthClub === managedClubRecord.id)}  onPromoteYouth={promoteJunior} embedded championHistory={championHistory} section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={managementDatabase ?? database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations.filter(deal => deal.buyerClubId === managedClubRecord?.id)} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
             jobs={managerMarket && careerDatabase && managedClubRecord ? { market: managerMarket, database: careerDatabase, currentClubId: managedClubRecord.id, date: saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11", appointments: managerAppointments, onApply: applyToManagerJob, onDecline: declineJob, onAccept: acceptJob } : undefined}
             championHistory={championHistory}
             stadium={managedClubRecord ? stadiums[managedClubRecord.id] : undefined}

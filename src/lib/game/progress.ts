@@ -21,6 +21,8 @@ export type MatchPreparation = {
 };
 
 export type CareerProgress = {
+  /** Frozen club/player catalog, independent of future editor imports. */
+  universeSnapshot?: import("./editor-data").EditorDatabase;
   youthTeams?: Record<string, import("./youth").YouthTeam>;
   stadiums?: Record<string, StadiumState>;
   managerMarket?: ManagerMarket;
