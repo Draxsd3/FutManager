@@ -48,3 +48,32 @@ it("merges a new file into an older checkpoint without replacing already validat
   expect(saved.snapshot.clubs[0].stadiumName).toBe("Previously verified stadium");
   expect(saved.seedId).toBe("attachment-v1");
 });
+
+it("audits the November collection and preserves its profile and collection timestamp", async () => {
+  const { default: data } = await import("@/data/transfermarkt/brasileirao-2026-novembro.json");
+  const collectedAt = data.sourceMetadata.generatedAt;
+  const { checkpoint, report } = prepareNationalSeed(data, data.sourceMetadata.sha256, "2026-11-05T12:00:00Z", [], collectedAt);
+  expect(report.clubs).toBe(156);
+  expect(report.players).toBe(4208);
+  expect(report.pendingClubs).toBe(87);
+  expect(report.validClubs).toBe(69);
+  expect(report.playerIssues).toHaveLength(207);
+  expect(checkpoint.stagedAt).toBe("2026-11-05T12:00:00Z");
+  expect(checkpoint.snapshot.generatedAt).toBe(collectedAt);
+  expect(report.validClubs + report.pendingClubs).toBe(156);
+  expect(report.sourceCollectedAt).toBe(collectedAt);
+  expect(checkpoint.snapshot.clubs.every(club => club.fetchedAt === collectedAt)).toBe(true);
+  const palmeiras = checkpoint.snapshot.clubs.find(club => club.id === "1023");
+  expect(palmeiras).toMatchObject({ stadiumName: "Nubank Parque", coachName: "Abel Ferreira", honours: expect.any(Array) });
+});
+
+it("does not discard an attached player when completing a pending roster from the API", async () => {
+  const { checkpoint } = prepareNationalSeed(file, "attachment-v1");
+  const pending = checkpoint.members.find(member => !checkpoint.snapshot.clubs.some(club => club.id === member.id))!;
+  const wrongRoster = { ...checkpoint.snapshot.clubs[0], id: pending.id };
+  let saved = checkpoint;
+  await expect(collectNationalSnapshot({ load: async () => checkpoint, request: async () => wrongRoster,
+    save: async value => { saved = structuredClone(value!); } })).rejects.toThrow();
+  expect(saved.snapshot.clubs.some(club => club.id === pending.id)).toBe(false);
+  expect(saved.issues?.find(issue => issue.clubId === pending.id)?.message).toContain("não contém todos os jogadores do arquivo");
+});

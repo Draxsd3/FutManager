@@ -83,7 +83,7 @@ export function normalizeLiveClub(profileInput: unknown, squadInput: unknown, cl
 
 export type ImportProgress = (message: string) => void;
 export type LiveCollectionIssue = { clubId: string; clubName: string; message: string };
-export type LiveCheckpoint = { collectionVersion?: number; loanChecks?: string[]; snapshot: TransfermarktSnapshot; members: { id: string; name: string; competitionId: string }[]; issues?: LiveCollectionIssue[]; seedId?: string };
+export type LiveCheckpoint = { stagedAt?: string; collectionVersion?: number; loanChecks?: string[]; snapshot: TransfermarktSnapshot; members: { id: string; name: string; competitionId: string; expectedPlayerIds?: string[] }[]; issues?: LiveCollectionIssue[]; seedId?: string };
 export type LiveOptions = {
   enrichLoans?: boolean;
   enrichHonours?: boolean;
@@ -108,7 +108,7 @@ export async function collectNationalSnapshot(options: LiveOptions) {
     try {
       checkpoint.snapshot = transfermarktSnapshotSchema.parse(checkpoint.snapshot);
       if (checkpoint.snapshot.version !== 2 || checkpoint.snapshot.seasonId !== "2026" ||
-        !checkpoint.snapshot.generatedAt || Date.now() - Date.parse(checkpoint.snapshot.generatedAt) > 86_400_000 ||
+        !checkpoint.snapshot.generatedAt || (!Number.isFinite(Date.parse(checkpoint.stagedAt ?? checkpoint.snapshot.generatedAt)) || Date.now() - Date.parse(checkpoint.stagedAt ?? checkpoint.snapshot.generatedAt) > 86_400_000) ||
         checkpoint.members.length !== 156 || new Set(checkpoint.members.map(member => member.id)).size !== 156 ||
         !nationalCompetitions.every(c => checkpoint!.members.filter(member => member.competitionId === c.id).length === c.expected && checkpoint!.snapshot.competitions?.filter(comp => comp.id === c.id && comp.division === c.division).length === 1) ||
         new Set(checkpoint.snapshot.clubs.map(club => club.id)).size !== checkpoint.snapshot.clubs.length ||
@@ -166,6 +166,7 @@ export async function collectNationalSnapshot(options: LiveOptions) {
       const club = transfermarktSnapshotSchema.shape.clubs.element.parse(await request({ action: "club", club: member.id, season: competition.seasonId }));
       options.signal?.throwIfAborted();
       if (club.id !== member.id) throw new Error("Identidade do clube divergente.");
+      if (member.expectedPlayerIds?.some(id => !club.players.some(player => player.id === id))) throw new Error("O elenco retornado não contém todos os jogadores do arquivo; revisão necessária.");
       checkpoint!.snapshot.clubs.push({ ...club, competitionId: competition.id, division: competition.division, country: "Brasil" });
       issues.delete(member.id);
     } catch (error) {

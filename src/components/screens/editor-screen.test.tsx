@@ -79,3 +79,17 @@ it("rejects invalid JSON and leaves catalog untouched", async () => {
   expect(await screen.findByText(/Não foi possível preparar o JSON/)).toBeTruthy();
   expect(change).not.toHaveBeenCalled();
 });
+
+it("prepares the incorporated collection only after confirmation and never modifies the catalogue", async () => {
+  const change = vi.fn();
+  const save = vi.spyOn(await import("@/lib/importer/database-cache"), "saveTransfermarktCheckpoint").mockResolvedValue();
+  vi.spyOn(window, "confirm").mockReturnValue(true);
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ checkpoint: { members: [] }, report: { clubs: 156, players: 4208, validClubs: 69, pendingClubs: 87 } }) }));
+  render(<EditorScreen userId="alice" database={createDefaultDatabase()} syncLabel="Salvo" onChange={change} onBack={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", { name: "Dados e importação" }));
+  fireEvent.click(screen.getByRole("button", { name: "Preparar dados recebidos" }));
+  expect(await screen.findByText(/69 clubes válidos e 87 com pendências/)).toBeTruthy();
+  expect(save).toHaveBeenCalledOnce();
+  expect(change).not.toHaveBeenCalled();
+  vi.restoreAllMocks(); vi.unstubAllGlobals();
+});

@@ -1,17 +1,20 @@
 import { z } from "zod";
 import { manualCorrectionsSchema, correctionFields, type ManualCorrection } from "./transfermarkt-corrections";
 import { nationalCompetitions, normalizeLiveClub, normalizeLivePlayer, type LiveCheckpoint } from "./transfermarkt-live";
+import { historicalHonourSchema } from "@/lib/game/honours";
 import { transfermarktSnapshotSchema } from "./transfermarkt";
 
 const idSchema = z.string().regex(/^[1-9]\d*$/);
 const fileSchema = z.object({ competitions: z.array(z.object({
   id: z.string(), name: z.string().min(1), seasonId: z.literal("2025"),
-  clubs: z.array(z.object({ id: idSchema, name: z.string().min(1), players: z.array(z.unknown()).max(200) })).max(96),
+  clubs: z.array(z.object({ id: idSchema, name: z.string().min(1), profile: z.unknown().optional(), honours: z.array(historicalHonourSchema).optional(), players: z.array(z.unknown()).max(200) })).max(96),
 })).length(4) });
 export type SeedPlayerIssue = { clubId: string; clubName: string; playerId: string; playerName: string; message: string };
 
 /** User-supplied 2026 collection. Processing date is NOT the unknown upstream collection date. */
-export function prepareNationalSeed(input: unknown, seedId: string, processedAt = new Date().toISOString(), correctionsInput: ManualCorrection[] = []) {
+export function prepareNationalSeed(input: unknown, seedId: string, processedAt = new Date().toISOString(), correctionsInput: ManualCorrection[] = [], sourceCollectedAt: string | null = null) {
+  if (sourceCollectedAt && !Number.isFinite(Date.parse(sourceCollectedAt))) throw new Error("Data de coleta inválida.");
+  const observedAt = sourceCollectedAt ?? processedAt;
   const file = fileSchema.parse(input);
   const corrections = manualCorrectionsSchema.parse(correctionsInput);
   for (const correction of corrections) {
@@ -26,7 +29,7 @@ export function prepareNationalSeed(input: unknown, seedId: string, processedAt 
       manualCorrection: { fields: correctionFields(correction), correctedAt } };
   }
   if (new Set(file.competitions.map(comp => comp.id)).size !== 4) throw new Error("Competições duplicadas no arquivo.");
-  const checkpoint: LiveCheckpoint = { seedId, snapshot: { version: 2, generatedAt: processedAt, seasonId: "2026", competitions: [], clubs: [] }, members: [], issues: [] };
+  const checkpoint: LiveCheckpoint = { seedId, stagedAt: processedAt, snapshot: { version: 2, generatedAt: sourceCollectedAt ?? processedAt, seasonId: "2026", competitions: [], clubs: [] }, members: [], issues: [] };
   const playerIssues: SeedPlayerIssue[] = [], clubIds = new Set<string>(), playerIds = new Set<string>();
   let totalPlayers = 0;
   for (const expected of nationalCompetitions) {
@@ -36,14 +39,14 @@ export function prepareNationalSeed(input: unknown, seedId: string, processedAt 
     for (const club of comp.clubs) {
       if (clubIds.has(club.id)) throw new Error("Clube duplicado no arquivo.");
       clubIds.add(club.id);
-      checkpoint.members.push({ id: club.id, name: club.name, competitionId: comp.id });
+      checkpoint.members.push({ id: club.id, name: club.name, competitionId: comp.id, expectedPlayerIds: club.players.map(player => z.object({ id: idSchema }).parse(player).id) });
       const problems: string[] = [];
       for (const raw of club.players) {
         const identity = z.object({ id: idSchema, name: z.string().min(1) }).parse(raw);
         if (playerIds.has(identity.id)) throw new Error("Jogador duplicado no arquivo.");
         playerIds.add(identity.id); totalPlayers++;
         try {
-          transfermarktSnapshotSchema.shape.clubs.element.shape.players.element.parse(normalizeLivePlayer(raw, club.name, processedAt));
+          transfermarktSnapshotSchema.shape.clubs.element.shape.players.element.parse(normalizeLivePlayer(raw, club.name, observedAt));
         } catch {
           const facts = raw as Record<string, unknown>;
           const missing = [!facts.position ? "posição não informada" : null,
@@ -57,15 +60,15 @@ export function prepareNationalSeed(input: unknown, seedId: string, processedAt 
       if (!problems.length) {
         try {
           // Country is established by the explicitly allowlisted Brazilian competition, not an invented profile.
-          const normalized = normalizeLiveClub({ id: club.id, name: club.name, league: { countryName: "Brazil" } }, { id: club.id, players: club.players }, club.id, processedAt);
+          const normalized = normalizeLiveClub(club.profile ?? { id: club.id, name: club.name, league: { countryName: "Brazil" } }, { id: club.id, players: club.players }, club.id, observedAt);
           if (!normalized.players.some(player => player.position === "G")) throw new Error("Elenco sem goleiro.");
-          checkpoint.snapshot.clubs.push({ ...normalized, competitionId: comp.id, division: expected.division, country: "Brasil" });
+          checkpoint.snapshot.clubs.push({ ...normalized, ...(club.honours ? { honours: club.honours } : {}), competitionId: comp.id, division: expected.division, country: "Brasil" });
         } catch (error) { problems.push(error instanceof Error ? error.message : "Elenco inválido."); }
       }
       if (problems.length) checkpoint.issues!.push({ clubId: club.id, clubName: club.name, message: problems.join("\n") });
     }
   }
-  return { checkpoint, report: { filename: "brasileirao-2026.json", seedId, processedAt, sourceCollectedAt: null,
+  return { checkpoint, report: { filename: "brasileirao-2026.json", seedId, processedAt, sourceCollectedAt,
     clubs: clubIds.size, players: totalPlayers, validClubs: checkpoint.snapshot.clubs.length,
     pendingClubs: checkpoint.issues!.length, playerIssues } };
 }
