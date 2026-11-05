@@ -1333,12 +1333,26 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   if (page === "menu") {
+    const latestSave =
+      saves.length > 0
+        ? [...saves].sort(
+            (a, b) => (Date.parse(b.updatedAt ?? "") || 0) - (Date.parse(a.updatedAt ?? "") || 0),
+          )[0]
+        : null;
+    const latestClubColor = latestSave
+      ? database.clubs.find((item) => item.name === latestSave.clubName)?.primaryColor
+      : undefined;
     return (
       <StartMenuScreen
         email={email}
         onSignOut={onSignOut}
         saveCount={saves.length}
         syncLabel={syncLabel}
+        latestSave={latestSave}
+        latestClubColor={latestClubColor}
+        clubCount={database.clubs.length}
+        playerCount={database.players.length}
+        onContinueLatest={loadCareer}
         onNewGame={() => {
           const first = database.clubs.find((item) => item.division === "Série A") ?? database.clubs[0];
           if (first) {

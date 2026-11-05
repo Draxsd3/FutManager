@@ -1,21 +1,209 @@
-.screen { min-height: 100svh; display: grid; place-items: center; padding: 32px 20px; background: linear-gradient(100deg, #0a100ef5, #0a100ed9), url('/game-assets/backgrounds/stadium.jpg') center/cover; color: #f6f7f2; font-family: var(--font-geist-sans), Arial, sans-serif; }
-.card { width: min(100%, 430px); }
-.back { border: 0; background: none; padding: 8px 0; color: #b2bdad; font-size: 12px; cursor: pointer; }
-.eyebrow { display: block; margin-top: 40px; color: #c2f45b; letter-spacing: 2px; font-size: 10px; }
-.card h1 { margin: 18px 0 14px; font-size: clamp(29px, 5vw, 40px); font-weight: 800; line-height: 1.15; letter-spacing: -1.5px; }
-.card > p { margin-bottom: 28px; color: #aebaa9; font-size: 13px; line-height: 1.7; }
-.tabs { display: flex; gap: 24px; border-bottom: 1px solid #ffffff25; margin-bottom: 26px; }
-.tabs button { padding: 12px 0; border: 0; border-bottom: 2px solid transparent; background: none; color: #b2bdad; cursor: pointer; font-size: 13px; }
-.tabs button[aria-pressed='true'] { border-color: #c2f45b; color: #c2f45b; }
-.card form { display: grid; gap: 10px; }
-.card label { margin-top: 8px; font-size: 12px; color: #c8d1c3; }
-.card label small { color: #9da995; }
-.card input { width: 100%; height: 48px; border: 1px solid #ffffff30; border-radius: 3px; padding: 10px 14px; background: #162018; color: #fff; font-size: 16px; }
-.card button:focus-visible, .card input:focus-visible { outline: 2px solid #c2f45b; outline-offset: 4px; }
-.submit { margin-top: 16px; min-height: 50px; border: 0; border-radius: 3px; background: #c2f45b; color: #14200c; font-size: 11px; font-weight: 800; letter-spacing: 1px; cursor: pointer; }
-.card button:disabled, .card input:disabled { opacity: .55; cursor: not-allowed; }
-.error, .success { padding: 12px; border: 1px solid #ffffff25; font-size: 12px; line-height: 1.6; }
-.error { color: #ffb9b2; background: #7e201e25; }
-.success { color: #c2f45b; background: #c2f45b12; }
-.privacy { display: block; margin-top: 24px; text-align: center; color: #95a18e; font-size: 10px; }
-.notice { position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: #7e201e; color: white; padding: 12px; }
+.screen {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+  background:
+    radial-gradient(ellipse 75% 45% at 50% 10%, rgba(229, 184, 75, 0.14), transparent 70%),
+    linear-gradient(
+      180deg,
+      rgba(5, 11, 8, 0.88) 0%,
+      rgba(6, 15, 11, 0.56) 45%,
+      rgba(5, 10, 8, 0.95) 100%
+    ),
+    url("/game-assets/backgrounds/stadium-management.webp") center 44% / cover no-repeat;
+  color: #f3f7f4;
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+}
+
+.card {
+  width: min(100%, 456px);
+  padding: clamp(24px, 4vw, 34px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(12, 26, 19, 0.9), rgba(7, 15, 11, 0.95));
+  box-shadow:
+    0 28px 68px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 7px 12px;
+  color: #cad9cf;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color 0.16s ease, color 0.16s ease;
+}
+
+.back:hover:not(:disabled) {
+  border-color: rgba(47, 208, 107, 0.48);
+  color: #ffffff;
+}
+
+.eyebrow {
+  display: block;
+  margin-top: 22px;
+  color: #e5b84b;
+  letter-spacing: 0.15em;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.card h1 {
+  margin: 10px 0 10px;
+  font-size: clamp(26px, 4.2vw, 34px);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  color: #ffffff;
+}
+
+.card > p {
+  margin-bottom: 22px;
+  color: #b4c5ba;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(5, 12, 9, 0.65);
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #adc0b4;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.tabs button[aria-pressed="true"] {
+  background: rgba(47, 208, 107, 0.22);
+  color: #ebfff2;
+  box-shadow: inset 0 0 0 1px rgba(47, 208, 107, 0.45);
+}
+
+.card form {
+  display: grid;
+  gap: 10px;
+}
+
+.card label {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 650;
+  color: #d2e0d7;
+}
+
+.card label small {
+  color: #96ab9e;
+  font-weight: 500;
+}
+
+.card input {
+  width: 100%;
+  height: 46px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9px;
+  padding: 10px 14px;
+  background: rgba(7, 17, 12, 0.85);
+  color: #ffffff;
+  font-size: 15px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.card input:focus {
+  outline: none;
+  border-color: rgba(47, 208, 107, 0.65);
+  box-shadow: 0 0 0 3px rgba(47, 208, 107, 0.16);
+}
+
+.card button:focus-visible,
+.card input:focus-visible {
+  outline: 2px solid #46e380;
+  outline-offset: 3px;
+}
+
+.submit {
+  margin-top: 14px;
+  min-height: 48px;
+  border: 1px solid rgba(47, 208, 107, 0.55);
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2fd06b, #1d9f4d);
+  color: #06180d;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: transform 0.16s ease, filter 0.16s ease;
+}
+
+.submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+.card button:disabled,
+.card input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.error,
+.success {
+  padding: 12px 14px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.error {
+  color: #ffc4be;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(127, 29, 29, 0.32);
+}
+
+.success {
+  color: #d9ffe6;
+  border-color: rgba(47, 208, 107, 0.42);
+  background: rgba(20, 83, 45, 0.38);
+}
+
+.privacy {
+  display: block;
+  margin-top: 20px;
+  text-align: center;
+  color: #8fa396;
+  font-size: 11px;
+}
+
+.notice {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: #7e201e;
+  color: white;
+  padding: 12px;
+}

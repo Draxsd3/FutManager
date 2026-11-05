@@ -179,8 +179,8 @@ it("returns to the redesigned menu from new career, saves and the universe edito
   render(game());
   const assertCurrentMenu = async () => {
     const title = await screen.findByRole("heading", { level: 1 });
-    expect(title.textContent).toBe("90 MINUTOS.UM CLUBE.UMA VIDA.");
-    expect(document.querySelector('[data-menu-version="field-v2"]')).toBeTruthy();
+    expect(title.textContent?.replace(/\s+/g, " ").trim()).toBe("FUTMANAGER 26");
+    expect(document.querySelector('[data-menu-version="stadium-v3"]')).toBeTruthy();
     expect(screen.queryByRole("button", { name: "OPÇÕES" })).toBeNull();
     expect(screen.getByRole("link", { name: /menu principal/ }).getAttribute("href")).toBe("#menu-principal");
   };
@@ -220,7 +220,7 @@ it("keeps club navigation internal and the top Menu inicial button returns to th
   fireEvent.click(screen.getByRole("button", { name: "Configurações" }));
   fireEvent.click(screen.getByRole("button", { name: "Voltar ao menu inicial" }));
   expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
-  expect(document.querySelector('[data-menu-version="field-v2"]')).toBeTruthy();
+  expect(document.querySelector('[data-menu-version="stadium-v3"]')).toBeTruthy();
   expect(readLocalSaves("alice")[0].managerName).toBe("Teste Navegação");
 }, 15000);
 
