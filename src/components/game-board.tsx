@@ -69,6 +69,7 @@ import type { CareerProgress, MatchPreparation } from "@/lib/game/progress";
 import { applyTrainingSession, type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
 import { calculateMatchStatistics, calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, seededRandom, simulateAction } from "@/lib/game/live-match";
 import { completeCareerFixture, createCareerSeason, getCompetitionPlayerStats, getCompetitionStandings, nextCareerFixture, playerContributionsFromMatch, type CareerSeason } from "@/lib/game/season";
+import { reconcileCareerSaveWithDatabase } from "@/lib/game/save-reconciliation";
 import { backgroundClubStrengths, roundFixtures } from "@/lib/game/round-fixtures";
 import { loadMatchRules, type MatchRules } from "@/lib/game/match-rules";
 import { visualFormation } from "@/lib/game/live-positioning";
@@ -143,7 +144,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       const pendingDatabaseSync = await hasPendingDatabaseSync(userId).catch(() => false);
       const localDatabase = upgradeEditorDatabase(await readCachedDatabase(userId).catch(() => null) ?? readLocalDatabase(userId) ?? (await (await import("@/lib/importer/november-database")).applyNovemberDatabase(await importBrazilDatabase())).database);
       if (cancelled) return;
-      const localSaves = currentCareerSaves(await readCachedCareerSaves(userId).catch(() => null) ?? readLocalSaves(userId));
+      const localSaves = currentCareerSaves(await readCachedCareerSaves(userId).catch(() => null) ?? readLocalSaves(userId))
+        .map((save) => reconcileCareerSaveWithDatabase(save, localDatabase).save);
       // Replace both account-local stores even offline; the reset is not a recurring wipe.
       writeLocalSaves(localSaves, userId);
       const sessionId = readActiveCareerSession(userId);
@@ -159,23 +161,36 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       try {
         const [cloudDatabase, cloudSaves] = await Promise.all([readCloudDatabase(userId), readCloudSaves(userId)]);
         if (cancelled) return;
+        let effectiveDatabase = localDatabase;
         if (databaseRevision.current > 0) {
           // A deliberate editor import/edit supersedes the hydration snapshot. Its own write is queued.
         } else if (cloudDatabase && !pendingDatabaseSync) {
           const upgradedCloudDatabase = upgradeEditorDatabase(cloudDatabase);
+          effectiveDatabase = upgradedCloudDatabase;
           setDatabase(upgradedCloudDatabase);
           writeLocalDatabase(upgradedCloudDatabase, userId);
           await cacheDatabase(upgradedCloudDatabase, userId, false).catch(() => undefined);
+          if (upgradedCloudDatabase.clubs.length !== cloudDatabase.clubs.length) {
+            await writeCloudDatabase(upgradedCloudDatabase, userId);
+          }
         } else {
           await writeCloudDatabase(localDatabase, userId);
           await cacheDatabase(localDatabase, userId, false).catch(() => undefined);
         }
-        const merged = mergeCareerSaves(localSaves, cloudSaves);
+        const reconciledSaveIds = new Set<string>();
+        const merged = mergeCareerSaves(localSaves, cloudSaves).map((save) => {
+          const reconciled = reconcileCareerSaveWithDatabase(save, effectiveDatabase);
+          if (reconciled.changed) {
+            reconciledSaveIds.add(save.id);
+            return { ...reconciled.save, updatedAt: new Date().toISOString() };
+          }
+          return save;
+        });
         if (cancelled) return;
         savesRef.current = merged;
         setSaves(merged);
         writeLocalSaves(merged, userId);
-        await Promise.all(merged.filter((save) => !cloudSaves.some((cloud) => cloud.id === save.id && cloud.updatedAt >= save.updatedAt))
+        await Promise.all(merged.filter((save) => reconciledSaveIds.has(save.id) || !cloudSaves.some((cloud) => cloud.id === save.id && cloud.updatedAt >= save.updatedAt))
           .map((save) => writeCloudSave(save, userId)));
         setSyncLabel("Supabase conectado");
       } catch {
@@ -900,6 +915,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   async function loadCareer(save: CareerSave): Promise<boolean> {
     if (!isCurrentCareerSave(save)) return false;
+    if (database) save = reconcileCareerSaveWithDatabase(save, database).save;
     const clubId = database?.clubs.find((item) => item.name === save.clubName)?.id ?? save.clubId;
     const storedSeason = save.progress?.competitionSeason ?? (database && clubId ? createCareerSeason(database, clubId, Number(save.inGameDate.slice(0, 4)) || 2026) ?? undefined : undefined);
     const restoredSeason = storedSeason ? applyBrazilianCalendar(save.progress?.competitionSeason ? storedSeason : { ...storedSeason, calendarVersion: undefined }, save.inGameDate) : undefined;

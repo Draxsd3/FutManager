@@ -1,3 +1,4 @@
+import { reconcileEditorDatabase } from "./club-reconciliation";
 import type { HistoricalHonour } from "./honours";
 import { isLoanAtClub, type LoanContract } from "./loans";
 import { clubThemes, clubs, squad, type DivisionKey, type Player, type PositionCode } from "./mock-data";
@@ -191,7 +192,8 @@ export function createDefaultDatabase(): EditorDatabase {
   return { clubs: editorClubs, players: editorPlayers };
 }
 
-export function upgradeEditorDatabase(database: EditorDatabase): EditorDatabase {
+export function upgradeEditorDatabase(rawDatabase: EditorDatabase): EditorDatabase {
+  const { database } = reconcileEditorDatabase(rawDatabase);
   const legacyMarketData = !database.players.some((player) => player.marketStatus !== undefined);
   const clubsData = database.clubs.map((club, index) => ({
     ...club,

@@ -1,3 +1,4 @@
+import { CANONICAL_TM_CLUB_TARGETS, NEW_2026_SERIE_D_SPECS } from "@/lib/game/club-reconciliation";
 import { historicalHonourSchema } from "@/lib/game/honours";
 import { manualCorrectionSchema } from "./transfermarkt-corrections";
 import { loanContractSchema } from "@/lib/game/loans";
@@ -43,12 +44,46 @@ const rawPlayerSchema = z.object({
   contract: z.iso.date().nullable().optional(), marketValue: z.number().int().nullable().optional(),
 });
 const profileSchema = z.object({
-  id: z.string(), name: z.string(), addressLine2: z.string().nullable().optional(), addressLine3: z.string().nullable().optional(), shortName: z.string().nullable().optional(), colors: z.array(z.string()).optional(),
+  id: z.string(), name: z.string(), addressLine1: z.string().nullable().optional(), addressLine2: z.string().nullable().optional(), addressLine3: z.string().nullable().optional(), shortName: z.string().nullable().optional(), colors: z.array(z.string()).optional(),
   league: z.object({ countryName: z.string().nullable().optional() }).nullable().optional(),
   stadiumName: z.string().nullable().optional(), stadiumSeats: z.number().nullable().optional(),
-  stadium: z.object({ addressLine2: z.string().nullable().optional(), countryName: z.string().nullable().optional(), name: z.string().nullable().optional(), capacity: z.number().nullable().optional() }).nullable().optional(),
+  stadium: z.object({ addressLine1: z.string().nullable().optional(), addressLine2: z.string().nullable().optional(), countryName: z.string().nullable().optional(), name: z.string().nullable().optional(), capacity: z.number().nullable().optional() }).nullable().optional(),
   coach: z.object({ name: z.string().nullable().optional() }).nullable().optional(),
 });
+
+function stateFromPostalCode(address: string): string | undefined {
+  const match = address.match(/\b(\d{5})(?:-\d{3})?\b/);
+  if (!match) return undefined;
+  const code = Number(match[1]);
+  if (code >= 1000 && code <= 19999) return "São Paulo";
+  if (code >= 20000 && code <= 28999) return "Rio de Janeiro";
+  if (code >= 29000 && code <= 29999) return "Espírito Santo";
+  if (code >= 30000 && code <= 39999) return "Minas Gerais";
+  if (code >= 40000 && code <= 48999) return "Bahia";
+  if (code >= 49000 && code <= 49999) return "Sergipe";
+  if (code >= 50000 && code <= 56999) return "Pernambuco";
+  if (code >= 57000 && code <= 57999) return "Alagoas";
+  if (code >= 58000 && code <= 58999) return "Paraíba";
+  if (code >= 59000 && code <= 59999) return "Rio Grande do Norte";
+  if (code >= 60000 && code <= 63999) return "Ceará";
+  if (code >= 64000 && code <= 64999) return "Piauí";
+  if (code >= 65000 && code <= 65999) return "Maranhão";
+  if (code >= 66000 && code <= 68899) return "Pará";
+  if (code >= 68900 && code <= 68999) return "Amapá";
+  if ((code >= 69000 && code <= 69299) || (code >= 69400 && code <= 69899)) return "Amazonas";
+  if (code >= 69300 && code <= 69399) return "Roraima";
+  if (code >= 69900 && code <= 69999) return "Acre";
+  if ((code >= 70000 && code <= 72799) || (code >= 73000 && code <= 73699)) return "Distrito Federal";
+  if ((code >= 72800 && code <= 72999) || (code >= 73700 && code <= 76799)) return "Goiás";
+  if (code >= 76800 && code <= 76999) return "Rondônia";
+  if (code >= 77000 && code <= 77999) return "Tocantins";
+  if (code >= 78000 && code <= 78899) return "Mato Grosso";
+  if (code >= 79000 && code <= 79999) return "Mato Grosso do Sul";
+  if (code >= 80000 && code <= 87999) return "Paraná";
+  if (code >= 88000 && code <= 89999) return "Santa Catarina";
+  if (code >= 90000 && code <= 99999) return "Rio Grande do Sul";
+  return undefined;
+}
 export function normalizeLivePlayer(input: unknown, clubName: string, collectedAt: string) {
   const player = rawPlayerSchema.parse(input);
   const reference = new Date(collectedAt);
@@ -70,10 +105,19 @@ export function normalizeLiveClub(profileInput: unknown, squadInput: unknown, cl
   if (![profile.league?.countryName, profile.stadium?.countryName, profile.addressLine3].some(country => country === "Brazil" || country === "Brasil")) throw new Error(`${profile.name}: país brasileiro não confirmado.`);
   const players = squad.players.map(player => normalizeLivePlayer(player, profile.name, collectedAt));
   const states: Record<string, string> = { AC: "Acre", AL: "Alagoas", AP: "Amapá", AM: "Amazonas", BA: "Bahia", CE: "Ceará", DF: "Distrito Federal", ES: "Espírito Santo", GO: "Goiás", MA: "Maranhão", MT: "Mato Grosso", MS: "Mato Grosso do Sul", MG: "Minas Gerais", PA: "Pará", PB: "Paraíba", PR: "Paraná", PE: "Pernambuco", PI: "Piauí", RJ: "Rio de Janeiro", RN: "Rio Grande do Norte", RS: "Rio Grande do Sul", RO: "Rondônia", RR: "Roraima", SC: "Santa Catarina", SP: "São Paulo", SE: "Sergipe", TO: "Tocantins" };
-  const suffix = `${profile.shortName ?? ""}`.match(/(?:[- (])([A-Z]{2})\)?$/)?.[1] ?? profile.name.match(/\(([A-Z]{2})\)$/)?.[1];
-  const address = [profile.addressLine2, profile.stadium?.addressLine2].filter(Boolean).join(", ");
-  const addressStates = Object.values(states).filter(state => address.split(",").some(part => part.trim() === state));
-  const state = suffix && states[suffix] ? states[suffix] : addressStates.length === 1 ? addressStates[0] : undefined;
+  // Only match explicit "-UF" or "(UF)" tags; bare trailing words like "Ceará SC" mean Sporting Club, not Santa Catarina.
+  const suffix = `${profile.shortName ?? ""}`.trim().match(/(?:-\s*|\()([A-Z]{2})\)?$/)?.[1]
+    ?? profile.name.trim().match(/(?:-\s*|\()([A-Z]{2})\)?$/)?.[1];
+  const address = [profile.addressLine1, profile.addressLine2, profile.stadium?.addressLine1, profile.stadium?.addressLine2].filter(Boolean).join(", ");
+  const addressStates = [...new Set(Object.values(states).filter(state => address.split(/[,-]/).some(part => part.trim() === state)))];
+  const addressTag = address.match(/(?:-\s*|\()([A-Z]{2})(?:\)|\b)/)?.[1];
+  const state = suffix && states[suffix]
+    ? states[suffix]
+    : addressStates.length === 1
+      ? addressStates[0]
+      : addressTag && states[addressTag]
+        ? states[addressTag]
+        : stateFromPostalCode(address) ?? CANONICAL_TM_CLUB_TARGETS[clubId]?.[1] ?? NEW_2026_SERIE_D_SPECS[clubId]?.state;
   const club = { state, source: `transfermarkt:${clubId}`, id: clubId, name: profile.name,
     shortName: profile.shortName ?? undefined, colors: profile.colors?.filter(color => /^#[\da-f]{6}$/i.test(color)),
     fetchedAt: collectedAt, updatedAt: squad.updatedAt ?? null,

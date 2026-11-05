@@ -2,1038 +2,1038 @@
   "athpr": {
     "name": "Athlético Paranaense",
     "state": "Paraná",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "679",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/679"
   },
   "atleticomg_bra": {
     "name": "Atlético Mineiro",
     "state": "Minas Gerais",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "330",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/330"
   },
   "bahia": {
     "name": "Bahia",
     "state": "Bahia",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "10010",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/10010"
   },
   "botafogorj_bra": {
     "name": "Botafogo",
     "state": "Rio de Janeiro",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "537",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/537"
   },
   "chapecoense_bra": {
     "name": "Chapecoense",
     "state": "Santa Catarina",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "17776",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/17776"
   },
   "corinthians_bra": {
     "name": "Corinthians",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "199",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/199"
   },
   "coritiba_bra": {
     "name": "Coritiba",
     "state": "Paraná",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "776",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/776"
   },
   "cruzeiro_bra": {
     "name": "Cruzeiro",
     "state": "Minas Gerais",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "609",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/609"
   },
   "flarj": {
     "name": "Flamengo",
     "state": "Rio de Janeiro",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "614",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/614"
   },
   "flurj": {
     "name": "Fluminense",
     "state": "Rio de Janeiro",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "2462",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/2462"
   },
   "gremio": {
     "name": "Grêmio",
     "state": "Rio Grande do Sul",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "210",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/210"
   },
   "internacional_bra": {
     "name": "Internacional",
     "state": "Rio Grande do Sul",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "6600",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/6600"
   },
   "miirassol_sp": {
     "name": "Mirassol",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "3876",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/3876"
   },
   "palmeiras": {
     "name": "Palmeiras",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "1023",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/1023"
   },
   "bragantino_bra": {
     "name": "Red Bull Bragantino",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "8793",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/8793"
   },
   "remo": {
     "name": "Remo",
     "state": "Pará",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "10997",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/10997"
   },
   "santos": {
     "name": "Santos",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "221",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/221"
   },
   "saopaulo_bra": {
     "name": "São Paulo",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "585",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/585"
   },
   "vasco": {
     "name": "Vasco da Gama",
     "state": "Rio de Janeiro",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "978",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/978"
   },
   "vitoria": {
     "name": "Vitória",
     "state": "Bahia",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "2125",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/2125"
   },
   "americamg_bra": {
     "name": "América Mineiro",
     "state": "Minas Gerais",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "2863",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/2863"
   },
   "athleticclub_mg": {
     "name": "Athletic Club",
     "state": "Minas Gerais",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "64918",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/64918"
   },
   "atleticogo_bra": {
     "name": "Atlético Goianiense",
     "state": "Goiás",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "15172",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/15172"
   },
   "avai_bra": {
     "name": "Avaí",
     "state": "Santa Catarina",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "2035",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/2035"
   },
   "botafogosp_bra": {
     "name": "Botafogo SP",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "9030",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/9030"
   },
   "crb_bra": {
     "name": "CRB",
     "state": "Alagoas",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "11449",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/11449"
   },
   "ceara_bra": {
     "name": "Ceará",
     "state": "Ceará",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "2029",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/2029"
   },
   "criciuma_bra": {
     "name": "Criciúma",
     "state": "Santa Catarina",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "7178",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/7178"
   },
   "cuiaba_bra": {
     "name": "Cuiabá",
     "state": "Mato Grosso",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "28022",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/28022"
   },
   "fortaleza": {
     "name": "Fortaleza",
     "state": "Ceará",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "10870",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/10870"
   },
   "goias": {
     "name": "Goiás",
     "state": "Goiás",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "3197",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/3197"
   },
   "novorinzontino_sp": {
     "name": "Grêmio Novorizontino",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "37474",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/37474"
   },
   "juventude": {
     "name": "Juventude",
     "state": "Rio Grande do Sul",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "10492",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/10492"
   },
   "londrina_pr": {
     "name": "Londrina",
     "state": "Paraná",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "1693",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/1693"
   },
   "nautico": {
     "name": "Náutico",
     "state": "Pernambuco",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "2646",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/2646"
   },
   "operario_pr": {
     "name": "Operário PR",
     "state": "Paraná",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "27214",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/27214"
   },
   "pontepreta_bra": {
     "name": "Ponte Preta",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "1134",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/1134"
   },
   "sport": {
     "name": "Sport Recife",
     "state": "Pernambuco",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "8718",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/8718"
   },
   "saobernardo_sp": {
     "name": "São Bernardo",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "16439",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/16439"
   },
   "vilago": {
     "name": "Vila Nova",
     "state": "Goiás",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "5677",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/5677"
   },
   "amazonas_am": {
     "name": "Amazonas FC",
     "state": "Amazonas",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "87727",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/87727"
   },
   "anapolisgo_bra": {
     "name": "Anápolis",
     "state": "Goiás",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "17568",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/17568"
   },
   "barra_sc": {
     "name": "Barra-SC",
     "state": "Santa Catarina",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "52519",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/52519"
   },
   "botafogopb_bra": {
     "name": "Botafogo PB",
     "state": "Paraíba",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "17964",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/17964"
   },
   "brusquesc_bra": {
     "name": "Brusque",
     "state": "Santa Catarina",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "14390",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/14390"
   },
   "caxias": {
     "name": "Caxias",
     "state": "Rio Grande do Sul",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "9141",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/9141"
   },
   "confianca_se": {
     "name": "Confiança",
     "state": "Sergipe",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "3280",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/3280"
   },
   "ferroviaria_sp": {
     "name": "Ferroviária",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "15882",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/15882"
   },
   "figueirense": {
     "name": "Figueirense",
     "state": "Santa Catarina",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "4064",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/4064"
   },
   "florestace": {
     "name": "Floresta",
     "state": "Ceará",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "65477",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/65477"
   },
   "guaranisp_bra": {
     "name": "Guarani",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "1755",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/1755"
   },
   "interlimeirasp_bra": {
     "name": "Internacional de Limeira",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "308",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/308"
   },
   "itabaiana_se": {
     "name": "Itabaiana",
     "state": "Sergipe",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "8547",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/8547"
   },
   "ituano_sp": {
     "name": "Ituano",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "4773",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/4773"
   },
   "maranhãoqtt_bra": {
     "name": "Maranhão",
     "state": "Maranhão",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "34293",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/34293"
   },
   "maringapr": {
     "name": "Maringá",
     "state": "Paraná",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "33003",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/33003"
   },
   "paysandu": {
     "name": "Paysandu",
     "state": "Pará",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "6347",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/6347"
   },
   "santa": {
     "name": "Santa Cruz",
     "state": "Pernambuco",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "1785",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/1785"
   },
   "voltaredondarj_bra": {
     "name": "Volta Redonda",
     "state": "Rio de Janeiro",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "4176",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/4176"
   },
   "ypiranga_rs": {
     "name": "Ypiranga-RS",
     "state": "Rio Grande do Sul",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "16869",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/16869"
   },
   "abcrn_bra": {
     "name": "ABC",
     "state": "Rio Grande do Norte",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "7209",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/7209"
   },
   "asaarapiracaal_bra": {
     "name": "ASA",
     "state": "Alagoas",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "20092",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/20092"
   },
   "altos_pi": {
     "name": "Altos",
     "state": "Piauí",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "62794",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/62794"
   },
   "americarj": {
     "name": "America RJ",
     "state": "Rio de Janeiro",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "9138",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/9138"
   },
   "americarn": {
     "name": "América RN",
     "state": "Rio Grande do Norte",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "1751",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/1751"
   },
   "aparecidense_go": {
     "name": "Aparecidense",
     "state": "Goiás",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "25209",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/25209"
   },
   "araguaina_to": {
     "name": "Araguaína",
     "state": "Tocantins",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "32639",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/32639"
   },
   "atleticoalagoinhas_bra": {
     "name": "Atlético Alagoinhas",
     "state": "Bahia",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "25229",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/25229"
   },
   "atleticoce_bra": {
     "name": "Atlético Cearense",
     "state": "Ceará",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "27837",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/27837"
   },
   "azurizpr_bra": {
     "name": "Azuriz",
     "state": "Paraná",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "85931",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/85931"
   },
   "betimmg_bra": {
     "name": "Betim",
     "state": "Minas Gerais",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "98702",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/98702"
   },
   "blumenau_sc": {
     "name": "Blumenau",
     "state": "Santa Catarina",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "66492",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/66492"
   },
   "brasilpelotas_bra": {
     "name": "Brasil de Pelotas",
     "state": "Rio Grande do Sul",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "10560",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/10560"
   },
   "brasiliense_df_bra": {
     "name": "Brasiliense",
     "state": "Distrito Federal",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "3973",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/3973"
   },
   "cracgo_bra": {
     "name": "CRAC",
     "state": "Goiás",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "12602",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/12602"
   },
   "csa_bra": {
     "name": "CSA",
     "state": "Alagoas",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "18545",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/18545"
   },
   "cseal_bra": {
     "name": "CSE",
     "state": "Alagoas",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "52513",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/52513"
   },
   "capital_df_bra": {
     "name": "Capital",
     "state": "Distrito Federal",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "38023",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/38023"
   },
   "cascavel_pr": {
     "name": "Cascavel",
     "state": "Paraná",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "28621",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/28621"
   },
   "ceilandia_df_bra": {
     "name": "Ceilândia",
     "state": "Distrito Federal",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "12279",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/12279"
   },
   "central_bra": {
     "name": "Central - PE",
     "state": "Pernambuco",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "21409",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/21409"
   },
   "cianorte_pr": {
     "name": "Cianorte",
     "state": "Paraná",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "16837",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/16837"
   },
   "decisaope_bra": {
     "name": "Decisão",
     "state": "Pernambuco",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "76155",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/76155"
   },
   "ecdemocrata_mg": {
     "name": "Democrata GV",
     "state": "Minas Gerais",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "3364",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/3364"
   },
   "ferroviarioce_bra": {
     "name": "Ferroviário",
     "state": "Ceará",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "11931",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/11931"
   },
   "fluminensepi_bra": {
     "name": "Fluminense - PI",
     "state": "Piauí",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "87817",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/87817"
   },
   "gas_rr": {
     "name": "GAS",
     "state": "Roraima",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "87822",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/87822"
   },
   "galvez_ac": {
     "name": "Galvez",
     "state": "Acre",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "69424",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/69424"
   },
   "gama_df_bra": {
     "name": "Gama",
     "state": "Distrito Federal",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "7014",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/7014"
   },
   "goiatubago_bra": {
     "name": "Goiatuba",
     "state": "Goiás",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "8567",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/8567"
   },
   "guapore_bra": {
     "name": "Guaporé",
     "state": "Rondônia",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "87821",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/87821"
   },
   "guaranybage_rs": {
     "name": "Guarany Bagé",
     "state": "Rio Grande do Sul",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "24903",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/24903"
   },
   "humaita_ac": {
     "name": "Humaitá",
     "state": "Acre",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "60741",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/60741"
   },
   "iape_ma": {
     "name": "IAPE",
     "state": "Maranhão",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "87160",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/87160"
   },
   "iguatu_ce": {
     "name": "Iguatu",
     "state": "Ceará",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "39555",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/39555"
   },
   "imperatriz_ma": {
     "name": "Imperatriz",
     "state": "Maranhão",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "23778",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/23778"
   },
   "independencia_ac": {
     "name": "Independência",
     "state": "Acre",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "32612",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/32612"
   },
   "inhumasgo_bra": {
     "name": "Inhumas",
     "state": "Goiás",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "25296",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/25296"
   },
   "jacuipense_bra": {
     "name": "Jacuipense",
     "state": "Bahia",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "33050",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/33050"
   },
   "joinville": {
     "name": "Joinville",
     "state": "Santa Catarina",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "3330",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/3330"
   },
   "juazeirense_ba": {
     "name": "Juazeirense",
     "state": "Bahia",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "32991",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/32991"
   },
   "lagarto_se": {
     "name": "Lagarto",
     "state": "Sergipe",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "56341",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/56341"
   },
   "luverdensemt_bra": {
     "name": "Luverdense",
     "state": "Mato Grosso",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "21599",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/21599"
   },
   "madureira_bra": {
     "name": "Madureira",
     "state": "Rio de Janeiro",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "4907",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/4907"
   },
   "maguary_cg_br": {
     "name": "Maguary",
     "state": "Pernambuco",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "103697",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/103697"
   },
   "manauara_br": {
     "name": "Manauara",
     "state": "Amazonas",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "94182",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/94182"
   },
   "manaus_bra": {
     "name": "Manaus",
     "state": "Amazonas",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "46022",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/46022"
   },
   "maracana_ce": {
     "name": "Maracanã",
     "state": "Ceará",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "22352",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/22352"
   },
   "marciliodiassc_bra": {
     "name": "Marcílio Dias",
     "state": "Santa Catarina",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "4759",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/4759"
   },
   "marica_rj": {
     "name": "Maricá",
     "state": "Rio de Janeiro",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "63296",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/63296"
   },
   "mixto_mt": {
     "name": "Mixto",
     "state": "Mato Grosso",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "11900",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/11900"
   },
   "motoclubma_bra": {
     "name": "Moto Club",
     "state": "Maranhão",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "12009",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/12009"
   },
   "nacional_am": {
     "name": "Nacional - AM",
     "state": "Amazonas",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "22782",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/22782"
   },
   "noroeste_sp": {
     "name": "Noroeste",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "15047",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/15047"
   },
   "novaiguacu_rj": {
     "name": "Nova Iguaçu",
     "state": "Rio de Janeiro",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "16108",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/16108"
   },
   "operario_ms": {
     "name": "Operário - MS",
     "state": "Mato Grosso do Sul",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "32386",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/32386"
   },
   "operariovg_mt": {
     "name": "Operário - MT",
     "state": "Mato Grosso",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "60520",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/60520"
   },
   "oratorio_br": {
     "name": "Oratório Recreativo",
     "state": "Amapá",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "53471",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/53471"
   },
   "parnahyba_br": {
     "name": "Parnahyba",
     "state": "Piauí",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "41872",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/41872"
   },
   "portosportclube_bra": {
     "name": "Porto Sport Clube",
     "state": "Bahia",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "121518",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/121518"
   },
   "portovelhoro_bra": {
     "name": "Porto Velho-RO",
     "state": "Rondônia",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "72477",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/72477"
   },
   "portuguesa_bra": {
     "name": "Portuguesa",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "10247",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/10247"
   },
   "portuguesarj_bra": {
     "name": "Portuguesa RJ",
     "state": "Rio de Janeiro",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "52517",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/52517"
   },
   "pousoalegre_mg": {
     "name": "Pouso Alegre",
     "state": "Minas Gerais",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "73407",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/73407"
   },
   "retrope_bra": {
     "name": "Retrô",
     "state": "Pernambuco",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "76156",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/76156"
   },
   "riobranco_es": {
     "name": "Rio Branco - ES",
     "state": "Espírito Santo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "30489",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/30489"
   },
   "samapaiocorrea_ma": {
     "name": "Sampaio Corrêa",
     "state": "Maranhão",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "3319",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/3319"
   },
   "sampaiocorrea_rj": {
     "name": "Sampaio Corrêa - RJ",
     "state": "Rio de Janeiro",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "40120",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/40120"
   },
   "santacatarina_cg_br": {
     "name": "Santa Catarina",
     "state": "Santa Catarina",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "36963",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/36963"
   },
   "sergipe_se": {
     "name": "Sergipe",
     "state": "Sergipe",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "7816",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/7816"
   },
   "serrabranca_pb_cg_br": {
     "name": "Serra Branca",
     "state": "Paraíba",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "65479",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/65479"
   },
   "sousapb_bra": {
     "name": "Sousa",
     "state": "Paraíba",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "18236",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/18236"
   },
   "independente_pr": {
     "name": "São Joseense",
     "state": "Paraná",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "80647",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/80647"
   },
   "saojosers_bra": {
     "name": "São José",
     "state": "Rio Grande do Sul",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "7535",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/7535"
   },
   "saoluiz_rs": {
     "name": "São Luiz",
     "state": "Rio Grande do Sul",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "27355",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/27355"
   },
   "saoraimundo_rr": {
     "name": "São Raimundo - RR",
     "state": "Roraima",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "73574",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/73574"
   },
   "tocantinopolis_to": {
     "name": "Tocantinópolis",
     "state": "Tocantins",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "27242",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/27242"
   },
   "tombense_mg": {
     "name": "Tombense",
     "state": "Minas Gerais",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "3234",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/3234"
   },
   "ap_trem": {
     "name": "Trem",
     "state": "Amapá",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "36012",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/36012"
   },
   "trezepb_bra": {
     "name": "Treze",
     "state": "Paraíba",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "11086",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/11086"
   },
   "tunaluso_pa": {
     "name": "Tuna Luso",
     "state": "Pará",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "20803",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/20803"
   },
   "uberlandia_ec": {
     "name": "Uberlândia",
     "state": "Minas Gerais",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "8825",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/8825"
   },
   "uniaorondonopolis_mt": {
     "name": "União Rondonópolis",
     "state": "Mato Grosso",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "28199",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/28199"
   },
   "veloclube_sp": {
     "name": "Velo Clube",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "32037",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/32037"
   },
   "vitoria_es": {
     "name": "Vitória - ES",
     "state": "Espírito Santo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "32934",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/32934"
   },
   "xvdepiracicaba_sp": {
     "name": "XV de Piracicaba",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "55335",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/55335"
   },
   "aguasantasp_bra": {
     "name": "Água Santa",
     "state": "São Paulo",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "45176",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/45176"
   },
   "aguiapa_bra": {
     "name": "Águia",
     "state": "Pará",
-    "transfermarktId": null,
-    "approved": false,
-    "evidenceUrl": null
+    "transfermarktId": "27642",
+    "approved": true,
+    "evidenceUrl": "https://www.transfermarkt.com.br/-/startseite/verein/27642"
   },
   "corisabba_br": {
     "name": "AA Corisabbá",
