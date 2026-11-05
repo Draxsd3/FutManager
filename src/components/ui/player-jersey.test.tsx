@@ -49,16 +49,21 @@ it("renders every goalkeeper with the realistic contrasting mold and club crest 
   );
 });
 
-it("renders a vector club shield on the goalkeeper chest when a club has no crest asset or fails to load", () => {
+it("renders a vector club shield on the goalkeeper chest when a custom club has no crest asset or fails to load", () => {
   const { container, rerender } = render(
     <PlayerJersey
       player={goalkeeper}
-      club="Porto Velho-RO"
+      club="Clube Criado no Editor"
       kit={1}
-      clubColors={{ primaryColor: "#c8102e", secondaryColor: "#111111", shortName: "PVH" }}
+      clubColors={{ primaryColor: "#c8102e", secondaryColor: "#111111", shortName: "CCE" }}
     />,
   );
-  expect(container.querySelector("g[data-jersey-crest='fallback']")?.textContent).toBe("PVH");
+  expect(container.querySelector("g[data-jersey-crest='fallback']")?.textContent).toBe("CCE");
+
+  rerender(<PlayerJersey player={goalkeeper} club="Porto Velho-RO" kit={1} />);
+  expect(container.querySelector("image[data-jersey-crest='true']")?.getAttribute("href")).toBe(
+    clubCrestAsset("Porto Velho-RO"),
+  );
 
   rerender(<PlayerJersey player={goalkeeper} club="Flamengo" kit={1} />);
   const crest = container.querySelector("image[data-jersey-crest='true']")!;

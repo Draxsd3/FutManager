@@ -12,19 +12,40 @@ const clubSlugs: Record<string, string> = {
   Bahia: "bahia",
 };
 
+const clubAliases: Record<string, string> = {
+  Gremio: "Grêmio",
+  "CEFAT Tirol": "Tirol",
+  "Ivinhema FC": "Ivinhema",
+  "Clube Laguna": "Laguna",
+  "Clube Laguna (RN)": "Laguna",
+  "Monte Roraima FC": "Monte Roraima",
+  "Piauí EC": "Piauí",
+  "Piauí EC (PI)": "Piauí",
+  "Primavera AC": "Primavera - MT",
+  "Primavera-MT": "Primavera - MT",
+  "Real Noroeste CFC": "Real Noroeste",
+};
+
+export function canonicalAssetClubName(club: string) {
+  return clubAliases[club] ?? club;
+}
+
 export function clubAssetSlug(club: string) {
-  return imported[club]?.slug ?? clubSlugs[club] ?? null;
+  const canonical = canonicalAssetClubName(club);
+  return imported[canonical]?.slug ?? clubSlugs[canonical] ?? clubSlugs[club] ?? null;
 }
 
 export function clubCrestAsset(club: string, mini = false) {
-  if (imported[club] && !imported[club].crest) return null;
-  const slug = clubAssetSlug(club);
+  const canonical = canonicalAssetClubName(club);
+  if (imported[canonical] && !imported[canonical].crest) return null;
+  const slug = clubAssetSlug(canonical);
   return slug ? `/game-assets/clubs/${slug}/${mini ? "crest-mini" : "crest"}.png` : null;
 }
 
 export function clubKitAsset(club: string, kit: 1 | 2 | 3 = 1) {
-  if (imported[club] && !imported[club].kits.includes(kit)) return null;
-  const slug = clubAssetSlug(club);
+  const canonical = canonicalAssetClubName(club);
+  if (imported[canonical] && !imported[canonical].kits.includes(kit)) return null;
+  const slug = clubAssetSlug(canonical);
   return slug ? `/game-assets/clubs/${slug}/kit-${kit}.png` : null;
 }
 

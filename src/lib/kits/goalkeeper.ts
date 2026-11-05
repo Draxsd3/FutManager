@@ -1,5 +1,5 @@
 import rawKitColors from "@/data/brazil-kit-colors.json";
-import { clubCrestAsset, clubKitAsset } from "@/lib/game/assets";
+import { canonicalAssetClubName, clubCrestAsset, clubKitAsset } from "@/lib/game/assets";
 import { clubThemes } from "@/lib/game/mock-data";
 
 export type GoalkeeperKitColorId = "graphite" | "yellow" | "sky" | "orange";
@@ -92,8 +92,9 @@ export function kitContrastScore(hexA: string, hexB: string): number {
 }
 
 export function resolveClubIdentity(club?: string, clubColors?: ClubColorIdentity) {
-  const catalogEntry = club ? kitColorCatalog[club] : undefined;
-  const themeEntry = club ? clubThemes[club] : undefined;
+  const canonical = club ? canonicalAssetClubName(club) : undefined;
+  const catalogEntry = club ? kitColorCatalog[club] ?? (canonical ? kitColorCatalog[canonical] : undefined) : undefined;
+  const themeEntry = club ? clubThemes[club] ?? (canonical ? clubThemes[canonical] : undefined) : undefined;
 
   const primaryColor =
     normalizeHex(clubColors?.primaryColor) ??
@@ -118,7 +119,9 @@ export function resolveOutfieldKitColors(
   clubColors?: ClubColorIdentity,
 ): string[] {
   if (club && clubKitAsset(club, kit)) {
-    const extracted = kitColorCatalog[club]?.[String(kit) as "1" | "2" | "3"]
+    const canonical = canonicalAssetClubName(club);
+    const entry = kitColorCatalog[club] ?? kitColorCatalog[canonical];
+    const extracted = entry?.[String(kit) as "1" | "2" | "3"]
       ?.map((hex) => normalizeHex(hex))
       .filter((hex): hex is string => Boolean(hex));
     if (extracted && extracted.length > 0) {

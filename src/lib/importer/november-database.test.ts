@@ -1,10 +1,17 @@
 import { expect, it } from "vitest";
+import { clubCrestAsset } from "@/lib/game/assets";
 import { applyNovemberDatabase } from "./november-database";
 import { importBrazilDatabase } from "./brazil-database";
 it("updates all source clubs and players while flagging inferred positions", async () => {
   const base = await importBrazilDatabase();
   const result = await applyNovemberDatabase(base);
   expect(result).toMatchObject({ clubs: 156, players: 4208, provisional: 207, shortRosters: 4 });
+  expect(result.database.clubs).toHaveLength(714);
+  expect(result.database.clubs.filter(club => club.division === "Série A")).toHaveLength(20);
+  expect(result.database.clubs.filter(club => club.division === "Série B")).toHaveLength(20);
+  expect(result.database.clubs.filter(club => club.division === "Série C")).toHaveLength(20);
+  expect(result.database.clubs.filter(club => club.division === "Série D")).toHaveLength(96);
+  expect(result.database.clubs.every(club => Boolean(club.state) && Boolean(clubCrestAsset(club.name)))).toBe(true);
   const imported = result.database.players.filter(player => player.transfermarkt?.collectedAt === "2026-11-04T15:48:14.249086+00:00");
   expect(imported).toHaveLength(4208);
   expect(imported.filter(player => player.transfermarkt?.estimatedFields?.includes("primaryPosition"))).toHaveLength(207);

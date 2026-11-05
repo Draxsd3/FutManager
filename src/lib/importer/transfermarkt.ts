@@ -1,3 +1,9 @@
+import {
+  CANONICAL_TM_CLUB_TARGETS,
+  NEW_2026_SERIE_D_SPECS,
+  normalizeBrazilianClubIdentity,
+  reconcileEditorDatabase,
+} from "@/lib/game/club-reconciliation";
 import { historicalHonourSchema } from "@/lib/game/honours";
 import { loanContractSchema } from "@/lib/game/loans";
 import { z } from "zod";
@@ -68,27 +74,40 @@ export function applyTransfermarktSnapshot(
     }
     updates.set(incoming.source, incoming);
   }
+  const workingDatabase = reconcileEditorDatabase(database).database;
   // A source ID is a reliable identity even if an old catalog already contains
   // duplicate rows or the player moved between clubs. Names alone are not.
   const playersByExternalId = new Map<string, EditorPlayer[]>();
-  for (const old of database.players) {
+  for (const old of workingDatabase.players) {
     const id = old.transfermarkt?.id;
     if (id) playersByExternalId.set(id, [...(playersByExternalId.get(id) ?? []), old]);
   }
   const playersByClub = new Map<string, EditorPlayer[]>();
   const targets = new Map<string, z.infer<typeof clubSchema>>();
-  const baseClubs = [...database.clubs];
-  const normalizedClub = (name: string) => normalizeName(name.replace(/[-()]/g, " "))
-    .replace(/^(sociedade esportiva|esporte clube|sport club|clube de regatas do|clube de regatas|club|se|cr|sc|ec|aa|ad|ser) /, "")
-    .replace(/ (de futebol e regatas|foot ball porto alegrense|futebol clube|fc|ec|fr|fbpa|sc)$/, "").trim();
+  const baseClubs = [...workingDatabase.clubs];
+  const normalizedClub = (name: string) => normalizeBrazilianClubIdentity(name);
   for (const incoming of updates.values()) {
     const registered = catalog.find(entry => entry.source === incoming.source || links[entry.source]?.approved && links[entry.source]?.transfermarktId === incoming.id);
     const linked = baseClubs.filter(club => club.transfermarkt?.id === incoming.id);
+    const explicitTarget = CANONICAL_TM_CLUB_TARGETS[incoming.id];
+    const registeredMatches = registered
+      ? baseClubs.filter(club => !club.transfermarkt && club.country.toLowerCase() === "brasil" && club.name === registered.name && (!registered.state || !club.state || club.state === registered.state))
+      : [];
+    const explicitMatches = explicitTarget
+      ? baseClubs.filter(club => !club.transfermarkt && club.country.toLowerCase() === "brasil" && club.name === explicitTarget[0] && (!club.state || club.state === explicitTarget[1]))
+      : [];
     const candidates = baseClubs.filter(club => !club.transfermarkt && club.country.toLowerCase() === "brasil" && (!incoming.state || !club.state || incoming.state === club.state));
     // Prefer an exact source short name (Botafogo-PB) to a generic official name (Botafogo FC).
     const shortMatches = incoming.shortName ? candidates.filter(club => normalizedClub(club.name) === normalizedClub(incoming.shortName!)) : [];
-    let matches = linked.length ? linked : registered ? candidates.filter(club => club.name === registered.name && club.state === registered.state)
-      : shortMatches.length ? shortMatches : candidates.filter(club => normalizedClub(club.name) === normalizedClub(incoming.name));
+    let matches = linked.length
+      ? linked
+      : registeredMatches.length
+        ? registeredMatches
+        : explicitMatches.length
+          ? explicitMatches
+          : shortMatches.length
+            ? shortMatches
+            : candidates.filter(club => normalizedClub(club.name) === normalizedClub(incoming.name));
     if (matches.length > 1) {
       const exact = (name: string) => normalizeName(name).replace(/ (fc|futebol clube)$/, "");
       const narrowed = matches.filter(club => exact(club.name) === exact(incoming.shortName ?? incoming.name));
@@ -97,10 +116,23 @@ export function applyTransfermarktSnapshot(
     if (matches.length > 1) throw new Error(`Clube ambíguo: ${incoming.name}. Confira o vínculo antes de importar.`);
     let club = matches[0];
     if (!club && snapshot.version === 2) {
-      club = { id: crypto.randomUUID(), name: incoming.name, shortName: (incoming.shortName ?? incoming.name).slice(0, 3).toUpperCase(),
-        division: incoming.division!, state: incoming.state, country: "Brasil", foundedYear: 0, primaryColor: incoming.colors?.[0] ?? "#246e43", secondaryColor: incoming.colors?.[1] ?? "#ffffff",
-        stadiumName: incoming.stadiumName ?? "Não informado", stadiumCapacity: incoming.stadiumCapacity ?? 0,
-        coachName: incoming.coachName ?? "Não informado", level: ({ "Série A": 16, "Série B": 12, "Série C": 8, "Série D": 5 } as const)[incoming.division!], kitStyle: "lisa" } satisfies EditorClub;
+      const spec = NEW_2026_SERIE_D_SPECS[incoming.id];
+      club = {
+        id: crypto.randomUUID(),
+        name: spec?.name ?? incoming.name,
+        shortName: spec?.shortName ?? (incoming.shortName ?? incoming.name).slice(0, 3).toUpperCase(),
+        division: incoming.division!,
+        state: incoming.state ?? spec?.state,
+        country: "Brasil",
+        foundedYear: 0,
+        primaryColor: incoming.colors?.[0] ?? spec?.primaryColor ?? "#246e43",
+        secondaryColor: incoming.colors?.[1] ?? spec?.secondaryColor ?? "#ffffff",
+        stadiumName: incoming.stadiumName ?? "Não informado",
+        stadiumCapacity: incoming.stadiumCapacity ?? 0,
+        coachName: incoming.coachName ?? "Não informado",
+        level: ({ "Série A": 16, "Série B": 12, "Série C": 8, "Série D": 5 } as const)[incoming.division!],
+        kitStyle: "lisa",
+      } satisfies EditorClub;
       baseClubs.push(club);
     }
     if (club) {
@@ -111,7 +143,7 @@ export function applyTransfermarktSnapshot(
   const clubs = baseClubs.map((club) => {
     const incoming = targets.get(club.id);
     if (!incoming) return club;
-    const previous = database.players.filter((player) => player.clubId === club.id);
+    const previous = workingDatabase.players.filter((player) => player.clubId === club.id);
     const senior = [...incoming.players].sort((a, b) => Number(b.position === "G") - Number(a.position === "G"));
     const reused = new Set<string>();
     const resolveClub = (externalId?: string) => [...targets].find(([, incoming]) => incoming.id === externalId)?.[0] ?? baseClubs.find(item => item.transfermarkt?.id === externalId)?.id;
@@ -155,7 +187,7 @@ export function applyTransfermarktSnapshot(
   const importedPlayers = Array.from(playersByClub.values()).flat();
   const importedIds = new Set(importedPlayers.map(player => player.id));
   const importedExternalIds = new Set(importedPlayers.map(player => player.transfermarkt!.id));
-  return { clubs, players: [...database.players.filter((player) => !playersByClub.has(player.clubId) && !importedIds.has(player.id)
+  return { clubs, players: [...workingDatabase.players.filter((player) => !playersByClub.has(player.clubId) && !importedIds.has(player.id)
     && (!player.transfermarkt || !importedExternalIds.has(player.transfermarkt.id))), ...importedPlayers] };
 }
 
