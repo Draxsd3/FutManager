@@ -21,3 +21,15 @@ it("retains club identities and kit customizations on repeat and does not lose s
   expect(second.players.filter(player => player.transfermarkt?.collectedAt === "2026-11-04T15:48:14.249086+00:00")).toHaveLength(4208);
   expect(second.players.length).toBe(first.players.length);
 });
+it("replaces each of the 156 rosters exactly and repeated updates do not duplicate players or clubs", async () => {
+  const { default: source } = await import("@/data/transfermarkt/brasileirao-2026-novembro.json");
+  const first = (await applyNovemberDatabase(await importBrazilDatabase())).database;
+  const second = (await applyNovemberDatabase(first)).database;
+  expect(second.clubs.length).toBe(first.clubs.length);
+  for (const competition of source.competitions) for (const sourceClub of competition.clubs) {
+    const matchingClubs = second.clubs.filter(club => club.transfermarkt?.id === sourceClub.id);
+    expect(matchingClubs).toHaveLength(1);
+    const roster = second.players.filter(player => player.clubId === matchingClubs[0].id);
+    expect(roster.map(player => player.transfermarkt?.id).sort()).toEqual(sourceClub.players.map(player => player.id).sort());
+  }
+});

@@ -127,3 +127,21 @@ it("reads all cloud pages before removing retired careers, scoped to the authent
   expect(removed).not.toContain("c-1001");
   expect(new Set(owners)).toEqual(new Set(["alice"]));
 });
+
+it("removes obsolete roster rows from the cloud when updating the catalog", async () => {
+  const { createDefaultDatabase } = await import("./editor-data");
+  const { writeCloudDatabase } = await import("./persistence");
+  const database = createDefaultDatabase();
+  database.clubs = database.clubs.slice(0, 1);
+  database.players = database.players.filter(player => player.clubId === database.clubs[0].id).slice(0, 2);
+  const removed: Record<string, string[]> = {};
+  client.from.mockImplementation((table: string) => ({
+    select: () => ({ order: () => ({ range: () => Promise.resolve({ data: table === "editor_clubs" ? [{ id: database.clubs[0].id }] : [{ id: database.players[0].id }, { id: "old-roster-player" }], error: null }) }) }),
+    delete: () => ({ in: (_key: string, ids: string[]) => { removed[table] = [...(removed[table] ?? []), ...ids]; return Promise.resolve({ error: null }); } }),
+    upsert: client.upsert,
+  }));
+  await writeCloudDatabase(database, "alice");
+  expect(removed.editor_players).toEqual(["old-roster-player"]);
+  expect(removed.editor_clubs).toBeUndefined();
+  expect(client.upsert.mock.calls.flatMap(([rows]) => rows).filter(row => row.club_id).map(row => row.id)).toEqual(database.players.map(player => player.id));
+});

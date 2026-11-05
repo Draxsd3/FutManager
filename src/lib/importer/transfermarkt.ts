@@ -68,6 +68,13 @@ export function applyTransfermarktSnapshot(
     }
     updates.set(incoming.source, incoming);
   }
+  // A source ID is a reliable identity even if an old catalog already contains
+  // duplicate rows or the player moved between clubs. Names alone are not.
+  const playersByExternalId = new Map<string, EditorPlayer[]>();
+  for (const old of database.players) {
+    const id = old.transfermarkt?.id;
+    if (id) playersByExternalId.set(id, [...(playersByExternalId.get(id) ?? []), old]);
+  }
   const playersByClub = new Map<string, EditorPlayer[]>();
   const targets = new Map<string, z.infer<typeof clubSchema>>();
   const baseClubs = [...database.clubs];
@@ -110,9 +117,10 @@ export function applyTransfermarktSnapshot(
     const resolveClub = (externalId?: string) => [...targets].find(([, incoming]) => incoming.id === externalId)?.[0] ?? baseClubs.find(item => item.transfermarkt?.id === externalId)?.id;
     const roster = senior.map((player, index): EditorPlayer => {
       // Name matching is only used for game defaults, never for approving a club/link.
-      const linked = database.players.filter(old => old.transfermarkt?.id === player.id);
-      if (linked.length > 1) throw new Error(`Identidade externa duplicada no catálogo: ${player.name}. Nada foi aplicado.`);
-      const matches = linked.length ? linked : previous.filter((old) => !old.transfermarkt && normalizeName(old.name) === normalizeName(player.name));
+      const linked = playersByExternalId.get(player.id) ?? [];
+      // Prefer the current club's row; otherwise retain the first linked ID.
+      const matches = linked.length ? [linked.find(old => old.clubId === club.id) ?? linked[0]]
+        : previous.filter((old) => !old.transfermarkt && normalizeName(old.name) === normalizeName(player.name));
       const old = matches.length === 1 && !reused.has(matches[0].id) ? matches[0] : undefined;
       if (old) reused.add(old.id);
       // Provisional, deterministic simulation. Missing market data is not zero value.
@@ -144,8 +152,11 @@ export function applyTransfermarktSnapshot(
       stadiumCapacity: incoming.stadiumCapacity ?? club.stadiumCapacity,
       coachName: incoming.coachName ?? club.coachName };
   });
-  const importedIds = new Set(Array.from(playersByClub.values()).flat().map(player => player.id));
-  return { clubs, players: [...database.players.filter((player) => !playersByClub.has(player.clubId) && !importedIds.has(player.id)), ...Array.from(playersByClub.values()).flat()] };
+  const importedPlayers = Array.from(playersByClub.values()).flat();
+  const importedIds = new Set(importedPlayers.map(player => player.id));
+  const importedExternalIds = new Set(importedPlayers.map(player => player.transfermarkt!.id));
+  return { clubs, players: [...database.players.filter((player) => !playersByClub.has(player.clubId) && !importedIds.has(player.id)
+    && (!player.transfermarkt || !importedExternalIds.has(player.transfermarkt.id))), ...importedPlayers] };
 }
 
 /** Bundled, validated snapshot only; never scrape from a browser or during a match. */
