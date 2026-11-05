@@ -70,6 +70,8 @@ it("places other fixtures with crests and standings option on the left, human ma
   expect(resultCss).not.toContain("#f5f6f3");
   expect(resultCss).toMatch(/\.page\s*\{[^}]*height:\s*100dvh/);
   expect(resultCss).toMatch(/\.page\s*\{[^}]*overflow:\s*hidden/);
+  expect(resultCss).toMatch(/\.trophy\s*\{[^}]*display:\s*inline-flex/);
+  expect(resultCss).toMatch(/\.trophy\s*\{[^}]*overflow:\s*hidden/);
   expect(resultCss).toMatch(/\.trophy\s*\{[^}]*background:\s*transparent/);
   expect(resultCss).toMatch(/\.trophy\s*\{[^}]*border:\s*0/);
 
