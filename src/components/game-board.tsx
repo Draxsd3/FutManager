@@ -1641,7 +1641,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       homePlayerRatings={userIsHome ? playerRatings : opponentRatings}
       awayPlayerRatings={userIsHome ? opponentRatings : playerRatings}
       statistics={displayedStatistics}
+      onOpenStandings={() => setStandingsOpen(true)}
       onContinue={() => {
+        setStandingsOpen(false);
         const nextRound = round + 1;
         const nextFixture = nextCareerFixture(competitionSeason);
         setRound(nextRound);
@@ -1663,6 +1665,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         setPage("hub");
       }}
     />
+      {renderStandings()}
     </>
   );
 }

@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { MatchOverviewScreen } from "./match-overview-screen";
 
@@ -85,9 +87,29 @@ it("displays synchronized background matches and preserves scheduled and recorde
   expect(screen.getByText("Sua partida · Ao vivo · 10′")).toBeTruthy();
   expect(screen.getByText("Ao vivo · 10′")).toBeTruthy();
   expect(screen.getByText("Agendada")).toBeTruthy();
-  expect(screen.getByRole("region", { name: "Jogos da rodada" }).getAttribute("tabindex")).toBe("0");
+  const fixturesRegion = screen.getByRole("region", { name: "Jogos da rodada" });
+  expect(fixturesRegion.getAttribute("tabindex")).toBe("0");
+  expect(within(fixturesRegion).getByRole("img", { name: "Escudo do Santos" })).toBeTruthy();
+  expect(within(fixturesRegion).getByRole("img", { name: "Escudo do São Paulo" })).toBeTruthy();
+  expect(within(fixturesRegion).getByRole("img", { name: "Escudo do Corinthians" })).toBeTruthy();
+  expect(within(fixturesRegion).getByRole("img", { name: "Escudo do Palmeiras" })).toBeTruthy();
   fixtures[1].homeScore = 1;
   rerender(<MatchOverviewScreen {...props} running={false} minute={45} fixtures={fixtures} />);
   expect(screen.getAllByText("1 - 0")).toHaveLength(2);
   expect(screen.getByText("Pausada · 45′")).toBeTruthy();
+});
+
+it("keeps the dark broadcast theme, cardless larger trophy and enlarged club crests", () => {
+  const overviewCss = readFileSync(path.join(process.cwd(), "src/components/screens/match-overview-screen.module.css"), "utf8");
+  const statsCss = readFileSync(path.join(process.cwd(), "src/components/ui/match-statistics-table.module.css"), "utf8");
+  expect(overviewCss).not.toContain("#f5f6f3");
+  expect(statsCss).not.toContain("#f5f6f3");
+  expect(overviewCss).toMatch(/\.trophy\s*\{[^}]*background:\s*transparent/);
+  expect(overviewCss).toMatch(/\.trophy\s*\{[^}]*border:\s*0/);
+
+  const { props } = matchProps();
+  render(<MatchOverviewScreen {...props} />);
+  expect(screen.queryByText(/CENTRAL DA PARTIDA/i)).toBeNull();
+  const homeCrest = screen.getByRole("img", { name: "Escudo do Flamengo" });
+  expect(homeCrest.className).toContain("h-20");
 });
