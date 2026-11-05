@@ -1,9 +1,13 @@
 "use client";
 
+import { useState, type CSSProperties } from "react";
+import Image from "next/image";
+import type { CareerSave } from "@/lib/game/editor-data";
+import { Crest } from "@/components/ui/club-sidebar";
 import { InterfaceIcon } from "@/components/ui/interface-icon";
 import styles from "./start-menu-screen.module.css";
 
-export function StartMenuScreen({ email, onSignOut, onLogin, saveCount, syncLabel, onNewGame, onSaves, onEdit }: {
+export interface StartMenuScreenProps {
   email?: string;
   onSignOut?: () => Promise<void>;
   onLogin?: () => void;
@@ -12,40 +16,373 @@ export function StartMenuScreen({ email, onSignOut, onLogin, saveCount, syncLabe
   onNewGame: () => void;
   onSaves: () => void;
   onEdit: () => void;
-}) {
-  return <main className={styles.screen} data-menu-version="field-v2">
-    <div className={styles.backdrop} aria-hidden="true" />
-    <header className={styles.topbar}>
-      <a className={styles.brand} href="#menu-principal" aria-label="FutManager — menu principal"><span className={styles.brandMark} aria-hidden="true">F<span /></span><span>FUTMANAGER<span className={styles.brandDot}>.</span></span></a>
-      <span className={styles.edition}>BRASIL <i>·</i> TEMPORADA 2026</span>
-      <div className={styles.account}>{email ? <><span title={email}>{email}</span><button type="button" onClick={() => void onSignOut?.()}>Sair ↗</button></> : <button type="button" onClick={onLogin}>Entrar / Criar conta ↗</button>}</div>
-    </header>
-
-    <div className={styles.hero} id="menu-principal">
-      <section className={styles.content} aria-label="Menu principal">
-        <div className={styles.eyebrow}><span /> O APITO INICIAL É SEU</div>
-        <h1 className={styles.title}>90 MINUTOS.<br/>UM <em>CLUBE.</em><br/>UMA VIDA.</h1>
-        <p className={styles.description}>Escolha as cores. Monte o time. Mude o destino.<br/>Cada temporada começa com uma decisão.</p>
-        <nav className={styles.menu} aria-label="Ações da carreira">
-          <button type="button" className={styles.primary} onClick={onNewGame}><span className={styles.buttonNumber} aria-hidden="true">01</span><span>INICIAR NOVA CARREIRA</span><Arrow/></button>
-          <button type="button" className={styles.secondary} onClick={onSaves}><span className={styles.buttonNumber} aria-hidden="true">02</span><span className={styles.buttonCopy}>CONTINUAR JOGANDO<small>{saveCount ? `${saveCount} carreira${saveCount === 1 ? " salva" : "s salvas"}` : email ? "Nenhuma carreira salva" : "Entre para acessar suas carreiras"}</small></span><Arrow/></button>
-          <button type="button" className={styles.editor} onClick={onEdit}><InterfaceIcon name="book"/> EDITAR O UNIVERSO <span aria-hidden="true">↗</span></button>
-        </nav>
-      </section>
-
-      <aside className={styles.arena} aria-label="O campo está pronto">
-        <div className={styles.arenaHeader}><span>O CAMPO ESTÁ PRONTO</span><span><i/> 00 : 00</span></div>
-        <div className={styles.pitch} aria-hidden="true"><span className={styles.pitchCircle}/><i className={styles.pitchBoxTop}/><i className={styles.pitchBoxBottom}/><b className={styles.ball}/><span className={styles.routeOne}/><span className={styles.routeTwo}/><span className={styles.playerOne}/><span className={styles.playerTwo}/><span className={styles.playerThree}/></div>
-        <div className={styles.arenaFooter}><span>BRASIL · 2026</span><b>O próximo lance<br/>é seu.</b></div>
-        <span className={styles.arenaNumber} aria-hidden="true">01—90</span>
-      </aside>
-    </div>
-
-    <footer className={styles.footer}>
-      <span className={styles.sync} role="status"><i aria-hidden="true"/>{syncLabel}</span>
-      <span className={styles.footerMotto}>ESTRATÉGIA É OUTRA FORMA DE JOGAR. <span className={styles.build}>FM / 26</span></span>
-    </footer>
-  </main>;
+  latestSave?: CareerSave | null;
+  latestClubColor?: string;
+  clubCount?: number;
+  playerCount?: number;
+  onContinueLatest?: (save: CareerSave) => unknown;
 }
 
-function Arrow() { return <InterfaceIcon name="arrow_right" className={styles.arrow}/>; }
+function formatSaveDate(isoDate?: string): string | null {
+  if (!isoDate) return null;
+  const parsed = new Date(`${isoDate}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatSaveBudget(budgetThousands?: number): string | null {
+  if (typeof budgetThousands !== "number" || !Number.isFinite(budgetThousands)) return null;
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(budgetThousands * 1000);
+}
+
+export function StartMenuScreen({
+  email,
+  onSignOut,
+  onLogin,
+  saveCount,
+  syncLabel,
+  onNewGame,
+  onSaves,
+  onEdit,
+  latestSave,
+  latestClubColor,
+  clubCount,
+  playerCount,
+  onContinueLatest,
+}: StartMenuScreenProps) {
+  const [resuming, setResuming] = useState(false);
+
+  const hasValidLatest = Boolean(latestSave && latestSave.clubName);
+  const saveDateLabel = formatSaveDate(latestSave?.inGameDate);
+  const saveBudgetLabel = formatSaveBudget(latestSave?.budget);
+  const spotlightStyle = (
+    latestClubColor ? { "--spotlight-accent": latestClubColor } : undefined
+  ) as CSSProperties | undefined;
+
+  async function handleResumeLatest() {
+    if (!latestSave || !onContinueLatest || resuming) return;
+    setResuming(true);
+    try {
+      await onContinueLatest(latestSave);
+    } finally {
+      setResuming(false);
+    }
+  }
+
+  return (
+    <main className={styles.screen} data-menu-version="stadium-v3">
+      <div className={styles.backdrop} aria-hidden="true" />
+      <div className={styles.pitchOverlay} aria-hidden="true" />
+
+      <header className={styles.topbar}>
+        <div className={styles.topbarInner}>
+          <a
+            className={styles.brand}
+            href="#menu-principal"
+            aria-label="FutManager — menu principal"
+          >
+            <BrandCrest />
+            <span className={styles.brandText}>
+              <strong>FUTMANAGER</strong>
+              <small>EDIÇÃO BRASIL · 2026</small>
+            </span>
+          </a>
+
+          <div className={styles.topRight}>
+            <span className={styles.syncBadge} role="status">
+              <i className={styles.syncDot} aria-hidden="true" />
+              <span>{syncLabel}</span>
+            </span>
+
+            <div className={styles.account}>
+              {email ? (
+                <>
+                  <span className={styles.accountEmail} title={email}>
+                    {email}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.signOutBtn}
+                    onClick={() => void onSignOut?.()}
+                  >
+                    Sair
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.loginBtn}
+                  onClick={onLogin}
+                >
+                  Entrar / Criar conta
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className={styles.stage} id="menu-principal">
+        <div className={styles.heroRow}>
+          <section className={styles.identity} aria-label="Apresentação do jogo">
+            <div className={styles.kicker}>
+              <span className={styles.kickerPulse} aria-hidden="true" />
+              <span>TEMPORADA OFICIAL 2026 · CALENDÁRIO BRASILEIRO</span>
+            </div>
+
+            <h1 className={styles.title}>
+              FUTMANAGER <span className={styles.seasonTag}>26</span>
+            </h1>
+
+            <p className={styles.subtitle}>
+              Assuma o vestiário, arme sua equipe na prancheta tática e dispute as divisões
+              nacionais, a Copa do Brasil e os campeonatos estaduais.
+            </p>
+
+            <div className={styles.leaguePills} aria-label="Competições disponíveis">
+              <span>Brasileirão A · B · C · D</span>
+              <span>Copa do Brasil</span>
+              <span>Estaduais</span>
+            </div>
+          </section>
+
+          {hasValidLatest && latestSave ? (
+            <aside
+              className={`${styles.spotlight} ${styles.spotlightCareer}`}
+              style={spotlightStyle}
+              aria-label="Última carreira salva"
+            >
+              <div className={styles.spotlightHeader}>
+                <span className={styles.spotlightEyebrow}>
+                  <i aria-hidden="true" /> ÚLTIMA SESSÃO
+                </span>
+                <span className={styles.spotlightBadge}>
+                  {latestSave.division || "Futebol Brasileiro"}
+                </span>
+              </div>
+
+              <div className={styles.careerBody}>
+                <div className={styles.careerCrestWrap}>
+                  <Crest club={latestSave.clubName} size="md" />
+                </div>
+                <div className={styles.careerInfo}>
+                  <strong className={styles.careerClub}>{latestSave.clubName}</strong>
+                  <span className={styles.careerCoach}>
+                    Técnico · {latestSave.managerName || "Treinador"}
+                  </span>
+                  <div className={styles.careerMeta}>
+                    {typeof latestSave.round === "number" && (
+                      <span>{latestSave.round}ª rodada</span>
+                    )}
+                    {saveDateLabel && <span>{saveDateLabel}</span>}
+                    {saveBudgetLabel && <span>Caixa {saveBudgetLabel}</span>}
+                  </div>
+                </div>
+              </div>
+
+              {onContinueLatest && (
+                <button
+                  type="button"
+                  className={styles.resumeBtn}
+                  disabled={resuming}
+                  onClick={() => void handleResumeLatest()}
+                >
+                  <span>
+                    {resuming
+                      ? "Carregando carreira..."
+                      : `Retomar ${latestSave.clubName}`}
+                  </span>
+                  <InterfaceIcon name="arrow_right" size={16} />
+                </button>
+              )}
+            </aside>
+          ) : (
+            <aside
+              className={styles.spotlight}
+              aria-label="Resumo da temporada 2026"
+            >
+              <div className={styles.spotlightHeader}>
+                <span className={styles.spotlightEyebrow}>
+                  <i aria-hidden="true" /> PIRÂMIDE NACIONAL
+                </span>
+                <span className={styles.spotlightBadge}>TEMPORADA 2026</span>
+              </div>
+
+              <div className={styles.seasonBody}>
+                <Image
+                  src="/icons/navigation/estadio.webp"
+                  alt=""
+                  aria-hidden="true"
+                  width={64}
+                  height={64}
+                  unoptimized
+                  className={styles.seasonIcon}
+                />
+                <div className={styles.careerInfo}>
+                  <strong className={styles.careerClub}>Futebol Brasileiro</strong>
+                  <span className={styles.careerCoach}>
+                    {clubCount && playerCount
+                      ? `${clubCount.toLocaleString("pt-BR")} clubes e ${playerCount.toLocaleString("pt-BR")} atletas prontos no catálogo`
+                      : "Séries A, B, C e D, Copa do Brasil e Estaduais"}
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.divisionStrip} aria-hidden="true">
+                <span>SÉRIE A</span>
+                <span>SÉRIE B</span>
+                <span>SÉRIE C</span>
+                <span>SÉRIE D</span>
+              </div>
+            </aside>
+          )}
+        </div>
+
+        <nav className={styles.modeDeck} aria-label="Ações da carreira">
+          <button
+            type="button"
+            className={`${styles.modeCard} ${styles.modePrimary}`}
+            onClick={onNewGame}
+          >
+            <div className={styles.modeCardTop}>
+              <span className={styles.modeChip}>MODO CARREIRA</span>
+              <Image
+                src="/icons/navigation/tecnicos.webp"
+                alt=""
+                aria-hidden="true"
+                width={56}
+                height={56}
+                unoptimized
+                className={styles.modeIcon}
+              />
+            </div>
+            <div className={styles.modeCardBody}>
+              <strong className={styles.modeTitle}>INICIAR NOVA CARREIRA</strong>
+              <p className={styles.modeDesc}>
+                Escolha um clube brasileiro, defina seu perfil de treinador e inicie a caminhada na
+                temporada 2026.
+              </p>
+            </div>
+            <span className={styles.modeAction}>
+              <span>Escolher clube</span>
+              <InterfaceIcon name="arrow_right" size={16} className={styles.modeArrow} />
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className={styles.modeCard}
+            onClick={onSaves}
+          >
+            <div className={styles.modeCardTop}>
+              <span className={styles.modeChip}>
+                CARREIRAS SALVAS
+                {saveCount > 0 && <b className={styles.saveCounter}>{saveCount}</b>}
+              </span>
+              <Image
+                src="/icons/navigation/trofeus.webp"
+                alt=""
+                aria-hidden="true"
+                width={56}
+                height={56}
+                unoptimized
+                className={styles.modeIcon}
+              />
+            </div>
+            <div className={styles.modeCardBody}>
+              <strong className={styles.modeTitle}>CONTINUAR JOGANDO</strong>
+              <p className={styles.modeDesc}>
+                {saveCount
+                  ? `${saveCount} carreira${saveCount === 1 ? " salva pronta" : "s salvas prontas"} para continuar.`
+                  : email
+                    ? "Nenhuma carreira salva nesta conta."
+                    : "Entre para acessar suas carreiras."}
+              </p>
+            </div>
+            <span className={styles.modeAction}>
+              <span>{saveCount ? "Selecionar carreira" : "Ver carreiras"}</span>
+              <InterfaceIcon name="arrow_right" size={16} className={styles.modeArrow} />
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className={styles.modeCard}
+            onClick={onEdit}
+          >
+            <div className={styles.modeCardTop}>
+              <span className={styles.modeChip}>CENTRAL DE DADOS</span>
+              <Image
+                src="/icons/navigation/times.webp"
+                alt=""
+                aria-hidden="true"
+                width={56}
+                height={56}
+                unoptimized
+                className={styles.modeIcon}
+              />
+            </div>
+            <div className={styles.modeCardBody}>
+              <strong className={styles.modeTitle}>EDITAR O UNIVERSO</strong>
+              <p className={styles.modeDesc}>
+                Personalize clubes, elencos e uniformes ou sincronize os dados pela API e pacotes
+                JSON.
+              </p>
+            </div>
+            <span className={styles.modeAction}>
+              <span>Abrir editor</span>
+              <InterfaceIcon name="arrow_right" size={16} className={styles.modeArrow} />
+            </span>
+          </button>
+        </nav>
+      </div>
+
+      <footer className={styles.footer}>
+        <div className={styles.footerInner}>
+          <span className={styles.footerInfo}>
+            Salvamento automático vinculado por conta · Prancheta tática livre
+          </span>
+          <span className={styles.footerBrand}>FUTMANAGER · TEMPORADA 2026</span>
+        </div>
+      </footer>
+    </main>
+  );
+}
+
+function BrandCrest() {
+  return (
+    <svg
+      className={styles.brandCrest}
+      viewBox="0 0 40 44"
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M20 2.2 35.5 7.4v13.2c0 10.6-6.9 17.8-15.5 21.2C11.4 38.4 4.5 31.2 4.5 20.6V7.4L20 2.2Z"
+        fill="#0d2318"
+        stroke="#e5b84b"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M20 5.5 32.2 9.6v10.8c0 8.4-5.2 14.3-12.2 17.4-7-3.1-12.2-9-12.2-17.4V9.6L20 5.5Z"
+        fill="#133824"
+      />
+      <path d="M14 8.2h4v27.5h-4V8.2Zm8 0h4v27.5h-4V8.2Z" fill="#1e5638" opacity="0.65" />
+      <circle cx="20" cy="20.5" r="6.4" fill="#0b1d14" stroke="#e5b84b" strokeWidth="1.4" />
+      <path
+        d="m20 16.7 3.2 2.3-1.2 3.8h-4l-1.2-3.8 3.2-2.3Z"
+        fill="#2fd06b"
+      />
+    </svg>
+  );
+}
