@@ -157,7 +157,7 @@ export function ResultScreen({
       </aside>
       <section className={styles.matchCard}>
         <header className={styles.header}>
-          <span className={styles.trophy}>{trophyAsset ? <Image src={trophyAsset} alt={`Troféu ${competition}`} width={52} height={56} unoptimized className={styles.trophyImg} /> : <span role="img" aria-label={`Troféu ${competition}`}><InterfaceIcon name="trophy" size={38} /></span>}</span>
+          <span className={styles.trophy}>{trophyAsset ? <Image src={trophyAsset} alt={`Troféu ${competition}`} width={38} height={42} unoptimized className={styles.trophyImg} /> : <span role="img" aria-label={`Troféu ${competition}`}><InterfaceIcon name="trophy" size={32} /></span>}</span>
           <div className={styles.headerMeta}><span className={styles.eyebrow}>FIM DE JOGO · {roundLabel ?? `${round}ª RODADA`}</span><h1>{competition}</h1></div>
         </header>
         <section className={styles.scoreboard} aria-label={`Resultado final: ${club} ${homeScore}, ${opponent} ${awayScore}`}>
