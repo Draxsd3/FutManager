@@ -1,6 +1,7 @@
 import { attackingProgress, chanceQuality, localPressure, opponentPlan, passUtility } from "./football-decisions";
 import type { Player, PositionCode } from "./mock-data";
 import type { ManualPosition } from "./career";
+import { fifaPosition } from "./fifa-position";
 import { formationSlotRoles, formationSlots, playerFitAtPosition } from "./formations";
 import type { MatchRules } from "./match-rules";
 
@@ -122,13 +123,139 @@ const skillAliases: Record<string, string[]> = {
   goalkeeping: ["ref", "col", "sgo", "dpe", "goleiro", "reflexo", "colocação"],
   dribbling: ["dri", "vel", "tec", "drible", "técnica"],
   physical: ["for", "vel", "res", "físico", "força", "velocidade"],
+  stamina: ["res", "resist", "fôlego", "folego", "vigor", "físic", "fisic", "motor", "incans"],
 };
 
+export type MatchFatigueContext = {
+  formation?: string;
+  positions?: Record<number, ManualPosition>;
+  starterIds?: number[];
+  rolesByPlayerId?: Record<number, PositionCode | undefined>;
+  style?: string;
+  focus?: string;
+};
+
+/**
+ * Physiological age multiplier for in-match energy drain.
+ * Strictly increasing from 16 to 45 so older players always tire faster than younger ones.
+ */
+export function ageFatigueMultiplier(age: number): number {
+  const safeAge = clamp(Number.isFinite(age) ? age : 26, 16, 45);
+  if (safeAge <= 26) {
+    return 0.82 + ((safeAge - 16) / 10) * 0.18;
+  }
+  const over = safeAge - 26;
+  return 1 + over * 0.026 + over * over * 0.0015;
+}
+
+/**
+ * Running and high-intensity sprint workload by tactical role and pitch corridor.
+ * Full-backs (L) cover the entire flank and tire substantially more than center-backs (Z) and goalkeepers (G).
+ */
+export function roleFatigueMultiplier(role: PositionCode, wide = false): number {
+  switch (role) {
+    case "G":
+      return 0.30;
+    case "Z":
+      return 0.78;
+    case "A":
+      return wide ? 1.05 : 0.96;
+    case "M":
+      return wide ? 1.15 : 1.08;
+    case "L":
+      return 1.24;
+  }
+}
+
+export function resolveMatchPlayerRole(
+  player: Player,
+  index?: number,
+  formation?: string,
+  positions?: Record<number, ManualPosition>,
+  fallbackRole?: PositionCode,
+): { role: PositionCode; wide: boolean } {
+  if (index !== undefined && index >= 0 && index < 11) {
+    const activeFormation = formation ?? "4-3-3";
+    const slots = formationSlots[activeFormation] ?? formationSlots["4-3-3"];
+    const roleList = formationSlotRoles[activeFormation] ?? formationSlotRoles["4-3-3"];
+    const position = (index === 10 ? slots[10] : positions?.[player.id] ?? slots[index]) ?? { left: 50, top: 50 };
+    const role = playerFitAtPosition(player, activeFormation, position, index).role ?? roleList[index] ?? player.position;
+    return { role, wide: role !== "G" && Math.abs(position.left - 50) >= 22 };
+  }
+  const role = fallbackRole ?? player.position;
+  const namedFifa = fifaPosition(player);
+  const wide = role === "L" || namedFifa === "LB" || namedFifa === "RB" || namedFifa === "LW" || namedFifa === "RW";
+  return { role, wide };
+}
+
+function effectiveFatigueRates(rules?: MatchRules) {
+  if (!rules || rules.baseFatiguePerMinute < 0.05) {
+    return { base: 0.205, heavyPress: 0.085, heatPerDegree: 0.0065 };
+  }
+  return {
+    base: rules.baseFatiguePerMinute,
+    heavyPress: rules.heavyPressFatiguePerMinute,
+    heatPerDegree: rules.heatFatiguePerDegree,
+  };
+}
+
+export function calculatePlayerFatigueLoss(
+  player: Player,
+  playedMinutes: number,
+  options: {
+    role?: PositionCode;
+    wide?: boolean;
+    weather: MatchWeather;
+    tactics: { marking: string; style?: string; focus?: string };
+    rules?: MatchRules;
+  },
+): number {
+  const played = clamp(Number.isFinite(playedMinutes) ? playedMinutes : 0, 0, 120);
+  if (played <= 0) return 0;
+  const fallback = resolveMatchPlayerRole(player, undefined, undefined, undefined, options.role);
+  const role = options.role ?? fallback.role;
+  const wide = options.wide ?? fallback.wide;
+  const isKeeper = role === "G";
+  const rates = effectiveFatigueRates(options.rules);
+
+  const pressScale = isKeeper ? 0.15 : 1;
+  const pressingRate = (options.tactics.marking === "Pesada"
+    ? rates.heavyPress
+    : options.tactics.marking === "Normal"
+      ? rates.heavyPress * 0.45
+      : 0) * pressScale;
+  const lightMarkingFactor = !isKeeper && options.tactics.marking === "Leve" ? 0.93 : 1;
+
+  const heatRate = Math.max(0, options.weather.temperatureC - 24) * rates.heatPerDegree * (isKeeper ? 0.45 : 1);
+  const rainRate = Math.max(0, options.weather.rainIntensity ?? 0) * 0.018 * (isKeeper ? 0.35 : 1);
+
+  const style = options.tactics.style ?? "Equilibrado";
+  const styleFactor = style === "Ofensivo" ? (isKeeper ? 1.02 : 1.07) : style === "Defensivo" ? (isKeeper ? 1 : 0.95) : 1;
+
+  const focus = (options.tactics.focus ?? "").toLowerCase();
+  const focusFactor = isKeeper
+    ? 1
+    : focus.includes("later")
+      ? role === "L" || wide ? 1.06 : 0.98
+      : focus.includes("meio") && role === "M" && !wide
+        ? 1.03
+        : 1;
+
+  const staminaFactor = traitHas(player, skillAliases.stamina) ? 0.90 : 1;
+  const progressiveFactor = 1 + (Math.max(0, played - 60) / 30) * 0.10;
+  const perMinute = (rates.base + pressingRate + heatRate + rainRate)
+    * roleFatigueMultiplier(role, wide)
+    * ageFatigueMultiplier(player.age)
+    * lightMarkingFactor
+    * styleFactor
+    * focusFactor
+    * staminaFactor;
+
+  return played * progressiveFactor * perMinute;
+}
+
 function playerRole(player: Player, index: number, team: MatchTeamInput): PositionCode {
-  const slots = formationSlots[team.formation] ?? formationSlots["4-3-3"];
-  const roleList = formationSlotRoles[team.formation] ?? formationSlotRoles["4-3-3"];
-  const position = (index === 10 ? slots[10] : team.positions[player.id] ?? slots[index]) ?? { left: 50, top: 50 };
-  return playerFitAtPosition(player, team.formation, position, index).role ?? roleList[index] ?? player.position;
+  return resolveMatchPlayerRole(player, index, team.formation, team.positions).role;
 }
 
 function fitPenalty(player: Player, index: number, team: MatchTeamInput) {
@@ -137,18 +264,33 @@ function fitPenalty(player: Player, index: number, team: MatchTeamInput) {
   return playerFitAtPosition(player, team.formation, position, index).penalty;
 }
 
+function playerLiveEnergy(player: Player, index: number, team: MatchTeamInput, minute: number, weather: MatchWeather): number {
+  const played = Math.max(0, team.minutesPlayed?.[player.id] ?? minute);
+  const { role, wide } = resolveMatchPlayerRole(player, index, team.formation, team.positions);
+  const loss = calculatePlayerFatigueLoss(player, played, {
+    role,
+    wide,
+    weather,
+    tactics: team.tactics,
+    rules: team.rules,
+  });
+  return clamp(player.energy - loss, 15, 100);
+}
+
 function athleteSkill(player: Player, index: number, team: MatchTeamInput, skill: keyof typeof skillAliases, minute: number, weather: MatchWeather) {
   const tags = skillAliases[skill];
   const tagged = traitHas(player, tags);
   const secondary = traitHas(player, ["secundária", "secondary"]);
   const bonus = tagged ? (secondary ? 3 : 6) : 0;
-  const played = team.minutesPlayed?.[player.id] ?? minute;
-  const fatigueRate = team.rules ? team.rules.baseFatiguePerMinute
-    + (team.tactics.marking === "Pesada" ? team.rules.heavyPressFatiguePerMinute : team.tactics.marking === "Normal" ? team.rules.heavyPressFatiguePerMinute * .45 : 0)
-    + Math.max(0, weather.temperatureC - 24) * team.rules.heatFatiguePerDegree : .24;
-  const effectiveEnergy = Math.max(15, player.energy - played * fatigueRate);
-  const fatigue = Math.max(0, 70 - effectiveEnergy) * .16 + played / 90 * 4;
-  return clamp(player.overall - fitPenalty(player, index, team) + bonus + (team.motivation - 65) * .12 + (effectiveEnergy - 70) * 0.06 - fatigue, 1, 100);
+  const played = Math.max(0, team.minutesPlayed?.[player.id] ?? minute);
+  const { role, wide } = resolveMatchPlayerRole(player, index, team.formation, team.positions);
+  const effectiveEnergy = playerLiveEnergy(player, index, team, minute, weather);
+  const skillFatigueSensitivity = skill === "defending" ? 1.28 : skill === "finishing" ? 0.72 : skill === "goalkeeping" ? 0.55 : 1;
+  const freshness = (effectiveEnergy - 80) * 0.07;
+  const acuteWear = (played / 90) * 2.4 * roleFatigueMultiplier(role, wide) * ageFatigueMultiplier(player.age);
+  const energyPenalty = Math.max(0, 74 - effectiveEnergy) * 0.16 + Math.max(0, 55 - effectiveEnergy) * 0.14;
+  const fatigue = (acuteWear + energyPenalty) * skillFatigueSensitivity;
+  return clamp(player.overall - fitPenalty(player, index, team) + bonus + (team.motivation - 65) * .12 + freshness - fatigue, 1, 100);
 }
 
 type TeamProfile = {
@@ -162,6 +304,7 @@ type TeamProfile = {
   passer: number;
   shooter: number;
   keeperIndex: number;
+  outfieldEnergy: number;
 };
 
 function weightedMean(values: Array<{ value: number; weight: number }>, fallback: number) {
@@ -178,15 +321,17 @@ function profile(team: MatchTeamInput, minute: number, weather: MatchWeather): T
   const entries = activePlayers(team);
   const players = entries.map((entry) => entry.player);
   const roles = entries.map(({ player, index }) => playerRole(player, index, team));
+  const energies = entries.map(({ player, index }) => playerLiveEnergy(player, index, team, minute, weather));
   const manpowerPenalty = (11 - entries.length) * 2.4;
-  const overall = weightedMean(entries.map(({ player, index }) => {
-    const played = team.minutesPlayed?.[player.id] ?? minute;
-    const rate = team.rules ? team.rules.baseFatiguePerMinute
-      + (team.tactics.marking === "Pesada" ? team.rules.heavyPressFatiguePerMinute : team.tactics.marking === "Normal" ? team.rules.heavyPressFatiguePerMinute * .45 : 0)
-      + Math.max(0, weather.temperatureC - 24) * team.rules.heatFatiguePerDegree : .24;
-    const energy = Math.max(15, player.energy - played * rate);
-    return { value: clamp(player.overall - fitPenalty(player, index, team) + (energy - 70) * .045 - Math.max(0, 70 - energy) * .16, 25, 100), weight: 1 };
+  const overall = weightedMean(entries.map(({ player, index }, rowIndex) => {
+    const energy = energies[rowIndex];
+    const fatigue = Math.max(0, 75 - energy) * 0.16 + Math.max(0, 55 - energy) * 0.14;
+    return { value: clamp(player.overall - fitPenalty(player, index, team) + (energy - 75) * .055 - fatigue, 25, 100), weight: 1 };
   }), 68) - manpowerPenalty;
+  const outfieldEnergy = weightedMean(
+    entries.map((_, rowIndex) => ({ value: energies[rowIndex], weight: roles[rowIndex] === "G" ? 0 : 1 })),
+    80,
+  );
   const passing = entries.map(({ player, index }) => athleteSkill(player, index, team, "passing", minute, weather));
   const finishing = entries.map(({ player, index }) => athleteSkill(player, index, team, "finishing", minute, weather));
   const defending = entries.map(({ player, index }) => athleteSkill(player, index, team, "defending", minute, weather));
@@ -204,7 +349,7 @@ function profile(team: MatchTeamInput, minute: number, weather: MatchWeather): T
   const keeperIndex = keeperRow >= 0 ? entries[keeperRow].index : entries.at(-1)?.index ?? 0;
   const keeper = keeperRow >= 0 ? goalkeeping[keeperRow] : (goalkeeping.at(-1) ?? overall) - manpowerPenalty * .35;
   const technique = weightedMean([...passing, ...finishing, ...defending].map((value) => ({ value, weight: 1 })), overall);
-  return { overall, technique, attack, defense, midfield, keeper, marking: defense, passer: midfield, shooter: attack, keeperIndex };
+  return { overall, technique, attack, defense, midfield, keeper, marking: defense, passer: midfield, shooter: attack, keeperIndex, outfieldEnergy };
 }
 
 function choosePlayer(team: MatchTeamInput, minute: number, weather: MatchWeather, random: () => number, purpose: "passing" | "finishing" | "defending" | "goalkeeping", restrict?: PositionCode[]) {
@@ -380,12 +525,14 @@ export function simulateAction({ minute, starters, formation, positions, opponen
     const keeperSkill = keeper ? athleteSkill(keeper, keeperIndex, defenseTeam, "goalkeeping", minute, weather) : defenseProfile.keeper;
     const homeEdge = (possession === "home") === managedIsHome ? rules.homeAdvantage * .001 : 0;
     quality = chanceQuality(from, possession, pressure);
+    const defensiveWear = Math.max(0, 88 - defenseProfile.outfieldEnergy) * 0.0011;
     const goalChance = clamp(
       quality * (rules.goalBaseChance / .115)
         + (finish - 70) * rules.finishingWeight
         + (attackProfile.attack - defenseProfile.defense) * .0012
         - (keeperSkill - 70) * rules.keeperWeight
         + (attackMotivation - defenseMotivation) * rules.motivationWeight
+        + defensiveWear
         + homeEdge - weatherShotEffect,
       Math.min(rules.goalMinChance, quality * .35), rules.goalMaxChance,
     );
@@ -414,8 +561,9 @@ export function simulateAction({ minute, starters, formation, positions, opponen
       possessionAfter = defenseSide;
     }
   } else {
+    const defenseFatigue = Math.max(0, 74 - defenseProfile.outfieldEnergy);
     const turnoverRate = clamp(.075 + (isHeavyPress ? rules.heavyPressTurnoverBonus : 0) + (defenseProfile.defense - 70) * .0008, .04, .22);
-    const foulRate = clamp(.045 + (isHeavyPress ? rules.heavyPressFoulBonus : 0), .025, .16);
+    const foulRate = clamp(.045 + (isHeavyPress ? rules.heavyPressFoulBonus : 0) + defenseFatigue * .0007, .025, .16);
     const tackleRate = clamp(.09 + (defenseProfile.defense - attackProfile.midfield) * .0015
       - (attackMotivation - defenseMotivation) * .001, .025, .20);
     const choice = (actionRoll - shotRate) / (1 - shotRate);
@@ -569,14 +717,56 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   };
 }
 
-export function matchEnergyAfter(players: Player[], participation: Record<number, number>, minute: number, weather: MatchWeather, marking: string, rules: MatchRules) {
-  const heatFatigue = Math.max(0, weather.temperatureC - 24) * rules.heatFatiguePerDegree;
-  const pressingFatigue = marking === "Pesada" ? rules.heavyPressFatiguePerMinute : marking === "Normal" ? rules.heavyPressFatiguePerMinute * .45 : 0;
+export function matchEnergyAfter(
+  players: Player[],
+  participation: Record<number, number>,
+  minute: number,
+  weather: MatchWeather,
+  marking: string,
+  rules: MatchRules,
+  context?: MatchFatigueContext,
+) {
   return players.map((player) => {
-    const played = Math.min(minute, participation[player.id] ?? 0);
+    const played = Math.min(minute, Math.max(0, participation[player.id] ?? 0));
     if (!played) return player;
-    const loss = played * (rules.baseFatiguePerMinute + pressingFatigue + heatFatigue);
-    return { ...player, energy: Math.max(15, Math.round(player.energy - loss)) };
+    const starterSlotIndex = context?.starterIds ? context.starterIds.indexOf(player.id) : -1;
+    const { role, wide } = resolveMatchPlayerRole(
+      player,
+      starterSlotIndex >= 0 ? starterSlotIndex : undefined,
+      context?.formation,
+      context?.positions,
+      context?.rolesByPlayerId?.[player.id],
+    );
+    const loss = calculatePlayerFatigueLoss(player, played, {
+      role,
+      wide,
+      weather,
+      tactics: { marking, style: context?.style, focus: context?.focus },
+      rules,
+    });
+    return { ...player, energy: clamp(Math.round(player.energy - loss), 15, 100) };
+  });
+}
+
+/**
+ * Passive physiological recovery between career calendar dates.
+ * Younger players recover faster per rest day than veterans, preserving meaningful rotation on tight midweek turnarounds.
+ */
+export function recoverSquadBetweenMatches(players: Player[], previousDate: string, nextDate: string): Player[] {
+  const startMs = Date.parse(`${previousDate.slice(0, 10)}T00:00:00Z`);
+  const endMs = Date.parse(`${nextDate.slice(0, 10)}T00:00:00Z`);
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) return players;
+  const elapsedDays = clamp(Math.round((endMs - startMs) / 86_400_000), 0, 21);
+  if (elapsedDays <= 0) return players;
+  return players.map((player) => {
+    if (player.energy >= 100) return player.energy === 100 ? player : { ...player, energy: 100 };
+    const safeAge = clamp(Number.isFinite(player.age) ? player.age : 26, 16, 45);
+    const ageRecoveryFactor = safeAge <= 26
+      ? 1 + ((26 - safeAge) / 10) * 0.20
+      : Math.max(0.58, 1 - (safeAge - 26) * 0.026);
+    const staminaBonus = traitHas(player, skillAliases.stamina) ? 1.08 : 1;
+    const recovery = Math.max(1, Math.round(elapsedDays * 4.8 * ageRecoveryFactor * staminaBonus));
+    return { ...player, energy: clamp(player.energy + recovery, 0, 100) };
   });
 }
 

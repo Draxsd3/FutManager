@@ -49,12 +49,12 @@ function TimelineCard({ event, home }: { event: MatchEvent; home: boolean }) {
   </div>;
 }
 
-export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabel, minute, half, club, opponent, homeScore, awayScore, statistics, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, weather, motivationHome, motivationAway, rulesLoading, rulesError, clubColors }: {
+export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabel, minute, half, club, opponent, homeScore, awayScore, statistics, fixtures, events, running, speed, halftimeWaiting, onToggleRunning, onSpeedChange, onOpenDetail, weather, motivationHome, motivationAway, squadCondition, rulesLoading, rulesError, clubColors }: {
   competition: string; trophyAsset?: string | null; round: number; roundLabel?: string; minute: number; half: "1º tempo" | "2º tempo" | "fim";
   club: string; opponent: string; clubColors?: { primaryColor: string; secondaryColor: string }; homeScore: number; awayScore: number; statistics: MatchStatistics; fixtures: RoundFixture[]; events: MatchEvent[];
   running: boolean; speed: 1 | 2 | 4; halftimeWaiting: boolean; onToggleRunning: () => void | Promise<void>;
   onSpeedChange: (speed: 1 | 2 | 4) => void; onOpenDetail: () => void;
-  weather?: MatchWeather; motivationHome?: number; motivationAway?: number; rulesLoading: boolean; rulesError: string | null;
+  weather?: MatchWeather; motivationHome?: number; motivationAway?: number; squadCondition?: { averageEnergy: number; tiredCount: number }; rulesLoading: boolean; rulesError: string | null;
 }) {
   const logEnd = useRef<HTMLDivElement>(null);
   const status = running ? "AO VIVO" : halftimeWaiting ? "INTERVALO" : minute >= 90 ? "ENCERRADA" : "PARTIDA PAUSADA";
@@ -99,7 +99,17 @@ export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabe
             <span className={styles.weatherDivider} aria-hidden="true" />
             <small>Motivação estimada · {club} {motivationHome ?? "—"} · {opponent} {motivationAway ?? "—"}</small>
           </div>
-          <div className={styles.matchFacts}><span>{fouls} faltas somadas</span><span>{statistics.home.passes + statistics.away.passes} passes contabilizados</span><span>{cards} cartões</span></div>
+          <div className={styles.matchFacts}>
+            <span>{fouls} faltas somadas</span>
+            <span>{statistics.home.passes + statistics.away.passes} passes contabilizados</span>
+            <span>{cards} cartões</span>
+            {squadCondition && (
+              <span>
+                Fôlego em campo: {squadCondition.averageEnergy}%
+                {squadCondition.tiredCount > 0 ? ` · ${squadCondition.tiredCount} desgastado${squadCondition.tiredCount > 1 ? "s" : ""}` : ""}
+              </span>
+            )}
+          </div>
           <div className={styles.timeline} role="log" aria-label="Lances importantes da partida" aria-live="polite" aria-relevant="additions text">
             {keyMoments.length === 0 ? <p className={styles.empty}>{rulesError ? "A partida não iniciou porque as regras não puderam ser lidas." : "Aguardando os primeiros lances importantes…"}</p> : keyMoments.map((event, index) => {
               const side = event.team ?? event.scene?.team;

@@ -110,8 +110,9 @@ it("keeps the dark broadcast theme, cardless larger trophy and enlarged club cre
   expect(overviewCss).toMatch(/\.trophy\s*\{[^}]*border:\s*0/);
 
   const { props } = matchProps();
-  render(<MatchOverviewScreen {...props} />);
+  render(<MatchOverviewScreen {...props} squadCondition={{ averageEnergy: 78, tiredCount: 3 }} />);
   expect(screen.queryByText(/CENTRAL DA PARTIDA/i)).toBeNull();
+  expect(screen.getByText("Fôlego em campo: 78% · 3 desgastados")).toBeTruthy();
   const homeCrest = screen.getByRole("img", { name: "Escudo do Flamengo" });
   expect(homeCrest.className).toContain("h-20");
 });

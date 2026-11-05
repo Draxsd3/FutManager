@@ -67,7 +67,7 @@ import { generateYouthTeam, promoteYouth, type YouthTeam } from "@/lib/game/yout
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { CareerProgress, MatchPreparation } from "@/lib/game/progress";
 import { applyTrainingSession, type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
-import { calculateMatchStatistics, calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, seededRandom, simulateAction } from "@/lib/game/live-match";
+import { calculateMatchStatistics, calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, recoverSquadBetweenMatches, resolveMatchPlayerRole, seededRandom, simulateAction } from "@/lib/game/live-match";
 import { completeCareerFixture, createCareerSeason, getCompetitionPlayerStats, getCompetitionStandings, nextCareerFixture, playerContributionsFromMatch, type CareerSeason } from "@/lib/game/season";
 import { reconcileCareerSaveWithDatabase } from "@/lib/game/save-reconciliation";
 import { backgroundClubStrengths, roundFixtures } from "@/lib/game/round-fixtures";
@@ -380,9 +380,32 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const eligibleMatchBench = (matchBenchIds ?? bench.filter((p) => !participation[p.id]).slice(0, 12).map((p) => p.id))
     .map((id) => squad.find((p) => p.id === id))
     .filter((p): p is Player => !!p && !starters.includes(p.id) && !participation[p.id]);
-  const matchStarters = matchPreparation ? matchEnergyAfter(startersData,
-    Object.fromEntries(startersData.map((p) => [p.id, Math.max(0, minute - (participation[p.id]?.entered ?? 0))])),
-    minute, matchPreparation.weather, marking, matchPreparation.rules) : startersData;
+  const sentOffHomeMinuteById = Object.fromEntries(
+    events
+      .filter((item) => item.card === "red" && item.scene?.team === "home" && item.actorId !== undefined)
+      .map((item) => [item.actorId!, item.minute]),
+  );
+  const rolesByPlayerId = Object.fromEntries(Object.entries(participation).map(([id, stint]) => [Number(id), stint.role]));
+  const matchFatigueContext = { formation, positions: manualPositions, starterIds: starters, rolesByPlayerId, style, focus };
+  const matchStarters = matchPreparation ? matchEnergyAfter(
+    startersData,
+    Object.fromEntries(startersData.map((p) => {
+      const capMinute = sentOffHomeMinuteById[p.id] !== undefined ? Math.min(minute, sentOffHomeMinuteById[p.id]) : minute;
+      return [p.id, Math.max(0, capMinute - (participation[p.id]?.entered ?? 0))];
+    })),
+    minute,
+    matchPreparation.weather,
+    marking,
+    matchPreparation.rules,
+    matchFatigueContext,
+  ) : startersData;
+  const activeFieldStarters = matchStarters.filter((p) => sentOffHomeMinuteById[p.id] === undefined);
+  const liveSquadCondition = activeFieldStarters.length
+    ? {
+        averageEnergy: Math.round(activeFieldStarters.reduce((sum, p) => sum + p.energy, 0) / activeFieldStarters.length),
+        tiredCount: activeFieldStarters.filter((p) => p.energy < 75).length,
+      }
+    : undefined;
   const selectedPlayerData = squad.find((p) => p.id === selectedPlayer) ?? null;
 
   const matchKey = `${activeSaveId ?? "career"}|${activeFixture?.id ?? `${round}|${club}|${opponent}`}`;
@@ -485,7 +508,12 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         }
         const home = homeScore + (event.scene?.action === "goal" && event.scene.team === "home" ? 1 : 0);
         const away = awayScore + (event.scene?.action === "goal" && event.scene.team === "away" ? 1 : 0);
-        const played: MatchParticipation = Object.keys(participation).length ? participation : Object.fromEntries(starters.map((id) => [id, { entered: 0 }]));
+        const played: MatchParticipation = Object.keys(participation).length
+          ? participation
+          : Object.fromEntries(starters.map((id, slotIndex) => {
+              const starterPlayer = squad.find((item) => item.id === id);
+              return [id, { entered: 0, role: starterPlayer ? resolveMatchPlayerRole(starterPlayer, slotIndex, formation, manualPositions).role : undefined }];
+            }));
         const finalParticipation: MatchParticipation = { ...played };
         for (const item of finalEvents.filter((entry) => entry.card === "red" && entry.actorId !== undefined)) {
           const playerId = item.actorId!;
@@ -493,7 +521,15 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           finalParticipation[playerId] = { ...stint, left: Math.min(stint.left ?? nextMinute, item.minute) };
         }
         const playedMinutes = Object.fromEntries(Object.entries(finalParticipation).map(([id, stint]) => [id, Math.max(0, (stint.left ?? 90) - stint.entered)]));
-        setCareerSquad(matchEnergyAfter(squad, playedMinutes, nextMinute, matchPreparation.weather, marking, matchPreparation.rules));
+        const finalRolesById = Object.fromEntries(Object.entries(finalParticipation).map(([id, stint]) => [Number(id), stint.role]));
+        setCareerSquad(matchEnergyAfter(squad, playedMinutes, nextMinute, matchPreparation.weather, marking, matchPreparation.rules, {
+          formation,
+          positions: manualPositions,
+          starterIds: starters,
+          rolesByPlayerId: finalRolesById,
+          style,
+          focus,
+        }));
         const reportPlayers = squad.filter((player) => finalParticipation[player.id]);
         const ratings = calculatePlayerRatings(reportPlayers, finalEvents, "home");
         const ratingById = Object.fromEntries(ratings.map((item) => [item.playerId, item.rating]));
@@ -1300,7 +1336,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     const rules = await readMatchRules();
     if (!rules) return;
     setMatchPreparation(createPreparation(rules));
-    setParticipation(Object.fromEntries(starters.map((id) => [id, { entered: 0 }])));
+    setParticipation(Object.fromEntries(starters.map((id, slotIndex) => {
+      const starterPlayer = squad.find((item) => item.id === id);
+      return [id, { entered: 0, role: starterPlayer ? resolveMatchPlayerRole(starterPlayer, slotIndex, formation, manualPositions).role : undefined }];
+    })));
     setMatchBenchIds(bench.slice(0, 12).map((player) => player.id));
     setMinute(0);
     setHomeScore(0);
@@ -1321,7 +1360,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     const canonicalRules = await readMatchRules();
     if (!canonicalRules) return;
     const preparation = matchPreparation?.matchKey === matchKey
-      ? matchPreparation
+      ? (matchPreparation.rules.baseFatiguePerMinute < 0.05 ? { ...matchPreparation, rules: canonicalRules } : matchPreparation)
       : createPreparation(canonicalRules);
     setMatchPreparation(preparation);
     setHalftimeWaiting(false);
@@ -1368,6 +1407,16 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setFormation(next);
     setStarters(arranged);
     setManualPositions({});
+    setParticipation((current) => {
+      const updated = { ...current };
+      arranged.forEach((id, slotIndex) => {
+        const player = squad.find((item) => item.id === id);
+        if (player && updated[id]) {
+          updated[id] = { ...updated[id], role: resolveMatchPlayerRole(player, slotIndex, next, {}).role };
+        }
+      });
+      return updated;
+    });
     setSelectedPlayer(null);
     setSubstitutionOut(null);
     setEvents((current) => [
@@ -1393,11 +1442,21 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   function substitute(id: number, point?: ManualPosition) {
     if (substitutionOut === null || substitutionsLeft <= 0 || !eligibleMatchBench.some((player) => player.id === id) || !starters.includes(substitutionOut)) return;
-    const outgoing = squad.find((player) => player.id === substitutionOut)?.name ?? "Jogador";
-    const incoming = squad.find((player) => player.id === id)?.name ?? "Jogador";
-    const result = deployLineupPlayer(starters, squad, formation, manualPositions, id, starters.indexOf(substitutionOut), point);
+    const outgoingPlayer = squad.find((player) => player.id === substitutionOut);
+    const incomingPlayer = squad.find((player) => player.id === id);
+    const outgoing = outgoingPlayer?.name ?? "Jogador";
+    const incoming = incomingPlayer?.name ?? "Jogador";
+    const outSlotIndex = starters.indexOf(substitutionOut);
+    const result = deployLineupPlayer(starters, squad, formation, manualPositions, id, outSlotIndex, point);
     if (!result) return;
-    setParticipation((current) => ({ ...current, [substitutionOut]: { ...(current[substitutionOut] ?? { entered: 0 }), left: minute }, [id]: { entered: minute } }));
+    const newSlotIndex = result.starters.indexOf(id);
+    const outgoingRole = outgoingPlayer ? resolveMatchPlayerRole(outgoingPlayer, outSlotIndex, formation, manualPositions).role : undefined;
+    const incomingRole = incomingPlayer ? resolveMatchPlayerRole(incomingPlayer, newSlotIndex >= 0 ? newSlotIndex : outSlotIndex, formation, result.positions).role : undefined;
+    setParticipation((current) => ({
+      ...current,
+      [substitutionOut]: { ...(current[substitutionOut] ?? { entered: 0 }), role: current[substitutionOut]?.role ?? outgoingRole, left: minute },
+      [id]: { entered: minute, role: incomingRole },
+    }));
     setStarters(result.starters);
     setManualPositions(result.positions);
     setSubstitutionsLeft((value) => value - 1);
@@ -1643,6 +1702,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           weather={matchPreparation?.weather}
           motivationHome={userIsHome ? matchPreparation?.motivationHome : matchPreparation?.motivationAway}
           motivationAway={userIsHome ? matchPreparation?.motivationAway : matchPreparation?.motivationHome}
+          squadCondition={liveSquadCondition}
           rulesLoading={matchRulesLoading}
           rulesError={matchRulesError}
           competition={competitionName}
@@ -1756,13 +1816,15 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         const nextFixture = nextCareerFixture(competitionSeason);
         setRound(nextRound);
         setActiveFixtureId(nextFixture?.id);
-        const date = careerCalendarDate(savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11", competitionSeason, nextFixture);
+        const previousDate = savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11";
+        const date = careerCalendarDate(previousDate, competitionSeason, nextFixture);
         const nextManagerMarket = managerMarket ? refreshJobOffers(managerMarket, date) : undefined;
         setManagerMarket(nextManagerMarket);
         const nextLoans = expireLoans(loanContracts, date);
         const ownClubId = database?.clubs.find(item => item.name === club)?.id ?? "";
         const nextDatabase = careerDatabase ? databaseWithLoans(careerDatabase, nextLoans) : null;
-        const nextSquad = reconcileLoanSquad(squad, nextDatabase ? buildSquadFromDatabase(nextDatabase, club, true) ?? [] : [], nextLoans, ownClubId, Object.keys(playerCareers).map(Number));
+        const reconciledSquad = reconcileLoanSquad(squad, nextDatabase ? buildSquadFromDatabase(nextDatabase, club, true) ?? [] : [], nextLoans, ownClubId, Object.keys(playerCareers).map(Number));
+        const nextSquad = recoverSquadBetweenMatches(reconciledSquad, previousDate, date);
         const remaining = new Set(nextSquad.map(player => player.id));
         const nextStarters = starters.filter(id => remaining.has(id));
         const nextBench = matchBenchIds?.filter(id => remaining.has(id));
