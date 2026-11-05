@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { LoadingScreen } from "./screens/loading-screen";
 import { GameLogo } from "./ui/game-logo";
 import { GameBoard } from "./game-board";
 import { StartMenuScreen } from "./screens/start-menu-screen";
@@ -55,7 +56,9 @@ export function AccountGame() {
     setUser(null);
   }
 
-  if (ready && user) {
+  if (!ready) return <LoadingScreen />;
+
+  if (user) {
     return <>{logoutError && <p role="alert" className={styles.notice}>{logoutError}</p>}<GameBoard key={user.id} userId={user.id} email={user.email ?? "Minha conta"} onSignOut={signOut} initialPage="menu" /></>;
   }
 
@@ -63,7 +66,7 @@ export function AccountGame() {
     return <AccountScreen unavailable={configurationError} onBack={() => { setAuthOpen(false); }} />;
   }
 
-  return <StartMenuScreen saveCount={0} syncLabel={!ready ? "Verificando sua conta..." : "Entre para salvar e continuar suas carreiras"} onNewGame={requestAccount} onSaves={requestAccount} onEdit={requestAccount} onLogin={requestAccount} />;
+  return <StartMenuScreen saveCount={0} syncLabel="Entre para salvar e continuar suas carreiras" onNewGame={requestAccount} onSaves={requestAccount} onEdit={requestAccount} onLogin={requestAccount} />;
 }
 
 function AccountScreen({ onBack, unavailable }: { onBack: () => void; unavailable: boolean }) {
