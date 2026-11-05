@@ -31,7 +31,6 @@ describe("StartMenuScreen (stadium-v3)", () => {
         email="treinador@futmanager.com"
         onSignOut={onSignOut}
         saveCount={0}
-        syncLabel="Sincronizado com a nuvem"
         clubCount={706}
         playerCount={16040}
         onNewGame={onNewGame}
@@ -48,7 +47,7 @@ describe("StartMenuScreen (stadium-v3)", () => {
     expect(screen.queryByText(/90 MINUTOS/i)).toBeNull();
     expect(screen.queryByText(/O CAMPO ESTÁ PRONTO/i)).toBeNull();
 
-    expect(screen.getByRole("status").textContent).toContain("Sincronizado com a nuvem");
+    expect(screen.queryByText(/Modo local|Supabase indisponível/i)).toBeNull();
     expect(screen.getByText(/706 clubes e 16\.040 atletas prontos no catálogo/)).toBeTruthy();
     expect(screen.getByText("Nenhuma carreira salva nesta conta.")).toBeTruthy();
 
@@ -73,7 +72,6 @@ describe("StartMenuScreen (stadium-v3)", () => {
       <StartMenuScreen
         email="dev.renan@example.com"
         saveCount={2}
-        syncLabel="Salvo localmente"
         latestSave={sampleSave}
         latestClubColor="#006437"
         onContinueLatest={onContinueLatest}
@@ -103,7 +101,6 @@ describe("StartMenuScreen (stadium-v3)", () => {
     render(
       <StartMenuScreen
         saveCount={0}
-        syncLabel="Entre para salvar e continuar suas carreiras"
         onLogin={onLogin}
         onNewGame={onLogin}
         onSaves={onLogin}
