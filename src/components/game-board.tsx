@@ -63,6 +63,8 @@ import {
   writeActiveCareerSession,
 } from "@/lib/game/session";
 import { agendaOptions, type AgendaView } from "@/components/screens/agenda-screen";
+import { generateYouthTeam, promoteYouth, type YouthTeam } from "@/lib/game/youth";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { CareerProgress, MatchPreparation } from "@/lib/game/progress";
 import { applyTrainingSession, type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
 import { calculateMatchStatistics, calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, seededRandom, simulateAction } from "@/lib/game/live-match";
@@ -220,6 +222,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [activeFixtureId, setActiveFixtureId] = useState<string>();
   const [transferNegotiations, setTransferNegotiations] = useState<TransferNegotiation[]>([]);
   const [loanContracts, setLoanContracts] = useState<CareerLoans>({});
+  const [youthTeams, setYouthTeams] = useState<Record<string, YouthTeam>>({});
+  const [retryYouthClub, setRetryYouthClub] = useState<string | null>(null);
   const [loansOpen, setLoansOpen] = useState(false);
   const careerDatabase = useMemo(() => database ? databaseWithLoans(databaseWithCompletedTransfers({ ...database, players: database.players.map(player => ({ ...player, loan: undefined })) }, transferNegotiations), loanContracts) : null, [database, transferNegotiations, loanContracts]);
 
@@ -247,7 +251,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore,
     events, participation, matchBenchIds, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
-    stadiums, managerMarket, jobClubSnapshots, managerAppointments, competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
+    stadiums, managerMarket, jobClubSnapshots, managerAppointments, youthTeams, competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
 
   };
   const progressRef = useRef(progress);
@@ -267,7 +271,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     pendingCloudSave.current = next;
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore, events,
-    participation, matchBenchIds, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, managerMarket, jobClubSnapshots, managerAppointments, stadiums, userId]);
+    participation, matchBenchIds, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, managerMarket, jobClubSnapshots, managerAppointments, youthTeams, stadiums, userId]);
 
 
   useEffect(() => {
@@ -296,6 +300,44 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const divisionClubNames = useMemo(() => database?.clubs.filter((item) => item.country.toLocaleLowerCase("pt-BR") === "brasil" && item.division === division).map((item) => item.name) ?? [], [database, division]);
   const managementDatabase = useMemo(() => database ? { ...database, clubs: database.clubs.map(item => ({ ...item, coachName: managerMarket?.clubs[item.id] ? managerMarket.clubs[item.id].coach ?? "" : item.coachName })) } : null, [database, managerMarket]);
   const managedClubRecord = database?.clubs.find((item) => item.name === club);
+  useEffect(() => {
+    if (page !== "juniors" || !careerLoaded || !activeSaveId || !managedClubRecord || (youthTeams[managedClubRecord.id] && retryYouthClub !== managedClubRecord.id)) return;
+    let cancelled = false;
+    const team = managedClubRecord;
+    async function loadYouth() {
+      let result = generateYouthTeam(team, activeSaveId!, team.transfermarkt?.id ? "Base simulada: não foi possível confirmar dados reais na API." : "Base simulada: clube sem identificação Transfermarkt.");
+      if (team.transfermarkt?.id) {
+        try {
+          const client = createBrowserSupabaseClient();
+          const { data } = await client.auth.getSession();
+          if (!data.session) throw new Error("Sem sessão");
+          const reply = await fetch("/api/transfermarkt/youth", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ club: team.transfermarkt.id }), signal: AbortSignal.timeout(55000) });
+          if (!reply.ok) throw new Error("API indisponível");
+          const source: { players: { id: string; name: string; age: number; position: "G" | "L" | "Z" | "M" | "A"; ageEstimated?: boolean; positionEstimated?: boolean }[]; collectedAt?: string; missing?: number } = await reply.json();
+          const professionals = new Set(database?.players.map(player => player.transfermarkt?.id));
+          const seen = new Set<string>();
+          const players = source.players.filter(player => !professionals.has(player.id) && !seen.has(player.id) && !!seen.add(player.id)).map(player => ({ id: `transfermarkt:${player.id}`, externalId: player.id, name: player.name, position: player.position, age: player.age, ageEstimated: player.ageEstimated, positionEstimated: player.positionEstimated, nationality: null, overall: Math.min(75, Math.max(35, 39 + team.level)), origin: "transfermarkt" as const }));
+          if (players.length) {
+            const names = new Set(players.map(player => player.name.toLocaleLowerCase("pt-BR")));
+            const simulated = generateYouthTeam(team, activeSaveId!).players.filter(player => !names.has(player.name.toLocaleLowerCase("pt-BR"))).slice(0, Math.max(0, 20 - players.length));
+            result = { players: [...players, ...simulated], origin: "transfermarkt", collectedAt: source.collectedAt, note: `Elenco atual da API; força estimada.${simulated.length ? ` ${simulated.length} jogadores fictícios completam a base.` : ""}${source.missing ? ` ${source.missing} registros incompletos não puderam ser importados.` : ""} Não representa necessariamente o início de 2026.` };
+          }
+        } catch { /* Keep generated roster, explicitly identified as simulated. */ }
+      }
+      if (!cancelled) {
+        setYouthTeams(current => {
+          const previous = current[team.id];
+          const promoted = previous?.promoted ?? [];
+          // Keep a real roster if retry fails; a generated retry must not resurrect promoted players.
+          const next = previous?.origin === "transfermarkt" && result.origin === "simulado" ? previous : { ...result, promoted, players: result.players.filter(player => !promoted.includes(player.id)) };
+          return { ...current, [team.id]: next };
+        });
+        setRetryYouthClub(null);
+      }
+    }
+    void loadYouth();
+    return () => { cancelled = true; };
+  }, [page, careerLoaded, activeSaveId, managedClubRecord, youthTeams, database, retryYouthClub]);
   const scheduledFixture = nextCareerFixture(competitionSeason);
   const activeFixture = competitionSeason?.fixtures.find((item) => item.id === activeFixtureId) ?? scheduledFixture;
   const userIsHome = !activeFixture || activeFixture.homeClubId === managedClubRecord?.id;
@@ -655,6 +697,22 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return { record: result.record };
   }
 
+  function promoteJunior(youthId: string) {
+    if (!managedClubRecord || !activeSaveId) return "Carreira indisponível.";
+    const team = youthTeams[managedClubRecord.id];
+    const junior = team?.players.find(player => player.id === youthId);
+    if (!junior) return "Jogador não encontrado na base.";
+    if (squad.length >= 200) return "Elenco principal atingiu o limite de 200 jogadores.";
+    const promoted = promoteYouth(junior, squad, Object.keys(playerCareers).map(Number));
+    if (!promoted) return "Jogador já promovido.";
+    const nextSquad = [...squad, promoted];
+    const nextTeams = { ...youthTeams, [managedClubRecord.id]: { ...team, players: team.players.filter(player => player.id !== youthId), promoted: [...(team.promoted ?? []), youthId] } };
+    setCareerSquad(nextSquad); setYouthTeams(nextTeams);
+    const current = savesRef.current.find(save => save.id === activeSaveId);
+    if (current) void persistSave({ ...current, updatedAt: new Date().toISOString(), progress: { ...progressRef.current, careerSquad: nextSquad, youthTeams: nextTeams } });
+    return `${junior.name} promovido ao elenco principal.`;
+  }
+
   function renderStandings() {
     if (!standingsOpen || !database) return null;
     return <CompetitionCenter database={database} fixtures={fixtures} club={club} competition={division} activeCompetitionId={centerCompetitionId} roundLabel={competitionRoundLabel} careerCompetitionData={careerCompetitionData} table={centerTable} topScorers={centerTopScorers} topRatings={centerTopRatings} round={competitionRound} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onClose={() => setStandingsOpen(false)} />;
@@ -803,11 +861,12 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       round: 1, budget: 12624, stadiums: {}, kit: 1, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
       careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, trainingSessions: [], manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
-      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, confidenceHistory: [], confidenceStartBudget: 12624, managerMarket: initializeCareerMarket(database, newSeason, coach.trim(), 12624), jobClubSnapshots: {}, managerAppointments: [{ clubId: selectedClub.id, club: selectedClub.name, startedOn: save.inGameDate }], activeFixtureId: firstFixture?.id, transferNegotiations: [], loanContracts: initialLoans, championHistory: [] };
+      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, confidenceHistory: [], confidenceStartBudget: 12624, managerMarket: initializeCareerMarket(database, newSeason, coach.trim(), 12624), jobClubSnapshots: {}, managerAppointments: [{ clubId: selectedClub.id, club: selectedClub.name, startedOn: save.inGameDate }], youthTeams: {}, activeFixtureId: firstFixture?.id, transferNegotiations: [], loanContracts: initialLoans, championHistory: [] };
     setActiveSaveId(save.id);
     setCompetitionSeason(newSeason);
     setManagerMarket(save.progress.managerMarket); setJobClubSnapshots({}); setManagerAppointments(save.progress.managerAppointments ?? []);
     setChampionHistory([]);
+    setYouthTeams({}); setRetryYouthClub(null);
     setConfidenceHistory([]);
     setConfidenceStartBudget(12624);
     setActiveFixtureId(firstFixture?.id);
@@ -880,6 +939,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setPlayerCareers(save.playerCareers ?? {});
     setKit(save.progress?.kit === 2 || save.progress?.kit === 3 ? save.progress.kit : 1);
     setTrainingSessions(save.progress?.trainingSessions ?? []);
+    setYouthTeams(save.progress?.youthTeams ?? {}); setRetryYouthClub(null);
     setManualPositions(save.manualPositions ?? {});
     setTransferNegotiations(save.progress?.transferNegotiations ?? []);
     setLoanContracts(save.progress?.loanContracts ?? Object.fromEntries((save.progress?.careerSquad ?? []).filter(player => player.sourceId && player.loan).map(player => [player.sourceId!, player.loan!])));
@@ -1479,7 +1539,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return (
       <>
         <CareerWorkspace {...workspace} title={windowTitles[page]} titleIcon={managementSection === "teams" ? "group" : undefined}>
-          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens embedded championHistory={championHistory} section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={managementDatabase ?? database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations.filter(deal => deal.buyerClubId === managedClubRecord?.id)} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
+          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens youthTeam={managedClubRecord ? youthTeams[managedClubRecord.id] : undefined} youthLoading={!!managedClubRecord && (!youthTeams[managedClubRecord.id] || retryYouthClub === managedClubRecord.id)} onRetryYouth={() => { if (managedClubRecord) setRetryYouthClub(managedClubRecord.id); }} onPromoteYouth={promoteJunior} embedded championHistory={championHistory} section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={managementDatabase ?? database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations.filter(deal => deal.buyerClubId === managedClubRecord?.id)} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
             jobs={managerMarket && careerDatabase && managedClubRecord ? { market: managerMarket, database: careerDatabase, currentClubId: managedClubRecord.id, date: saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11", appointments: managerAppointments, onApply: applyToManagerJob, onDecline: declineJob, onAccept: acceptJob } : undefined}
             championHistory={championHistory}
             stadium={managedClubRecord ? stadiums[managedClubRecord.id] : undefined}

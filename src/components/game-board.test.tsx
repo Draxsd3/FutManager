@@ -694,3 +694,32 @@ it("waits for catalog synchronization, explains failure, and retries with Atuali
   expect(apply).toHaveBeenCalledTimes(2);
   vi.restoreAllMocks();
 }, 30000);
+
+it("creates a separate simulated youth team and persists a promotion after reload", async () => {
+  const { IDBFactory } = await import("fake-indexeddb");
+  vi.stubGlobal("indexedDB", new IDBFactory());
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+  const view = render(game("youth-manager"));
+  fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Técnico Base" } });
+  fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
+  fireEvent.click(await screen.findByRole("button", { name: "Juniores" }));
+  await screen.findByText(/Jogadores fictícios gerados pelo jogo/);
+  expect(screen.getAllByRole("button", { name: "Promover" })).toHaveLength(20);
+  fireEvent.click(screen.getAllByRole("button", { name: "Promover" })[0]);
+  expect(await screen.findByText(/promovido ao elenco principal/)).toBeTruthy();
+  await waitFor(() => expect(readLocalSaves("youth-manager")[0].progress?.careerSquad?.some(p => p.youthId)).toBe(true));
+  const saved = readLocalSaves("youth-manager")[0];
+  expect(Object.values(saved.progress!.youthTeams!)[0].players).toHaveLength(19);
+  fireEvent.click(screen.getByRole("button", { name: "Tentar buscar dados reais" }));
+  await screen.findByText(/Jogadores fictícios gerados pelo jogo/);
+  expect(screen.getAllByRole("button", { name: "Promover" })).toHaveLength(19);
+  view.unmount();
+  render(game("youth-manager"));
+  await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ });
+  fireEvent.click(screen.getByRole("button", { name: /CONTINUAR JOGANDO/ }));
+  fireEvent.click((await screen.findAllByRole("button", { name: "CONTINUAR" }))[0]);
+  await screen.findByText(/Jogadores fictícios gerados pelo jogo/);
+  expect(screen.getAllByRole("button", { name: "Promover" })).toHaveLength(19);
+  confirm.mockRestore();
+}, 30000);

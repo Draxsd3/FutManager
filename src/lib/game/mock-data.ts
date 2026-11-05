@@ -5,6 +5,7 @@ export type Player = {
   loan?: LoanContract;
   id: number;
   sourceId?: string;
+  youthId?: string;
   shirtNumber?: number;
   name: string;
   position: PositionCode;
