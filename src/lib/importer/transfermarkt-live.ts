@@ -62,9 +62,10 @@ export function normalizeLivePlayer(input: unknown, clubName: string, collectedA
     contractEndsOn: player.contract ?? null, marketValueEur: player.marketValue ?? null };
 }
 
-export function normalizeLiveClub(profileInput: unknown, squadInput: unknown, clubId: string, collectedAt = new Date().toISOString()) {
+export function normalizeLiveClub(profileInput: unknown, squadInput: unknown, clubId: string, collectedAt = new Date().toISOString(), options: { allowIncompleteRosters?: boolean } = {}) {
   const profile = profileSchema.parse(profileInput);
-  const squad = z.object({ id: z.string(), updatedAt: z.string().nullable().optional(), players: z.array(rawPlayerSchema).min(11).max(200) }).parse(squadInput);
+  const squad = z.object({ id: z.string(), updatedAt: z.string().nullable().optional(), players: z.array(rawPlayerSchema).max(200) }).parse(squadInput);
+  if (!options.allowIncompleteRosters && squad.players.length < 11) throw new Error("Elenco com menos de 11 jogadores.");
   if (profile.id !== clubId || squad.id !== clubId) throw new Error("A fonte retornou outro clube.");
   if (![profile.league?.countryName, profile.stadium?.countryName, profile.addressLine3].some(country => country === "Brazil" || country === "Brasil")) throw new Error(`${profile.name}: país brasileiro não confirmado.`);
   const players = squad.players.map(player => normalizeLivePlayer(player, profile.name, collectedAt));

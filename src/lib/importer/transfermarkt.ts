@@ -7,6 +7,7 @@ import { normalizeName } from "./matching";
 const numericId = z.string().regex(/^[1-9]\d*$/);
 const playerSchema = z.object({
   loan: loanContractSchema.nullable().optional(),
+  positionEstimated: z.boolean().optional(),
   manualCorrection: z.object({ fields: z.array(z.string()), correctedAt: z.iso.datetime({ offset: true }) }).optional(),
   id: numericId, name: z.string().trim().min(1).max(250), dateOfBirth: z.iso.date().nullable().optional(),
   age: z.number().int().min(14).max(65), position: z.enum(["G", "L", "Z", "M", "A"]),
@@ -25,7 +26,7 @@ const clubSchema = z.object({
   stadiumName: z.string().trim().min(1).max(250).nullable(),
   stadiumCapacity: z.number().int().min(0).max(500_000).nullable(),
   coachName: z.string().trim().min(1).max(250).nullable(),
-  players: z.array(playerSchema).min(11).max(200),
+  players: z.array(playerSchema).max(200),
 });
 export const transfermarktSnapshotSchema = z.object({
   version: z.union([z.literal(1), z.literal(2)]),
@@ -42,6 +43,7 @@ type Link = { transfermarktId: string | null; approved: boolean };
  */
 export function applyTransfermarktSnapshot(
   database: EditorDatabase, input: unknown, catalog: CatalogClub[], links: Record<string, Link>,
+  options: { allowIncompleteRosters?: boolean } = {},
 ): EditorDatabase {
   const snapshot = transfermarktSnapshotSchema.parse(input);
   if (!snapshot.clubs.length) return database;
@@ -58,7 +60,8 @@ export function applyTransfermarktSnapshot(
     }
     if (clubIds.has(incoming.id) || updates.has(incoming.source)) throw new Error("Duplicate club identity");
     clubIds.add(incoming.id);
-    if (!incoming.players.some((player) => player.position === "G")) throw new Error("Roster has no goalkeeper");
+    if (!options.allowIncompleteRosters && incoming.players.length < 11) throw new Error("Roster has fewer than 11 players");
+    if (!options.allowIncompleteRosters && !incoming.players.some((player) => player.position === "G")) throw new Error("Roster has no goalkeeper");
     for (const player of incoming.players) {
       if (playerIds.has(player.id)) throw new Error("Duplicate Transfermarkt player identity");
       playerIds.add(player.id);
@@ -77,8 +80,13 @@ export function applyTransfermarktSnapshot(
     const candidates = baseClubs.filter(club => !club.transfermarkt && club.country.toLowerCase() === "brasil" && (!incoming.state || !club.state || incoming.state === club.state));
     // Prefer an exact source short name (Botafogo-PB) to a generic official name (Botafogo FC).
     const shortMatches = incoming.shortName ? candidates.filter(club => normalizedClub(club.name) === normalizedClub(incoming.shortName!)) : [];
-    const matches = linked.length ? linked : registered ? candidates.filter(club => club.name === registered.name && club.state === registered.state)
+    let matches = linked.length ? linked : registered ? candidates.filter(club => club.name === registered.name && club.state === registered.state)
       : shortMatches.length ? shortMatches : candidates.filter(club => normalizedClub(club.name) === normalizedClub(incoming.name));
+    if (matches.length > 1) {
+      const exact = (name: string) => normalizeName(name).replace(/ (fc|futebol clube)$/, "");
+      const narrowed = matches.filter(club => exact(club.name) === exact(incoming.shortName ?? incoming.name));
+      if (narrowed.length === 1) matches = narrowed;
+    }
     if (matches.length > 1) throw new Error(`Clube ambíguo: ${incoming.name}. Confira o vínculo antes de importar.`);
     let club = matches[0];
     if (!club && snapshot.version === 2) {
@@ -118,7 +126,7 @@ export function applyTransfermarktSnapshot(
         ...(player.loan ? { loan: { ...player.loan, owner: { ...player.loan.owner, clubId: resolveClub(player.loan.owner.externalId) }, borrower: { ...player.loan.borrower, clubId: resolveClub(player.loan.borrower.externalId) } } } : {}),
         transfermarkt: { id: player.id, collectedAt: incoming.fetchedAt, season: snapshot.seasonId ?? "2026",
           manualCorrection: player.manualCorrection, marketValueEur: player.marketValueEur, dateOfBirth: player.dateOfBirth ?? null, modelVersion: "provisional-national-v1",
-          estimatedFields: ["overall", "salaryMonthlyBrl", "marketValueBrl", ...(!player.foot ? ["preferredFoot"] : []), ...(!player.contractEndsOn ? ["contractEndsOn"] : []), ...(!player.shirtNumber ? ["shirtNumber"] : [])] },
+          estimatedFields: ["overall", "salaryMonthlyBrl", "marketValueBrl", ...(player.positionEstimated ? ["primaryPosition"] : []), ...(!player.foot ? ["preferredFoot"] : []), ...(!player.contractEndsOn ? ["contractEndsOn"] : []), ...(!player.shirtNumber ? ["shirtNumber"] : [])] },
         shirtNumber: player.shirtNumber ?? old?.shirtNumber ?? index + 1,
         age: player.age, primaryPosition: player.position, secondaryPosition: null,
         preferredFoot: player.foot ?? old?.preferredFoot ?? "D", overall,
