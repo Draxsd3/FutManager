@@ -42,7 +42,7 @@ describe("account entry", () => {
 
   it("shows email confirmation instructions after registration", async () => {
     render(<AccountGame />);
-    fireEvent.click(screen.getByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
     fireEvent.click(screen.getByRole("button", { name: "Criar conta" }));
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "novo@example.com" } });
     fireEvent.change(screen.getByLabelText(/Senha/), { target: { value: "test-password" } });
@@ -62,7 +62,7 @@ describe("account entry", () => {
   it("reports login errors without opening the game", async () => {
     auth.signInWithPassword.mockResolvedValue({ error: { code: "invalid_credentials" } });
     render(<AccountGame />);
-    fireEvent.click(screen.getByRole("button", { name: /Entrar \/ Criar conta/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Entrar \/ Criar conta/ }));
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "alice@example.com" } });
     fireEvent.change(screen.getByLabelText("Senha"), { target: { value: "wrong" } });
     fireEvent.click(screen.getByRole("button", { name: /ENTRAR EM CAMPO/ }));
@@ -93,4 +93,15 @@ it.each([/INICIAR NOVA CARREIRA/, /CONTINUAR JOGANDO/, /EDITAR O UNIVERSO/, /Ent
   act(() => auth.listener?.("SIGNED_IN", { user: { id: "alice", email: "alice@example.com" } }));
   expect(await screen.findByText("Conta alice / tela menu")).toBeTruthy();
   expect(screen.queryByText(/tela editor|tela saves|tela new/)).toBeNull();
+});
+
+it("keeps the game loading screen until account verification settles", async () => {
+  let finish!: (value: { data: { session: null }; error: null }) => void;
+  auth.getSession.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+  render(<AccountGame />);
+  expect(screen.getByRole("status").textContent).toBe("Preparando o jogo");
+  expect(screen.queryByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeNull();
+  await act(async () => { finish({ data: { session: null }, error: null }); });
+  expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
+  expect(screen.queryByRole("region", { name: "Carregamento do FutManager" })).toBeNull();
 });

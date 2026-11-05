@@ -178,7 +178,8 @@ it("reloads directly into the last career screen without going through the start
 it("returns to the redesigned menu from new career, saves and the universe editor", async () => {
   render(game());
   const assertCurrentMenu = async () => {
-    const title = await screen.findByRole("heading", { level: 1 });
+    await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ });
+    const title = screen.getByRole("heading", { level: 1 });
     expect(title.textContent?.replace(/\s+/g, " ").trim()).toBe("FUTMANAGER 26");
     expect(document.querySelector('[data-menu-version="stadium-v3"]')).toBeTruthy();
     expect(screen.queryByRole("button", { name: "OPÇÕES" })).toBeNull();
