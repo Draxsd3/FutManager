@@ -581,7 +581,7 @@ it("connects jobs to the career, confirms a club change and restores it without 
 }, 20000);
 
 it("saves the chosen imported shirt per career, restores it and carries it into match tactics", async () => {
-  const { clubKitAsset } = await import("@/lib/game/assets");
+  const { clubCrestAsset, clubKitAsset } = await import("@/lib/game/assets");
   const view = render(game());
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
   fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Escolha de uniforme" } });
@@ -595,12 +595,27 @@ it("saves the chosen imported shirt per career, restores it and carries it into 
   view.unmount();
   render(game());
   expect((await screen.findByRole("button", { name: "Usar camisa 3" })).getAttribute("aria-pressed")).toBe("true");
-  for (const image of screen.getByLabelText("Campo de escalação").querySelectorAll("svg image")) expect(image.getAttribute("href")).toBe(clubKitAsset(club, 3));
+  const lineupField = screen.getByLabelText("Campo de escalação");
+  expect(lineupField.querySelectorAll("svg[data-jersey-role='outfield'] image").length).toBeGreaterThan(0);
+  expect(lineupField.querySelectorAll("svg[data-jersey-role='goalkeeper']").length).toBe(1);
+  for (const image of lineupField.querySelectorAll("svg[data-jersey-role='outfield'] image")) {
+    expect(image.getAttribute("href")).toBe(clubKitAsset(club, 3));
+  }
+  for (const gkSvg of lineupField.querySelectorAll("svg[data-jersey-role='goalkeeper']")) {
+    expect(gkSvg.getAttribute("data-gk-color")).toBe("#eab308");
+    expect(gkSvg.querySelector("image[data-jersey-crest='true']")?.getAttribute("href")).toBe(clubCrestAsset(club));
+  }
   fireEvent.click(screen.getByRole("button", { name: /Ir para a partida/ }));
   fireEvent.click(await screen.findByRole("button", { name: /Escalação e táticas/ }));
   const dialog = await screen.findByRole("dialog", { name: "Táticas" });
   expect(within(dialog).getByText("Uniforme 3")).toBeTruthy();
-  for (const image of dialog.querySelectorAll("svg image")) expect(image.getAttribute("href")).toBe(clubKitAsset(club, 3));
+  for (const image of dialog.querySelectorAll("svg[data-jersey-role='outfield'] image")) {
+    expect(image.getAttribute("href")).toBe(clubKitAsset(club, 3));
+  }
+  for (const gkSvg of dialog.querySelectorAll("svg[data-jersey-role='goalkeeper']")) {
+    expect(gkSvg.getAttribute("data-gk-color")).toBe("#eab308");
+    expect(gkSvg.querySelector("image[data-jersey-crest='true']")?.getAttribute("href")).toBe(clubCrestAsset(club));
+  }
   expect(readLocalSaves("alice")[0].progress?.kit).toBe(3);
 }, 15000);
 

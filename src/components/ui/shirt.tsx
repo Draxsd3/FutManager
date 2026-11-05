@@ -1,9 +1,12 @@
 import type { Player } from "@/lib/game/mock-data";
+import type { ClubColorIdentity } from "@/lib/kits/goalkeeper";
 import { PlayerJersey } from "./player-jersey";
 
 export function Shirt({
   player,
   club,
+  kit = 1,
+  clubColors,
   selected,
   onClick,
   compact,
@@ -21,6 +24,8 @@ export function Shirt({
   effectiveOverall?: number;
   fitLabel?: "Natural" | "Secundária" | "Improvisado";
   club?: string;
+  kit?: 1 | 2 | 3;
+  clubColors?: ClubColorIdentity;
 }) {
   return (
     <button
@@ -35,7 +40,7 @@ export function Shirt({
         selected ? "scale-105 drop-shadow-[0_0_6px_var(--accent)]" : "",
       ].join(" ")}
     >
-      <span className={compact ? "h-11 w-10 [&>svg]:h-full [&>svg]:w-full" : "h-12 w-11 [&>svg]:h-full [&>svg]:w-full"}><PlayerJersey club={club} player={player}/></span>
+      <span className={compact ? "h-11 w-10 [&>svg]:h-full [&>svg]:w-full" : "h-12 w-11 [&>svg]:h-full [&>svg]:w-full"}><PlayerJersey kit={kit} club={club} clubColors={clubColors} player={player}/></span>
       <span
         className={[
           "mt-1 max-w-full truncate font-bold text-white drop-shadow",

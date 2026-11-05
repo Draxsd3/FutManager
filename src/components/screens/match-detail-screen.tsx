@@ -15,7 +15,7 @@ export type { MatchEvent } from "@/lib/game/live-match";
 type Props = {
   kit?: 1 | 2 | 3;
   club: string;
-  clubColors?: { primaryColor: string; secondaryColor: string };
+  clubColors?: { primaryColor: string; secondaryColor: string; shortName?: string };
   opponent: string;
   homeScore: number;
   awayScore: number;
@@ -94,7 +94,7 @@ export function MatchDetailScreen({ kit = 1, club, clubColors, opponent, homeSco
       <WindowDateContext.Provider value={date}><WindowHeaderContext.Provider value>
       <div className={styles.halftimeLineup}>
         <p id="match-tactics-description" className={styles.description}>{isHalftime ? "Intervalo. Ajuste a equipe antes do segundo tempo; confirme as substituições antes de continuar." : "Partida pausada. Ajuste a equipe e confirme as substituições antes de voltar ao jogo."}</p>
-        <LineupScreen kit={kit} club={club} coach={coach} opponent={opponent} competition={competition} round={round}
+        <LineupScreen kit={kit} club={club} clubColors={clubColors} coach={coach} opponent={opponent} competition={competition} round={round}
           formation={formation} setFormation={setFormation} style={style} setStyle={setStyle}
           marking={marking} setMarking={setMarking} focus={focus} setFocus={setFocus}
           startersData={startersData} bench={bench} onReorderBench={() => {}}
