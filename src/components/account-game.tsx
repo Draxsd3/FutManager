@@ -63,7 +63,7 @@ export function AccountGame() {
     return <AccountScreen unavailable={configurationError} onBack={() => { setAuthOpen(false); }} />;
   }
 
-  return <StartMenuScreen saveCount={0} syncLabel={!ready ? "Verificando sua conta..." : "Entre para salvar e continuar suas carreiras"} onNewGame={requestAccount} onSaves={requestAccount} onEdit={requestAccount} onLogin={requestAccount} />;
+  return <StartMenuScreen saveCount={0} onNewGame={requestAccount} onSaves={requestAccount} onEdit={requestAccount} onLogin={requestAccount} />;
 }
 
 function AccountScreen({ onBack, unavailable }: { onBack: () => void; unavailable: boolean }) {

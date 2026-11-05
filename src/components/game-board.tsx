@@ -1501,7 +1501,6 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         email={email}
         onSignOut={onSignOut}
         saveCount={saves.length}
-        syncLabel={syncLabel}
         latestSave={latestSave}
         latestClubColor={latestClubColor}
         clubCount={database.clubs.length}

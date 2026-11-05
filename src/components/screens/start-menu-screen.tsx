@@ -13,7 +13,6 @@ export interface StartMenuScreenProps {
   onSignOut?: () => Promise<void>;
   onLogin?: () => void;
   saveCount: number;
-  syncLabel: string;
   onNewGame: () => void;
   onSaves: () => void;
   onEdit: () => void;
@@ -50,7 +49,6 @@ export function StartMenuScreen({
   onSignOut,
   onLogin,
   saveCount,
-  syncLabel,
   onNewGame,
   onSaves,
   onEdit,
@@ -99,11 +97,6 @@ export function StartMenuScreen({
           </a>
 
           <div className={styles.topRight}>
-            <span className={styles.syncBadge} role="status">
-              <i className={styles.syncDot} aria-hidden="true" />
-              <span>{syncLabel}</span>
-            </span>
-
             <div className={styles.account}>
               {email ? (
                 <>
