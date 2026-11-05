@@ -139,7 +139,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       await Promise.resolve();
       if (cancelled) return;
       const pendingDatabaseSync = await hasPendingDatabaseSync(userId).catch(() => false);
-      const localDatabase = upgradeEditorDatabase(await readCachedDatabase(userId).catch(() => null) ?? readLocalDatabase(userId) ?? await importBrazilDatabase());
+      const localDatabase = upgradeEditorDatabase(await readCachedDatabase(userId).catch(() => null) ?? readLocalDatabase(userId) ?? (await (await import("@/lib/importer/november-database")).applyNovemberDatabase(await importBrazilDatabase())).database);
       if (cancelled) return;
       const localSaves = currentCareerSaves(await readCachedCareerSaves(userId).catch(() => null) ?? readLocalSaves(userId));
       // Replace both account-local stores even offline; the reset is not a recurring wipe.
