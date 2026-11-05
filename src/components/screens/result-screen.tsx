@@ -90,6 +90,7 @@ export function ResultScreen({
   homePlayerRatings,
   awayPlayerRatings,
   statistics,
+  onOpenStandings,
   onContinue,
 }: {
   competition: string;
@@ -114,6 +115,7 @@ export function ResultScreen({
   homePlayerRatings: MatchPlayerRating[];
   awayPlayerRatings: MatchPlayerRating[];
   statistics: MatchStatistics;
+  onOpenStandings?: () => void;
   onContinue: () => void;
 }) {
   const [tab, setTab] = useState<ResultTab>("events");
@@ -121,18 +123,47 @@ export function ResultScreen({
     .sort((a, b) => b.event.minute - a.event.minute || b.index - a.index);
   const homeScorers = events.filter((event) => event.scene?.team === "home" && event.scene.action === "goal").map((event) => `${event.minute}′ ${event.scorer ?? event.text}`);
   const awayScorers = events.filter((event) => event.scene?.team === "away" && event.scene.action === "goal").map((event) => `${event.minute}′ ${event.scorer ?? event.text}`);
+  const otherFixtures = fixtures.filter((fixture) => !fixture.managed && !(fixture.home === club && fixture.away === opponent));
 
   return <main className={styles.page} style={clubThemeStyle(club, clubColors)}>
     <div className={styles.layout}>
+      <aside className={styles.fixturesPanel} aria-label="Demais jogos da rodada">
+        <header><span className={styles.eyebrow}>MESMA DATA</span><h2>Demais jogos</h2><p>Resultados da rodada</p></header>
+        <div className={styles.fixtureList} role="region" aria-label="Resultados dos demais jogos" tabIndex={0}>{otherFixtures.map((fixture) => (
+          <article key={`${fixture.home}-${fixture.away}`} className={styles.fixture}>
+            <div className={styles.fixtureTeams}>
+              <span className={styles.fixtureClubRow}>
+                {!fixture.participantsPending && <span className={styles.fixtureCrest}><Crest club={fixture.home} size="sm" /></span>}
+                <span className={styles.fixtureClubName} title={fixture.home}>{fixture.home}</span>
+              </span>
+              <b>{fixture.played === false ? "—" : fixture.homeScore}</b>
+            </div>
+            <div className={styles.fixtureTeams}>
+              <span className={styles.fixtureClubRow}>
+                {!fixture.participantsPending && <span className={styles.fixtureCrest}><Crest club={fixture.away} size="sm" /></span>}
+                <span className={styles.fixtureClubName} title={fixture.away}>{fixture.away}</span>
+              </span>
+              <b>{fixture.played === false ? "—" : fixture.awayScore}</b>
+            </div>
+            {fixture.played === false && <small>Agendada</small>}
+          </article>
+        ))}{otherFixtures.length === 0 && <p className={styles.noFixtures}>Nenhum outro jogo cadastrado.</p>}</div>
+        <footer className={styles.fixturesFooter}>
+          <button type="button" className={styles.standingsButton} onClick={() => onOpenStandings?.()}>
+            <InterfaceIcon name="data_table" size={16} />
+            <span>Ver tabelas dos campeonatos</span>
+          </button>
+        </footer>
+      </aside>
       <section className={styles.matchCard}>
         <header className={styles.header}>
-          <span className={styles.trophy}>{trophyAsset ? <Image src={trophyAsset} alt={`Troféu ${competition}`} width={38} height={42} unoptimized style={{ width: "80%", height: "88%", objectFit: "contain" }} /> : <span role="img" aria-label={`Troféu ${competition}`}><InterfaceIcon name="trophy" size={26} /></span>}</span>
-          <div><span className={styles.eyebrow}>FIM DE JOGO · {roundLabel ?? `${round}ª RODADA`}</span><h1>{competition}</h1><span className={styles.dateLabel}>Resumo da partida</span></div>
+          <span className={styles.trophy}>{trophyAsset ? <Image src={trophyAsset} alt={`Troféu ${competition}`} width={52} height={56} unoptimized className={styles.trophyImg} /> : <span role="img" aria-label={`Troféu ${competition}`}><InterfaceIcon name="trophy" size={38} /></span>}</span>
+          <div className={styles.headerMeta}><span className={styles.eyebrow}>FIM DE JOGO · {roundLabel ?? `${round}ª RODADA`}</span><h1>{competition}</h1></div>
         </header>
         <section className={styles.scoreboard} aria-label={`Resultado final: ${club} ${homeScore}, ${opponent} ${awayScore}`}>
-          <div className={styles.scoreTeam}><Crest club={club} size="md" /><b>{club}</b><small>MANDANTE</small></div>
+          <div className={`${styles.scoreTeam} ${styles.scoreTeamHome}`}><span className={styles.scoreCrest}><Crest club={club} size="md" /></span><div className={styles.scoreTeamMeta}><b>{club}</b><small>MANDANTE</small></div></div>
           <div className={styles.scoreCenter}><strong>{homeScore}<i>–</i>{awayScore}</strong><span>ENCERRADO</span></div>
-          <div className={styles.scoreTeam}><Crest club={opponent} size="md" /><b>{opponent}</b><small>VISITANTE</small></div>
+          <div className={`${styles.scoreTeam} ${styles.scoreTeamAway}`}><div className={styles.scoreTeamMeta}><b>{opponent}</b><small>VISITANTE</small></div><span className={styles.scoreCrest}><Crest club={opponent} size="md" /></span></div>
           {(homeScorers.length > 0 || awayScorers.length > 0) && <div className={styles.goalSummary}>
             <div>{homeScorers.map((goal) => <span key={goal}>⚽ {goal}</span>)}</div><div>{awayScorers.map((goal) => <span key={goal}>⚽ {goal}</span>)}</div>
           </div>}
@@ -183,17 +214,6 @@ export function ResultScreen({
         </div>
         <footer className={styles.footer}><p>Relato, estatísticas e placar vêm dos mesmos eventos da partida.</p><button onClick={onContinue}>Voltar ao hub <span aria-hidden="true">→</span></button></footer>
       </section>
-      <aside className={styles.fixturesPanel} aria-label="Todos os jogos da rodada">
-        <header><span className={styles.eyebrow}>MESMA DATA</span><h2>Jogos da rodada</h2><p>Resultados da competição</p></header>
-        <div className={styles.fixtureList}>{fixtures.map((fixture) => {
-          const current = fixture.home === club && fixture.away === opponent;
-          return <article key={`${fixture.home}-${fixture.away}`} className={`${styles.fixture} ${current ? styles.currentFixture : ""}`}>
-            <div className={styles.fixtureTeams}><span title={fixture.home}>{fixture.home}</span><b>{fixture.played === false ? "—" : fixture.homeScore}</b></div>
-            <div className={styles.fixtureTeams}><span title={fixture.away}>{fixture.away}</span><b>{fixture.played === false ? "—" : fixture.awayScore}</b></div>
-            <small>{current ? "Sua partida · finalizada" : fixture.played === false ? "Agendada" : "Resultado simulado da rodada"}</small>
-          </article>;
-        })}{fixtures.length === 0 && <p className={styles.noFixtures}>Nenhum outro jogo cadastrado.</p>}</div>
-      </aside>
     </div>
   </main>;
 }

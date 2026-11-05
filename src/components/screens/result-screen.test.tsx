@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { ResultScreen } from "./result-screen";
 import { squad } from "@/lib/game/mock-data";
@@ -61,4 +63,44 @@ it("shows the Google-inspired post-match tabs, both formations, stats and all ro
 
   fireEvent.click(screen.getByRole("button", { name: /Voltar ao hub/ }));
   expect(continued).toHaveBeenCalledOnce();
+});
+
+it("places other fixtures with crests and standings option on the left, human match on the right, and keeps dark 100dvh layout", () => {
+  const resultCss = readFileSync(path.join(process.cwd(), "src/components/screens/result-screen.module.css"), "utf8");
+  expect(resultCss).not.toContain("#f5f6f3");
+  expect(resultCss).toMatch(/\.page\s*\{[^}]*height:\s*100dvh/);
+  expect(resultCss).toMatch(/\.page\s*\{[^}]*overflow:\s*hidden/);
+  expect(resultCss).toMatch(/\.trophy\s*\{[^}]*background:\s*transparent/);
+  expect(resultCss).toMatch(/\.trophy\s*\{[^}]*border:\s*0/);
+
+  const openStandings = vi.fn();
+  const { container } = render(<ResultScreen
+    competition="Campeonato Estadual" trophyAsset="/game-assets/trophies/catalog/tr_estadual_RJ.png" round={8}
+    fixtures={[
+      { home: "Flamengo", away: "Botafogo", stadium: "Maracanã", attendance: 0, homeScore: 1, awayScore: 0, managed: true },
+      { home: "Palmeiras", away: "Corinthians", stadium: "Allianz Parque", attendance: 0, homeScore: 2, awayScore: 1 },
+    ]}
+    club="Flamengo" opponent="Botafogo" homeScore={1} awayScore={0}
+    homeFormation="4-3-3" awayFormation="4-4-2"
+    homeFormationPlayers={squad.slice(0, 11)} awayFormationPlayers={squad.slice(8, 19)}
+    ratingPlayers={[]} events={[]}
+    homePlayerRatings={emptyRatings} awayPlayerRatings={emptyRatings}
+    statistics={statistics} onOpenStandings={openStandings} onContinue={vi.fn()}
+  />);
+
+  const layout = container.querySelector("main > div");
+  expect(layout?.children[0]?.tagName).toBe("ASIDE");
+  expect(layout?.children[0]?.getAttribute("aria-label")).toBe("Demais jogos da rodada");
+  expect(layout?.children[1]?.tagName).toBe("SECTION");
+
+  const leftPanel = screen.getByRole("complementary", { name: "Demais jogos da rodada" });
+  expect(within(leftPanel).queryByText("Flamengo")).toBeNull();
+  expect(within(leftPanel).getByText("Palmeiras")).toBeTruthy();
+  expect(within(leftPanel).getByText("Corinthians")).toBeTruthy();
+  expect(within(leftPanel).getByRole("img", { name: "Escudo do Palmeiras" })).toBeTruthy();
+  expect(within(leftPanel).getByRole("img", { name: "Escudo do Corinthians" })).toBeTruthy();
+
+  const standingsBtn = within(leftPanel).getByRole("button", { name: /Ver tabelas dos campeonatos/i });
+  fireEvent.click(standingsBtn);
+  expect(openStandings).toHaveBeenCalledOnce();
 });
