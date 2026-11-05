@@ -21,6 +21,7 @@ export type MatchPreparation = {
 };
 
 export type CareerProgress = {
+  youthTeams?: Record<string, import("./youth").YouthTeam>;
   stadiums?: Record<string, StadiumState>;
   managerMarket?: ManagerMarket;
   jobClubSnapshots?: Record<string, JobClubSnapshot>;

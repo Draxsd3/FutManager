@@ -1,0 +1,9 @@
+# Categorias de base
+
+Cada carreira mantém uma base por clube, separada do elenco profissional. Ao abrir Juniores pela primeira vez, o jogo tenta consultar a API usando o ID Transfermarkt do clube. Busca até três páginas de clubes e aceita apenas uma equipe brasileira com nome exatamente correspondente ao nome oficial do clube seguido de U20. Se não puder identificar o vínculo com segurança, a consulta falhar ou não retornar atletas utilizáveis, gera 20 jogadores fictícios, brasileiros, com nomes comuns e posições variadas. Os elencos são criados sob demanda quando o técnico acessa cada clube, não são uma coleta antecipada de todos os clubes.
+
+Se o elenco real tiver menos de 20 jogadores aproveitáveis, jogadores fictícios completam a base. Cada atleta é marcado como Transfermarkt ou fictício; força é estimada e dados não informados são identificados. A nacionalidade dos reais não é presumida. Registros sem identidade válida ou com dados incompatíveis são contabilizados no aviso, sem fingir que foram importados. A busca conservadora pode não localizar todas as bases que existem na fonte; o usuário pode tentar a API novamente em uma base simulada. A consulta usa o elenco atual da fonte, não comprova a composição histórica no início da carreira 2026.
+
+Ao promover, o jogador sai da base e entra apenas no elenco da carreira; a mudança e a base são salvas na carreira, preservando o catálogo, outras carreiras e o elenco principal original. A capacidade técnica do elenco principal é 200. Alterações de carreira dependem da sincronização habitual do jogo. Não há competições de base ou evolução anual automática nesta versão. O filtro Jovens do principal no editor de universo continua mostrando apenas atletas já profissionais.
+
+A consulta real não pôde ser testada a partir do sandbox, cuja rede bloqueou a conexão ao servidor da API. Os testes de integração usam respostas simuladas, portanto a cobertura real da fonte deve ser verificada após publicação.
