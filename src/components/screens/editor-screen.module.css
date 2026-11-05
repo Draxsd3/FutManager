@@ -657,3 +657,43 @@
 .pageHeader h1 { display:flex; align-items:center; gap:12px; font-size:23px; letter-spacing:-.045em; }
 .pageHeader p:first-child,.pageHeader p:last-child { color:#5f705e; }
 @media(max-width:700px) { .screen { padding:18px 14px; } .pageHeader h1 { font-size:20px; } }
+
+/* Universe workspace: neutral surfaces, compact tools and dedicated list scrolling. */
+.screen { display:block; min-height:100dvh; padding:28px clamp(18px,4vw,64px); background:#f5f6f5; color:#202b27; }
+.pageHeader { max-width:1440px; margin:0 auto; padding:0 0 22px; }
+.pageHeader p:first-child { color:#7d8982; font-size:9px; letter-spacing:.16em; margin:0 0 8px; }
+.pageHeader h1 { color:#1c2923; font-size:24px; letter-spacing:-.04em; }
+.pageHeader p:last-child { color:#748078; margin-top:7px; }
+.pageHeader > button { background:#fff; color:#42564a; border:1px solid #dce3de; }
+.mainNav { max-width:1440px; margin:0 auto 24px; display:flex; gap:26px; border-bottom:1px solid #dfe5e0; overflow-x:auto; }
+.mainNav button { padding:13px 1px; background:none; border:0; border-bottom:2px solid transparent; color:#738078; white-space:nowrap; font-size:12px; font-weight:650; cursor:pointer; }
+.mainNav button[aria-current] { color:#255b40; border-bottom-color:#45936a; }
+.overview,.dataPage,.editorLayout { max-width:1440px; margin:auto; }
+.hero { min-height:180px; padding:30px 34px; border-radius:14px; background:#202a25; color:#fff; display:flex; align-items:center; justify-content:space-between; overflow:hidden; }
+.hero h2 { color:#fff; font-size:27px; letter-spacing:-.04em; margin:8px 0; }
+.hero p:not(.eyebrow) { color:#b6c2ba; font-size:13px; line-height:1.6; max-width:510px; }
+.eyebrow,.cardIndex { font-size:10px; font-weight:750; letter-spacing:.13em; color:#679475; }
+.hero .eyebrow { color:#a1c8aa; }
+.heroMark { font-size:120px; line-height:1; color:#ffffff0b; }
+.metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:16px 0; }
+.metrics > div { background:#fff; border:1px solid #e4e9e5; border-radius:10px; padding:20px; min-width:0; }
+.metrics span { color:#839087; font-size:11px; display:block; }
+.metrics strong { color:#25362c; display:block; margin-top:8px; font-size:24px; }
+.metrics .statusText { font-size:13px; overflow-wrap:anywhere; }
+.actionGrid,.dataCards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.actionGrid button,.dataCard,.apiPanel,.emptyState { background:#fff; border:1px solid #e0e7e1; border-radius:10px; padding:24px; }
+.actionGrid button { text-align:left; cursor:pointer; color:#25362c; display:flex; flex-direction:column; align-items:flex-start; gap:9px; }
+.actionGrid button:hover { border-color:#99bca5; box-shadow:0 5px 20px #1b44230b; }
+.actionGrid strong { font-size:15px; }.actionGrid small,.dataCard p,.dataIntro p { color:#77867b; line-height:1.55; font-size:12px; }.actionGrid b { margin-top:8px; font-size:11px; color:#377452; }
+.actionIcon { display:grid; place-items:center; width:38px; height:38px; border-radius:9px; background:#edf4ef; color:#42845a; font-size:20px; }
+.safetyNote { margin:18px 0; color:#77867b; font-size:11px; line-height:1.5; }
+.dataPage[hidden] { display:none; }.dataIntro { margin-bottom:20px; }.dataIntro h2 { font-size:22px; margin:7px 0; }.dataIntro .eyebrow { font-size:10px; }
+.dataCard h3 { margin:11px 0 8px; font-size:16px; }.dataCard p { margin-bottom:14px; }.dataCard input { display:block; max-width:100%; font-size:11px; color:#506155; }.dataCard input::file-selector-button,.outlineButton { border:1px solid #cbd9cf; border-radius:7px; background:#fff; color:#315f43; padding:10px 12px; margin-right:10px; cursor:pointer; font-weight:700; font-size:11px; }.dataCard [role=status] { margin:12px 0 0; color:#476753; white-space:pre-wrap; }
+.apiPanel { margin-top:14px; }.apiPanel > section { border:0; padding:16px 0 0; border-radius:0; }.apiPanel h2 { color:#25362c; }.apiPanel p { line-height:1.55; }
+.editorLayout { display:grid; grid-template-columns:280px minmax(0,1fr); gap:18px; align-items:start; }
+.teamPanel,.clubPanel,.playerTableWrap,.kits { border:1px solid #e1e7e2; background:#fff; color:#25362c; box-shadow:none; }
+.teamList { height:min(45vh,430px); }.teamTableHeader { color:#8a978e; border-color:#e7ece8; }.teamList button { color:#33473b; }.teamList button > span:nth-child(2) { color:#849087; }.teamList button:hover { background:#f5f8f5; }.teamList .teamSelected { color:#24563a; background:#edf5ef; border-color:#d5e7d9; }
+.teamActions,.searchBox { border-color:#e7ece8; }.classicButton,.randomButton { color:#496152; background:#f8faf8; border:1px solid #dce6de; }.classicButton:hover,.randomButton:hover { background:#edf5ef; color:#24563a; }.searchBox strong { color:#687b6c; }.searchBox input,.searchBox select { background:#fff; color:#25362c; border:1px solid #dce5de; }.searchBox > div > button { color:#5c7161; border-color:#e0e8e2; }
+.clubPanel { padding:20px; }.clubHeader { border-color:#e7ece8; background:#fafbfa; color:#26392f; border-left:3px solid var(--club-color); border-radius:8px; padding:18px; }.clubFacts { color:#6c7e70; }.clubFacts>strong { color:#24362a; font-size:22px; }.clubFacts .level { background:#e9f3eb; color:#3c754e; right:92px; }.realCrest { right:16px; top:14px; filter:none; }.crest { right:16px; top:14px; }.kits { padding:0; border:0; background:transparent; }.realShirt { filter:none; }
+.editorTabs,.squadTabs { border-color:#e3eae4; }.editorTabs button { color:#839087; }.editorTabs button[aria-pressed="true"] { color:#357149; border-bottom-color:#4a9a68; }.squadTabs button { color:#64776a; background:#fff; border-color:#dce6de; }.squadTabs .activeSquadTab { color:#2d6842; background:#edf5ef; }.playerTable { color:#304237; }.playerTable th { background:#f6f8f6; color:#839187; }.playerTable td,.playerTable th { border-color:#ecf0ed; }.playerTable td { color:#526558; }.playerTable td:nth-child(3) { color:#253b2d; }.playerTable tr:hover { background:#f6f9f6; }.playerTable .playerSelected { background:#edf5ef; }.playerTable tbody tr:focus-visible { outline:2px solid #38825a; outline-offset:-2px; }.squadFooter { color:#6c7d71; }.squadFooter select,.iconActions button { background:#f8faf8; color:#496152; border-color:#dce6de; }.syncStatus { max-width:1440px; margin:20px auto 0; color:#7b897f; }.modal { background:#fff; color:#26392f; }.formGrid>label { color:#526b5b; }.modal input,.modal select { background:#fff; color:#26392f; border:1px solid #dce5de; }.modal > footer button { background:#315f43; color:white; border-color:#315f43; }.emptyState h2 { font-size:17px; }.emptyState p { margin:10px 0; color:#728077; }.emptyState button { background:#315f43; color:#fff; padding:10px; border:0; border-radius:6px; }
+@media(max-width:760px) { .screen { display:block; padding:18px 14px; }.editorLayout { grid-template-columns:1fr; }.teamPanel { max-height:none; }.teamList { height:200px; }.hero { padding:24px; }.hero h2 { font-size:22px; }.heroMark { font-size:65px; }.metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }.metrics > div:last-child { grid-column:1/-1; }.actionGrid,.dataCards { grid-template-columns:1fr; }.clubFacts { max-width:calc(100% - 80px); }.clubFacts .level { position:static; width:max-content; }.pageHeader h1 { font-size:20px; } }

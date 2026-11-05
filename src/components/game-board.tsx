@@ -687,6 +687,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         await cacheDatabase(result.database, userId, false).catch(() => undefined);
       } catch { cloudPending = true; }
       await saveTransfermarktCheckpoint(userId, null).catch(() => undefined);
+      if (page === "editor") { setDatabase(result.database); synchronizedCatalog.current = null; }
       setSyncLabel(cloudPending ? "Transfermarkt salvo localmente — nuvem pendente" : "Catálogo Transfermarkt sincronizado");
       return { clubs: result.clubs, players: result.players, collectedAt: result.collectedAt, cloudPending };
     } finally { transfermarktSyncRunning.current = false; }
@@ -1358,7 +1359,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   if (page === "editor") {
-    return <EditorScreen userId={userId} database={database} syncLabel={syncLabel} onChange={changeDatabase} onBack={() => leaveActiveCareer("menu")} />;
+    return <EditorScreen userId={userId} database={database} syncLabel={syncLabel} onSynchronize={synchronizeTransfermarkt} onChange={changeDatabase} onBack={() => leaveActiveCareer("menu")} />;
   }
 
   if (page === "new")
