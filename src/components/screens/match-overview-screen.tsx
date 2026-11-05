@@ -71,7 +71,7 @@ export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabe
     <section className={styles.shell}>
       <header className={styles.header}>
         <div className={styles.competitionTitle}>
-          <span className={styles.trophy}>{trophyAsset ? <Image src={trophyAsset} alt={`Troféu ${competition}`} width={48} height={52} unoptimized className={styles.trophyImg} /> : <span role="img" aria-label={`Troféu ${competition}`}><InterfaceIcon name="trophy" size={36} /></span>}</span>
+          <span className={styles.trophy}>{trophyAsset ? <Image src={trophyAsset} alt={`Troféu ${competition}`} width={34} height={38} unoptimized className={styles.trophyImg} /> : <span role="img" aria-label={`Troféu ${competition}`}><InterfaceIcon name="trophy" size={30} /></span>}</span>
           <div className={styles.competitionMeta}><h1>{competition}</h1><span className={styles.muted}>{roundLabel ?? `${round}ª rodada`}</span></div>
         </div>
         <div className={styles.status}><span className={running ? styles.liveDot : styles.dot} /><span>{status}</span><strong>{minute}&apos; <small>· {halftimeWaiting ? "Intervalo" : half}</small></strong></div>

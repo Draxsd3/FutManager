@@ -104,6 +104,8 @@ it("keeps the dark broadcast theme, cardless larger trophy and enlarged club cre
   const statsCss = readFileSync(path.join(process.cwd(), "src/components/ui/match-statistics-table.module.css"), "utf8");
   expect(overviewCss).not.toContain("#f5f6f3");
   expect(statsCss).not.toContain("#f5f6f3");
+  expect(overviewCss).toMatch(/\.trophy\s*\{[^}]*display:\s*inline-flex/);
+  expect(overviewCss).toMatch(/\.trophy\s*\{[^}]*overflow:\s*hidden/);
   expect(overviewCss).toMatch(/\.trophy\s*\{[^}]*background:\s*transparent/);
   expect(overviewCss).toMatch(/\.trophy\s*\{[^}]*border:\s*0/);
 
