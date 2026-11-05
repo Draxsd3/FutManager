@@ -71,16 +71,16 @@ export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabe
     <section className={styles.shell}>
       <header className={styles.header}>
         <div className={styles.competitionTitle}>
-          <span className={styles.trophy}>{trophyAsset ? <Image src={trophyAsset} alt={`Troféu ${competition}`} width={38} height={42} unoptimized style={{ width: "80%", height: "88%", objectFit: "contain" }} /> : <span role="img" aria-label={`Troféu ${competition}`}><InterfaceIcon name="trophy" size={30} /></span>}</span>
-          <div><span className={styles.eyebrow}>CENTRAL DA PARTIDA · RELATO TEXTUAL</span><h1>{competition}</h1><span className={styles.muted}>{roundLabel ?? `${round}ª rodada`}</span></div>
+          <span className={styles.trophy}>{trophyAsset ? <Image src={trophyAsset} alt={`Troféu ${competition}`} width={48} height={52} unoptimized className={styles.trophyImg} /> : <span role="img" aria-label={`Troféu ${competition}`}><InterfaceIcon name="trophy" size={36} /></span>}</span>
+          <div className={styles.competitionMeta}><h1>{competition}</h1><span className={styles.muted}>{roundLabel ?? `${round}ª rodada`}</span></div>
         </div>
         <div className={styles.status}><span className={running ? styles.liveDot : styles.dot} /><span>{status}</span><strong>{minute}&apos; <small>· {halftimeWaiting ? "Intervalo" : half}</small></strong></div>
       </header>
       <div className={styles.progress}><div style={{ width: `${Math.min(100, minute / 90 * 100)}%` }} /></div>
       <div className={styles.scoreboard}>
-        <div className={styles.team}><Crest club={club} size="sm" /><strong>{club}</strong><span>MANDANTE</span></div>
+        <div className={styles.team}><span className={styles.teamCrest}><Crest club={club} size="md" /></span><strong>{club}</strong><span>MANDANTE</span></div>
         <div className={styles.score}><span>{homeScore}</span><i>:</i><span>{awayScore}</span></div>
-        <div className={styles.team}><Crest club={opponent} size="sm" /><strong>{opponent}</strong><span>VISITANTE</span></div>
+        <div className={styles.team}><span className={styles.teamCrest}><Crest club={opponent} size="md" /></span><strong>{opponent}</strong><span>VISITANTE</span></div>
       </div>
       <MatchStatisticsTable homeTeam={club} awayTeam={opponent} statistics={statistics} compact className={styles.matchStats} />
       <div className={styles.controls}>
@@ -117,7 +117,7 @@ export function MatchOverviewScreen({ competition, trophyAsset, round, roundLabe
         </section>
         <aside className={styles.sidebar}>
           <section className={styles.panel}><div className={styles.sectionHeading}><div><span className={styles.eyebrow}>MESMA RODADA</span><h2>Todos os jogos</h2></div><span className={styles.badge}>{fixtures.length} partidas</span></div>
-            <div className={styles.fixtures} role="region" aria-label="Jogos da rodada" tabIndex={0}>{fixtures.map(fixture => <div className={styles.fixture} key={`${fixture.home}-${fixture.away}`}><div className={fixture.live ? styles.fixtureLive : ""}><span>{fixture.home}</span><b>{fixture.played === false ? "—" : `${fixture.homeScore} - ${fixture.awayScore}`}</b><span>{fixture.away}</span></div><small>{fixture.live ? `${fixture.managed ? "Sua partida · " : ""}${minute >= 90 ? "Encerrada" : halftimeWaiting ? "Intervalo" : running ? "Ao vivo" : "Pausada"} · ${minute}′` : fixture.played === false ? "Agendada" : "Resultado registrado"}</small></div>)}</div>
+            <div className={styles.fixtures} role="region" aria-label="Jogos da rodada" tabIndex={0}>{fixtures.map(fixture => <div className={styles.fixture} key={`${fixture.home}-${fixture.away}`}><div className={`${styles.fixtureMatchup} ${fixture.live ? styles.fixtureLive : ""}`}><span className={styles.fixtureHome}><span className={styles.fixtureClub} title={fixture.home}>{fixture.home}</span>{!fixture.participantsPending && <span className={styles.fixtureCrest}><Crest club={fixture.home} size="sm" /></span>}</span><b>{fixture.played === false ? "—" : `${fixture.homeScore} - ${fixture.awayScore}`}</b><span className={styles.fixtureAway}>{!fixture.participantsPending && <span className={styles.fixtureCrest}><Crest club={fixture.away} size="sm" /></span>}<span className={styles.fixtureClub} title={fixture.away}>{fixture.away}</span></span></div><small>{fixture.live ? `${fixture.managed ? "Sua partida · " : ""}${minute >= 90 ? "Encerrada" : halftimeWaiting ? "Intervalo" : running ? "Ao vivo" : "Pausada"} · ${minute}′` : fixture.played === false ? "Agendada" : "Resultado registrado"}</small></div>)}</div>
           </section>
         </aside>
       </div>

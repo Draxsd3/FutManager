@@ -462,6 +462,11 @@ it("advances the career date after a result and returns an expired incoming loan
   render(game());
   fireEvent.click(await screen.findByRole("button", { name: /CONTINUAR JOGANDO/ }));
   fireEvent.click(await screen.findByRole("button", { name: "CONTINUAR" }));
+  fireEvent.click(await screen.findByRole("button", { name: /Ver tabelas dos campeonatos/i }));
+  const standingsDialog = await screen.findByRole("dialog");
+  fireEvent.click(screen.getByRole("button", { name: /^Fechar / }));
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(standingsDialog).toBeTruthy();
   fireEvent.click(await screen.findByRole("button", { name: /Voltar ao hub/ }));
   await screen.findByRole("button", { name: "Empréstimos" });
   await waitFor(() => {
