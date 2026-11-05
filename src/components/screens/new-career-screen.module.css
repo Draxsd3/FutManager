@@ -8,3 +8,4 @@
 .field input:focus,.field select:focus{border-color:color-mix(in srgb,var(--game-accent,#a2dfb2) 65%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--game-accent,#a2dfb2) 13%,transparent)}
 .start{border-color:var(--game-accent,#a2dfb2);background:var(--game-accent,#a2dfb2);color:var(--game-accent-text,#10291a)}
 .start:hover:not(:disabled){background:color-mix(in srgb,var(--game-accent,#a2dfb2) 86%,white)}
+.brand > span:first-child { width: 44px; height: 38px; padding: 5px; border: 0; border-radius: 8px; }

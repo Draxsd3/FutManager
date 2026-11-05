@@ -31,3 +31,5 @@
   .navImage { width: 48px; height: 48px; }
   .navButton svg { width: 34px; height: 48px; }
 }
+.brand { gap: 8px; }
+@media(max-width:650px){.brand > span:first-child{width:34px;height:30px;padding:4px}.brand{min-width:0}.brandCopy{display:none}}

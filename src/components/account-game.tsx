@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { GameLogo } from "./ui/game-logo";
 import { GameBoard } from "./game-board";
 import { StartMenuScreen } from "./screens/start-menu-screen";
 import styles from "./screens/account-screen.module.css";
@@ -99,7 +100,7 @@ function AccountScreen({ onBack, unavailable }: { onBack: () => void; unavailabl
   return <section className={styles.screen} aria-labelledby="account-title">
     <div className={styles.card}>
       <button className={styles.back} onClick={onBack} disabled={busy}>← Voltar ao início</button>
-      <span className={styles.eyebrow}>FUTMANAGER / SUA CONTA</span>
+      <span className={styles.accountBrand}><GameLogo /><span className={styles.eyebrow}>FUTMANAGER / SUA CONTA</span></span>
       <h1 id="account-title">{mode === "login" ? "Seu próximo capítulo." : "Seu legado começa aqui."}</h1>
       <p>Uma conta, várias carreiras. Continue seu progresso em qualquer dispositivo.</p>
       <div className={styles.tabs} aria-label="Acesso à conta">

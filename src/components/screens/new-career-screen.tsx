@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import type { EditorClub } from "@/lib/game/editor-data";
 import { divisionKeys, type DivisionKey } from "@/lib/game/mock-data";
+import { GameLogo } from "@/components/ui/game-logo";
 import { Crest } from "@/components/ui/club-sidebar";
 import { clubThemeStyle } from "@/components/ui/app-shell";
 import styles from "./new-career-screen.module.css";
@@ -27,7 +28,7 @@ export function NewCareerScreen({ coach, setCoach, division, setDivision, club, 
   } as CSSProperties & Record<`--${string}`, string>;
   return <main className={styles.screen} style={style}>
     <header className={styles.topbar}>
-      <div className={styles.brand}><span>F</span> FUTMANAGER <i>·</i> NOVA CARREIRA</div>
+      <div className={styles.brand}><GameLogo /> FUTMANAGER <i>·</i> NOVA CARREIRA</div>
       <button type="button" onClick={onBack}>← <span>Voltar ao início</span></button>
     </header>
     <div className={styles.layout}>

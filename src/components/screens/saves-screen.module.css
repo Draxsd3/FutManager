@@ -338,3 +338,5 @@
     font-size: 23px;
   }
 }
+.brand { display: inline-flex; align-items: center; }
+.brand > span:first-child { margin-left: 0; }

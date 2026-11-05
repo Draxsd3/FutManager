@@ -207,3 +207,5 @@
   color: white;
   padding: 12px;
 }
+.accountBrand { display: flex; align-items: center; gap: 10px; margin-top: 22px; }
+.accountBrand .eyebrow { margin-top: 0; }

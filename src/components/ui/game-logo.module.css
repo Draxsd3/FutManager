@@ -1,0 +1,4 @@
+.logo { display: inline-flex; align-items: center; justify-content: center; flex: none; background: #f6faf5; overflow: hidden; }
+.logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.symbol { width: 44px; height: 38px; padding: 5px; border-radius: 8px; }
+.full { width: min(290px, 65vw); height: auto; aspect-ratio: 955 / 537; padding: 10px 14px; border-radius: 12px; }
