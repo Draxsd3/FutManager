@@ -23,7 +23,7 @@ type EditorModal = "club" | "player" | null;
 const positions: PositionCode[] = ["G", "L", "Z", "M", "A"];
 const qualities = ["Armação", "Cabeceio", "Colocação", "Cruzamento", "Desarme", "Finalização", "Marcação", "Passe", "Reflexo", "Resistência", "Velocidade"];
 
-export function EditorScreen({ database, userId, syncLabel, onChange, onBack, onSynchronize }: { userId: string; database: EditorDatabase; syncLabel: string; onSynchronize?: (progress: (message: string) => void, signal: AbortSignal, resume?: boolean) => Promise<TransfermarktSyncResult>; onChange: (database: EditorDatabase) => void; onBack: () => void }) {
+export function EditorScreen({ database, userId, syncLabel, onChange, onBack, onSynchronize }: { userId: string; database: EditorDatabase; syncLabel: string; onSynchronize?: (progress: (message: string) => void, signal: AbortSignal, resume?: boolean) => Promise<TransfermarktSyncResult>; onChange: (database: EditorDatabase) => void | Promise<boolean>; onBack: () => void }) {
   const [section, setSection] = useState<"overview" | "clubs" | "data">("overview");
   const [apiBusy, setApiBusy] = useState(false);
   const [fileBusy, setFileBusy] = useState(false);
@@ -47,8 +47,11 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack, on
     setFileBusy(true); setFileMessage("");
     try {
       const result = await applyNovemberDatabase(database);
-      onChange(result.database);
-      setFileMessage(`${result.clubs} clubes e ${result.players} jogadores aplicados ao catálogo. ${result.provisional} posições são estimadas; ${result.shortRosters} elencos estão incompletos ou sem goleiro e precisam de revisão. Consulte o indicador de salvamento. Carreiras existentes não foram alteradas.`);
+      setFileMessage("Salvando e sincronizando o catálogo. Aguarde…");
+      const synced = await onChange(result.database);
+      setFileMessage(synced === false
+        ? "Os dados foram aplicados neste dispositivo, mas não foi possível confirmar a sincronização. Confira o estado do salvamento abaixo e clique em Atualizar para tentar novamente."
+        : `${result.clubs} clubes e ${result.players} jogadores atualizados e sincronizados. ${result.provisional} posições são estimadas; ${result.shortRosters} elencos precisam de revisão. Carreiras existentes não foram alteradas.`);
     } catch (error) { setFileMessage(`Não foi possível aplicar a coleta. Nenhum dado foi alterado. ${error instanceof Error ? error.message : ""}`); }
     finally { setFileBusy(false); }
   }
@@ -186,7 +189,7 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack, on
       <div className={styles.dataCards}>
         <article className={styles.dataCard}><h3>Consultar API</h3><p>Busca dados atuais do Transfermarkt. Pode levar horas; você poderá confirmar antes de aplicar. Se houver uma coleta preparada ou pausada, ela será retomada.</p><button className={styles.outlineButton} disabled={!onSynchronize || apiBusy || fileBusy} onClick={() => void consultApi()}>Consultar API</button>{apiBusy && <button className={styles.outlineButton} onClick={() => apiController.current?.abort()}>Pausar consulta</button>}{!onSynchronize && <p>Consulta indisponível nesta tela.</p>}</article>
         <article className={styles.dataCard}><h3>Importar JSON</h3><p>Selecione um JSON compatível. O arquivo será preparado; depois clique em Consultar API para completar os dados antes de aplicar.</p><input ref={fileInput} className={styles.fileInput} tabIndex={-1} type="file" accept=".json,application/json" aria-label="Selecionar JSON do Transfermarkt" disabled={fileBusy || apiBusy} onChange={event => void importJson(event.target.files?.[0])} /><button className={styles.outlineButton} disabled={fileBusy || apiBusy} onClick={() => fileInput.current?.click()}>Importar JSON</button></article>
-        <article className={styles.dataCard}><h3>Atualizar</h3><p>Aplica a coleta já recebida de 04/11/2026: 156 clubes e 4.208 jogadores. Não usa o JSON selecionado acima.</p><button className={styles.primaryButton} disabled={fileBusy || apiBusy} onClick={() => void applyReceivedCollection()}>{fileBusy ? "Aguarde…" : "Atualizar"}</button></article>
+        <article className={styles.dataCard}><h3>Atualizar</h3><p>Aplica a coleta já recebida de 04/11/2026: 156 clubes e 4.208 jogadores. Não usa o JSON selecionado acima.</p><button className={styles.primaryButton} disabled={fileBusy || apiBusy} onClick={() => void applyReceivedCollection()}>{fileBusy ? "Atualizando e sincronizando…" : "Atualizar"}</button></article>
       </div>
       {apiMessage && <p className={styles.safetyNote} role="status">{apiMessage}</p>}
       {fileMessage && <p className={styles.safetyNote} role="status">{fileMessage}</p>}

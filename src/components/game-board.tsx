@@ -693,26 +693,42 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     } finally { transfermarktSyncRunning.current = false; }
   }
 
-  function changeDatabase(next: EditorDatabase) {
+  async function changeDatabase(next: EditorDatabase): Promise<boolean> {
     synchronizedCatalog.current = null;
     const revision = ++databaseRevision.current;
     const limited = upgradeEditorDatabase(next);
     setDatabase(limited);
     const smallCacheSaved = writeLocalDatabase(limited, userId);
     const largeCache = cacheDatabase(limited, userId);
-    setSyncLabel("Salvando alterações...");
-    void largeCache.catch(() => { if (!smallCacheSaved) setSyncLabel("Falha no armazenamento local — não feche a página"); });
-    writeCloudDatabase(limited, userId)
-      .then(async () => {
-        if (revision !== databaseRevision.current) return;
-        await cacheDatabase(limited, userId, false).catch(() => undefined);
-        setSyncLabel("Alterações salvas no Supabase");
-      })
-      .catch(async () => {
-        if (revision !== databaseRevision.current) return;
-        try { await largeCache; setSyncLabel("Salvo localmente — sincronização pendente"); }
-        catch { setSyncLabel(smallCacheSaved ? "Salvo localmente — sincronização pendente" : "Falha ao salvar — mantenha a página aberta"); }
-      });
+    setSyncLabel("Salvando e sincronizando...");
+    // Always observe the cache promise, including if the cloud fails first.
+    const localSaved = await largeCache.then(() => true, () => smallCacheSaved);
+    try {
+      for (let attempt = 0; ; attempt++) {
+        try { await writeCloudDatabase(limited, userId); break; }
+        catch (error) {
+          const code = typeof error === "object" && error !== null && "code" in error ? String(error.code) : "";
+          const status = typeof error === "object" && error !== null && "status" in error ? Number(error.status) : 0;
+          const message = typeof error === "object" && error !== null && "message" in error ? String(error.message) : "";
+          const transient = error instanceof TypeError || status === 429 || status >= 500 || code.startsWith("08") || /failed to fetch|network|load failed/i.test(message);
+          if (!transient || attempt >= 2 || revision !== databaseRevision.current) throw error;
+          setSyncLabel("Reconectando e tentando sincronizar...");
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        }
+      }
+      if (revision !== databaseRevision.current) return false;
+      await cacheDatabase(limited, userId, false).catch(() => undefined);
+      setSyncLabel("Atualizado e sincronizado");
+      return true;
+    } catch (error) {
+      if (revision !== databaseRevision.current) return false;
+      const code = typeof error === "object" && error !== null && "code" in error ? String(error.code) : "";
+      const reason = code === "23514" || code === "23505" || code === "PGRST204"
+        ? "A nuvem recusou os dados. Verifique se o banco recebeu as atualizações necessárias."
+        : "Verifique sua conexão e sessão.";
+      setSyncLabel(localSaved ? `Salvo neste dispositivo, mas não sincronizado. ${reason} Clique em Atualizar para tentar novamente.` : `Não foi possível salvar. ${reason}`);
+      return false;
+    }
   }
 
   function persistSave(nextSave: CareerSave): Promise<void> {

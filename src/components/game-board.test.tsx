@@ -671,3 +671,26 @@ it.each([true, false])("credits gate only for a completed home fixture (home=%s)
     expect(result.progress?.stadiums?.[save.clubId]?.receipts.length ?? 0).toBe(home ? 1 : 0);
   }, { timeout: 5000 });
 }, 20000);
+
+it("waits for catalog synchronization, explains failure, and retries with Atualizar", async () => {
+  const { IDBFactory } = await import("fake-indexeddb");
+  vi.stubGlobal("indexedDB", new IDBFactory());
+  const persistence = await import("@/lib/game/persistence");
+  const cloud = vi.mocked(persistence.writeCloudDatabase);
+  cloud.mockResolvedValue(undefined);
+  render(<GameBoard userId="sync-test" email="sync@example.com" onSignOut={async () => {}} initialPage="editor" />);
+  fireEvent.click(await screen.findByRole("button", { name: "Dados e importação" }));
+  const november = await import("@/lib/importer/november-database");
+  const apply = vi.spyOn(november, "applyNovemberDatabase").mockImplementation(async database => ({ database, clubs: 156, players: 4208, provisional: 207, shortRosters: 4 }));
+  vi.spyOn(window, "confirm").mockReturnValue(true);
+  // Let hydration finish before testing the explicit update.
+  await waitFor(() => expect(cloud).toHaveBeenCalled());
+  cloud.mockRejectedValueOnce({ code: "23505" });
+  fireEvent.click(screen.getByRole("button", { name: "Atualizar" }));
+  expect(await screen.findByText(/não foi possível confirmar a sincronização/)).toBeTruthy();
+  expect(screen.getAllByText(/a nuvem recusou os dados/i).length).toBeGreaterThan(0);
+  fireEvent.click(screen.getByRole("button", { name: "Atualizar" }));
+  expect(await screen.findByText(/4208 jogadores atualizados e sincronizados/)).toBeTruthy();
+  expect(apply).toHaveBeenCalledTimes(2);
+  vi.restoreAllMocks();
+}, 30000);
