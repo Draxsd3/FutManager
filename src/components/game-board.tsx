@@ -1,4 +1,5 @@
 "use client";
+import { LoadingScreen } from "@/components/screens/loading-screen";
 import { SettingsScreen } from "@/components/screens/settings-screen";
 import { applyStructuralDatabaseUpdates, createCareerUniverseSnapshot } from "@/lib/game/career-universe";
 
@@ -1471,20 +1472,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setSubstitutionOut(null);
   }
 
-  if (!database || !hydrationDone) {
-    return (
-      <div className="grid h-dvh overflow-hidden place-items-center bg-[#090a0f] bg-[radial-gradient(ellipse_at_top,#202129,#090a0f_70%)] font-[Arial] text-sm text-[#eef0f4]">
-        <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#15161d] px-5 py-4 text-[#eef0f4] shadow-2xl">
-          <span className="h-3 w-3 animate-pulse rounded-full bg-[#d4ad64] shadow-[0_0_14px_#d4ad6480]" aria-hidden="true" />
-          Carregando suas carreiras...
-        </div>
-      </div>
-    );
-  }
+  if (!database || !hydrationDone) return <LoadingScreen phase="careers" />;
 
-  if (activeSaveId && !careerLoaded) {
-    return <div className="grid min-h-svh place-items-center bg-[#0a100e] text-white" role="status">Carregando a carreira selecionada...</div>;
-  }
+  if (activeSaveId && !careerLoaded) return <LoadingScreen phase="career" />;
 
   if (page === "menu") {
     const latestSave =
