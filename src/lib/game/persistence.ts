@@ -15,6 +15,8 @@ export type CloudCareer = {
 
 const DATABASE_KEY = "futmanager.editor.v1";
 const SAVES_KEY = "futmanager.saves.v1";
+// Large immutable universes live in IndexedDB/cloud, not the 5 MB localStorage index.
+const universeMemory = new Map<string, EditorDatabase>();
 
 export function readLocalDatabase(userId: string): EditorDatabase | null {
   try {
@@ -36,7 +38,10 @@ export function readLocalSaves(userId: string): CareerSave[] {
   try {
     const value = localStorage.getItem(accountStorageKey(SAVES_KEY, userId));
     const parsed = value ? JSON.parse(value) : [];
-    return Array.isArray(parsed) ? currentCareerSaves(parsed as CareerSave[]) : [];
+    return Array.isArray(parsed) ? currentCareerSaves(parsed as CareerSave[]).map(save => {
+      const snapshot = universeMemory.get(`${userId}:${save.id}`);
+      return snapshot && save.progress ? { ...save, progress: { ...save.progress, universeSnapshot: save.progress.universeSnapshot ?? snapshot } } : save;
+    }) : [];
   } catch {
     return [];
   }
@@ -45,8 +50,10 @@ export function readLocalSaves(userId: string): CareerSave[] {
 export function writeLocalSaves(saves: CareerSave[], userId: string) {
   saves = currentCareerSaves(saves);
   void cacheCareerSaves(saves, userId).catch(() => undefined);
+  for (const save of saves) if (save.progress?.universeSnapshot) universeMemory.set(`${userId}:${save.id}`, save.progress.universeSnapshot);
+  const index = saves.map(save => save.progress ? { ...save, progress: { ...save.progress, universeSnapshot: undefined } } : save);
   try {
-    localStorage.setItem(accountStorageKey(SAVES_KEY, userId), JSON.stringify(saves));
+    localStorage.setItem(accountStorageKey(SAVES_KEY, userId), JSON.stringify(index));
     return true;
   } catch { return false; }
 }

@@ -1,6 +1,7 @@
 "use client";
 import { WindowHeader } from "@/components/ui/window-header";
 import { ManagementIcon } from "@/components/ui/management-header";
+import { TransfermarktCorrections } from "./transfermarkt-corrections";
 import type { TransfermarktSyncResult } from "./transfermarkt-settings";
 import { prepareNationalSeed } from "@/lib/importer/transfermarkt-seed";
 import { COLLECTION_VERSION } from "@/lib/importer/transfermarkt-live";
@@ -25,6 +26,7 @@ const qualities = ["Armação", "Cabeceio", "Colocação", "Cruzamento", "Desarm
 
 export function EditorScreen({ database, userId, syncLabel, onChange, onBack, onSynchronize }: { userId: string; database: EditorDatabase; syncLabel: string; onSynchronize?: (progress: (message: string) => void, signal: AbortSignal, resume?: boolean) => Promise<TransfermarktSyncResult>; onChange: (database: EditorDatabase) => void | Promise<boolean>; onBack: () => void }) {
   const [section, setSection] = useState<"overview" | "clubs" | "data">("overview");
+  const [correctionsOpen, setCorrectionsOpen] = useState(false);
   const [apiBusy, setApiBusy] = useState(false);
   const [fileBusy, setFileBusy] = useState(false);
   const [fileMessage, setFileMessage] = useState("");
@@ -59,14 +61,14 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack, on
   const apiRunning = useRef(false);
   const [apiMessage, setApiMessage] = useState("");
   useEffect(() => () => apiController.current?.abort(), []);
-  async function consultApi() {
+  async function consultApi(resume = true) {
     if (!onSynchronize || apiRunning.current) return;
     apiRunning.current = true;
     setApiBusy(true); setApiMessage("Consultando a API…");
     const controller = new AbortController();
     apiController.current = controller;
     try {
-      const result = await onSynchronize(setApiMessage, controller.signal, true);
+      const result = await onSynchronize(setApiMessage, controller.signal, resume);
       setApiMessage(`${result.clubs} clubes e ${result.players} jogadores atualizados. ${result.cloudPending ? "Salvo neste dispositivo; sincronização com a nuvem pendente." : "Salvo neste dispositivo e na nuvem."}`);
     } catch (error) {
       setApiMessage(controller.signal.aborted ? "Consulta pausada. Clique em Consultar API para continuar." : error instanceof Error ? error.message : "Não foi possível consultar a API. Tente novamente.");
@@ -187,7 +189,7 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack, on
     <section hidden={section !== "data"} className={styles.dataPage} aria-label="Dados e importação">
       <div className={styles.dataIntro}><div><p className={styles.eyebrow}>CENTRAL DE DADOS</p><h2>Atualize seu universo</h2><p>Escolha uma das três ações. As alterações serão usadas em novas carreiras.</p></div></div>
       <div className={styles.dataCards}>
-        <article className={styles.dataCard}><h3>Consultar API</h3><p>Busca dados atuais do Transfermarkt. Pode levar horas; você poderá confirmar antes de aplicar. Se houver uma coleta preparada ou pausada, ela será retomada.</p><button className={styles.outlineButton} disabled={!onSynchronize || apiBusy || fileBusy} onClick={() => void consultApi()}>Consultar API</button>{apiBusy && <button className={styles.outlineButton} onClick={() => apiController.current?.abort()}>Pausar consulta</button>}{!onSynchronize && <p>Consulta indisponível nesta tela.</p>}</article>
+        <article className={styles.dataCard}><h3>Consultar API</h3><p>Busca dados atuais do Transfermarkt. Pode levar horas; você poderá confirmar antes de aplicar. Se houver uma coleta preparada ou pausada, ela será retomada.</p><button className={styles.outlineButton} disabled={!onSynchronize || apiBusy || fileBusy} onClick={() => void consultApi()}>Consultar API</button>{apiBusy && <button className={styles.outlineButton} onClick={() => apiController.current?.abort()}>Pausar consulta</button>}<button className={styles.outlineButton} disabled={!onSynchronize || apiBusy || fileBusy} onClick={() => { if (window.confirm("Iniciar uma coleta completa nova? O progresso da coleta anterior será descartado. Carreiras existentes não serão alteradas.")) void consultApi(false); }}>Nova coleta completa</button><button className={styles.outlineButton} disabled={apiBusy || fileBusy} onClick={() => setCorrectionsOpen(true)}>Correções manuais</button>{!onSynchronize && <p>Consulta indisponível nesta tela.</p>}</article>
         <article className={styles.dataCard}><h3>Importar JSON</h3><p>Selecione um JSON compatível. O arquivo será preparado; depois clique em Consultar API para completar os dados antes de aplicar.</p><input ref={fileInput} className={styles.fileInput} tabIndex={-1} type="file" accept=".json,application/json" aria-label="Selecionar JSON do Transfermarkt" disabled={fileBusy || apiBusy} onChange={event => void importJson(event.target.files?.[0])} /><button className={styles.outlineButton} disabled={fileBusy || apiBusy} onClick={() => fileInput.current?.click()}>Importar JSON</button></article>
         <article className={styles.dataCard}><h3>Atualizar</h3><p>Aplica a coleta já recebida de 04/11/2026: 156 clubes e 4.208 jogadores. Não usa o JSON selecionado acima.</p><button className={styles.primaryButton} disabled={fileBusy || apiBusy} onClick={() => void applyReceivedCollection()}>{fileBusy ? "Atualizando e sincronizando…" : "Atualizar"}</button></article>
       </div>
@@ -225,6 +227,7 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack, on
     </div>}
 
     {modal && selectedClub && <div className={styles.modalBackdrop} onMouseDown={() => setModal(null)}><section ref={dialog} role="dialog" aria-modal="true" aria-label={modal === "club" ? "Editar equipe" : "Editar jogador"} className={styles.modal} onKeyDown={(event) => { if(event.key === "Escape") setModal(null); }} onMouseDown={(event) => event.stopPropagation()}><WindowHeader level={2} title={modal === "club" ? "Editar equipe" : "Editar jogador"} onClose={() => setModal(null)} closeLabel="Fechar editor" />{modal === "club" ? <ClubForm club={selectedClub} onChange={updateClub} /> : <PlayerForm player={selectedPlayer} onChange={updatePlayer} />}<footer><button onClick={() => setModal(null)}>Salvar e fechar</button></footer></section></div>}
+    {correctionsOpen && <TransfermarktCorrections userId={userId} onClose={() => setCorrectionsOpen(false)} />}
     <div className={styles.syncStatus}>{syncLabel}</div>
   </main>;
 }
