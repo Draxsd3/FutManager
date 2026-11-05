@@ -75,7 +75,7 @@ it.each([/INICIAR NOVA CARREIRA/, /CONTINUAR JOGANDO/, /EDITAR O UNIVERSO/, /Ent
   await screen.findByText("Entre para salvar e continuar suas carreiras");
   fireEvent.click(screen.getByRole("button", { name: action }));
   fireEvent.click(screen.getByRole("button", { name: /Voltar ao início/ }));
-  expect(document.querySelector('[data-menu-version="field-v2"]')).toBeTruthy();
+  expect(document.querySelector('[data-menu-version="stadium-v3"]')).toBeTruthy();
   expect(screen.getByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
   expect(screen.queryByLabelText("Email")).toBeNull();
 });
