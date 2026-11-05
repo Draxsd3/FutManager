@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { CareerSave } from "@/lib/game/editor-data";
 import { Crest } from "@/components/ui/club-sidebar";
 import { InterfaceIcon } from "@/components/ui/interface-icon";
+import { GameLogo } from "@/components/ui/game-logo";
 import styles from "./start-menu-screen.module.css";
 
 export interface StartMenuScreenProps {
@@ -90,7 +91,7 @@ export function StartMenuScreen({
             href="#menu-principal"
             aria-label="FutManager — menu principal"
           >
-            <BrandCrest />
+            <GameLogo />
             <span className={styles.brandText}>
               <strong>FUTMANAGER</strong>
               <small>EDIÇÃO BRASIL · 2026</small>
@@ -140,7 +141,7 @@ export function StartMenuScreen({
             </div>
 
             <h1 className={styles.title}>
-              FUTMANAGER <span className={styles.seasonTag}>26</span>
+              <GameLogo variant="full" /> <span className={styles.visuallyHidden}>FUTMANAGER </span><span className={styles.seasonTag}>26</span>
             </h1>
 
             <p className={styles.subtitle}>
@@ -358,31 +359,4 @@ export function StartMenuScreen({
   );
 }
 
-function BrandCrest() {
-  return (
-    <svg
-      className={styles.brandCrest}
-      viewBox="0 0 40 44"
-      fill="none"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        d="M20 2.2 35.5 7.4v13.2c0 10.6-6.9 17.8-15.5 21.2C11.4 38.4 4.5 31.2 4.5 20.6V7.4L20 2.2Z"
-        fill="#0d2318"
-        stroke="#e5b84b"
-        strokeWidth="1.8"
-      />
-      <path
-        d="M20 5.5 32.2 9.6v10.8c0 8.4-5.2 14.3-12.2 17.4-7-3.1-12.2-9-12.2-17.4V9.6L20 5.5Z"
-        fill="#133824"
-      />
-      <path d="M14 8.2h4v27.5h-4V8.2Zm8 0h4v27.5h-4V8.2Z" fill="#1e5638" opacity="0.65" />
-      <circle cx="20" cy="20.5" r="6.4" fill="#0b1d14" stroke="#e5b84b" strokeWidth="1.4" />
-      <path
-        d="m20 16.7 3.2 2.3-1.2 3.8h-4l-1.2-3.8 3.2-2.3Z"
-        fill="#2fd06b"
-      />
-    </svg>
-  );
-}
+

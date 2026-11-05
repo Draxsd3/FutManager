@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import { createPortal } from "react-dom";
+import { GameLogo } from "./game-logo";
 import { ClassicIcon, type ClassicIconName } from "./classic-icon";
 import styles from "./top-nav.module.css";
 
@@ -12,7 +13,7 @@ export function TopNav({ items, date, classic = false }: { items: NavItem[]; dat
   return (
     <header className={styles.topbar} data-compact={classic || undefined}>
       <div className={styles.brand} aria-label="FUTMANAGER">
-        <span className={styles.brandCopy}><strong>FUTMANAGER</strong></span>
+        <GameLogo /><span className={styles.brandCopy}><strong>FUTMANAGER</strong></span>
       </div>
       <nav aria-label="Navegação do clube" className={styles.nav}>
         {items.map((item) => <NavButton key={item.label} item={item} />)}

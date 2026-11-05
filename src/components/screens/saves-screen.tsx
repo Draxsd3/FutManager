@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { CareerSave } from "@/lib/game/editor-data";
+import { GameLogo } from "@/components/ui/game-logo";
 import { Crest } from "@/components/ui/club-sidebar";
 import styles from "./saves-screen.module.css";
 
@@ -50,7 +51,7 @@ export function SavesScreen({
       <div className={styles.container}>
         <header className={styles.topbar}>
           <span className={styles.brand}>
-            FM<span> / FUTMANAGER</span>
+            <GameLogo /> <span>FUTMANAGER</span>
           </span>
           <button onClick={onBack} aria-label="Voltar ao menu">
             ← Voltar ao início
