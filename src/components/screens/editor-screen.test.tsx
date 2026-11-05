@@ -80,16 +80,38 @@ it("rejects invalid JSON and leaves catalog untouched", async () => {
   expect(change).not.toHaveBeenCalled();
 });
 
-it("prepares the incorporated collection only after confirmation and never modifies the catalogue", async () => {
+it("shows only the three clear actions and applies the received collection after confirmation", async () => {
+  const base = createDefaultDatabase();
+  const updated = { ...base, clubs: [...base.clubs] };
+  const apply = vi.spyOn(await import("@/lib/importer/november-database"), "applyNovemberDatabase").mockResolvedValue({ database: updated, clubs: 156, players: 4208, provisional: 207, shortRosters: 4 });
   const change = vi.fn();
-  const save = vi.spyOn(await import("@/lib/importer/database-cache"), "saveTransfermarktCheckpoint").mockResolvedValue();
-  vi.spyOn(window, "confirm").mockReturnValue(true);
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ checkpoint: { members: [] }, report: { clubs: 156, players: 4208, validClubs: 69, pendingClubs: 87 } }) }));
-  render(<EditorScreen userId="alice" database={createDefaultDatabase()} syncLabel="Salvo" onChange={change} onBack={vi.fn()} />);
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+  const synchronize = vi.fn().mockResolvedValue({ clubs: 156, players: 4208, collectedAt: "2026-11-04T00:00:00Z", cloudPending: false });
+  render(<EditorScreen userId="alice" database={base} syncLabel="Salvo" onChange={change} onBack={vi.fn()} onSynchronize={synchronize} />);
   fireEvent.click(screen.getByRole("button", { name: "Dados e importação" }));
-  fireEvent.click(screen.getByRole("button", { name: "Preparar dados recebidos" }));
-  expect(await screen.findByText(/69 clubes válidos e 87 com pendências/)).toBeTruthy();
-  expect(save).toHaveBeenCalledOnce();
+  expect(screen.getByRole("button", { name: "Consultar API" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Importar JSON" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Preparar dados recebidos" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Importar base incluída" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Atualizar" }));
+  expect(apply).not.toHaveBeenCalled();
+  confirm.mockReturnValue(true);
+  fireEvent.click(screen.getByRole("button", { name: "Atualizar" }));
+  await waitFor(() => expect(change).toHaveBeenCalledWith(updated));
+  expect(screen.getByText(/4208 jogadores aplicados ao catálogo/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Consultar API" }));
+  await waitFor(() => expect(synchronize).toHaveBeenCalledWith(expect.any(Function), expect.any(AbortSignal), true));
+  expect(await screen.findByText(/156 clubes e 4208 jogadores atualizados/)).toBeTruthy();
+  vi.restoreAllMocks();
+});
+
+it("keeps an API failure visible and allows a retry without changing the catalog", async () => {
+  const change = vi.fn();
+  const synchronize = vi.fn().mockRejectedValue(new Error("API indisponível"));
+  render(<EditorScreen userId="alice" database={createDefaultDatabase()} syncLabel="Salvo" onChange={change} onBack={vi.fn()} onSynchronize={synchronize} />);
+  fireEvent.click(screen.getByRole("button", { name: "Dados e importação" }));
+  fireEvent.click(screen.getByRole("button", { name: "Consultar API" }));
+  expect(await screen.findByText("API indisponível")).toBeTruthy();
   expect(change).not.toHaveBeenCalled();
-  vi.restoreAllMocks(); vi.unstubAllGlobals();
+  expect(screen.getByRole("button", { name: "Consultar API" })).not.toHaveProperty("disabled", true);
 });

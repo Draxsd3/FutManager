@@ -1,7 +1,7 @@
 "use client";
 import { WindowHeader } from "@/components/ui/window-header";
 import { ManagementIcon } from "@/components/ui/management-header";
-import { TransfermarktSettings, type TransfermarktSyncResult } from "./transfermarkt-settings";
+import type { TransfermarktSyncResult } from "./transfermarkt-settings";
 import { prepareNationalSeed } from "@/lib/importer/transfermarkt-seed";
 import { COLLECTION_VERSION } from "@/lib/importer/transfermarkt-live";
 import { saveTransfermarktCheckpoint } from "@/lib/importer/database-cache";
@@ -9,7 +9,6 @@ import { saveTransfermarktCheckpoint } from "@/lib/importer/database-cache";
 import { useMemo, useState, useEffect, useRef, type CSSProperties } from "react";
 import Image from "next/image";
 import { applyNovemberDatabase } from "@/lib/importer/november-database";
-import { importBrazilDatabase } from "@/lib/importer/brazil-database";
 import { divisionKeys, type DivisionKey, type PositionCode } from "@/lib/game/mock-data";
 import { brazilianStates } from "@/lib/game/competitions";
 import { MAX_CLUB_SQUAD_SIZE, type EditorClub, type EditorDatabase, type EditorPlayer } from "@/lib/game/editor-data";
@@ -39,21 +38,9 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack, on
       const { checkpoint, report } = prepareNationalSeed(input, `arquivo-${crypto.randomUUID()}`);
       if (!window.confirm(`Arquivo validado: ${report.clubs} clubes e ${report.players} jogadores; ${report.pendingClubs} clubes com pendências. Preparar este arquivo para a coleta da API? Isso substitui qualquer progresso de coleta anterior, mas não altera o catálogo nem as carreiras.`)) { setFileMessage("Importação cancelada. Nenhum dado foi alterado."); return; }
       await saveTransfermarktCheckpoint(userId, { ...checkpoint, collectionVersion: COLLECTION_VERSION });
-      setFileMessage(`Arquivo preparado: ${report.validClubs} clubes válidos e ${report.pendingClubs} com pendências. Use Retomar coleta para consultar os dados faltantes, empréstimos e títulos. O catálogo só muda após a confirmação final.`);
+      setFileMessage(`Arquivo preparado: ${report.validClubs} clubes válidos e ${report.pendingClubs} com pendências. Clique em Consultar API para completar a coleta. O catálogo só muda após a confirmação final.`);
     } catch (error) { setFileMessage(`Não foi possível preparar o JSON. Nenhum dado foi alterado. ${error instanceof Error && !(error instanceof SyntaxError) && error.name !== "ZodError" ? error.message : "Confira se é uma coleta brasileira compatível."}`); }
     finally { setFileBusy(false); if (fileInput.current) fileInput.current.value = ""; }
-  }
-  async function prepareBundledCollection() {
-    setFileBusy(true); setFileMessage("");
-    try {
-      const response = await fetch("/api/transfermarkt/novembro", { cache: "no-store" });
-      if (!response.ok) throw new Error("Não foi possível validar o arquivo incorporado.");
-      const { checkpoint, report } = await response.json();
-      if (!window.confirm(`Coleta de 04/11/2026: ${report.clubs} clubes e ${report.players} jogadores; ${report.pendingClubs} clubes têm pendências. Usar estes dados atuais como ponto de partida? Isso substitui o progresso de coleta anterior, mas ainda não altera o catálogo nem as carreiras.`)) { setFileMessage("Preparação cancelada. Nenhum dado foi alterado."); return; }
-      await saveTransfermarktCheckpoint(userId, { ...checkpoint, collectionVersion: COLLECTION_VERSION });
-      setFileMessage(`Arquivo de 04/11/2026 preparado: ${report.validClubs} clubes válidos e ${report.pendingClubs} com pendências. Clique em Retomar coleta para completar e revisar antes de aplicar. Os elencos são os atuais na data da coleta, não os de janeiro de 2026.`);
-    } catch (error) { setFileMessage(error instanceof Error ? error.message : "Não foi possível preparar a coleta."); }
-    finally { setFileBusy(false); }
   }
   async function applyReceivedCollection() {
     if (!window.confirm("Atualizar o catálogo com os 156 clubes e 4.208 jogadores da coleta de novembro? Os elencos destes clubes serão substituídos, inclusive alterações manuais nesses elencos. Carreiras salvas e uniformes serão preservados. Posições ausentes serão estimadas; quatro elencos não possuem 11 atletas ou goleiro. A coleta não representa janeiro de 2026.")) return;
@@ -65,14 +52,22 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack, on
     } catch (error) { setFileMessage(`Não foi possível aplicar a coleta. Nenhum dado foi alterado. ${error instanceof Error ? error.message : ""}`); }
     finally { setFileBusy(false); }
   }
-  const [importing, setImporting] = useState(false);
-  const [importMessage, setImportMessage] = useState("");
-  async function importBase() {
-    if (!window.confirm("Importar a base brasileira 2026? Clubes brasileiros reconhecidos terão cadastro e elenco substituídos; clubes personalizados e carreiras salvas serão mantidos. Camisas próprias do ateliê não serão apagadas. Há atributos financeiros/de força estimados e 8 participantes da Série D ausentes na base.")) return;
-    setImporting(true);
-    try { const next = await importBrazilDatabase(database); onChange(next); setImportMessage("Base importada: 706 clubes, até 35 atletas por clube. Divisões 2026; elencos dos arquivos. Valores, força, numeração e contratos são padrões da simulação. Fundação 0 = não informada."); }
-    catch { setImportMessage("Não foi possível importar. Seus dados anteriores foram mantidos."); }
-    finally { setImporting(false); }
+  const apiController = useRef<AbortController | null>(null);
+  const apiRunning = useRef(false);
+  const [apiMessage, setApiMessage] = useState("");
+  useEffect(() => () => apiController.current?.abort(), []);
+  async function consultApi() {
+    if (!onSynchronize || apiRunning.current) return;
+    apiRunning.current = true;
+    setApiBusy(true); setApiMessage("Consultando a API…");
+    const controller = new AbortController();
+    apiController.current = controller;
+    try {
+      const result = await onSynchronize(setApiMessage, controller.signal, true);
+      setApiMessage(`${result.clubs} clubes e ${result.players} jogadores atualizados. ${result.cloudPending ? "Salvo neste dispositivo; sincronização com a nuvem pendente." : "Salvo neste dispositivo e na nuvem."}`);
+    } catch (error) {
+      setApiMessage(controller.signal.aborted ? "Consulta pausada. Clique em Consultar API para continuar." : error instanceof Error ? error.message : "Não foi possível consultar a API. Tente novamente.");
+    } finally { apiController.current = null; apiRunning.current = false; setApiBusy(false); }
   }
   const [tab, setTab] = useState<"squad" | "kits">("squad");
   const [selectedClubId, setSelectedClubId] = useState(database.clubs[0]?.id ?? "");
@@ -178,8 +173,8 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack, on
   }
 
   return <main className={styles.screen} style={selectedClub ? clubThemeStyle(selectedClub.name, selectedClub) : undefined}>
-    <header className={styles.pageHeader}><div><p>FUTMANAGER / BANCO DE DADOS</p><h1><ManagementIcon name="pencil" />Editar universo</h1><p>Configure a base de dados para suas próximas carreiras.</p></div><button disabled={apiBusy || fileBusy || importing} onClick={onBack}>← Voltar ao início</button></header>
-    <nav className={styles.mainNav} aria-label="Áreas do universo">{([["overview", "Visão geral"], ["clubs", "Clubes e jogadores"], ["data", "Dados e importação"]] as const).map(([id, title]) => <button key={id} aria-current={section === id ? "page" : undefined} disabled={apiBusy || fileBusy || importing} onClick={() => setSection(id)}>{title}</button>)}</nav>
+    <header className={styles.pageHeader}><div><p>FUTMANAGER / BANCO DE DADOS</p><h1><ManagementIcon name="pencil" />Editar universo</h1><p>Configure a base de dados para suas próximas carreiras.</p></div><button disabled={apiBusy || fileBusy} onClick={onBack}>← Voltar ao início</button></header>
+    <nav className={styles.mainNav} aria-label="Áreas do universo">{([["overview", "Visão geral"], ["clubs", "Clubes e jogadores"], ["data", "Dados e importação"]] as const).map(([id, title]) => <button key={id} aria-current={section === id ? "page" : undefined} disabled={apiBusy || fileBusy} onClick={() => setSection(id)}>{title}</button>)}</nav>
     {section === "overview" && <section className={styles.overview} aria-label="Visão geral do universo">
       <div className={styles.hero}><div><p className={styles.eyebrow}>SEU UNIVERSO, SUAS REGRAS</p><h2>Seu futebol começa aqui.</h2><p>Gerencie os clubes e jogadores ou atualize os dados que serão usados nas novas carreiras.</p></div><span aria-hidden="true" className={styles.heroMark}>✦</span></div>
       <div className={styles.metrics}><div><span>Clubes cadastrados</span><strong>{database.clubs.length.toLocaleString("pt-BR")}</strong></div><div><span>Jogadores cadastrados</span><strong>{database.players.length.toLocaleString("pt-BR")}</strong></div><div><span>Estado do catálogo</span><strong className={styles.statusText}>{syncLabel}</strong></div></div>
@@ -187,11 +182,16 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack, on
       <p className={styles.safetyNote}>Alterações no universo são usadas em novas carreiras. Suas carreiras salvas e uniformes personalizados são preservados.</p>
     </section>}
     <section hidden={section !== "data"} className={styles.dataPage} aria-label="Dados e importação">
-      <div className={styles.dataIntro}><div><p className={styles.eyebrow}>CENTRAL DE DADOS</p><h2>Atualize seu universo</h2><p>Escolha uma fonte e revise os dados antes de aplicar ao catálogo.</p></div></div>
-      <div className={styles.dataCards}><article className={styles.dataCard}><span className={styles.cardIndex}>ARQUIVO RECEBIDO / 04 NOV 2026</span><h3>Coleta Transfermarkt recebida</h3><p>156 clubes e 4.208 jogadores. Elencos atuais em novembro. As posições faltantes são estimadas e quatro elencos precisam de revisão. A API de empréstimos usa a situação de janeiro de 2026, que pode diferir desses elencos.</p><button className={styles.outlineButton} disabled={fileBusy || apiBusy || importing} onClick={() => void applyReceivedCollection()}>Atualizar catálogo com dados recebidos</button><button className={styles.outlineButton} disabled={fileBusy || apiBusy || importing} onClick={() => void prepareBundledCollection()}>{fileBusy ? "Preparando…" : "Preparar dados recebidos"}</button></article><article className={styles.dataCard}><span className={styles.cardIndex}>01 / ARQUIVO</span><h3>Importar JSON</h3><p>Selecione uma coleta brasileira do Transfermarkt com as competições Séries A, B, C e D. O arquivo é validado e preparado; a API completa pendências antes da aplicação. Retome a coleta em até 24 horas.</p><input ref={fileInput} type="file" accept=".json,application/json" aria-label="Selecionar JSON do Transfermarkt" disabled={fileBusy || apiBusy} onChange={event => void importJson(event.target.files?.[0])} /></article>
-      <article className={styles.dataCard}><span className={styles.cardIndex}>02 / BASE INCLUÍDA</span><h3>Base brasileira 2026</h3><p>Usar os clubes e elencos incluídos no jogo. Os dados de força e finanças são estimativas.</p><button className={styles.outlineButton} disabled={importing || apiBusy || fileBusy} onClick={() => void importBase()}>{importing ? "Importando…" : "Importar base incluída"}</button><p role="status">{importMessage}</p></article></div>
+      <div className={styles.dataIntro}><div><p className={styles.eyebrow}>CENTRAL DE DADOS</p><h2>Atualize seu universo</h2><p>Escolha uma das três ações. As alterações serão usadas em novas carreiras.</p></div></div>
+      <div className={styles.dataCards}>
+        <article className={styles.dataCard}><h3>Consultar API</h3><p>Busca dados atuais do Transfermarkt. Pode levar horas; você poderá confirmar antes de aplicar. Se houver uma coleta preparada ou pausada, ela será retomada.</p><button className={styles.outlineButton} disabled={!onSynchronize || apiBusy || fileBusy} onClick={() => void consultApi()}>Consultar API</button>{apiBusy && <button className={styles.outlineButton} onClick={() => apiController.current?.abort()}>Pausar consulta</button>}{!onSynchronize && <p>Consulta indisponível nesta tela.</p>}</article>
+        <article className={styles.dataCard}><h3>Importar JSON</h3><p>Selecione um JSON compatível. O arquivo será preparado; depois clique em Consultar API para completar os dados antes de aplicar.</p><input ref={fileInput} className={styles.fileInput} tabIndex={-1} type="file" accept=".json,application/json" aria-label="Selecionar JSON do Transfermarkt" disabled={fileBusy || apiBusy} onChange={event => void importJson(event.target.files?.[0])} /><button className={styles.outlineButton} disabled={fileBusy || apiBusy} onClick={() => fileInput.current?.click()}>Importar JSON</button></article>
+        <article className={styles.dataCard}><h3>Atualizar</h3><p>Aplica a coleta já recebida de 04/11/2026: 156 clubes e 4.208 jogadores. Não usa o JSON selecionado acima.</p><button className={styles.primaryButton} disabled={fileBusy || apiBusy} onClick={() => void applyReceivedCollection()}>{fileBusy ? "Aguarde…" : "Atualizar"}</button></article>
+      </div>
+      {apiMessage && <p className={styles.safetyNote} role="status">{apiMessage}</p>}
       {fileMessage && <p className={styles.safetyNote} role="status">{fileMessage}</p>}
-      <div className={styles.apiPanel}><span className={styles.cardIndex}>03 / SINCRONIZAÇÃO</span>{onSynchronize ? <TransfermarktSettings userId={userId} onSynchronize={onSynchronize} onBusyChange={setApiBusy} disabled={fileBusy || importing} /> : <p>Sincronização da API indisponível nesta tela.</p>}</div>
+      <p className={styles.safetyNote}>Ao atualizar, elencos dos clubes reconhecidos serão substituídos. Carreiras salvas e uniformes serão preservados. Na coleta recebida, 207 posições são estimadas e quatro elencos precisam de revisão.</p>
+      <p className={styles.safetyNote}>Estado do salvamento: {syncLabel}</p>
     </section>
     {section === "clubs" && <div className={styles.editorLayout}>
     <section className={styles.teamPanel}>
