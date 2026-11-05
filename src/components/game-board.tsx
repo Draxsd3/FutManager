@@ -1398,6 +1398,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           <HubScreen
             kit={kit}
             club={club}
+            clubColors={database.clubs.find((item) => item.name === club)}
             coach={coach}
             budget={budget}
             opponent={opponent}
@@ -1511,6 +1512,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           kit={kit}
           onKitChange={setKit}
           club={club}
+          clubColors={database.clubs.find((item) => item.name === club)}
           coach={coach}
           opponent={opponent}
           round={competitionRound}

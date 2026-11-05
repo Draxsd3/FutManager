@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { afterEach, beforeAll, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { clubKitAsset } from "@/lib/game/assets";
+import { clubCrestAsset, clubKitAsset } from "@/lib/game/assets";
 import { squad, buildStartingXI, type Player } from "@/lib/game/mock-data";
 import { LineupScreen } from "./lineup-screen";
 const ids = buildStartingXI("4-3-3", squad);
@@ -439,22 +439,35 @@ it("draws complete pitch markings and keeps player labels and energy attached to
   }
 });
 
-it("uses the imported club shirt for starters and the entire bench, not a tinted generic mold", () => {
+it("uses the imported club shirt for outfield players and a contrasting crest jersey for goalkeepers across starters and bench", () => {
   setup();
-  const shirts = document.querySelectorAll('svg image');
-  expect(shirts.length).toBeGreaterThanOrEqual(starters.length + bench.length);
-  for (const image of shirts) {
+  const outfieldImages = document.querySelectorAll("svg[data-jersey-role='outfield'] image");
+  const goalkeeperSvgs = document.querySelectorAll("svg[data-jersey-role='goalkeeper']");
+  expect(outfieldImages.length + goalkeeperSvgs.length).toBeGreaterThanOrEqual(starters.length + bench.length);
+  expect(goalkeeperSvgs.length).toBeGreaterThan(0);
+  for (const image of outfieldImages) {
     expect(image.getAttribute("href")).toBe(clubKitAsset("Flamengo"));
     expect(image.hasAttribute("filter")).toBe(false);
   }
+  for (const gkSvg of goalkeeperSvgs) {
+    expect(gkSvg.getAttribute("data-gk-color")).toBe("#eab308");
+    expect(gkSvg.querySelector("image[data-jersey-crest='true']")?.getAttribute("href")).toBe(clubCrestAsset("Flamengo"));
+  }
 });
 
-it("lets the manager preview all three imported shirts and applies the choice to starters and reserves", () => {
+it("lets the manager preview all three imported shirts and updates goalkeeper contrast accordingly", () => {
   setup({ chooseKit: true });
+  const expectedGkColors = { 1: "#eab308", 2: "#252930", 3: "#eab308" } as const;
   for (const kit of [1, 2, 3] as const) {
     fireEvent.click(screen.getByRole("button", { name: `Usar camisa ${kit}` }));
     expect(screen.getByRole("button", { name: `Usar camisa ${kit}` }).getAttribute("aria-pressed")).toBe("true");
-    for (const image of document.querySelectorAll("svg image")) expect(image.getAttribute("href")).toBe(clubKitAsset("Flamengo", kit));
+    for (const image of document.querySelectorAll("svg[data-jersey-role='outfield'] image")) {
+      expect(image.getAttribute("href")).toBe(clubKitAsset("Flamengo", kit));
+    }
+    for (const gkSvg of document.querySelectorAll("svg[data-jersey-role='goalkeeper']")) {
+      expect(gkSvg.getAttribute("data-gk-color")).toBe(expectedGkColors[kit]);
+      expect(gkSvg.querySelector("image[data-jersey-crest='true']")?.getAttribute("href")).toBe(clubCrestAsset("Flamengo"));
+    }
   }
   expect(document.querySelectorAll('[role="group"][aria-label="Camisa para a partida"] img')).toHaveLength(3);
 });

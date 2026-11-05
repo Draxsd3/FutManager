@@ -1,11 +1,14 @@
 import type { Player } from "@/lib/game/mock-data";
 import { formationSlotRoles, formationSlots, playerFitAtPosition } from "@/lib/game/formations";
 import type { ManualPosition } from "@/lib/game/career";
+import type { ClubColorIdentity } from "@/lib/kits/goalkeeper";
 import { Shirt } from "./shirt";
 import { PlayerJersey } from "./player-jersey";
 
 export function Pitch({
   club,
+  kit = 1,
+  clubColors,
   formation,
   starters,
   selectedPlayer,
@@ -17,6 +20,8 @@ export function Pitch({
   tactical = false,
 }: {
   club?: string;
+  kit?: 1 | 2 | 3;
+  clubColors?: ClubColorIdentity;
   formation: string;
   starters: Player[];
   selectedPlayer: number | null;
@@ -89,7 +94,7 @@ export function Pitch({
             className="absolute -translate-x-1/2 -translate-y-1/2"
             style={{ left: fieldCoordinate(slot.left), top: fieldCoordinate(slot.top) }}
           >
-            {tactical ? <TacticPlayer club={club} player={player} role={tacticalRole} selected={selectedPlayer === player.id} fitLabel={fit.label} effectiveOverall={Math.max(1, player.overall - fit.penalty)} onClick={() => { if (onPlacePlayer && selectedPlayer !== null && selectedPlayer !== player.id) onPlacePlayer(selectedPlayer, index); else onSelect(player.id); }} onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/player-id", String(player.id)); }} /> : <Shirt club={club} player={player} selected={selectedPlayer === player.id} onClick={() => onSelect(player.id)} effectiveOverall={Math.max(1, player.overall - fit.penalty)} fitLabel={fit.label} draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/player-id", String(player.id)); }} />}
+            {tactical ? <TacticPlayer club={club} kit={kit} clubColors={clubColors} player={player} role={tacticalRole} selected={selectedPlayer === player.id} fitLabel={fit.label} effectiveOverall={Math.max(1, player.overall - fit.penalty)} onClick={() => { if (onPlacePlayer && selectedPlayer !== null && selectedPlayer !== player.id) onPlacePlayer(selectedPlayer, index); else onSelect(player.id); }} onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/player-id", String(player.id)); }} /> : <Shirt club={club} kit={kit} clubColors={clubColors} player={player} selected={selectedPlayer === player.id} onClick={() => onSelect(player.id)} effectiveOverall={Math.max(1, player.overall - fit.penalty)} fitLabel={fit.label} draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/player-id", String(player.id)); }} />}
           </div>
         );
       })}
@@ -100,11 +105,11 @@ export function Pitch({
   );
 }
 
-function TacticPlayer({ club, player, role, selected, effectiveOverall, fitLabel, onClick, onDragStart }: { club?: string; player: Player; role: string; selected: boolean; effectiveOverall: number; fitLabel: "Natural" | "Secundária" | "Improvisado"; onClick: () => void; onDragStart: (event: React.DragEvent<HTMLButtonElement>) => void }) {
+function TacticPlayer({ club, kit = 1, clubColors, player, role, selected, effectiveOverall, fitLabel, onClick, onDragStart }: { club?: string; kit?: 1 | 2 | 3; clubColors?: ClubColorIdentity; player: Player; role: string; selected: boolean; effectiveOverall: number; fitLabel: "Natural" | "Secundária" | "Improvisado"; onClick: () => void; onDragStart: (event: React.DragEvent<HTMLButtonElement>) => void }) {
   const fitTone = fitLabel === "Natural" ? "border-[#19d66d]" : fitLabel === "Secundária" ? "border-[#f1bf31]" : "border-[#e65e50]";
   const energyTone = player.energy >= 80 ? "bg-[#17d66d]" : player.energy >= 55 ? "bg-[#f1bd31]" : "bg-[#e65e50]";
   return <button type="button" draggable data-starter={player.id} aria-label={`Sai: ${player.name}, camisa ${player.shirtNumber ?? player.id}, ${role}`} aria-pressed={selected} onDragStart={onDragStart} onClick={onClick} className={`relative z-[1] flex w-[96px] flex-col items-center cursor-grab transition-all duration-200 active:cursor-grabbing ${selected ? "scale-110 rounded ring-2 ring-[#e6c137]" : "hover:scale-105"}`}>
-    <span className="relative grid h-16 w-16 place-items-end overflow-visible"><PlayerJersey club={club} player={player} /><b className={`absolute -right-4 -top-1 grid h-8 w-8 place-items-center rounded-full border-2 ${fitTone} bg-[#071009] text-[12px] text-white`}>{effectiveOverall}</b></span>
+    <span className="relative grid h-16 w-16 place-items-end overflow-visible"><PlayerJersey kit={kit} club={club} clubColors={clubColors} player={player} /><b className={`absolute -right-4 -top-1 grid h-8 w-8 place-items-center rounded-full border-2 ${fitTone} bg-[#071009] text-[12px] text-white`}>{effectiveOverall}</b></span>
     <span className="mt-0.5 rounded bg-[#101610] px-1 text-[7px] font-black text-[#ffc73d]">{role}</span>
     <span className="-mt-px w-full truncate border-y border-[#0a0d0a] bg-black/95 px-1 py-0.5 text-center text-[10px] font-black uppercase text-white">{player.name}</span>
     <span className="h-1 w-[88px] overflow-hidden rounded-b bg-black/80"><i style={{ width: `${player.energy}%` }} className={`block h-full ${energyTone}`} /></span>

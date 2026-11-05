@@ -2,7 +2,7 @@
 import { useState, type ComponentProps } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { clubKitAsset } from "@/lib/game/assets";
+import { clubCrestAsset, clubKitAsset } from "@/lib/game/assets";
 import { squad, buildStartingXI } from "@/lib/game/mock-data";
 import { MatchDetailScreen } from "./match-detail-screen";
 
@@ -148,5 +148,13 @@ it.each([false, true])("keeps the selected third shirt during match tactics and 
   setup({ kit: 3, isHalftime });
   expect(screen.getByText("Uniforme 3")).toBeTruthy();
   expect(screen.queryByRole("button", { name: /Usar camisa/ })).toBeNull();
-  for (const image of document.querySelectorAll("svg image")) expect(image.getAttribute("href")).toBe(clubKitAsset("Flamengo", 3));
+  const outfieldImages = document.querySelectorAll("svg[data-jersey-role='outfield'] image");
+  const goalkeeperSvgs = document.querySelectorAll("svg[data-jersey-role='goalkeeper']");
+  expect(outfieldImages.length).toBeGreaterThan(0);
+  expect(goalkeeperSvgs.length).toBeGreaterThan(0);
+  for (const image of outfieldImages) expect(image.getAttribute("href")).toBe(clubKitAsset("Flamengo", 3));
+  for (const gkSvg of goalkeeperSvgs) {
+    expect(gkSvg.getAttribute("data-gk-color")).toBe("#eab308");
+    expect(gkSvg.querySelector("image[data-jersey-crest='true']")?.getAttribute("href")).toBe(clubCrestAsset("Flamengo"));
+  }
 });
