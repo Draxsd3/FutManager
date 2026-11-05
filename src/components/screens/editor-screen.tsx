@@ -43,7 +43,7 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack, on
     finally { setFileBusy(false); if (fileInput.current) fileInput.current.value = ""; }
   }
   async function applyReceivedCollection() {
-    if (!window.confirm("Atualizar o catálogo com os 156 clubes e 4.208 jogadores da coleta de novembro? Os elencos destes clubes serão substituídos, inclusive alterações manuais nesses elencos. Carreiras salvas e uniformes serão preservados. Posições ausentes serão estimadas; quatro elencos não possuem 11 atletas ou goleiro. A coleta não representa janeiro de 2026.")) return;
+    if (!window.confirm("Atualizar o catálogo com os 156 clubes e 4.208 jogadores da coleta de novembro? Os elencos antigos destes clubes serão removidos e substituídos, inclusive alterações manuais nesses elencos, para evitar duplicações. Carreiras salvas e uniformes serão preservados. Posições ausentes serão estimadas; quatro elencos não possuem 11 atletas ou goleiro. A coleta não representa janeiro de 2026.")) return;
     setFileBusy(true); setFileMessage("");
     try {
       const result = await applyNovemberDatabase(database);

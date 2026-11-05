@@ -97,3 +97,33 @@ it("refuses competition imports without matching competition provenance", () => 
   const { snapshot } = fixture();
   expect(() => applyTransfermarktSnapshot({ clubs: [], players: [] }, { ...snapshot, version: 2 }, [], {})).toThrow(/Unapproved/);
 });
+
+it("replaces old rosters and removes duplicate linked players even across clubs, without merging namesakes", () => {
+  const { database, club, catalog, links, snapshot } = fixture();
+  const other = database.clubs[1];
+  const oldAtClub = database.players.find(player => player.clubId === club.id)!;
+  const otherPlayer = database.players.find(player => player.clubId === other.id)!;
+  const source = snapshot.clubs[0].players[0];
+  const origin = { id: source.id, collectedAt: "2026-01-01T00:00:00Z", season: "2026" };
+  const localCanonical = { ...oldAtClub, id: "canonical", name: source.name, transfermarkt: origin };
+  const duplicate = { ...otherPlayer, id: "duplicate", name: source.name, transfermarkt: origin };
+  const namesake = { ...otherPlayer, id: "namesake", name: source.name };
+  const base = { ...database, players: [...database.players, localCanonical, duplicate, namesake] };
+  const result = applyTransfermarktSnapshot(base, snapshot, catalog, links);
+  expect(result.players.filter(player => player.clubId === club.id)).toHaveLength(40);
+  expect(result.players.some(player => player.id === oldAtClub.id)).toBe(false);
+  expect(result.players.filter(player => player.transfermarkt?.id === source.id)).toHaveLength(1);
+  expect(result.players.find(player => player.transfermarkt?.id === source.id)?.id).toBe("canonical");
+  expect(result.players.some(player => player.id === "duplicate")).toBe(false);
+  expect(result.players.some(player => player.id === "namesake")).toBe(true);
+  expect(base.players.some(player => player.id === "duplicate")).toBe(true);
+  const repeat = applyTransfermarktSnapshot(result, snapshot, catalog, links);
+  expect(repeat.players).toEqual(result.players);
+});
+
+it("does not remove linked players when the source club is absent in a version 1 catalog", () => {
+  const { database, catalog, links, snapshot, club } = fixture();
+  const player = database.players.find(item => item.clubId !== club.id)!;
+  const base = { clubs: database.clubs.filter(item => item.id !== club.id), players: [{ ...player, transfermarkt: { id: "1", collectedAt: "2026-01-01T00:00:00Z", season: "2026" } }] };
+  expect(applyTransfermarktSnapshot(base, snapshot, catalog, links)).toEqual(base);
+});
