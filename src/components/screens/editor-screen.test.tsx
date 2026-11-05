@@ -98,10 +98,10 @@ it("shows only the three clear actions and applies the received collection after
   confirm.mockReturnValue(true);
   fireEvent.click(screen.getByRole("button", { name: "Atualizar" }));
   await waitFor(() => expect(change).toHaveBeenCalledWith(updated));
-  expect(screen.getByText(/4208 jogadores aplicados ao catálogo/)).toBeTruthy();
+  expect(await screen.findByText(/4208 jogadores atualizados e sincronizados/)).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Consultar API" }));
   await waitFor(() => expect(synchronize).toHaveBeenCalledWith(expect.any(Function), expect.any(AbortSignal), true));
-  expect(await screen.findByText(/156 clubes e 4208 jogadores atualizados/)).toBeTruthy();
+  expect(await screen.findByText(/156 clubes e 4208 jogadores atualizados\. Salvo/)).toBeTruthy();
   vi.restoreAllMocks();
 });
 
@@ -114,4 +114,23 @@ it("keeps an API failure visible and allows a retry without changing the catalog
   expect(await screen.findByText("API indisponível")).toBeTruthy();
   expect(change).not.toHaveBeenCalled();
   expect(screen.getByRole("button", { name: "Consultar API" })).not.toHaveProperty("disabled", true);
+});
+
+
+it("waits for cloud confirmation and shows failure instead of claiming success", async () => {
+  const base = createDefaultDatabase();
+  vi.spyOn(await import("@/lib/importer/november-database"), "applyNovemberDatabase").mockResolvedValue({ database: base, clubs: 156, players: 4208, provisional: 207, shortRosters: 4 });
+  vi.spyOn(window, "confirm").mockReturnValue(true);
+  let finish!: (result: boolean) => void;
+  const save = vi.fn(() => new Promise<boolean>(resolve => { finish = resolve; }));
+  render(<EditorScreen userId="alice" database={base} syncLabel="Salvando" onChange={save} onBack={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", { name: "Dados e importação" }));
+  fireEvent.click(screen.getByRole("button", { name: "Atualizar" }));
+  await waitFor(() => expect(save).toHaveBeenCalledOnce());
+  expect(screen.getByRole("button", { name: "Atualizando e sincronizando…" })).toHaveProperty("disabled", true);
+  expect(screen.queryByText(/atualizados e sincronizados/)).toBeNull();
+  finish(false);
+  expect(await screen.findByText(/não foi possível confirmar a sincronização/)).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Atualizar" })).not.toHaveProperty("disabled", true);
+  vi.restoreAllMocks();
 });
