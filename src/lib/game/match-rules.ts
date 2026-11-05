@@ -109,7 +109,7 @@ export function parseMatchRules(markdown: string): MatchRules {
     markingWeight: [0, .02], heavyPressTurnoverBonus: [0, .5], heavyPressFoulBonus: [0, .5], goalBaseChance: [0, 1],
     finishingWeight: [0, .02], keeperWeight: [0, .02], motivationWeight: [0, .02], goalMinChance: [0, 1], goalMaxChance: [0, 1],
     rainPassPenalty: [0, .5], rainShotPenalty: [0, .5], windPassPenaltyPerKmh: [0, .05], windShotPenaltyPerKmh: [0, .05],
-    heatFatiguePerDegree: [0, .02], baseFatiguePerMinute: [0, .02], heavyPressFatiguePerMinute: [0, .02],
+    heatFatiguePerDegree: [0, .05], baseFatiguePerMinute: [.05, .8], heavyPressFatiguePerMinute: [0, .4],
     yellowCardBaseChanceOnFoul: [0, 1], heavyMarkingCardBonus: [0, 1],
   };
   const invalidLimit = Object.entries(limits).some(([key, [minimum, maximum]]) => {

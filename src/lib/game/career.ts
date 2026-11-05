@@ -1,4 +1,4 @@
-import type { Player } from "./mock-data";
+import type { Player, PositionCode } from "./mock-data";
 
 export type PlayerMarketStatus = "normal" | "sale" | "loan" | "retiring";
 
@@ -66,7 +66,7 @@ export type PlayerMatchRecord = {
   saves?: number;
   errors?: number;
 };
-export type MatchParticipation = Record<number, { entered: number; left?: number }>;
+export type MatchParticipation = Record<number, { entered: number; left?: number; role?: PositionCode }>;
 export type PlayerMatchPerformance = { goals?: number; assists?: number; rating?: number | null; yellowCards?: number; redCards?: number; shots?: number; tackles?: number; passes?: number; saves?: number; errors?: number };
 
 /** Register only completed matches; the fixture key makes retries and resumed saves idempotent. */

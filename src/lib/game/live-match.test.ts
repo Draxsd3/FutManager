@@ -1,7 +1,19 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { buildStartingXI, squad } from "./mock-data";
-import { calculateMatchStatistics, createMatchWeather, createMinuteRandom, matchEnergyAfter, otherScore, calculatePlayerRatings, simulateAction } from "./live-match";
+import {
+  ageFatigueMultiplier,
+  calculateMatchStatistics,
+  calculatePlayerFatigueLoss,
+  calculatePlayerRatings,
+  createMatchWeather,
+  createMinuteRandom,
+  matchEnergyAfter,
+  otherScore,
+  recoverSquadBetweenMatches,
+  roleFatigueMultiplier,
+  simulateAction,
+} from "./live-match";
 import { parseMatchRules } from "./match-rules";
 
 const rules = parseMatchRules(readFileSync("public/game-assets/match-engine-rules.md", "utf8"));
@@ -160,6 +172,86 @@ describe("text-first match engine", () => {
     const hotPress = matchEnergyAfter(staminaSquad, Object.fromEntries(staminaSquad.map((player) => [player.id, 90])), 90, hotWeather, "Pesada", rules);
     expect(hotPress[0].energy).toBeLessThan(lightPress[0].energy);
     expect(hotPress[0].energy).toBeLessThan(80);
+  });
+
+  it("visibly tires starters over 90 minutes while differentiating position/role (lateral > zagueiro > goleiro) and age", () => {
+    const baseAthlete = { ...strong[0], name: "Atleta Padrão", energy: 100, age: 27, traits: "", foot: "D" as const };
+    const goalkeeper = { ...baseAthlete, id: 901, position: "G" as const };
+    const centerBack = { ...baseAthlete, id: 902, position: "Z" as const };
+    const striker = { ...baseAthlete, id: 903, position: "A" as const };
+    const midfielder = { ...baseAthlete, id: 904, position: "M" as const };
+    const fullBack = { ...baseAthlete, id: 905, position: "L" as const };
+    const benchUnused = { ...baseAthlete, id: 906, position: "L" as const };
+
+    expect(roleFatigueMultiplier("L")).toBeGreaterThan(roleFatigueMultiplier("M"));
+    expect(roleFatigueMultiplier("M")).toBeGreaterThan(roleFatigueMultiplier("A"));
+    expect(roleFatigueMultiplier("A")).toBeGreaterThan(roleFatigueMultiplier("Z"));
+    expect(roleFatigueMultiplier("Z")).toBeGreaterThan(roleFatigueMultiplier("G"));
+
+    const after90 = matchEnergyAfter(
+      [goalkeeper, centerBack, striker, midfielder, fullBack, benchUnused],
+      { 901: 90, 902: 90, 903: 90, 904: 90, 905: 90, 906: 0 },
+      90,
+      dryWeather,
+      "Normal",
+      rules,
+      { style: "Equilibrado", focus: "Pelo meio" },
+    );
+    const byId = Object.fromEntries(after90.map((player) => [player.id, player.energy]));
+
+    // Every 90-minute starter visibly loses energy (fixing the 99.92 -> 100 rounding bug), while unused bench stays at 100%.
+    expect(byId[901]).toBeLessThan(98);
+    expect(byId[906]).toBe(100);
+    // Strict positional ordering: lateral tires more than meia, atacante, zagueiro, and goleiro.
+    expect(byId[905]).toBeLessThan(byId[904]);
+    expect(byId[904]).toBeLessThan(byId[903]);
+    expect(byId[903]).toBeLessThan(byId[902]);
+    expect(byId[902]).toBeLessThan(byId[901]);
+    expect(byId[901] - byId[905]).toBeGreaterThanOrEqual(20);
+    expect(byId[902] - byId[905]).toBeGreaterThanOrEqual(8);
+
+    // Age curve: strictly monotonic from 17 to 40, so older players tire faster than younger players in any position.
+    for (let age = 18; age <= 40; age++) {
+      expect(ageFatigueMultiplier(age)).toBeGreaterThan(ageFatigueMultiplier(age - 1));
+    }
+    const youngLateral = { ...fullBack, id: 910, age: 19 };
+    const primeLateral = { ...fullBack, id: 911, age: 27 };
+    const veteranLateral = { ...fullBack, id: 912, age: 36 };
+    const enduranceVeteran = { ...veteranLateral, id: 913, traits: "Resistência, Marcação" };
+    const ageComparison = matchEnergyAfter(
+      [youngLateral, primeLateral, veteranLateral, enduranceVeteran],
+      { 910: 90, 911: 90, 912: 90, 913: 90 },
+      90,
+      dryWeather,
+      "Normal",
+      rules,
+      { style: "Ofensivo", focus: "Pelas laterais" },
+    );
+    const ageById = Object.fromEntries(ageComparison.map((player) => [player.id, player.energy]));
+    expect(ageById[912]).toBeLessThan(ageById[911]);
+    expect(ageById[911]).toBeLessThan(ageById[910]);
+    expect(ageById[910] - ageById[912]).toBeGreaterThanOrEqual(12);
+    expect(ageById[913]).toBeGreaterThan(ageById[912]);
+
+    // Tactical pitch slot / manual positioning also governs workload when a player is deployed out wide as a lateral.
+    const versatile = { ...baseAthlete, id: 920, position: "Z" as const, secondaryPosition: "L" as const };
+    const lossAsCenterBack = calculatePlayerFatigueLoss(versatile, 90, { role: "Z", wide: false, weather: dryWeather, tactics, rules });
+    const lossAsFullBack = calculatePlayerFatigueLoss(versatile, 90, { role: "L", wide: true, weather: dryWeather, tactics, rules });
+    expect(lossAsFullBack).toBeGreaterThan(lossAsCenterBack);
+  });
+
+  it("recovers squad condition between calendar matchdays faster for younger players than veterans", () => {
+    const youngTired = { ...strong[0], id: 930, age: 20, energy: 65, traits: "" };
+    const veteranTired = { ...strong[0], id: 931, age: 36, energy: 65, traits: "" };
+    const fullEnergy = { ...strong[0], id: 932, age: 29, energy: 100, traits: "" };
+
+    const midweekTurnaround = recoverSquadBetweenMatches([youngTired, veteranTired, fullEnergy], "2026-04-15", "2026-04-18");
+    expect(midweekTurnaround[0].energy).toBeGreaterThan(midweekTurnaround[1].energy);
+    expect(midweekTurnaround[1].energy).toBeGreaterThan(65);
+    expect(midweekTurnaround[2].energy).toBe(100);
+
+    const sameDay = recoverSquadBetweenMatches([youngTired], "2026-04-15", "2026-04-15");
+    expect(sameDay[0].energy).toBe(65);
   });
 
   it("calculates match ratings from contributions rather than a static overall-only value", () => {
