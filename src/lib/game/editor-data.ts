@@ -36,6 +36,8 @@ export type EditorClub = {
 export type EditorPlayerMarketStatus = "normal" | "sale" | "loan";
 
 export type EditorPlayer = {
+  /** Source-supplied nationalities; never infer from the club country. */
+  nationalities?: string[];
   loan?: LoanContract;
   transfermarkt?: TransfermarktOrigin;
   id: string;

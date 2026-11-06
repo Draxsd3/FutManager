@@ -131,7 +131,13 @@ def normalize(source, club_id, profile, squad):
             if not isinstance(contract, str) or len(contract) != 10:
                 raise ValueError('Invalid contract date')
             dt.date.fromisoformat(contract)
+        nationalities = raw.get('nationalities') or raw.get('citizenship') or raw.get('nationality') or []
+        if isinstance(nationalities, str):
+            nationalities = [nationalities]
+        if not isinstance(nationalities, list) or any(not isinstance(n, str) for n in nationalities):
+            raise ValueError('Invalid nationality data')
         players.append({
+            'nationalities': list(dict.fromkeys(n.strip() for n in nationalities if n.strip())),
             'id': player_id, 'name': text(raw.get('name')),
             'position': position, 'age': number(raw.get('age'), 14, 65),
             'shirtNumber': number(raw.get('shirtNumber'), 1, 999, True),

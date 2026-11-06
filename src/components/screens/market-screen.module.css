@@ -75,3 +75,11 @@
   .playerMain > button { margin-left: auto; }
   .offerForm { grid-template-columns: 1fr; }
 }
+
+/* Scouting routes: a compact game menu, not another filter dashboard. */
+.scouting { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; margin: 0 0 15px; padding: 4px 0 9px; border-bottom: 1px solid #dce5dd; }
+.scouting button { padding: 7px 0; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #738277; cursor: pointer; font-size: 12px; font-weight: 750; }
+.scouting button[aria-pressed="true"] { color: #174d32; border-bottom-color: #26774d; }
+.scouting button:hover { color: #174d32; }
+.scouting button:focus-visible { outline: 2px solid #26774d; outline-offset: 3px; }
+.scouting .clearSearch { margin-left: auto; font-size: 10px; font-weight: 500; }

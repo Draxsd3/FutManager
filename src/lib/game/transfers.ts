@@ -1,3 +1,4 @@
+import { isFreeAgent } from "./player-contract";
 import type { EditorDatabase } from "./editor-data";
 
 export type TransferKind = "sale" | "loan";
@@ -11,6 +12,7 @@ export type TransferNegotiation = {
   sourceClub: string;
   buyerClubId: string;
   kind: TransferKind;
+  freeAgent?: boolean;
   askingFeeBrl: number;
   offerFeeBrl: number;
   wageSharePercent: number;
@@ -45,20 +47,22 @@ export function proposeTransfer(database: EditorDatabase, existing: TransferNego
   const player = database.players.find((item) => item.id === input.playerId);
   const buyer = database.clubs.find((item) => item.id === input.buyerClubId);
   const seller = player && database.clubs.find((item) => item.id === player.clubId);
-  if (!player || !buyer || !seller || seller.id === buyer.id || !input.id) return { message: "Jogador ou clube inválido." };
-  if (player.marketStatus !== "sale" && player.marketStatus !== "loan") return { message: "Este atleta não está listado para venda ou empréstimo." };
+  const free = player ? isFreeAgent(player) : false;
+  if (!player || !buyer || (!seller && !free) || seller?.id === buyer.id || !input.id) return { message: "Jogador ou clube inválido." };
+  if (!free && player.marketStatus !== "sale" && player.marketStatus !== "loan") return { message: "Este atleta não está listado para venda ou empréstimo." };
   if (existing.some((item) => item.playerId === player.id && item.status !== "rejected" && item.status !== "completed")) return { message: "Já existe uma negociação ativa por este atleta." };
-  const kind = player.marketStatus;
-  const askingFee = askingFeeBrl(kind, player.marketValueBrl);
+  const kind = free ? "sale" : player.marketStatus as TransferKind;
+  const askingFee = free ? 0 : askingFeeBrl(kind, player.marketValueBrl);
   const wageSharePercent = kind === "loan" ? input.wageSharePercent ?? 50 : 0;
-  const validation = validateOffer(input.feeBrl, wageSharePercent, askingFee, kind);
+  const validation = free ? input.feeBrl !== 0 ? "Jogador livre não tem taxa de transferência." : null : validateOffer(input.feeBrl, wageSharePercent, askingFee, kind);
   if (validation) return { message: validation };
   const base: TransferNegotiation = {
     id: input.id,
     playerId: player.id,
     playerName: player.name,
-    sourceClubId: seller.id,
-    sourceClub: seller.name,
+    sourceClubId: seller?.id ?? "",
+    sourceClub: seller?.name ?? "Sem clube",
+    ...(free ? { freeAgent: true } : {}),
     buyerClubId: buyer.id,
     kind,
     askingFeeBrl: askingFee,
@@ -68,7 +72,7 @@ export function proposeTransfer(database: EditorDatabase, existing: TransferNego
     attempts: 0,
     message: "",
   };
-  const negotiation = evaluateOffer(base);
+  const negotiation = free ? { ...base, status: "agreed" as const, agreedFeeBrl: 0, agreedWageSharePercent: 100, message: "Atleta livre aceitou as condições salariais cadastradas. Confirme o compromisso de 12 meses de salário antes de contratar." } : evaluateOffer(base);
   return { negotiation, message: negotiation.message };
 }
 

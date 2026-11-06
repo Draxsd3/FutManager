@@ -1,3 +1,4 @@
+import { isFreeAgent } from "./player-contract";
 import type { EditorDatabase } from "./editor-data";
 import type { Player } from "./mock-data";
 import type { TransferKind } from "./transfers";
@@ -23,18 +24,19 @@ export function recruitPlayer(
   const source = database.players.find((player) => player.id === sourceId);
   const borrower = database.clubs.find(item => item.name === club);
   const sourceClub = source && database.clubs.find((item) => item.id === source.clubId);
-  if (!source || !sourceClub || !borrower || source.loan?.status === "active" || sourceClub.name === club || squad.some((player) => player.sourceId === sourceId)) {
+  const free = source ? isFreeAgent(source) : false;
+  if (!source || (!sourceClub && !free) || !borrower || source.loan?.status === "active" || sourceClub?.name === club || squad.some((player) => player.sourceId === sourceId)) {
     return { squad, budget, message: "Jogador indisponível para contratação." };
   }
-  if (source.marketStatus !== "sale" && source.marketStatus !== "loan") return { squad, budget, message: "Jogador não está à venda nem disponível para empréstimo." };
+  if (!free && source.marketStatus !== "sale" && source.marketStatus !== "loan") return { squad, budget, message: "Jogador não está à venda nem disponível para empréstimo." };
   // Keep the existing in-career recruitment rule separate from the imported catalog.
   if (squad.length >= 35) return { squad, budget, message: "Elenco cheio: limite de 35 jogadores." };
-  const kind = terms?.kind ?? source.marketStatus;
-  if (kind !== source.marketStatus) return { squad, budget, message: "O tipo de contratação não corresponde à disponibilidade do jogador." };
-  const feeBrl = terms?.feeBrl ?? source.marketValueBrl * 2;
+  const kind = terms?.kind ?? (free ? "sale" : source.marketStatus);
+  if (free ? kind !== "sale" : kind !== source.marketStatus) return { squad, budget, message: "O tipo de contratação não corresponde à disponibilidade do jogador." };
+  const feeBrl = terms?.feeBrl ?? (free ? 0 : source.marketValueBrl * 2);
   const wageSharePercent = kind === "loan" ? terms?.wageSharePercent ?? 50 : 100;
   const loanMonths = kind === "loan" ? terms?.loanMonths ?? 6 : 0;
-  if (!Number.isFinite(feeBrl) || feeBrl <= 0 || !Number.isFinite(wageSharePercent) || wageSharePercent < 0 || wageSharePercent > 100 || !Number.isInteger(loanMonths) || (kind === "loan" && (loanMonths < 1 || loanMonths > 24))) {
+  if (!Number.isFinite(feeBrl) || (free ? feeBrl !== 0 : feeBrl <= 0) || !Number.isFinite(wageSharePercent) || wageSharePercent < 0 || wageSharePercent > 100 || !Number.isInteger(loanMonths) || (kind === "loan" && (loanMonths < 1 || loanMonths > 24))) {
     return { squad, budget, message: "Termos financeiros da contratação inválidos." };
   }
   const salaryCommitmentMonths = kind === "loan" ? loanMonths : 12;
@@ -60,11 +62,11 @@ export function recruitPlayer(
     traits: `${source.qualityPrimary.slice(0, 3)}/${source.qualitySecondary.slice(0, 3)}`,
     age: source.age,
     avgRating: null,
-    contractUntil: loanExpiresOn ?? source.contractEndsOn,
+    contractUntil: loanExpiresOn ?? (free ? addMonths(terms?.gameDate ?? new Date().toISOString().slice(0,10), 12) : source.contractEndsOn),
     marketValue: source.marketValueBrl / 1e6,
     marketAvailability: "normal",
     acquisitionType: kind === "loan" ? "loan" : "permanent",
-    ...(loanExpiresOn ? { loanExpiresOn, loan: { owner: { clubId: sourceClub.id, name: sourceClub.name }, borrower: { clubId: borrower.id, name: borrower.name }, startsOn: terms?.gameDate ?? new Date().toISOString().slice(0, 10), endsOn: loanExpiresOn, status: "active", source: "game", wageSharePercent } as const } : {}),
+    ...(loanExpiresOn ? { loanExpiresOn, loan: { owner: { clubId: sourceClub!.id, name: sourceClub!.name }, borrower: { clubId: borrower.id, name: borrower.name }, startsOn: terms?.gameDate ?? new Date().toISOString().slice(0, 10), endsOn: loanExpiresOn, status: "active", source: "game", wageSharePercent } as const } : {}),
   };
   const action = kind === "loan" ? `emprestado por ${loanMonths} meses` : "contratado em definitivo";
   return {

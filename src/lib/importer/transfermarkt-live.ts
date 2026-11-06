@@ -38,6 +38,9 @@ const positions: Record<string, "G" | "L" | "Z" | "M" | "A"> = {
   "Left Winger": "A", "Right Winger": "A", "Second Striker": "A", "Centre-Forward": "A",
 };
 const rawPlayerSchema = z.object({
+  nationalities: z.array(z.string().trim().min(1)).max(5).optional(),
+  citizenship: z.array(z.string().trim().min(1)).max(5).nullable().optional(),
+  nationality: z.union([z.string(), z.array(z.string())]).nullable().optional(),
   manualCorrection: z.object({ fields: z.array(z.string()), correctedAt: z.iso.datetime({ offset: true }) }).optional(),
   id: z.string(), name: z.string(), position: z.string().nullable(),
   imageUrl: z.unknown().optional(),
@@ -93,7 +96,7 @@ export function normalizeLivePlayer(input: unknown, clubName: string, collectedA
   const age = player.age ?? (born ? reference.getUTCFullYear() - born.getUTCFullYear() - Number(reference.toISOString().slice(5, 10) < player.dateOfBirth!.slice(5)) : null);
   const position = player.position ? positions[player.position] : undefined;
   if (age === null || !position) throw new Error(`${clubName} / ${player.name}: idade/nascimento ou posição não informados. Nada foi aplicado.`);
-  return { manualCorrection: player.manualCorrection, id: player.id, name: player.name, age, position, photoUrl: trustedPlayerPhoto(player.imageUrl), dateOfBirth: player.dateOfBirth ?? null,
+  return { nationalities: player.nationalities ?? player.citizenship ?? (player.nationality ? (Array.isArray(player.nationality) ? player.nationality : [player.nationality]) : undefined), manualCorrection: player.manualCorrection, id: player.id, name: player.name, age, position, photoUrl: trustedPlayerPhoto(player.imageUrl), dateOfBirth: player.dateOfBirth ?? null,
     shirtNumber: player.shirtNumber && player.shirtNumber > 0 ? player.shirtNumber : null,
     foot: ({ left: "E", right: "D", both: "A" } as const)[player.foot as "left" | "right" | "both"] ?? null,
     contractEndsOn: player.contract ?? null, marketValueEur: player.marketValue ?? null };
