@@ -127,3 +127,10 @@ it("does not remove linked players when the source club is absent in a version 1
   const base = { clubs: database.clubs.filter(item => item.id !== club.id), players: [{ ...player, transfermarkt: { id: "1", collectedAt: "2026-01-01T00:00:00Z", season: "2026" } }] };
   expect(applyTransfermarktSnapshot(base, snapshot, catalog, links)).toEqual(base);
 });
+
+it("carries source nationality arrays into the editor without using club country", () => {
+  const { database, snapshot, catalog, links, club } = fixture();
+  Object.assign(snapshot.clubs[0].players[0], { nationalities: ["Argentina", "Italy"] });
+  const imported = applyTransfermarktSnapshot(database,snapshot,catalog,links);
+  expect(imported.players.find(p => p.transfermarkt?.id === "1" && p.clubId === club.id)?.nationalities).toEqual(["Argentina","Italy"]);
+});
