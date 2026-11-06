@@ -32,6 +32,7 @@ it("renders every goalkeeper with the realistic contrasting mold and club crest 
   const crest = container.querySelector("image[data-jersey-crest='true']")!;
 
   expect(svg.getAttribute("data-jersey-role")).toBe("goalkeeper");
+  expect(svg.querySelectorAll("[data-jersey-sleeves=long] path")).toHaveLength(2);
   expect(svg.getAttribute("data-gk-color")).toBe("#eab308");
   expect(fabric.getAttribute("href")).toBe(KIT_TEMPLATE.image);
   expect(fabric.hasAttribute("filter")).toBe(true);
