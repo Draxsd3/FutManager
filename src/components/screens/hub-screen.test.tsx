@@ -115,3 +115,15 @@ it("shows confidence estimates and updates them when season results change", () 
   view.rerender(<HubScreen {...props} confidence={null} />);
   expect(screen.getAllByText("Indisponível")).toHaveLength(2);
 });
+
+it("orders the roster by displayed position without changing the squad or lineup", () => {
+  const positions = ["A", "M", "Z", "L", "G"] as const;
+  const players = positions.map((position, index) => ({ ...squad[index], id: 800 + index, name: `Teste ${position}`, position, foot: "D" as const }));
+  const original = players.map((p) => p.id);
+  const starters = [players[0].id];
+  render(<HubScreen club="Teste" coach="Teste" budget={0} opponent="Rival" round={1} competition="Liga" squad={players} starters={starters} selectedPlayer={null} onSelectPlayer={vi.fn()} onOpenPlayer={vi.fn()} onEscalar={vi.fn()} onQuickAction={vi.fn()} />);
+  const rows = within(screen.getByRole("region", { name: "Elenco do clube" })).getAllByRole("row").slice(1);
+  expect(rows.map((row) => row.querySelector("td")?.textContent)).toEqual(["GK", "RB", "CB", "CM", "ST"]);
+  expect(players.map((p) => p.id)).toEqual(original);
+  expect(starters).toEqual([players[0].id]);
+});

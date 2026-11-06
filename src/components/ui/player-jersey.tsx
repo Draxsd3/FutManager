@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { clubKitAsset } from "@/lib/game/assets";
 import { Player } from "@/lib/game/mock-data";
 import { ClubColorIdentity, resolveGoalkeeperKit } from "@/lib/kits/goalkeeper";
+import { importedKitFrame } from "@/lib/kits/kit-bounds";
 import { KIT_TEMPLATE } from "@/lib/kits/template";
 
 export function PlayerJersey({
@@ -56,6 +57,11 @@ export function PlayerJersey({
             <feComposite in="lit" in2="SourceGraphic" operator="in" />
           </filter>
         </defs>
+        {/* Sleeve extensions sit behind the original fabric and share the goalkeeper color. */}
+        <g data-jersey-sleeves="long" fill={goalkeeperKit.hex} stroke="rgba(0,0,0,0.22)" strokeWidth="5" strokeLinejoin="round">
+          <path d="M26 395 L165 420 L150 686 Q90 704 32 675 Z" />
+          <path d="M844 395 L705 420 L720 686 Q780 704 838 675 Z" />
+        </g>
         <image
           data-jersey-fabric="true"
           href={KIT_TEMPLATE.image}
@@ -112,6 +118,7 @@ export function PlayerJersey({
 
   const asset = club ? clubKitAsset(club, kit) : null;
   const imported = asset && asset !== failedAsset ? asset : null;
+  const frame = imported ? importedKitFrame(imported) : { x: 0, y: 0, width: 870, height: 1000 };
   const color = clubColors?.primaryColor ?? "var(--team-primary, #287354)";
 
   return (
@@ -144,8 +151,10 @@ export function PlayerJersey({
       )}
       <image
         href={imported ?? KIT_TEMPLATE.image}
-        width="870"
-        height="1000"
+        x={frame.x}
+        y={frame.y}
+        width={frame.width}
+        height={frame.height}
         preserveAspectRatio="xMidYMid meet"
         filter={imported ? undefined : `url(#${id})`}
         onError={imported ? () => setFailedAsset(asset) : undefined}
