@@ -13,6 +13,8 @@ import { normalizeName } from "./matching";
 
 const numericId = z.string().regex(/^[1-9]\d*$/);
 const playerSchema = z.object({
+  nationalities: z.array(z.string().trim().min(1).max(100)).max(5).optional(),
+  nationality: z.union([z.string().trim().min(1).max(100), z.array(z.string().trim().min(1).max(100)).max(5)]).nullable().optional(),
   loan: loanContractSchema.nullable().optional(),
   positionEstimated: z.boolean().optional(),
   manualCorrection: z.object({ fields: z.array(z.string()), correctedAt: z.iso.datetime({ offset: true }) }).optional(),
@@ -170,6 +172,7 @@ export function applyTransfermarktSnapshot(
           manualCorrection: player.manualCorrection, photoUrl: trustedPlayerPhoto(player.photoUrl) ?? (old?.transfermarkt?.id === player.id ? trustedPlayerPhoto(old.transfermarkt.photoUrl) : undefined), marketValueEur: player.marketValueEur, dateOfBirth: player.dateOfBirth ?? null, modelVersion: "provisional-national-v1",
           estimatedFields: ["overall", "salaryMonthlyBrl", "marketValueBrl", ...(player.positionEstimated ? ["primaryPosition"] : []), ...(!player.foot ? ["preferredFoot"] : []), ...(!player.contractEndsOn ? ["contractEndsOn"] : []), ...(!player.shirtNumber ? ["shirtNumber"] : [])] },
         shirtNumber: player.shirtNumber ?? old?.shirtNumber ?? index + 1,
+        nationalities: player.nationalities ?? (player.nationality ? (Array.isArray(player.nationality) ? player.nationality : [player.nationality]) : old?.nationalities ?? []),
         age: player.age, primaryPosition: player.position, secondaryPosition: null,
         preferredFoot: player.foot ?? old?.preferredFoot ?? "D", overall,
         starRating: old?.starRating ?? Math.max(1, Math.min(5, Math.round((overall - 30) / 12))),

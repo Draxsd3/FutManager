@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { collectNationalSnapshot, nationalCompetitions, normalizeLiveClub, resolveSeason, type LiveCheckpoint, type LiveRequest } from "./transfermarkt-live";
+import { collectNationalSnapshot, nationalCompetitions, normalizeLivePlayer, normalizeLiveClub, resolveSeason, type LiveCheckpoint, type LiveRequest } from "./transfermarkt-live";
 import { applyTransfermarktSnapshot } from "./transfermarkt";
 
 function club(id = "614", count = 40) {
@@ -185,4 +185,12 @@ it("collects every club gallery, defers a failure and resumes just the missing h
   const snapshot = await collectNationalSnapshot({ request: resumed, save, load: async () => saved, enrichHonours: true });
   expect(resumed).toHaveBeenCalledTimes(1);
   expect(snapshot.clubs.every(club => Array.isArray(club.honours))).toBe(true);
+});
+
+it("preserves multiple source nationalities from legacy arrays, strings and citizenship, without guessing missing data", () => {
+  const raw = { id: "999", name: "Atleta", position: "Goalkeeper", age: 25 };
+  expect(normalizeLivePlayer({ ...raw, nationality: ["Brazil", "Italy"] }, "Clube", "2026-11-04T12:00:00Z").nationalities).toEqual(["Brazil", "Italy"]);
+  expect(normalizeLivePlayer({ ...raw, nationality: "Argentina" }, "Clube", "2026-11-04T12:00:00Z").nationalities).toEqual(["Argentina"]);
+  expect(normalizeLivePlayer({ ...raw, citizenship: ["Portugal"] }, "Clube", "2026-11-04T12:00:00Z").nationalities).toEqual(["Portugal"]);
+  expect(normalizeLivePlayer(raw, "Clube", "2026-11-04T12:00:00Z").nationalities).toBeUndefined();
 });

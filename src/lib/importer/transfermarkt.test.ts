@@ -128,6 +128,13 @@ it("does not remove linked players when the source club is absent in a version 1
   expect(applyTransfermarktSnapshot(base, snapshot, catalog, links)).toEqual(base);
 });
 
+it("carries source nationality arrays into the editor without using club country", () => {
+  const { database, snapshot, catalog, links, club } = fixture();
+  Object.assign(snapshot.clubs[0].players[0], { nationalities: ["Argentina", "Italy"] });
+  const imported = applyTransfermarktSnapshot(database,snapshot,catalog,links);
+  expect(imported.players.find(p => p.transfermarkt?.id === "1" && p.clubId === club.id)?.nationalities).toEqual(["Argentina","Italy"]);
+});
+
 it("preserva a foto confiável da API no catálogo e em atualizações sem foto", async () => {
   const { normalizeLivePlayer } = await import("./transfermarkt-live");
   const { database, catalog, links, snapshot } = fixture();

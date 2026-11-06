@@ -1,4 +1,5 @@
 "use client";
+import { isFreeAgent, playerNationalities, searchMarket, type MarketAvailability } from "@/lib/game/market-search";
 import Image from "next/image";
 import { Crest } from "@/components/ui/club-sidebar";
 import marketStyles from "./market-screen.module.css";
@@ -30,21 +31,17 @@ function Empty({ children }: { children: React.ReactNode }) { return <div classN
 
 export function WorldScreens({ youthTeam, youthLoading = false, onPromoteYouth, onRetryYouth, embedded = false, championHistory = [], section, database, squad, club, coach, budget, records, negotiations, historyView, onHistoryView, onOpenPlayer, onTransferOffer, onTransferAction, onBack }: { youthTeam?: YouthTeam; youthLoading?: boolean; onPromoteYouth?: (id: string) => string; onRetryYouth?: () => void; embedded?: boolean; championHistory?: ChampionshipRecord[]; section: "juniors" | "teams" | "search" | "coaches" | "history"; database: EditorDatabase; squad: Player[]; club: string; coach: string; budget: number; records: Record<number, PlayerCareerRecord>; negotiations: TransferNegotiation[]; historyView: HistoryView; onHistoryView: (view: HistoryView) => void; onOpenPlayer: (id: number) => void; onTransferOffer: (playerId: string, feeBrl: number, wageSharePercent: number) => string; onTransferAction: (id: string, action: TransferNegotiationAction) => string; onBack: () => void }) {
   const [marketTab, setMarketTab] = useState<"players" | "negotiations">("players");
-  const [query, setQuery] = useState(""); const [country, setCountry] = useState(""); const [division, setDivision] = useState(""); const [position, setPosition] = useState(""); const [age, setAge] = useState(""); const [maxFee, setMaxFee] = useState(""); const [availability, setAvailability] = useState<"available" | "sale" | "loan">("available"); const [page, setPage] = useState(0); const [selected, setSelected] = useState(""); const [marketPlayerId, setMarketPlayerId] = useState(""); const [offerFee, setOfferFee] = useState(""); const [wageShare, setWageShare] = useState("50"); const [counteringId, setCounteringId] = useState(""); const [counterFee, setCounterFee] = useState(""); const [counterShare, setCounterShare] = useState("50"); const [message, setMessage] = useState("");
+  const [query, setQuery] = useState(""); const [country, setCountry] = useState(""); const [division, setDivision] = useState(""); const [position, setPosition] = useState(""); const [age, setAge] = useState(""); const [maxFee, setMaxFee] = useState(""); const [availability, setAvailability] = useState<MarketAvailability>("all"); const [page, setPage] = useState(0); const [selected, setSelected] = useState(""); const [marketPlayerId, setMarketPlayerId] = useState(""); const [offerFee, setOfferFee] = useState(""); const [wageShare, setWageShare] = useState("50"); const [counteringId, setCounteringId] = useState(""); const [counterFee, setCounterFee] = useState(""); const [counterShare, setCounterShare] = useState("50"); const [message, setMessage] = useState("");
+  const [nationality, setNationality] = useState("");
+  const [minOverall, setMinOverall] = useState("");
+  const [maxSalary, setMaxSalary] = useState("");
+  const nationalities = [...new Set(database.players.flatMap(playerNationalities))].sort((a,b) => a.localeCompare(b,"pt-BR"));
+  const resetSearch = () => { setQuery(""); setCountry(""); setDivision(""); setPosition(""); setAge(""); setMaxFee(""); setNationality(""); setMinOverall(""); setMaxSalary(""); setAvailability("all"); setPage(0); };
   const clubsById = useMemo(() => new Map(database.clubs.map((item) => [item.id, item])), [database.clubs]);
   const countries = [...new Set(database.clubs.map((item) => item.country).filter(Boolean))].sort();
   const divisions = [...new Set(database.clubs.filter((item) => !country || item.country === country).map((item) => item.division))].sort();
   const hired = new Set(squad.map((item) => item.sourceId));
-  const players = database.players.filter((p) => {
-    const team = clubsById.get(p.clubId);
-    const isListed = p.marketStatus === "sale" || p.marketStatus === "loan";
-    const kind = p.marketStatus === "loan" ? "loan" : "sale";
-    return !!team && team.name !== club && !hired.has(p.id) && isListed && (availability === "available" || p.marketStatus === availability)
-      && (!country || team.country === country) && (!division || team.division === division)
-      && (!position || p.primaryPosition === position) && (!age || p.age <= Number(age))
-      && (!maxFee || askingFeeBrl(kind, p.marketValueBrl) <= Number(maxFee) * 1e6)
-      && p.name.toLocaleLowerCase("pt-BR").includes(query.toLocaleLowerCase("pt-BR"));
-  }).sort((a, b) => b.overall - a.overall || a.name.localeCompare(b.name));
+  const players = searchMarket(database, club, hired, { query, country, division, position, maxAge: age, maxFee, availability, nationality, minOverall, maxSalary });
   const coaches = database.clubs.map((team) => ({ id: team.id, name: team.name === club ? coach : team.coachName, team })).filter((item) => item.name && item.name.toLocaleLowerCase("pt-BR").includes(query.toLocaleLowerCase("pt-BR")));
   const activeCoach = coaches.find((item) => item.id === selected);
   const pages = Math.max(1, Math.ceil(players.length / 12)); const visiblePage = Math.min(page, pages - 1);
@@ -57,7 +54,7 @@ export function WorldScreens({ youthTeam, youthLoading = false, onPromoteYouth, 
       <Header eyebrow="transferências" title="Mercado" detail="Pesquise atletas listados à venda ou para empréstimo e negocie com o clube." onBack={onBack}/>
       <div className={marketStyles.market}>
         <div className={marketStyles.intro}>
-          <div className={marketStyles.introCopy}><span className={marketStyles.kicker}>CENTRAL DE TRANSFERÊNCIAS</span><h2>Encontre seu próximo reforço</h2><p>Busque jogadores disponíveis e acompanhe suas propostas em um só lugar.</p></div>
+          <div className={marketStyles.introCopy}><span className={marketStyles.kicker}>CENTRAL DE TRANSFERÊNCIAS</span><h2>Encontre seu próximo reforço</h2><p>Explore o mercado, descubra talentos e escolha seu próximo reforço.</p></div>
           <Image src="/icons/navigation/mercado.webp" alt="" aria-hidden="true" width={104} height={104} className={marketStyles.heroIcon} unoptimized />
           <div className={marketStyles.budget}><Image src="/icons/navigation/financas.webp" alt="" aria-hidden="true" width={48} height={48} unoptimized /><span><small>CAIXA DISPONÍVEL</small><strong>{formatBrl(budget * 1000)}</strong></span></div>
         </div>
@@ -67,40 +64,50 @@ export function WorldScreens({ youthTeam, youthLoading = false, onPromoteYouth, 
         </nav>
         {message && <p role="status" className={marketStyles.notice}>{message}</p>}
         {marketTab === "players" ? <section className={marketStyles.panel} aria-label="Busca de jogadores">
-          <div className={marketStyles.sectionHeading}><div><h3>Jogadores disponíveis</h3><p>Escolha um atleta para enviar uma proposta.</p></div><span>{players.length} {players.length === 1 ? "jogador" : "jogadores"}</span></div>
+          <div className={marketStyles.sectionHeading}><div><h3>Área de observação</h3><p>Explore por perfil, mesmo sem saber o nome do atleta.</p></div><span>{players.length} {players.length === 1 ? "jogador" : "jogadores"}</span></div>
+          <div className={marketStyles.scouting} role="group" aria-label="Rotas de observação">
+            {([['all','Visão geral'],['free','Sem clube'],['sale','À venda'],['loan','Empréstimos']] as const).map(([value,label]) => <button key={value} type="button" aria-pressed={availability === value} onClick={() => { setAvailability(value); if (value === "free") { setCountry(""); setDivision(""); } setPage(0); }}>{label}</button>)}
+            <button type="button" aria-pressed={age === "23"} onClick={() => { setAge(age === "23" ? "" : "23"); setPage(0); }}>Até 23 anos</button>
+            <button type="button" className={marketStyles.clearSearch} onClick={resetSearch}>Limpar busca</button>
+          </div>
           <div className={marketStyles.filters}>
-            <label className={marketStyles.searchField}><span>Buscar jogador</span><input aria-label="Buscar por nome" placeholder="Nome do jogador" value={query} onChange={(e) => { setQuery(e.target.value); setPage(0); }}/></label>
-            <label><span>Disponibilidade</span><select aria-label="Disponibilidade" value={availability} onChange={(e) => { setAvailability(e.target.value as typeof availability); setPage(0); }}><option value="available">À venda ou empréstimo</option><option value="sale">Somente à venda</option><option value="loan">Somente para empréstimo</option></select></label>
+            <label className={marketStyles.searchField}><span>Buscar jogador</span><input aria-label="Buscar jogadores" placeholder="Nome, clube, país ou nacionalidade" value={query} onChange={(e) => { setQuery(e.target.value); setPage(0); }}/></label>
+            <label><span>Disponibilidade</span><select aria-label="Disponibilidade" value={availability} onChange={(e) => { setAvailability(e.target.value as typeof availability); if (e.target.value === "free") { setCountry(""); setDivision(""); } setPage(0); }}><option value="all">Todos os jogadores</option><option value="free">Sem clube / sem contrato</option><option value="available">Listados ou livres</option><option value="sale">Somente à venda</option><option value="loan">Somente para empréstimo</option></select></label>
             <label><span>Posição</span><select aria-label="Posição" value={position} onChange={(e) => { setPosition(e.target.value); setPage(0); }}><option value="">Todas as posições</option>{[["G", "Goleiro"], ["L", "Lateral"], ["Z", "Zagueiro"], ["M", "Meio-campo"], ["A", "Atacante"]].map(([code, name]) => <option key={code} value={code}>{name}</option>)}</select></label>
-            <details className={marketStyles.moreFilters}><summary>Mais filtros{[country, division, age, maxFee].filter(Boolean).length > 0 ? ` (${[country, division, age, maxFee].filter(Boolean).length})` : ""}</summary><div className={marketStyles.extraFilters}>
-              <label><span>País</span><select aria-label="País" value={country} onChange={(e) => { setCountry(e.target.value); setDivision(""); setPage(0); }}><option value="">Todos os países</option>{countries.map((c) => <option key={c}>{c}</option>)}</select></label>
+            <details className={marketStyles.moreFilters}><summary>Mais filtros{[country, nationality, division, age, maxFee, minOverall, maxSalary].filter(Boolean).length > 0 ? ` (${[country, nationality, division, age, maxFee, minOverall, maxSalary].filter(Boolean).length})` : ""}</summary><div className={marketStyles.extraFilters}>
+              <label><span>Onde atua</span><select aria-label="País onde atua" value={country} onChange={(e) => { setCountry(e.target.value); setDivision(""); setPage(0); }}><option value="">Todos os países</option>{countries.map((c) => <option key={c}>{c}</option>)}</select></label>
+              <label><span>Nacionalidade</span><select aria-label="Nacionalidade" value={nationality} onChange={e => { setNationality(e.target.value); setPage(0); }}><option value="">Todas as nacionalidades</option>{nationalities.map(n => <option key={n}>{n}</option>)}<option value="__unknown">Não informada</option></select></label>
+              <label><span>Força mínima</span><select aria-label="Força mínima" value={minOverall} onChange={e => { setMinOverall(e.target.value); setPage(0); }}><option value="">Qualquer força</option>{[50,60,70,80,90].map(n => <option key={n} value={n}>{n} ou mais</option>)}</select></label>
+              <label><span>Salário até (R$ mil/mês)</span><input aria-label="Salário máximo em milhares" type="number" min="0" value={maxSalary} onChange={e => { setMaxSalary(e.target.value); setPage(0); }} placeholder="Sem limite" /></label>
               <label><span>Divisão</span><select aria-label="Competição" value={division} onChange={(e) => { setDivision(e.target.value); setPage(0); }}><option value="">Todas as divisões</option>{divisions.map((d) => <option key={d}>{d}</option>)}</select></label>
               <label><span>Idade máxima</span><select aria-label="Idade máxima" value={age} onChange={(e) => { setAge(e.target.value); setPage(0); }}><option value="">Qualquer idade</option>{[21, 23, 25, 30].map((n) => <option key={n} value={n}>Até {n} anos</option>)}</select></label>
               <label><span>Taxa máxima (R$ mi)</span><input aria-label="Taxa máxima em milhões" value={maxFee} onChange={(e) => { setMaxFee(e.target.value); setPage(0); }} type="number" min="0" placeholder="Sem limite"/></label>
             </div></details>
           </div>
-          <p className={marketStyles.hint}>Somente atletas listados no editor. A contratação depende de acordo e confirmação.</p>
+          <p className={marketStyles.hint}>Sem nome? Escolha uma rota de observação. País indica onde atua; nacionalidade vem do cadastro, nunca do clube. Só listados ou livres recebem propostas.</p>
           <div className={marketStyles.playerList} aria-label="Lista de jogadores" tabIndex={0}>
             {players.slice(visiblePage * 12, visiblePage * 12 + 12).map((p) => {
-              const kind = p.marketStatus === "loan" ? "loan" : "sale";
-              const asking = askingFeeBrl(kind, p.marketValueBrl);
+              const free = isFreeAgent(p);
+              const kind = !free && p.marketStatus === "loan" ? "loan" : "sale";
+              const canOffer = free || p.marketStatus === "sale" || p.marketStatus === "loan";
+              const asking = free ? 0 : askingFeeBrl(kind, p.marketValueBrl);
               const team = clubsById.get(p.clubId);
               const activeNegotiation = negotiations.find((item) => item.playerId === p.id && item.status !== "rejected" && item.status !== "completed");
               return <article key={p.id} className={marketStyles.player}>
                 <div className={marketStyles.playerMain}>
                   <div className={marketStyles.crest}>{team && <Crest club={team.name} size="sm" />}</div>
-                  <div className={marketStyles.playerInfo}><strong>{p.name}</strong><span>{team?.name} · {p.age} anos · salário {formatBrl(p.salaryMonthlyBrl)}/mês</span><div><b className={marketStyles.position}>{p.primaryPosition}</b><b className={marketStyles.rating}>FORÇA {p.overall}</b><b className={kind === "loan" ? marketStyles.loan : marketStyles.sale}>{kind === "loan" ? "PARA EMPRÉSTIMO" : "À VENDA"}</b></div></div>
-                  <div className={marketStyles.asking}><small>{kind === "loan" ? "TAXA PEDIDA" : "VALOR PEDIDO"}</small><strong>{formatBrl(asking)}</strong></div>
-                  <button className={marketStyles.primary} aria-label={`${activeNegotiation ? "Negociação ativa" : "Fazer proposta"} por ${p.name} do ${team?.name}`} disabled={!!activeNegotiation} onClick={() => { setMarketPlayerId(p.id); setOfferFee((asking / 1e6).toFixed(2)); setWageShare("50"); }}>{activeNegotiation ? "Negociação ativa" : "Fazer proposta"}</button>
+                  <div className={marketStyles.playerInfo}><strong>{p.name}</strong><span>{free ? "Sem clube" : team?.name} · {playerNationalities(p).join(" / ") || "Nacionalidade não informada"} · {p.age} anos · salário {formatBrl(p.salaryMonthlyBrl)}/mês</span><div><b className={marketStyles.position}>{p.primaryPosition}</b><b className={marketStyles.rating}>FORÇA {p.overall}</b><b className={kind === "loan" ? marketStyles.loan : marketStyles.sale}>{free ? "SEM CONTRATO" : !canOffer ? "EM OBSERVAÇÃO" : kind === "loan" ? "PARA EMPRÉSTIMO" : "À VENDA"}</b></div></div>
+                  <div className={marketStyles.asking}><small>{free ? "PASSE LIVRE" : !canOffer ? "REFERÊNCIA" : kind === "loan" ? "TAXA PEDIDA" : "VALOR PEDIDO"}</small><strong>{formatBrl(asking)}</strong></div>
+                  <button className={marketStyles.primary} aria-label={`${activeNegotiation ? "Negociação ativa" : "Fazer proposta"} por ${p.name} do ${team?.name ?? "Sem clube"}`} disabled={!!activeNegotiation || !canOffer} onClick={() => { setMarketPlayerId(p.id); setOfferFee((asking / 1e6).toFixed(2)); setWageShare("50"); }}>{activeNegotiation ? "Negociação ativa" : !canOffer ? "Não listado" : "Fazer proposta"}</button>
                 </div>
                 {marketPlayerId === p.id && <div className={marketStyles.offerForm}>
-                  <label>{kind === "loan" ? "Taxa do empréstimo (R$ mi)" : "Oferta de compra (R$ mi)"}<input aria-label="Valor da proposta" type="number" min="0.01" step="0.01" value={offerFee} onChange={(e) => setOfferFee(e.target.value)}/></label>
-                  {kind === "loan" ? <label>Parte do salário paga por você (%)<input aria-label="Parte do salário" type="number" min="0" max="100" step="5" value={wageShare} onChange={(e) => setWageShare(e.target.value)}/></label> : <p>Além da taxa, a contratação reserva 12 meses de salário.</p>}
-                  <div className={marketStyles.offerActions}><button className={marketStyles.primary} onClick={() => { const feeBrl = Number(offerFee) * 1e6; const share = kind === "loan" ? Number(wageShare) : 0; if (!Number.isFinite(feeBrl) || feeBrl <= 0 || (kind === "loan" && (!Number.isFinite(share) || share < 0 || share > 100))) { setMessage("Revise o valor e a participação salarial."); return; } if (window.confirm(`Enviar oferta de ${formatBrl(feeBrl)}${kind === "loan" ? ` e pagar ${share}% do salário por 6 meses` : ""} por ${p.name}?`)) { setMessage(onTransferOffer(p.id, feeBrl, share)); setMarketPlayerId(""); } }}>Enviar proposta</button><button className={marketStyles.secondary} onClick={() => setMarketPlayerId("")}>Cancelar</button></div>
+                  <label>{free ? "Passe livre — sem taxa" : kind === "loan" ? "Taxa do empréstimo (R$ mi)" : "Oferta de compra (R$ mi)"}<input aria-label="Valor da proposta" type="number" disabled={free} min={free ? "0" : "0.01"} step="0.01" value={offerFee} onChange={(e) => setOfferFee(e.target.value)}/></label>
+                  {kind === "loan" ? <label>Parte do salário paga por você (%)<input aria-label="Parte do salário" type="number" min="0" max="100" step="5" value={wageShare} onChange={(e) => setWageShare(e.target.value)}/></label> : <p>{free ? "Sem taxa de transferência. " : "Além da taxa, "}A contratação reserva 12 meses de salário.</p>}
+                  <div className={marketStyles.offerActions}><button className={marketStyles.primary} onClick={() => { const feeBrl = Number(offerFee) * 1e6; const share = kind === "loan" ? Number(wageShare) : 0; if (!Number.isFinite(feeBrl) || (free ? feeBrl !== 0 : feeBrl <= 0) || (kind === "loan" && (!Number.isFinite(share) || share < 0 || share > 100))) { setMessage("Revise o valor e a participação salarial."); return; } if (window.confirm(`Enviar oferta de ${formatBrl(feeBrl)}${kind === "loan" ? ` e pagar ${share}% do salário por 6 meses` : ""} por ${p.name}?`)) { setMessage(onTransferOffer(p.id, feeBrl, share)); setMarketPlayerId(""); } }}>Enviar proposta</button><button className={marketStyles.secondary} onClick={() => setMarketPlayerId("")}>Cancelar</button></div>
                 </div>}
               </article>;
             })}
-            {!players.length && <div className={marketStyles.empty}><strong>Nenhum jogador encontrado</strong><span>Altere os filtros ou verifique a disponibilidade no editor de clubes.</span></div>}
+            {!players.length && <div className={marketStyles.empty}><strong>Nenhum jogador encontrado</strong><span>Tente outra rota de observação ou limpe a busca. Somente jogadores presentes no universo da carreira aparecem aqui.</span></div>}
           </div>
           <Pagination page={visiblePage} pages={pages} setPage={setPage}/>
         </section> : <section className={marketStyles.panel} aria-label="Negociações da carreira">
@@ -110,7 +117,7 @@ export function WorldScreens({ youthTeam, youthLoading = false, onPromoteYouth, 
           const salaryMonths = item.kind === "loan" ? 6 : 12;
           const wageShare = item.agreedWageSharePercent ?? item.counterWageSharePercent ?? item.wageSharePercent;
           const totalBrl = (item.agreedFeeBrl ?? item.counterFeeBrl ?? item.offerFeeBrl) + (source ? source.salaryMonthlyBrl * (item.kind === "sale" ? 1 : wageShare / 100) * salaryMonths : 0);
-          const statusText = item.status === "countered" ? "Contraproposta recebida" : item.status === "agreed" ? "Acordo entre clubes" : item.status === "completed" ? "Concluída" : "Recusada";
+          const statusText = item.status === "countered" ? "Contraproposta recebida" : item.status === "agreed" ? item.freeAgent ? "Condições aceitas pelo atleta" : "Acordo entre clubes" : item.status === "completed" ? "Concluída" : "Recusada";
           return <article key={item.id} className={marketStyles.deal}>
             <div className="flex flex-wrap items-start justify-between gap-2"><div><b>{item.playerName}</b><p className="text-xs text-[#718477]">{item.sourceClub} · {item.kind === "loan" ? "Empréstimo de 6 meses" : "Transferência definitiva"}</p><p className="mt-1 text-xs font-bold text-[#246e43]">{statusText}</p><p className="mt-1 text-xs text-[#536b59]">{item.message}</p></div><p className="text-right text-xs">Oferta: <b>{formatBrl(item.offerFeeBrl)}</b>{item.kind === "loan" && <span className="block">Salário: {item.wageSharePercent}%</span>}</p></div>
             {item.status === "countered" && <div className="mt-3 rounded-lg bg-[#fff8e5] p-3"><p className="text-xs font-bold">Contraproposta: {formatBrl(item.counterFeeBrl ?? item.askingFeeBrl)}{item.kind === "loan" ? ` · ${item.counterWageSharePercent ?? 50}% do salário` : ""}</p><div className="mt-2 flex flex-wrap gap-2"><button className={action} onClick={() => setMessage(onTransferAction(item.id, { type: "accept-counter" }))}>Aceitar contraproposta</button><button className="rounded-lg border border-[#bbd1c0] px-3 py-2 text-xs font-bold" onClick={() => { setCounteringId(counteringId === item.id ? "" : item.id); setCounterFee((item.offerFeeBrl / 1e6).toFixed(2)); setCounterShare(String(item.wageSharePercent)); }}>Fazer contraproposta</button><button className="rounded-lg border border-[#bbd1c0] px-3 py-2 text-xs font-bold" onClick={() => setMessage(onTransferAction(item.id, { type: "reject" }))}>Encerrar negociação</button></div>
