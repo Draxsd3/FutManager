@@ -22,7 +22,7 @@ beforeEach(() => {
 describe("account entry", () => {
   it("shows the public menu and requires login before continuing a career", async () => {
     render(<AccountGame />);
-    await screen.findByText("Entre para salvar e continuar suas carreiras");
+    await act(async () => { await auth.getSession.mock.results[0].value; });
     fireEvent.click(screen.getByRole("button", { name: /CONTINUAR JOGANDO/ }));
     expect(screen.getByLabelText("Email")).toBeTruthy();
     expect(screen.getByLabelText("Senha")).toBeTruthy();
@@ -54,7 +54,8 @@ describe("account entry", () => {
   it("rejects legacy anonymous sessions instead of exposing a career", async () => {
     auth.getSession.mockResolvedValue({ data: { session: { user: { id: "anon", is_anonymous: true } } } });
     render(<AccountGame />);
-    expect(await screen.findByText("Entre para salvar e continuar suas carreiras")).toBeTruthy();
+    await act(async () => { await auth.getSession.mock.results[0].value; });
+    expect(screen.getByText("Entre para acessar suas carreiras.")).toBeTruthy();
     expect(screen.queryByText(/Conta anon/)).toBeNull();
   });
 
@@ -72,7 +73,7 @@ describe("account entry", () => {
 
 it.each([/INICIAR NOVA CARREIRA/, /CONTINUAR JOGANDO/, /EDITAR O UNIVERSO/, /Entrar \/ Criar conta/])("returns from account entry to the same redesigned public menu: %s", async (action) => {
   render(<AccountGame />);
-  await screen.findByText("Entre para salvar e continuar suas carreiras");
+  await act(async () => { await auth.getSession.mock.results[0].value; });
   fireEvent.click(screen.getByRole("button", { name: action }));
   fireEvent.click(screen.getByRole("button", { name: /Voltar ao início/ }));
   expect(document.querySelector('[data-menu-version="stadium-v3"]')).toBeTruthy();
@@ -83,7 +84,7 @@ it.each([/INICIAR NOVA CARREIRA/, /CONTINUAR JOGANDO/, /EDITAR O UNIVERSO/, /Ent
 
 it.each([/INICIAR NOVA CARREIRA/, /CONTINUAR JOGANDO/, /EDITAR O UNIVERSO/, /Entrar \/ Criar conta/])("always lands on the home menu after login, regardless of entry action: %s", async (action) => {
   render(<AccountGame />);
-  await screen.findByText("Entre para salvar e continuar suas carreiras");
+  await act(async () => { await auth.getSession.mock.results[0].value; });
   fireEvent.click(screen.getByRole("button", { name: action }));
   fireEvent.change(screen.getByLabelText("Email"), { target: { value: "alice@example.com" } });
   fireEvent.change(screen.getByLabelText("Senha"), { target: { value: "test-password" } });

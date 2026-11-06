@@ -20,7 +20,6 @@
   z-index: -2;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 42% at 50% 8%, rgba(229, 184, 75, 0.14), transparent 68%),
     radial-gradient(ellipse 72% 48% at 50% 56%, rgba(47, 208, 107, 0.12), transparent 72%),
     linear-gradient(
       180deg,
@@ -89,7 +88,7 @@
 }
 
 .brandText small {
-  color: var(--champ-gold);
+  color: #aab9af;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -101,28 +100,6 @@
   gap: 12px;
   flex-wrap: wrap;
   justify-content: flex-end;
-}
-
-.syncBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
-  background: rgba(11, 23, 17, 0.72);
-  color: #b7c8bd;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.syncDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--pitch-emerald);
-  box-shadow: 0 0 10px rgba(47, 208, 107, 0.75);
-  flex-shrink: 0;
 }
 
 .account {
@@ -245,17 +222,11 @@
 }
 
 .seasonTag {
-  display: inline-grid;
-  place-items: center;
-  padding: 4px 14px 6px;
-  border: 1px solid rgba(229, 184, 75, 0.55);
-  border-radius: 12px;
-  background: linear-gradient(145deg, rgba(229, 184, 75, 0.24), rgba(31, 24, 9, 0.85));
-  color: var(--champ-gold);
-  font-size: 0.62em;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  color: #c7d1ca;
+  font-size: 0.48em;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-shadow: none;
 }
 
 .subtitle {
@@ -683,15 +654,6 @@
     flex-wrap: wrap;
   }
 
-  .topRight {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .syncBadge {
-    font-size: 10px;
-    padding: 5px 10px;
-  }
 
   .accountEmail {
     max-width: 136px;

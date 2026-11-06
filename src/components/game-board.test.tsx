@@ -749,6 +749,6 @@ it("opens local career options when cloud reads never respond", async () => {
   render(game("cloud-timeout"));
   expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }, { timeout: 22000 })).toBeTruthy();
   expect(screen.getByRole("button", { name: /CONTINUAR JOGANDO/ })).toBeTruthy();
-  expect(screen.getByText("Modo local — Supabase indisponível")).toBeTruthy();
+  expect(screen.queryByRole("region", { name: "Carregamento do FutManager" })).toBeNull();
   pending.mockResolvedValue(null);
 }, 30000);
