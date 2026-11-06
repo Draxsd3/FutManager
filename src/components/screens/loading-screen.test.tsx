@@ -12,7 +12,8 @@ it.each([
   const { container } = render(<LoadingScreen phase={phase} />);
   expect(screen.getByRole("status").textContent).toBe(label);
   expect(container.querySelector('[data-loading-phase]')?.getAttribute("data-loading-phase")).toBe(phase);
-  expect(container.querySelector('img[src="/game-assets/branding/logo-simbolo.png"]')).toBeTruthy();
+  expect(container.querySelector('img[src="/game-assets/branding/logo-completa.png"]')).toBeTruthy();
+  expect(screen.queryByText("FUTMANAGER")).toBeNull();
   expect(screen.queryByRole("progressbar")).toBeNull();
   expect(screen.queryByRole("button")).toBeNull();
 });
