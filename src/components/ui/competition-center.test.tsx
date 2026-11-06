@@ -214,3 +214,19 @@ it("renders the full standings table without an internal vertical scroll contain
   expect(rule).toContain("max-height:none");
   expect(rule).not.toMatch(/overflow(?:-y)?\s*:\s*(?:auto|scroll)/);
 });
+
+it("opens actual groups for Série D and offers its persisted knockout rounds separately", () => {
+  const database = createDefaultDatabase();
+  render(<CompetitionCenter club="ABC" competition="Série D" database={database} activeCompetitionId="league:Brasil:Série D"
+    careerCompetitionData={{ "league:Brasil:Série D": { type: "league", hasKnockout: true, groups: [
+      { name: "Grupo A1", table: [{ club: "Manaus", played: 1, wins: 1, draws: 0, losses: 0, goalsFor: 2, goalsAgainst: 0, points: 3 }] },
+      { name: "Grupo A8", table: [{ club: "ABC", played: 1, wins: 0, draws: 1, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 1 }] },
+    ], formatNote: "16 grupos de 6 · Inscrição incompleta neste universo: Laguna.", table: [], fixtures: [], topScorers: [], topRatings: [], matchesPlayed: 2, goals: 2 } }}
+    table={[]} topScorers={[]} topRatings={[]} fixtures={[]} round={1} onClose={vi.fn()} />);
+  expect(screen.getByText("Grupo A1")).toBeTruthy();
+  expect(screen.getByText("Grupo A8")).toBeTruthy();
+  expect(screen.getAllByRole("table")).toHaveLength(2);
+  expect(screen.getByRole("note").textContent).toContain("Laguna");
+  fireEvent.click(screen.getByRole("button", { name: "Mata-mata" }));
+  expect(screen.getByRole("region", { name: "Confrontos do mata-mata" })).toBeTruthy();
+});
