@@ -48,15 +48,6 @@
   color: #ffffff;
 }
 
-.eyebrow {
-  display: block;
-  margin-top: 22px;
-  color: #e5b84b;
-  letter-spacing: 0.15em;
-  font-size: 10px;
-  font-weight: 800;
-}
-
 .card h1 {
   margin: 10px 0 10px;
   font-size: clamp(26px, 4.2vw, 34px);
@@ -207,5 +198,5 @@
   color: white;
   padding: 12px;
 }
-.accountBrand { display: flex; align-items: center; gap: 10px; margin-top: 22px; }
-.accountBrand .eyebrow { margin-top: 0; }
+.accountBrand { display: flex; justify-content: center; margin-top: 22px; }
+.accountBrand > span { width: min(132px, 45vw); height: auto; aspect-ratio: 977 / 482; padding: 0; }

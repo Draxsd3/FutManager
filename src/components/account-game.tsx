@@ -104,7 +104,7 @@ function AccountScreen({ onBack, unavailable }: { onBack: () => void; unavailabl
   return <section className={styles.screen} aria-labelledby="account-title">
     <div className={styles.card}>
       <button className={styles.back} onClick={onBack} disabled={busy}>← Voltar ao início</button>
-      <span className={styles.accountBrand}><GameLogo /><span className={styles.eyebrow}>FUTMANAGER / SUA CONTA</span></span>
+      <div className={styles.accountBrand} role="img" aria-label="FutManager"><GameLogo /></div>
       <h1 id="account-title">{mode === "login" ? "Seu próximo capítulo." : "Seu legado começa aqui."}</h1>
       <p>Uma conta, várias carreiras. Continue seu progresso em qualquer dispositivo.</p>
       <div className={styles.tabs} aria-label="Acesso à conta">
