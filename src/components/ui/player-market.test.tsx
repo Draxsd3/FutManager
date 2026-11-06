@@ -6,7 +6,7 @@ import { createPlayerCareer } from "@/lib/game/career";
 import { squad } from "@/lib/game/mock-data";
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
-it("exibe dados reais e mantém listagem, renovação e registro de proposta acessíveis", () => {
+it("exibe dados reais e mantém listagem e renovação acessíveis", () => {
   const player = squad[0];
   const record = { ...createPlayerCareer(player, "Clube"), marketStatus: "sale" as const, releaseClause: 12 };
   const onAction = vi.fn().mockReturnValue("Operação registrada");
@@ -24,11 +24,9 @@ it("exibe dados reais e mantém listagem, renovação e registro de proposta ace
   fireEvent.click(screen.getByRole("button", { name: "Enviar proposta" }));
   expect(onAction).toHaveBeenCalledWith({ type: "contract", offer: { salary: record.salary, years: 3, releaseClause: 12 } });
   fireEvent.click(screen.getByRole("button", { name: "Propostas" }));
-  fireEvent.click(screen.getByRole("button", { name: "Registrar proposta" }));
-  expect(screen.getByRole("alert").textContent).toMatch(/Selecione/);
-  fireEvent.change(screen.getByLabelText("Clube interessado"), { target: { value: "Rival" } });
-  fireEvent.click(screen.getByRole("button", { name: "Registrar proposta" }));
-  expect(onAction).toHaveBeenCalledWith(expect.objectContaining({ type: "offer", club: "Rival", fee: player.marketValue }));
+  expect(screen.getByText("Nenhuma proposta recebida")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Registrar proposta" })).toBeNull();
+  expect(screen.queryByLabelText("Clube interessado")).toBeNull();
 });
 it("mostra propostas pendentes e permite recusar ou aceitar com confirmação", () => {
   const player = squad[0], onAction = vi.fn().mockReturnValue("Ok");
