@@ -595,3 +595,8 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Falha/timeout da sessão libera o menu público com mensagem para entrar novamente (não concede acesso a saves de outra conta). Falha/timeout da nuvem libera o menu com os dados locais e informa modo local. Gravações de migração não bloqueiam a exibição das opções; o cache só é marcado sincronizado quando o upload realmente termina.
 - Erros na preparação local são capturados e mostram “Tentar novamente”, sem excluir nem resetar carreiras. `withTimeout` limita a espera, não promete cancelar requisições em andamento e trata respostas/rejeições tardias sem falhas não capturadas.
 - Regressões: sessão que nunca responde e nuvem que nunca responde devem liberar as opções; cobertura dos limites, limpeza dos timers e rejeições tardias.
+
+### 74. Identificação da divisão sem cápsula dourada — 06/11/2026
+- Usuário rejeitou o visual da etiqueta “SÉRIE A” no resumo da última carreira como “design de IA proibido”.
+- Removida a cápsula dourada (fundo translúcido, contorno e arredondamento extremo). A divisão agora aparece como texto sóbrio, com ícone de troféu monoline discreto e separador vertical; sem fundo, brilho ou nova caixa. Aplicar a mesma apresentação a qualquer divisão salva, não somente Série A.
+- Preservar o restante do menu, os dados da carreira e a ação de retomar. Teste cobre nome dinâmico, ícone decorativo e ausência da classe da cápsula antiga.

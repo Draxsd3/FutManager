@@ -84,6 +84,10 @@ describe("StartMenuScreen (stadium-v3)", () => {
     expect(screen.getByLabelText("Última carreira salva")).toBeTruthy();
     expect(screen.getByRole("img", { name: "Escudo do Palmeiras" })).toBeTruthy();
     expect(screen.getByText("Técnico · Renan")).toBeTruthy();
+    const competition = screen.getByText("Série A").parentElement!;
+    expect(competition.className).toContain("careerCompetition");
+    expect(competition.querySelector('svg[aria-hidden="true"]')).toBeTruthy();
+    expect(document.querySelector('[class*="spotlightBadge"]')).toBeNull();
     expect(screen.getByText("6ª rodada")).toBeTruthy();
     expect(screen.getByText("2 carreiras salvas prontas para continuar.")).toBeTruthy();
 
