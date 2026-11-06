@@ -8,13 +8,12 @@ it.each([
   ["game", "Preparando o jogo"],
   ["careers", "Carregando suas carreiras..."],
   ["career", "Carregando a carreira selecionada..."],
-] as const)("announces the actual %s phase without inventing progress", (phase, label) => {
+] as const)("announces the actual %s phase with a simple loading indicator", (phase, label) => {
   const { container } = render(<LoadingScreen phase={phase} />);
   expect(screen.getByRole("status").textContent).toBe(label);
-  const progress = screen.getByRole("progressbar", { name: label });
-  expect(progress.hasAttribute("aria-valuenow")).toBe(false);
-  expect(screen.getByRole("heading", { level: 1 }).textContent).toContain("Grandes histórias.");
-  expect(container.querySelector('[aria-hidden="true"] svg')).toBeTruthy();
+  expect(container.querySelector('[data-loading-phase]')?.getAttribute("data-loading-phase")).toBe(phase);
+  expect(container.querySelector('img[src="/game-assets/branding/logo-simbolo.png"]')).toBeTruthy();
+  expect(screen.queryByRole("progressbar")).toBeNull();
   expect(screen.queryByRole("button")).toBeNull();
 });
 it("uses the game preparation phase by default", () => {
