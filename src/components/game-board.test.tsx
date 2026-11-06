@@ -381,32 +381,23 @@ it("keeps external collection out of career settings and saves the selected matc
   expect(readLocalSaves("alice")[0].progress?.universeSnapshot?.clubs.length).toBeGreaterThan(0);
 });
 
-it("saves a player photo in the active career and restores it after reload", async () => {
-  const photo = await import("@/lib/game/player-photo");
-  const processor = vi.spyOn(photo, "preparePlayerPhoto").mockResolvedValue("data:image/webp;base64,abc");
+it("shows the club shirt in a player profile after career reload", async () => {
   const view = render(game());
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
-  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Foto teste" } });
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Camisa teste" } });
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
   const roster = await screen.findByRole("region", { name: "Elenco do clube" });
   const first = readLocalSaves("alice")[0].progress!.careerSquad![0];
   fireEvent.doubleClick(within(roster).getByRole("button", { name: first.name }));
   const profile = await screen.findByRole("dialog", { name: `Perfil de ${first.name}` });
-  const sourcePhoto = within(profile).getByRole("img", { name: `Retrato de ${first.name}` }).getAttribute("src");
-  expect(sourcePhoto).toMatch(/^https:\/\/img\.a\.transfermarkt\.technology\/portrait\//);
-  fireEvent.change(within(profile).getByLabelText(/Adicionar foto|Alterar foto/), { target: { files: [new File(["foto"], "foto.png", { type: "image/png" })] } });
-  await waitFor(() => expect(readLocalSaves("alice")[0].progress?.careerSquad?.find((player) => player.id === first.id)?.photoDataUrl).toBe("data:image/webp;base64,abc"));
-  expect(readLocalSaves("alice")[0].progress?.careerSquad?.find((player) => player.id !== first.id)?.photoDataUrl).toBeFalsy();
+  expect(within(profile).getByRole("img", { name: `Camisa de ${first.name}` })).toBeTruthy();
+  expect(within(profile).queryByLabelText(/foto/i)).toBeNull();
   view.unmount();
   render(game());
   const restoredRoster = await screen.findByRole("region", { name: "Elenco do clube" });
   fireEvent.doubleClick(within(restoredRoster).getByRole("button", { name: first.name }));
   const restored = await screen.findByRole("dialog", { name: `Perfil de ${first.name}` });
-  expect(within(restored).getByRole("img", { name: `Retrato de ${first.name}` }).getAttribute("src")).toBe("data:image/webp;base64,abc");
-  fireEvent.click(within(restored).getByRole("button", { name: "Remover foto" }));
-  await waitFor(() => expect(readLocalSaves("alice")[0].progress?.careerSquad?.find((player) => player.id === first.id)?.photoDataUrl).toBeNull());
-  expect(within(restored).getByRole("img", { name: `Retrato de ${first.name}` }).getAttribute("src")).toBe(sourcePhoto);
-  processor.mockRestore();
+  expect(within(restored).getByRole("img", { name: `Camisa de ${first.name}` })).toBeTruthy();
 });
 
 it("advances the career date after a result and returns an expired incoming loan without keeping its lineup slot", async () => {
