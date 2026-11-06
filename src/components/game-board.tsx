@@ -1,4 +1,6 @@
 "use client";
+
+import { sourcePlayerPhoto } from "@/lib/game/source-player-photo";
 import { withTimeout } from "@/lib/with-timeout";
 import { LoadingScreen } from "@/components/screens/loading-screen";
 import { SettingsScreen } from "@/components/screens/settings-screen";
@@ -1603,7 +1605,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           const player = squad.find((item) => item.id === profilePlayer);
           if (!player) return null;
           const record = playerCareers[profilePlayer] ?? createPlayerCareer(player, club);
-          return <CareerPlayerProfile key={player.id} player={player} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onPhotoChange={(photo) => setPlayerPhoto(player.id, photo)} onClose={() => setProfilePlayer(null)} />;
+          return <CareerPlayerProfile key={player.id} player={player} sourcePhotoUrl={sourcePlayerPhoto(player, careerDatabase ?? database)} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onPhotoChange={(photo) => setPlayerPhoto(player.id, photo)} onClose={() => setProfilePlayer(null)} />;
         })()}
       </>
     );
@@ -1655,7 +1657,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           const player = squad.find((item) => item.id === profilePlayer);
           if (!player) return null;
           const record = playerCareers[profilePlayer] ?? createPlayerCareer(player, club);
-          return <CareerPlayerProfile key={player.id} player={player} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onPhotoChange={(photo) => setPlayerPhoto(player.id, photo)} onClose={() => setProfilePlayer(null)} />;
+          return <CareerPlayerProfile key={player.id} player={player} sourcePhotoUrl={sourcePlayerPhoto(player, careerDatabase ?? database)} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onPhotoChange={(photo) => setPlayerPhoto(player.id, photo)} onClose={() => setProfilePlayer(null)} />;
         })()}
       </>
     );

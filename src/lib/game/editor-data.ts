@@ -10,6 +10,7 @@ export type TransfermarktOrigin = {
   manualCorrection?: { fields: string[]; correctedAt: string };
   id: string; collectedAt: string; season: string;
   marketValueEur?: number | null; dateOfBirth?: string | null;
+  photoUrl?: string;
   modelVersion?: string; estimatedFields?: string[];
 };
 export type EditorClub = {
