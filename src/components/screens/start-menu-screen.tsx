@@ -159,8 +159,9 @@ export function StartMenuScreen({
                 <span className={styles.spotlightEyebrow}>
                   <i aria-hidden="true" /> ÚLTIMA SESSÃO
                 </span>
-                <span className={styles.spotlightBadge}>
-                  {latestSave.division || "Futebol Brasileiro"}
+                <span className={styles.careerCompetition}>
+                  <InterfaceIcon name="trophy" size={14} />
+                  <span>{latestSave.division || "Futebol Brasileiro"}</span>
                 </span>
               </div>
 
@@ -208,7 +209,7 @@ export function StartMenuScreen({
                 <span className={styles.spotlightEyebrow}>
                   <i aria-hidden="true" /> PIRÂMIDE NACIONAL
                 </span>
-                <span className={styles.spotlightBadge}>TEMPORADA 2026</span>
+                <span className={styles.careerCompetition}>TEMPORADA 2026</span>
               </div>
 
               <div className={styles.seasonBody}>
