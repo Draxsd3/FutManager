@@ -1,4 +1,5 @@
 "use client";
+import { withTimeout } from "@/lib/with-timeout";
 import { LoadingScreen } from "@/components/screens/loading-screen";
 import { SettingsScreen } from "@/components/screens/settings-screen";
 import { applyStructuralDatabaseUpdates, createCareerUniverseSnapshot } from "@/lib/game/career-universe";
@@ -109,6 +110,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [database, setDatabase] = useState<EditorDatabase | null>(null);
   const [saves, setSaves] = useState<CareerSave[]>([]);
   const [activeSaveId, setActiveSaveId] = useState<string | null>(null);
+  const [hydrationError, setHydrationError] = useState(false);
   const [hydrationDone, setHydrationDone] = useState(false);
   const [careerLoaded, setCareerLoaded] = useState(false);
   const savesRef = useRef(saves);
@@ -144,10 +146,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     async function hydrate() {
       await Promise.resolve();
       if (cancelled) return;
-      const pendingDatabaseSync = await hasPendingDatabaseSync(userId).catch(() => false);
-      const localDatabase = upgradeEditorDatabase(await readCachedDatabase(userId).catch(() => null) ?? readLocalDatabase(userId) ?? (await (await import("@/lib/importer/november-database")).applyNovemberDatabase(await importBrazilDatabase())).database);
+      const pendingDatabaseSync = await withTimeout(hasPendingDatabaseSync(userId), 2500).catch(() => false);
+      const localDatabase = upgradeEditorDatabase(await withTimeout(readCachedDatabase(userId), 2500).catch(() => null) ?? readLocalDatabase(userId) ?? (await (await import("@/lib/importer/november-database")).applyNovemberDatabase(await importBrazilDatabase())).database);
       if (cancelled) return;
-      const localSaves = currentCareerSaves(await readCachedCareerSaves(userId).catch(() => null) ?? readLocalSaves(userId))
+      const localSaves = currentCareerSaves(await withTimeout(readCachedCareerSaves(userId), 2500).catch(() => null) ?? readLocalSaves(userId))
         .map((save) => {
           const snapshot = save.progress?.universeSnapshot ?? createCareerUniverseSnapshot(localDatabase);
           const reconciled = reconcileCareerSaveWithDatabase(save, snapshot).save;
@@ -162,13 +164,14 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       setDatabase(localDatabase);
       setSaves(localSaves);
       writeLocalDatabase(localDatabase, userId);
-      await cacheDatabase(localDatabase, userId).catch(() => undefined);
+      await withTimeout(cacheDatabase(localDatabase, userId), 2500).catch(() => undefined);
       setSyncLabel("Dados locais carregados");
 
       try {
-        const [cloudDatabase, cloudSaves] = await Promise.all([readCloudDatabase(userId), readCloudSaves(userId)]);
+        const [cloudDatabase, cloudSaves] = await withTimeout(Promise.all([readCloudDatabase(userId), readCloudSaves(userId)]), 12000);
         if (cancelled) return;
         let effectiveDatabase = localDatabase;
+        let catalogUpload: Promise<boolean> | undefined;
         if (databaseRevision.current > 0) {
           // A deliberate editor import/edit supersedes the hydration snapshot. Its own write is queued.
         } else if (cloudDatabase && !pendingDatabaseSync) {
@@ -176,13 +179,12 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           effectiveDatabase = upgradedCloudDatabase;
           setDatabase(upgradedCloudDatabase);
           writeLocalDatabase(upgradedCloudDatabase, userId);
-          await cacheDatabase(upgradedCloudDatabase, userId, false).catch(() => undefined);
+          await withTimeout(cacheDatabase(upgradedCloudDatabase, userId, false), 2500).catch(() => undefined);
           if (upgradedCloudDatabase.clubs.length !== cloudDatabase.clubs.length) {
-            await writeCloudDatabase(upgradedCloudDatabase, userId);
+            catalogUpload = withTimeout(writeCloudDatabase(upgradedCloudDatabase, userId), 8000).then(() => true, () => false);
           }
         } else {
-          await writeCloudDatabase(localDatabase, userId);
-          await cacheDatabase(localDatabase, userId, false).catch(() => undefined);
+          catalogUpload = withTimeout(writeCloudDatabase(localDatabase, userId), 8000).then(() => true, () => false);
         }
         const reconciledSaveIds = new Set<string>();
         const merged = mergeCareerSaves(localSaves, cloudSaves).map((save) => {
@@ -199,6 +201,13 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         savesRef.current = merged;
         setSaves(merged);
         writeLocalSaves(merged, userId);
+        if (!cancelled) setHydrationDone(true);
+        if (catalogUpload) {
+          const uploaded = await catalogUpload;
+          if (cancelled) return;
+          if (!uploaded) throw new Error("Catálogo salvo localmente; sincronização pendente.");
+          await withTimeout(cacheDatabase(effectiveDatabase, userId, false), 2500).catch(() => undefined);
+        }
         await Promise.all(merged.filter((save) => reconciledSaveIds.has(save.id) || !cloudSaves.some((cloud) => cloud.id === save.id && cloud.updatedAt >= save.updatedAt))
           .map((save) => writeCloudSave(save, userId)));
         setSyncLabel("Supabase conectado");
@@ -208,7 +217,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         if (!cancelled) setHydrationDone(true);
       }
     }
-    void hydrate();
+    void hydrate().catch(() => {
+      if (!cancelled) setHydrationError(true);
+    });
     return () => { cancelled = true; };
   }, [userId]);
 
@@ -1471,6 +1482,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setSelectedPlayer(null);
     setSubstitutionOut(null);
   }
+
+  if (hydrationError) return <div className="grid min-h-dvh place-content-center gap-4 bg-[#07120e] p-8 text-white"><p role="alert">Não foi possível preparar os dados do jogo. Suas carreiras salvas não foram apagadas.</p><button type="button" onClick={() => window.location.reload()} className="rounded border border-white/30 px-4 py-3">Tentar novamente</button></div>;
 
   if (!database || !hydrationDone) return <LoadingScreen phase="careers" />;
 

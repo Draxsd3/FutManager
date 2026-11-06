@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { withTimeout } from "@/lib/with-timeout";
 import { LoadingScreen } from "./screens/loading-screen";
 import { GameLogo } from "./ui/game-logo";
 import { GameBoard } from "./game-board";
@@ -27,7 +28,7 @@ export function AccountGame() {
         setUser(session?.user && !session.user.is_anonymous ? session.user : null);
         setReady(true);
       });
-      void client.auth.getSession().then(({ data, error }) => {
+      void withTimeout(client.auth.getSession(), 8000).then(({ data, error }) => {
         if (!active || receivedAuthEvent) return;
         if (error) setLogoutError("Não foi possível recuperar sua sessão. Entre novamente.");
         setUser(data.session?.user && !data.session.user.is_anonymous ? data.session.user : null);
@@ -66,7 +67,7 @@ export function AccountGame() {
     return <AccountScreen unavailable={configurationError} onBack={() => { setAuthOpen(false); }} />;
   }
 
-  return <StartMenuScreen saveCount={0} syncLabel="Entre para salvar e continuar suas carreiras" onNewGame={requestAccount} onSaves={requestAccount} onEdit={requestAccount} onLogin={requestAccount} />;
+  return <StartMenuScreen saveCount={0} syncLabel={logoutError || "Entre para salvar e continuar suas carreiras"} onNewGame={requestAccount} onSaves={requestAccount} onEdit={requestAccount} onLogin={requestAccount} />;
 }
 
 function AccountScreen({ onBack, unavailable }: { onBack: () => void; unavailable: boolean }) {
