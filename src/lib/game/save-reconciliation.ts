@@ -198,6 +198,10 @@ export function reconcileCareerSaveWithDatabase(
         clubId: managedClub.id,
         clubName: managedClub.name,
         fixtures: cleanedFixtures,
+        ...(season.tournaments ? { tournaments: season.tournaments.map(t => ({ ...t, groups: t.groups.map(g => ({ ...g, clubIds: [...new Set(g.clubIds.map(id => duplicateToCanonical.get(id)?.id ?? id))] })) })) } : {}),
+        ...(season.promotedClubIds ? { promotedClubIds: [...new Set(season.promotedClubIds.map(id => duplicateToCanonical.get(id)?.id ?? id))] } : {}),
+        ...(season.serieDRetainedClubIds ? { serieDRetainedClubIds: [...new Set(season.serieDRetainedClubIds.map(id => duplicateToCanonical.get(id)?.id ?? id))] } : {}),
+        ...(season.stateRelegatedClubIds ? { stateRelegatedClubIds: [...new Set(season.stateRelegatedClubIds.map(id => duplicateToCanonical.get(id)?.id ?? id))] } : {}),
       };
     }
   }

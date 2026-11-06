@@ -57,12 +57,15 @@ function windowFor(fixture: SeasonFixture, roundIndex: number, count: number): W
     target = start;
   } else if (fixture.type === "state") {
     start = day("01-11"); end = day("03-08");
-    // The generated statewide round-robin is not an official federation format.
+    const limit = fixture.stage ? count : MAX_REFERENCE_STATE_DATES;
+    if (fixture.stage) start = day("01-07");
+    if (fixture.stage && fixture.state === "Goiás") { start = day("01-10"); end = day("03-15"); }
+    // Legacy generated statewide round-robins remain explicitly bounded.
     // Do not squeeze an arbitrary number of rounds into the eleven reference dates.
-    if (year === BRAZILIAN_REFERENCE_SEASON && roundIndex >= MAX_REFERENCE_STATE_DATES) {
+    if (year === BRAZILIAN_REFERENCE_SEASON && roundIndex >= limit) {
       return { start: end + 1, end, target: end + 1 };
     }
-    target = interpolate(start, end, roundIndex, year === BRAZILIAN_REFERENCE_SEASON ? Math.min(count, MAX_REFERENCE_STATE_DATES) : count);
+    target = interpolate(start, end, roundIndex, year === BRAZILIAN_REFERENCE_SEASON ? Math.min(count, limit) : count);
   } else if (fixture.division === "Série A") {
     start = day("01-28"); end = day("12-02");
     // Reserve the domestic Série A interruption only in the World Cup year 2026.
@@ -158,7 +161,7 @@ export function applyBrazilianCalendar(season: CareerSeason, notBefore?: string)
     // Prefer the planned day; search closest alternatives inside the same competition window.
     const candidates = Array.from({ length: Math.max(0, group.end - min + 1) }, (_, i) => min + i)
       .sort((a, b) => Math.abs(a - desired) - Math.abs(b - desired) || a - b);
-    const clubs = pending[0].type === "cup" ? new Set([...domesticClubIds, ...pending.flatMap(f => [f.homeClubId, f.awayClubId])]) : new Set(pending.flatMap(f => [f.homeClubId, f.awayClubId]));
+    const clubs = pending.some(f => f.homeClubId.startsWith("pending:")) ? new Set(season.fixtures.filter(f => f.competitionId === pending[0].competitionId && f.stage === "groups").flatMap(f => [f.homeClubId, f.awayClubId])) : pending[0].type === "cup" ? new Set([...domesticClubIds, ...pending.flatMap(f => [f.homeClubId, f.awayClubId])]) : new Set(pending.flatMap(f => [f.homeClubId, f.awayClubId]));
     const chosen = candidates.find(day => {
       // Reflowing a legacy save must not turn the interruption into free match
       // dates. The basic table allows round 18 through 01/06, then resumes 22/07.
