@@ -71,7 +71,7 @@ import { generateYouthTeam, promoteYouth, type YouthTeam } from "@/lib/game/yout
 import type { CareerProgress, MatchPreparation } from "@/lib/game/progress";
 import { applyTrainingSession, type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
 import { calculateMatchStatistics, calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, recoverSquadBetweenMatches, resolveMatchPlayerRole, seededRandom, simulateAction } from "@/lib/game/live-match";
-import { completeCareerFixture, createCareerSeason, getCompetitionPlayerStats, getCompetitionStandings, nextCareerFixture, playerContributionsFromMatch, type CareerSeason } from "@/lib/game/season";
+import { completeCareerFixture, createCareerSeason, upgradeUnplayedSeason, getCompetitionPlayerStats, getCompetitionStandings, nextCareerFixture, playerContributionsFromMatch, type CareerSeason } from "@/lib/game/season";
 import { reconcileCareerSaveWithDatabase } from "@/lib/game/save-reconciliation";
 import { backgroundClubStrengths, roundFixtures } from "@/lib/game/round-fixtures";
 import { loadMatchRules, type MatchRules } from "@/lib/game/match-rules";
@@ -620,6 +620,33 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     const scored = competitionFixtures.filter((fixture) => fixture.status === "played");
     careerCompetitionData[competitionId] = {
       type: metadata.type,
+      hasKnockout: competitionFixtures.some(f => f.stage === "knockout"),
+      qualifiesOverall: competitionSeason?.tournaments?.find(t => t.competitionId === competitionId)?.format.qualify === "top-eight",
+      groups: (() => {
+        const registration = competitionSeason?.tournaments?.find(t => t.competitionId === competitionId);
+        if (!registration) return undefined;
+        const groups = registration.format.pairing === "paulista" ? [] : registration.groups.map(g => ({ name: g.name, table: getCompetitionStandings(competitionFixtures, competitionId, g.clubIds) }));
+        if (registration.format.qualify === "cearense" && competitionFixtures.some(f => f.stage === "second-groups" && f.status !== "locked")) {
+          groups.push(...registration.groups.map((g,i) => ({ name: `2ª fase · Grupo ${i === 0 ? "C" : "D"}`, table: getCompetitionStandings(competitionFixtures, competitionId, getCompetitionStandings(competitionFixtures, competitionId, g.clubIds).slice(0,3).map(r => r.clubId), "second-groups") })));
+        }
+        if (competitionFixtures.some(f => f.stage === "relegation" && f.status !== "locked" && !f.leg)) {
+          const table = getCompetitionStandings(competitionFixtures, competitionId, undefined, "relegation");
+          if (metadata.state === "Santa Catarina") {
+            const fifths = registration.groups.flatMap(g => getCompetitionStandings(competitionFixtures, competitionId, g.clubIds).slice(4,5).map(r => r.clubId));
+            const bonus = getCompetitionStandings(competitionFixtures, competitionId, fifths)[0]?.clubId;
+            const row = table.find(r => r.clubId === bonus);
+            if (row) row.points += 1;
+            table.sort((a,b) => b.points-a.points || b.wins-a.wins || (b.goalsFor-b.goalsAgainst)-(a.goalsFor-a.goalsAgainst) || b.goalsFor-a.goalsFor);
+          }
+          groups.push({ name: "Permanência", table });
+        }
+        return groups.length ? groups : undefined;
+      })(),
+      formatNote: (() => {
+        const registration = competitionSeason?.tournaments?.find(t => t.competitionId === competitionId);
+        if (!registration) return metadata.type === "state" || metadata.division === "Série D" ? "Formato legado/simplificado. Resultados já disputados foram preservados." : undefined;
+        return registration.format.description + (metadata.season !== 2026 ? " · Projeção baseada em 2026" : "") + (registration.incomplete.length ? ` · Inscrição incompleta neste universo: ${registration.incomplete.join(", ")}.` : "");
+      })(),
       seasonYear: metadata.season,
       table: standings,
       fixtures: [...competitionFixtures].sort((a, b) => (a.scheduledDate ?? "").localeCompare(b.scheduledDate ?? "") || a.competitionRound - b.competitionRound).map((fixture) => ({
@@ -969,7 +996,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     }
     const clubId = database?.clubs.find((item) => item.name === save.clubName)?.id ?? save.clubId;
     const storedSeason = save.progress?.competitionSeason ?? (database && clubId ? createCareerSeason(database, clubId, Number(save.inGameDate.slice(0, 4)) || 2026) ?? undefined : undefined);
-    const restoredSeason = storedSeason ? applyBrazilianCalendar(save.progress?.competitionSeason ? storedSeason : { ...storedSeason, calendarVersion: undefined }, save.inGameDate) : undefined;
+    const formatSeason = storedSeason && database ? upgradeUnplayedSeason(storedSeason, database) : storedSeason;
+    const restoredSeason = formatSeason ? applyBrazilianCalendar(save.progress?.competitionSeason ? formatSeason : { ...formatSeason, calendarVersion: undefined }, save.inGameDate) : undefined;
     const resumingMatch = save.progress?.page === "result" || save.progress?.page === "matchOverview";
     const loadingFixture = resumingMatch ? restoredSeason?.fixtures.find(f => f.id === save.progress?.activeFixtureId) : nextCareerFixture(restoredSeason);
     save = { ...save, inGameDate: careerCalendarDate(save.inGameDate, undefined, loadingFixture),

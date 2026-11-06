@@ -1,3 +1,5 @@
+import { advanceTournaments } from "./tournament-progression";
+import { buildRegisteredTournament, type TournamentRegistration } from "./tournament-schedule";
 import { applyBrazilianCalendar } from "./brazilian-calendar";
 import type { EditorDatabase, EditorPlayer } from "./editor-data";
 import type { DivisionKey } from "./mock-data";
@@ -29,6 +31,11 @@ export type SeasonFixture = {
   /** ISO civil date generated inside a CBF planning window, not an official fixture. */
   scheduledDate?: string;
   dateSource?: "cbf-window" | "projection";
+  stage?: "groups" | "second-groups" | "knockout" | "access-playoff" | "relegation";
+  groupName?: string;
+  knockoutStage?: number;
+  tieIndex?: number;
+  leg?: number;
   roundLabel: string;
   homeClubId: string;
   home: string;
@@ -44,6 +51,10 @@ export type SeasonFixture = {
 
 export type CareerSeason = {
   version: 1;
+  tournaments?: TournamentRegistration[];
+  promotedClubIds?: string[];
+  serieDRetainedClubIds?: string[];
+  stateRelegatedClubIds?: string[];
   calendarVersion?: number;
   /** Results earned under a previous manager, excluded from this appointment's confidence. */
   priorAppointmentFixtureIds?: string[];
@@ -335,13 +346,22 @@ export function createCareerSeason(database: EditorDatabase, clubId: string, sea
   const stateId = state ? `state:${state}` : "";
   // Plan the whole domestic world before selecting the manager's competitions.
   // Otherwise selecting a different state changes league dates through local conflicts.
-  const leagueGroups = [...new Set(brazilianClubs.map(club => club.division))].sort().flatMap(division => buildRoundRobinGroups({
+  const tournaments: TournamentRegistration[] = [];
+  const registered = (id: string, name: string, state?: string): FixtureGroup[] | null => {
+    const built = buildRegisteredTournament(database, season, id, name, state);
+    if (!built) return null;
+    tournaments.push(built.registration);
+    const rounds = new Map<number, SeasonFixture[]>();
+    for (const f of built.fixtures) rounds.set(f.competitionRound, [...(rounds.get(f.competitionRound) ?? []), f]);
+    return [...rounds].map(([round, fixtures]) => ({ type: fixtures[0].type, competitionId: id, round, fixtures }));
+  };
+  const leagueGroups = [...new Set(brazilianClubs.map(club => club.division))].sort().flatMap(division => (division === "Série D" ? registered(`league:Brasil:${division}`, `Brasileirão ${division}`) : null) ?? buildRoundRobinGroups({
     clubs: brazilianClubs.filter(club => club.division === division), season,
     competitionId: `league:Brasil:${division}`, competitionName: `Brasileirão ${division}`,
     type: "league", division, doubleRoundRobin: true,
   }));
   const states = [...new Set(brazilianClubs.map(resolveClubState).filter((value): value is string => !!value))].sort();
-  const stateGroups = states.flatMap(state => buildRoundRobinGroups({
+  const stateGroups = states.flatMap(state => registered(`state:${state}`, stateCompetitionName(state), state) ?? buildRoundRobinGroups({
     clubs: brazilianClubs.filter(club => resolveClubState(club) === state), season,
     competitionId: `state:${state}`, competitionName: stateCompetitionName(state), type: "state", state,
   }));
@@ -374,10 +394,10 @@ export function createCareerSeason(database: EditorDatabase, clubId: string, sea
       fixtures.push(scheduled);
     }
   }
-  const planned = applyBrazilianCalendar({ version: 1, season, clubId, clubName: managedClub.name, division: managedClub.division, ...(state ? { state } : {}), fixtures });
+  const planned = applyBrazilianCalendar({ version: 1, tournaments, season, clubId, clubName: managedClub.name, division: managedClub.division, ...(state ? { state } : {}), fixtures });
   const careerFixtures = planned.fixtures.filter(f => f.competitionId === leagueId || f.competitionId === stateId || f.type === "cup");
   const competitionNames = new Set(careerFixtures.map(f => f.competitionName));
-  return { ...planned, fixtures: careerFixtures, calendarIssues: planned.calendarIssues?.filter(name => competitionNames.has(name)) };
+  return { ...planned, tournaments: tournaments.filter(t => careerFixtures.some(f => f.competitionId === t.competitionId)), fixtures: careerFixtures, calendarIssues: planned.calendarIssues?.filter(name => competitionNames.has(name)) };
 }
 
 function typePriority(type: SeasonCompetitionType) {
@@ -416,7 +436,7 @@ export function completeCareerFixture(
   if (!fixture || fixture.status !== "scheduled" || (season.calendarVersion && !fixture.scheduledDate)) return season;
   const winnerClubId = fixture.type === "cup"
     ? score.winnerClubId ?? (score.home > score.away ? fixture.homeClubId : score.away > score.home ? fixture.awayClubId : seededRandom(`${fixture.id}|penalties`)() < 0.5 ? fixture.homeClubId : fixture.awayClubId)
-    : undefined;
+    : fixture.stage === "knockout" || fixture.stage === "access-playoff" ? score.winnerClubId : undefined;
   const settled = season.fixtures.map((item) => {
     if (item.id === fixtureId) return { ...item, status: "played" as const, homeScore: score.home, awayScore: score.away, ...(winnerClubId ? { winnerClubId } : {}), playerContributions: score.playerContributions ?? [] };
     const dueCupBackground = item.type === "cup" && item.status === "locked" && item.homeClubId !== season.clubId && item.awayClubId !== season.clubId && item.calendarRound <= fixture.calendarRound;
@@ -441,10 +461,23 @@ export function completeCareerFixture(
       }
     }
   }
-  return { ...season, fixtures: settled };
+  let advanced = advanceTournaments({ ...season, fixtures: settled }, database);
+  // A manager can already have been eliminated: advance CPU phases due before the current date.
+  for (let pass = 0; pass < 16; pass++) {
+    let changed = false;
+    const cutoff = fixture.calendarRound;
+    const fixtures = advanced.fixtures.map(f => {
+      if (f.status !== "scheduled" || f.calendarRound > cutoff || !f.scheduledDate || f.homeClubId === season.clubId || f.awayClubId === season.clubId) return f;
+      changed = true;
+      return simulateFixture(database, f);
+    });
+    if (!changed) break;
+    advanced = advanceTournaments({ ...advanced, fixtures }, database);
+  }
+  return advanced;
 }
 
-export function getCompetitionStandings(fixtures: SeasonFixture[], competitionId: string): CompetitionStanding[] {
+export function getCompetitionStandings(fixtures: SeasonFixture[], competitionId: string, clubIds?: string[], stage: SeasonFixture["stage"] = "groups"): CompetitionStanding[] {
   const rows = new Map<string, CompetitionStanding>();
   const ensure = (clubId: string, club: string) => {
     let row = rows.get(clubId);
@@ -454,7 +487,7 @@ export function getCompetitionStandings(fixtures: SeasonFixture[], competitionId
     }
     return row;
   };
-  for (const fixture of fixtures.filter((item) => item.competitionId === competitionId)) {
+  for (const fixture of fixtures.filter((item) => item.competitionId === competitionId && (!item.stage || item.stage === stage))) {
     ensure(fixture.homeClubId, fixture.home);
     ensure(fixture.awayClubId, fixture.away);
     if (fixture.status !== "played" || fixture.homeScore === undefined || fixture.awayScore === undefined) continue;
@@ -470,7 +503,28 @@ export function getCompetitionStandings(fixtures: SeasonFixture[], competitionId
     else if (fixture.homeScore < fixture.awayScore) { away.wins += 1; away.points += 3; home.losses += 1; }
     else { home.draws += 1; away.draws += 1; home.points += 1; away.points += 1; }
   }
-  return [...rows.values()].sort((a, b) => b.points - a.points || b.wins - a.wins || (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst) || b.goalsFor - a.goalsFor || a.club.localeCompare(b.club, "pt-BR"));
+  const compare = (a: CompetitionStanding, b: CompetitionStanding) => b.points-a.points || b.wins-a.wins || (b.goalsFor-b.goalsAgainst)-(a.goalsFor-a.goalsAgainst) || b.goalsFor-a.goalsFor;
+  const result = [...rows.values()].filter(row => !clubIds || clubIds.includes(row.clubId)).sort((a,b) => compare(a,b) || a.club.localeCompare(b.club,"pt-BR"));
+  const registered = fixtures.some(f => f.competitionId === competitionId && f.stage === stage);
+  if (!registered) return result;
+  for (let start = 0; start < result.length;) {
+    let end = start+1;
+    while (end < result.length && compare(result[start],result[end]) === 0) end++;
+    const tied = result.slice(start,end);
+    const direct = new Map<string,number>();
+    if (tied.length === 2 && ["league:Brasil:Série D","state:Minas Gerais","state:Ceará"].includes(competitionId)) {
+      for (const f of fixtures.filter(f => f.competitionId === competitionId && f.stage === stage && f.status === "played" && tied.some(r => r.clubId === f.homeClubId) && tied.some(r => r.clubId === f.awayClubId))) {
+        direct.set(f.homeClubId,(direct.get(f.homeClubId) ?? 0)+(f.homeScore ?? 0)-(f.awayScore ?? 0));
+        direct.set(f.awayClubId,(direct.get(f.awayClubId) ?? 0)+(f.awayScore ?? 0)-(f.homeScore ?? 0));
+      }
+    }
+    // Cards are not recorded for CPU fixtures yet. Remaining ties use a seeded in-game draw,
+    // never an alphabetical sporting advantage; this limitation is documented in the REC audit.
+    const draw = (id: string) => seededRandom(`${fixtures[0]?.season}:${competitionId}:table-draw:${id}`)();
+    tied.sort((a,b) => (direct.get(b.clubId) ?? 0)-(direct.get(a.clubId) ?? 0) || draw(a.clubId)-draw(b.clubId));
+    result.splice(start,tied.length,...tied); start = end;
+  }
+  return result;
 }
 
 export function getCompetitionPlayerStats(fixtures: SeasonFixture[], competitionId: string) {
@@ -549,4 +603,10 @@ export function advanceSeasonBeforeDate(season: CareerSeason, date: string, data
     next = completeCareerFixture(next, due.id, { home: score.homeScore!, away: score.awayScore!, winnerClubId: score.winnerClubId, playerContributions: score.playerContributions }, database);
   }
   return next;
+}
+
+/** Structural upgrade only before any match. Never erase or reinterpret earned results. */
+export function upgradeUnplayedSeason(season: CareerSeason, database: EditorDatabase): CareerSeason {
+  if (season.tournaments || season.fixtures.some(f => f.status === "played")) return season;
+  return createCareerSeason(database, season.clubId, season.season) ?? season;
 }

@@ -1,3 +1,4 @@
+import { resolveRegisteredClub, STATE_FORMATS_2026 } from "./tournament-formats";
 import type { EditorDatabase } from "./editor-data";
 
 export type CompetitionCategory =
@@ -89,7 +90,7 @@ export function buildCompetitionCatalog(
     category: "national",
     location: "Brasil",
     division,
-    format: division === "Série A" || division === "Série B" ? "Liga" : "Fases e grupos a cadastrar",
+    format: division === "Série A" || division === "Série B" ? "Liga" : division === "Série D" ? "16 grupos de 6 · turno e returno · mata-mata · 6 acessos" : "Fases e grupos a cadastrar",
     clubs: database.clubs
       .filter((club) => club.country === "Brasil" && club.division === division)
       .map((club) => club.name),
@@ -118,13 +119,15 @@ export function buildCompetitionCatalog(
       clubs: name === "Copa do Brasil" ? brazilianClubs.map((club) => club.name) : [],
     })),
     ...brazilianStates.map((state) => {
-      const participants = brazilianClubs.filter((club) => (club.state ?? stateByName[club.name]) === state);
+      const eligible = brazilianClubs.filter((club) => (club.state ?? stateByName[club.name]) === state);
+      const rules = STATE_FORMATS_2026[state];
+      const participants = rules ? rules.groups.flat().flatMap(name => { const club = resolveRegisteredClub(eligible, name); return club ? [club] : []; }) : eligible;
       return {
         id: `state:${state}`,
         name: stateNames[state] ?? `Campeonato Estadual · ${state}`,
         category: "state" as const,
         location: state,
-        format: participants.length >= 2 ? `Grupo único · ${participants.length} clubes cadastrados` : "Sem participantes suficientes cadastrados",
+        format: rules?.description ?? (participants.length >= 2 ? `Formato simplificado · ${participants.length} clubes cadastrados` : "Sem participantes suficientes cadastrados"),
         clubs: participants.map((club) => club.name),
       };
     }),

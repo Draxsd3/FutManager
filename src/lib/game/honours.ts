@@ -1,3 +1,4 @@
+import { knockoutWinner } from "./tournament-progression";
 import { z } from "zod";
 import type { EditorDatabase } from "./editor-data";
 import { getCompetitionPlayerStats, getCompetitionStandings, type CareerSeason } from "./season";
@@ -26,7 +27,14 @@ export function archiveChampionships(history: ChampionshipRecord[], season: Care
     if (season.priorAppointmentFixtureIds && fixtures.every(f => season.priorAppointmentFixtureIds!.includes(f.id))) continue;
     const first = fixtures[0];
     let championId: string | undefined, runnerUpId: string | undefined;
-    if (first.type === "cup") {
+    if (fixtures.some(f => f.stage === "knockout")) {
+      const stage = Math.max(...fixtures.filter(f => f.stage === "knockout").map(f => f.knockoutStage ?? 0));
+      const final = fixtures.filter(f => f.stage === "knockout" && f.knockoutStage === stage);
+      if (new Set(final.map(f => f.tieIndex)).size !== 1) continue;
+      championId = knockoutWinner(final);
+      if (!championId) continue;
+      runnerUpId = final[0].homeClubId === championId ? final[0].awayClubId : final[0].homeClubId;
+    } else if (first.type === "cup") {
       const lastRound = Math.max(...fixtures.map(f => f.competitionRound));
       const finals = fixtures.filter(f => f.competitionRound === lastRound);
       if (finals.length !== 1 || finals[0].status !== "played") continue;

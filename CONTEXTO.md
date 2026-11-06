@@ -600,3 +600,10 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Usuário rejeitou o visual da etiqueta “SÉRIE A” no resumo da última carreira como “design de IA proibido”.
 - Removida a cápsula dourada (fundo translúcido, contorno e arredondamento extremo). A divisão agora aparece como texto sóbrio, com ícone de troféu monoline discreto e separador vertical; sem fundo, brilho ou nova caixa. Aplicar a mesma apresentação a qualquer divisão salva, não somente Série A.
 - Preservar o restante do menu, os dados da carreira e a ação de retomar. Teste cobre nome dinâmico, ícone decorativo e ausência da classe da cápsula antiga.
+
+### 75. Regras reais de grupos da Série D e dos estaduais — 06/11/2026
+- Pedido explícito: pesquisar regras antes de corrigir os grupos. Pesquisa/fonte/limites em `docs/REGULAMENTOS-2026.md`; priorizar REC das federações, pois resumos da imprensa se contradizem.
+- Novo gerador registra grupos e fases separadamente. Série D: 16×6, 10 jogos por clube, top4, chaveamento anexo B, ida/volta, quatro acessos nas quartas + dois playoffs. Não coroar primeiro da tabela de grupos nem misturar resultados eliminatórios na pontuação inicial.
+- Oito estaduais com regras distintas: SP (tabela única/potes), RJ, MG, RS, PR, SC, GO, CE (duas fases de grupos). Permanência pesquisada em RJ/RS/SC/PR/CE/GO (janela goiana até 15/03); registro direto de descenso SP/MG. As outras 19 federações continuam simplificadas e devem ser sinalizadas, não apresentadas como integralmente oficiais.
+- Inscritos estaduais podem estar sem divisão nacional. Não inscrever qualquer clube por ser do mesmo estado; não inventar inscritos ausentes do universo. Exibir inscrição incompleta com os nomes faltantes, preservando jogadores/API/universos independentes.
+- Migrar automaticamente só antes da primeira partida. Em carreira já disputada, preservar resultados e informar formato legado. Datas/sorteio de adversários são projeções; títulos secundários, critérios disciplinares e virada plurianual ainda têm limites documentados. Não alegar conformidade integral dos 27 estaduais.

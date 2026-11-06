@@ -16,6 +16,9 @@ import type {
 export type CareerCompetitionView = {
   type: "league" | "state" | "cup";
   seasonYear?: number;
+  hasKnockout?: boolean;
+  qualifiesOverall?: boolean;
+  formatNote?: string;
   groups?: { name: string; table: TableRow[] }[];
   table: TableRow[];
   fixtures: RoundFixture[];
@@ -128,8 +131,8 @@ export function CompetitionCenter({
   const effectiveFixtures = careerData?.fixtures ?? fixtures;
   const effectiveScorers = careerData?.topScorers ?? topScorers;
   const effectiveRatings = careerData?.topRatings ?? topRatings;
-  const isKnockout = careerData?.type === "cup" || selected?.id === "national:Copa do Brasil";
-  const visibleScope = scope === "table" && isKnockout ? (careerData?.groups?.length ? "groups" : "bracket") : scope;
+  const isKnockout = careerData?.hasKnockout || careerData?.type === "cup" || selected?.id === "national:Copa do Brasil";
+  const visibleScope = scope === "table" && isKnockout && !careerData?.qualifiesOverall ? (careerData?.groups?.length ? "groups" : "bracket") : scope;
   const rows = selected
     ? [...(careerData?.type === "league" && careerData.table.length ? careerData.table.map(row => row.club) : selected.clubs)]
         .map((name) => ({
@@ -229,12 +232,13 @@ export function CompetitionCenter({
                   {competitionTrophyAsset(selected) ? <Image src={competitionTrophyAsset(selected)!} alt={`Troféu ${selected.name}`} width={64} height={84} unoptimized className={styles.headerTrophy} /> : <span className={styles.headerTrophy} aria-hidden="true"><ClassicIcon name="medal_award_gold" size={30} /></span>}
                   <h2>{selected.name}</h2>
                 </header>
+                {careerData?.formatNote && <p role="note">{careerData.formatNote}</p>}
                 <nav
                   className={styles.scopes}
                   aria-label="Detalhes da competição"
                 >
                   {[
-                    ...(!isKnockout ? [{ id: "table", label: "Classificação" }] : []),
+                    ...(!isKnockout || careerData?.qualifiesOverall ? [{ id: "table", label: "Classificação" }] : []),
                     ...(careerData?.groups?.length ? [{ id: "groups", label: "Fase de grupos" }] : []),
                     ...(isKnockout ? [{ id: "bracket", label: "Mata-mata" }] : []),
                     { id: "rounds", label: "Rodadas" },
