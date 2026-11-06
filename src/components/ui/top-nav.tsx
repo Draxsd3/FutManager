@@ -12,8 +12,8 @@ export type NavItem = { icon: ClassicIconName; image?: string; label: string; on
 export function TopNav({ items, date, classic = false }: { items: NavItem[]; date: string; classic?: boolean; teamName?: string }) {
   return (
     <header className={styles.topbar} data-compact={classic || undefined}>
-      <div className={styles.brand} aria-label="FUTMANAGER">
-        <GameLogo /><span className={styles.brandCopy}><strong>FUTMANAGER</strong></span>
+      <div className={styles.brand} role="img" aria-label="FutManager">
+        <GameLogo />
       </div>
       <nav aria-label="Navegação do clube" className={styles.nav}>
         {items.map((item) => <NavButton key={item.label} item={item} />)}
