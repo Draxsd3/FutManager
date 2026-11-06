@@ -7,6 +7,7 @@ import {
 import { historicalHonourSchema } from "@/lib/game/honours";
 import { loanContractSchema } from "@/lib/game/loans";
 import { z } from "zod";
+import { trustedPlayerPhoto } from "@/lib/game/source-player-photo";
 import type { EditorClub, EditorDatabase, EditorPlayer } from "@/lib/game/editor-data";
 import { normalizeName } from "./matching";
 
@@ -17,6 +18,7 @@ const playerSchema = z.object({
   loan: loanContractSchema.nullable().optional(),
   positionEstimated: z.boolean().optional(),
   manualCorrection: z.object({ fields: z.array(z.string()), correctedAt: z.iso.datetime({ offset: true }) }).optional(),
+  photoUrl: z.string().max(2048).optional(),
   id: numericId, name: z.string().trim().min(1).max(250), dateOfBirth: z.iso.date().nullable().optional(),
   age: z.number().int().min(14).max(65), position: z.enum(["G", "L", "Z", "M", "A"]),
   shirtNumber: z.number().int().min(1).max(999).nullable(),
@@ -167,7 +169,7 @@ export function applyTransfermarktSnapshot(
         id: old?.id ?? crypto.randomUUID(), clubId: club.id, name: player.name,
         ...(player.loan ? { loan: { ...player.loan, owner: { ...player.loan.owner, clubId: resolveClub(player.loan.owner.externalId) }, borrower: { ...player.loan.borrower, clubId: resolveClub(player.loan.borrower.externalId) } } } : {}),
         transfermarkt: { id: player.id, collectedAt: incoming.fetchedAt, season: snapshot.seasonId ?? "2026",
-          manualCorrection: player.manualCorrection, marketValueEur: player.marketValueEur, dateOfBirth: player.dateOfBirth ?? null, modelVersion: "provisional-national-v1",
+          manualCorrection: player.manualCorrection, photoUrl: trustedPlayerPhoto(player.photoUrl) ?? (old?.transfermarkt?.id === player.id ? trustedPlayerPhoto(old.transfermarkt.photoUrl) : undefined), marketValueEur: player.marketValueEur, dateOfBirth: player.dateOfBirth ?? null, modelVersion: "provisional-national-v1",
           estimatedFields: ["overall", "salaryMonthlyBrl", "marketValueBrl", ...(player.positionEstimated ? ["primaryPosition"] : []), ...(!player.foot ? ["preferredFoot"] : []), ...(!player.contractEndsOn ? ["contractEndsOn"] : []), ...(!player.shirtNumber ? ["shirtNumber"] : [])] },
         shirtNumber: player.shirtNumber ?? old?.shirtNumber ?? index + 1,
         nationalities: player.nationalities ?? (player.nationality ? (Array.isArray(player.nationality) ? player.nationality : [player.nationality]) : old?.nationalities ?? []),

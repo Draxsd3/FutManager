@@ -392,7 +392,9 @@ it("saves a player photo in the active career and restores it after reload", asy
   const first = readLocalSaves("alice")[0].progress!.careerSquad![0];
   fireEvent.doubleClick(within(roster).getByRole("button", { name: first.name }));
   const profile = await screen.findByRole("dialog", { name: `Perfil de ${first.name}` });
-  fireEvent.change(within(profile).getByLabelText("Adicionar foto"), { target: { files: [new File(["foto"], "foto.png", { type: "image/png" })] } });
+  const sourcePhoto = within(profile).getByRole("img", { name: `Retrato de ${first.name}` }).getAttribute("src");
+  expect(sourcePhoto).toMatch(/^https:\/\/img\.a\.transfermarkt\.technology\/portrait\//);
+  fireEvent.change(within(profile).getByLabelText(/Adicionar foto|Alterar foto/), { target: { files: [new File(["foto"], "foto.png", { type: "image/png" })] } });
   await waitFor(() => expect(readLocalSaves("alice")[0].progress?.careerSquad?.find((player) => player.id === first.id)?.photoDataUrl).toBe("data:image/webp;base64,abc"));
   expect(readLocalSaves("alice")[0].progress?.careerSquad?.find((player) => player.id !== first.id)?.photoDataUrl).toBeFalsy();
   view.unmount();
@@ -403,6 +405,7 @@ it("saves a player photo in the active career and restores it after reload", asy
   expect(within(restored).getByRole("img", { name: `Retrato de ${first.name}` }).getAttribute("src")).toBe("data:image/webp;base64,abc");
   fireEvent.click(within(restored).getByRole("button", { name: "Remover foto" }));
   await waitFor(() => expect(readLocalSaves("alice")[0].progress?.careerSquad?.find((player) => player.id === first.id)?.photoDataUrl).toBeNull());
+  expect(within(restored).getByRole("img", { name: `Retrato de ${first.name}` }).getAttribute("src")).toBe(sourcePhoto);
   processor.mockRestore();
 });
 

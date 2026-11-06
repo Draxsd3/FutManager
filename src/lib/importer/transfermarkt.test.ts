@@ -134,3 +134,17 @@ it("carries source nationality arrays into the editor without using club country
   const imported = applyTransfermarktSnapshot(database,snapshot,catalog,links);
   expect(imported.players.find(p => p.transfermarkt?.id === "1" && p.clubId === club.id)?.nationalities).toEqual(["Argentina","Italy"]);
 });
+
+it("preserva a foto confiável da API no catálogo e em atualizações sem foto", async () => {
+  const { normalizeLivePlayer } = await import("./transfermarkt-live");
+  const { database, catalog, links, snapshot } = fixture();
+  const imageUrl = "https://img.a.transfermarkt.technology/portrait/big/1-123.jpg";
+  const normalized = normalizeLivePlayer({ id: "1", name: "Fixture player 0", age: 24, position: "Central Midfield", imageUrl }, "Clube", "2026-11-04T00:00:00Z");
+  const incoming = structuredClone(snapshot);
+  Object.assign(incoming.clubs[0].players[0], normalized);
+  const first = applyTransfermarktSnapshot(database, incoming, catalog, links);
+  expect(first.players.find(p => p.transfermarkt?.id === "1")?.transfermarkt?.photoUrl).toBe(imageUrl);
+  const second = applyTransfermarktSnapshot(first, snapshot, catalog, links);
+  expect(second.players.find(p => p.transfermarkt?.id === "1")?.transfermarkt?.photoUrl).toBe(imageUrl);
+  expect(normalizeLivePlayer({ id: "1", name: "Atleta", age: 24, position: "Central Midfield", imageUrl: "https://evil.example/portrait/x" }, "Clube", "2026-11-04T00:00:00Z").photoUrl).toBeUndefined();
+});

@@ -3,6 +3,7 @@ import { historicalHonourSchema } from "@/lib/game/honours";
 import { manualCorrectionSchema } from "./transfermarkt-corrections";
 import { loanContractSchema } from "@/lib/game/loans";
 import { z } from "zod";
+import { trustedPlayerPhoto } from "@/lib/game/source-player-photo";
 import { transfermarktSnapshotSchema, type TransfermarktSnapshot } from "./transfermarkt";
 
 export const COLLECTION_VERSION = 2;
@@ -42,6 +43,7 @@ const rawPlayerSchema = z.object({
   nationality: z.union([z.string(), z.array(z.string())]).nullable().optional(),
   manualCorrection: z.object({ fields: z.array(z.string()), correctedAt: z.iso.datetime({ offset: true }) }).optional(),
   id: z.string(), name: z.string(), position: z.string().nullable(),
+  imageUrl: z.unknown().optional(),
   age: z.number().int().nullable().optional(), dateOfBirth: z.iso.date().nullable().optional(),
   shirtNumber: z.number().int().nullable().optional(), foot: z.string().nullable().optional(),
   contract: z.iso.date().nullable().optional(), marketValue: z.number().int().nullable().optional(),
@@ -94,7 +96,7 @@ export function normalizeLivePlayer(input: unknown, clubName: string, collectedA
   const age = player.age ?? (born ? reference.getUTCFullYear() - born.getUTCFullYear() - Number(reference.toISOString().slice(5, 10) < player.dateOfBirth!.slice(5)) : null);
   const position = player.position ? positions[player.position] : undefined;
   if (age === null || !position) throw new Error(`${clubName} / ${player.name}: idade/nascimento ou posição não informados. Nada foi aplicado.`);
-  return { nationalities: player.nationalities ?? player.citizenship ?? (player.nationality ? (Array.isArray(player.nationality) ? player.nationality : [player.nationality]) : undefined), manualCorrection: player.manualCorrection, id: player.id, name: player.name, age, position, dateOfBirth: player.dateOfBirth ?? null,
+  return { nationalities: player.nationalities ?? player.citizenship ?? (player.nationality ? (Array.isArray(player.nationality) ? player.nationality : [player.nationality]) : undefined), manualCorrection: player.manualCorrection, id: player.id, name: player.name, age, position, photoUrl: trustedPlayerPhoto(player.imageUrl), dateOfBirth: player.dateOfBirth ?? null,
     shirtNumber: player.shirtNumber && player.shirtNumber > 0 ? player.shirtNumber : null,
     foot: ({ left: "E", right: "D", both: "A" } as const)[player.foot as "left" | "right" | "both"] ?? null,
     contractEndsOn: player.contract ?? null, marketValueEur: player.marketValue ?? null };
