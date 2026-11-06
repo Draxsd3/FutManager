@@ -24,6 +24,7 @@ export function HubScreen({ kit = 1, club, clubColors, coach, budget, opponent, 
 }) {
   const positionOrder = { G: 0, L: 1, Z: 2, M: 3, A: 4 } as const;
   const orderedSquad = [...squad].sort((a, b) => positionOrder[a.position] - positionOrder[b.position] || fifaPositionOrder(a) - fifaPositionOrder(b));
+  const pendingOffers = squad.filter(player => playerCareers[player.id]?.transferOffers?.some(offer => offer.status === "pending"));
   const selectedRecord = selectedPlayer ? playerCareers[selectedPlayer.id] : undefined;
   const selectedSeason = selectedRecord?.seasons.find((item) => item.season === season && item.club === club);
 
@@ -31,6 +32,7 @@ export function HubScreen({ kit = 1, club, clubColors, coach, budget, opponent, 
     <ClubSidebar confidence={confidence} club={club} coach={coach} budget={budget} opponent={opponent} competition={competition} roundLabel={roundLabel ?? `${round}ª rodada`} isHome={isHome} hasNextMatch={hasNextMatch} squadSize={squad.length} ctaLabel="Escalar Time" onCta={onEscalar} onQuickAction={onQuickAction} />
     <section className={styles.roster} aria-label="Elenco do clube">
       <div className={styles.toolbar}><div className={styles.rosterTitle}><b>Plantel</b><span>{squad.length} atletas · temporada {season}</span></div>{onLoans && <button type="button" className={styles.weekBadge} onClick={onLoans}>Empréstimos</button>}<span className={styles.weekBadge}>SEMANA {trainingWeek}</span></div>
+      {pendingOffers.length > 0 && <p role="status" className="px-4 py-2 text-xs font-bold text-[#22653d]">Propostas recebidas para {pendingOffers.length} atleta(s). Abra a ficha do jogador e selecione Mercado → Propostas.</p>}
       {loanReminder > 0 && <p role="status" className="px-4 py-2 text-xs font-bold text-amber-800">{loanReminder} empréstimo(s) vence(m) nas próximas quatro semanas. Abra Empréstimos para propor a prorrogação antes da devolução.</p>}
       <div className={styles.rosterBody}>
         <div className={styles.tableScroll}>
@@ -43,7 +45,7 @@ export function HubScreen({ kit = 1, club, clubColors, coach, budget, opponent, 
               const current = record?.seasons.find((item) => item.season === season && item.club === club);
               return <tr key={player.id} onClick={() => onSelectPlayer(player.id)} onDoubleClick={() => onOpenPlayer(player.id)} className={selectedPlayer?.id === player.id ? styles.selected : undefined}>
                 <td>{fifaPosition(player)}</td><td className={styles.name}><button type="button" onClick={(event) => { event.stopPropagation(); onSelectPlayer(player.id); }} onDoubleClick={(event) => { event.stopPropagation(); onOpenPlayer(player.id); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); onOpenPlayer(player.id); } }} title="Selecione ou dê dois cliques para abrir a ficha">{player.name}</button>{starters.includes(player.id) && <span className={styles.starter} title="Titular">XI</span>}</td>
-                <td>{player.foot}</td><td>{player.overall}</td><td><span className={styles.energy}><span style={{ width: `${Math.max(0, Math.min(100, player.energy))}%` }} /><b>{player.energy}%</b></span></td><td>{record?.salary ?? player.salary} mil</td><td>{player.marketValue.toFixed(1)}M</td><td>{current?.games ?? 0}</td><td>{current?.goals ?? 0}</td><td>{player.traits}</td><td>{player.age}</td><td>{current?.assists ?? 0}</td><td className={current?.average != null && current.average >= 7 ? styles.good : current?.average != null && current.average < 6 ? styles.low : undefined}>{current?.average?.toFixed(2).replace(".", ",") ?? "—"}</td><td>{marketLabel}</td>
+                <td>{player.foot}</td><td>{player.overall}</td><td><span className={styles.energy}><span style={{ width: `${Math.max(0, Math.min(100, player.energy))}%` }} /><b>{player.energy}%</b></span></td><td>{record?.salary ?? player.salary} mil</td><td>{player.marketValue.toFixed(1)}M</td><td>{current?.games ?? 0}</td><td>{current?.goals ?? 0}</td><td>{player.traits}</td><td>{player.age}</td><td>{current?.assists ?? 0}</td><td className={current?.average != null && current.average >= 7 ? styles.good : current?.average != null && current.average < 6 ? styles.low : undefined}>{current?.average?.toFixed(2).replace(".", ",") ?? "—"}</td><td>{marketLabel}{record?.transferOffers?.some(offer => offer.status === "pending") && <span className="ml-1 font-bold text-[#227347]"> · Proposta!</span>}</td>
               </tr>;
             })}</tbody>
           </table>

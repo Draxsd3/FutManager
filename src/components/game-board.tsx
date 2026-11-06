@@ -57,6 +57,7 @@ import {
   type Player,
 } from "@/lib/game/mock-data";
 import { buildSquadFromDatabase, upgradeEditorDatabase, type CareerSave, type EditorDatabase } from "@/lib/game/editor-data";
+import { generateIncomingOffers } from "@/lib/game/incoming-offers";
 import { createPlayerCareer, recordPlayerMatch, applyNegotiation, type MarketAction, type MatchParticipation, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
 import { deployLineupPlayer } from "@/lib/game/lineup";
 import { mergeCareerSaves } from "@/lib/game/save-utils";
@@ -1160,7 +1161,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       budget,
       inGameDate: date ?? current?.inGameDate ?? "2026-01-22",
       updatedAt: new Date().toISOString(),
-      playerCareers,
+      playerCareers: progressPatch.playerCareers ?? playerCareers,
       manualPositions,
       progress: { ...progressRef.current, ...progressPatch, round: nextRound, page: page === "result" && nextRound !== round ? "hub" : page },
     });
@@ -1855,9 +1856,11 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         const nextStarters = starters.filter(id => remaining.has(id));
         const nextBench = matchBenchIds?.filter(id => remaining.has(id));
         const nextPositions = Object.fromEntries(Object.entries(manualPositions).filter(([id]) => remaining.has(Number(id))));
+        const nextCareers = nextDatabase ? generateIncomingOffers({ squad: nextSquad, records: playerCareers, database: nextDatabase, managerMarket: nextManagerMarket, clubId: ownClubId, club, eventId: activeFixture?.id ?? `round-${round}`, date }) : playerCareers;
+        setPlayerCareers(nextCareers);
         setLoanContracts(nextLoans); setCareerSquad(nextSquad); setStarters(nextStarters); setMatchBenchIds(nextBench); setManualPositions(nextPositions);
         setProfilePlayer(null); setSelectedPlayer(null);
-        saveCurrentCareer(nextRound, { managerMarket: nextManagerMarket, activeFixtureId: nextFixture?.id, loanContracts: nextLoans, careerSquad: nextSquad, starters: nextStarters, matchBenchIds: nextBench, manualPositions: nextPositions }, date);
+        saveCurrentCareer(nextRound, { managerMarket: nextManagerMarket, activeFixtureId: nextFixture?.id, loanContracts: nextLoans, careerSquad: nextSquad, starters: nextStarters, matchBenchIds: nextBench, manualPositions: nextPositions, playerCareers: nextCareers }, date);
         setPage("hub");
       }}
     />
