@@ -24,6 +24,9 @@ describe("account entry", () => {
     render(<AccountGame />);
     await act(async () => { await auth.getSession.mock.results[0].value; });
     fireEvent.click(screen.getByRole("button", { name: /CONTINUAR JOGANDO/ }));
+    const brand = screen.getByRole("img", { name: "FutManager" });
+    expect(brand.querySelector('img[src="/game-assets/branding/logo-simbolo.png"]')).toBeTruthy();
+    expect(screen.queryByText("FUTMANAGER / SUA CONTA")).toBeNull();
     expect(screen.getByLabelText("Email")).toBeTruthy();
     expect(screen.getByLabelText("Senha")).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Email"), { target: { value: "treinador@example.com" } });
