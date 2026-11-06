@@ -105,3 +105,15 @@ it("keeps the game loading screen until account verification settles", async () 
   expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
   expect(screen.queryByRole("region", { name: "Carregamento do FutManager" })).toBeNull();
 });
+
+it("opens the public career options when session verification never responds", async () => {
+  vi.useFakeTimers();
+  try {
+    auth.getSession.mockReturnValue(new Promise(() => {}));
+    render(<AccountGame />);
+    expect(screen.getByRole("status").textContent).toBe("Preparando o jogo");
+    await act(async () => { await vi.advanceTimersByTimeAsync(8000); });
+    expect(screen.getByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
+    expect(screen.getByText("Não foi possível recuperar sua sessão. Entre novamente.")).toBeTruthy();
+  } finally { vi.useRealTimers(); }
+});

@@ -742,3 +742,13 @@ it("preserves the entire career universe across editor changes, reload and conti
   expect(readLocalSaves("isolated-universe")[0].progress?.universeSnapshot?.players).toEqual(snapshot.players);
   expect(within(screen.getByRole("dialog", { name: "Configurações" })).getByText(original.clubName, { selector: "strong" })).toBeTruthy();
 }, 30000);
+
+it("opens local career options when cloud reads never respond", async () => {
+  const persistence = await import("@/lib/game/persistence");
+  const pending = vi.mocked(persistence.readCloudDatabase).mockImplementationOnce(() => new Promise(() => {}));
+  render(game("cloud-timeout"));
+  expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }, { timeout: 22000 })).toBeTruthy();
+  expect(screen.getByRole("button", { name: /CONTINUAR JOGANDO/ })).toBeTruthy();
+  expect(screen.queryByRole("region", { name: "Carregamento do FutManager" })).toBeNull();
+  pending.mockResolvedValue(null);
+}, 30000);

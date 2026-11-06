@@ -588,3 +588,10 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Mesma composição no fallback de rota (`app/loading.tsx`), na verificação inicial da conta, na hidratação das carreiras e na abertura de uma carreira salva. Cada fase informa seu estado real; não adicionar atraso artificial, porcentagens inventadas ou etapas fictícias de progresso.
 - Barra indeterminada, mensagem `role=status` com anúncio educado e elementos decorativos ocultos de leitores de tela; respeitar `prefers-reduced-motion` desativando as animações. Preservar restauração de sessões, autenticação, salvamento e isolamento dos universos.
 - Testes de estados, acessibilidade, ausência de percentual fictício e transição da verificação de conta para o menu; testes de navegação aguardam explicitamente o menu em vez de confundir o título de carregamento com o título inicial.
+
+### 73. Correção de carregamento inicial sem fim — 06/11/2026
+- Relato: a página inicial fica carregando e não mostra as opções de carreiras após a recriação do loading.
+- A abertura aguardava indefinidamente `auth.getSession`, operações IndexedDB e leituras/gravações da nuvem. Agora a verificação da sessão tem limite de 8 segundos, leituras do catálogo/saves na nuvem têm limite conjunto de 12 segundos e o cache local tem limite de espera de 2,5 segundos por operação.
+- Falha/timeout da sessão libera o menu público com mensagem para entrar novamente (não concede acesso a saves de outra conta). Falha/timeout da nuvem libera o menu com os dados locais e informa modo local. Gravações de migração não bloqueiam a exibição das opções; o cache só é marcado sincronizado quando o upload realmente termina.
+- Erros na preparação local são capturados e mostram “Tentar novamente”, sem excluir nem resetar carreiras. `withTimeout` limita a espera, não promete cancelar requisições em andamento e trata respostas/rejeições tardias sem falhas não capturadas.
+- Regressões: sessão que nunca responde e nuvem que nunca responde devem liberar as opções; cobertura dos limites, limpeza dos timers e rejeições tardias.
