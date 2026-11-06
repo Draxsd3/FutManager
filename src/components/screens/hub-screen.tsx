@@ -4,7 +4,7 @@ import type { ClubConfidence } from "@/lib/game/confidence";
 import { positionLabel, type Player } from "@/lib/game/mock-data";
 import type { PlayerCareerRecord } from "@/lib/game/career";
 import { ClubSidebar } from "@/components/ui/club-sidebar";
-import { fifaPosition } from "@/lib/game/fifa-position";
+import { fifaPosition, fifaPositionOrder } from "@/lib/game/fifa-position";
 import { PlayerJersey } from "@/components/ui/player-jersey";
 import type { ClubColorIdentity } from "@/lib/kits/goalkeeper";
 import { TRAINING_DAYS, trainingDrillLabel, trainingWeekSessions, type TrainingSessionRecord } from "@/lib/game/training";
@@ -22,6 +22,8 @@ export function HubScreen({ kit = 1, club, clubColors, coach, budget, opponent, 
   onSelectPlayer: (id: number) => void; onOpenPlayer: (id: number) => void; onEscalar: () => void;
   onQuickAction: (action: "roster" | "finances" | "trophies" | "training") => void;
 }) {
+  const positionOrder = { G: 0, L: 1, Z: 2, M: 3, A: 4 } as const;
+  const orderedSquad = [...squad].sort((a, b) => positionOrder[a.position] - positionOrder[b.position] || fifaPositionOrder(a) - fifaPositionOrder(b));
   const selectedRecord = selectedPlayer ? playerCareers[selectedPlayer.id] : undefined;
   const selectedSeason = selectedRecord?.seasons.find((item) => item.season === season && item.club === club);
 
@@ -34,7 +36,7 @@ export function HubScreen({ kit = 1, club, clubColors, coach, budget, opponent, 
         <div className={styles.tableScroll}>
           <table className={styles.table}>
             <thead><tr><th scope="col" title="Posição">P</th><th scope="col">Nome</th><th scope="col" title="Pé dominante">Pé</th><th scope="col" title="Força">F</th><th scope="col">Energia</th><th scope="col">Salário</th><th scope="col">Valor</th><th scope="col" title="Jogos na temporada">J</th><th scope="col" title="Gols na temporada">G</th><th scope="col">Car.</th><th scope="col">Idade</th><th scope="col" title="Assistências na temporada">A</th><th scope="col" title="Nota média na temporada">NM</th><th scope="col">Mercado</th></tr></thead>
-            <tbody>{squad.map((player) => {
+            <tbody>{orderedSquad.map((player) => {
               const record = playerCareers[player.id];
               const market = record?.marketStatus ?? player.marketAvailability ?? "normal";
               const marketLabel = player.acquisitionType === "loan" ? "Emprestado" : ({ sale: "À venda", loan: "Disponível p/ empréstimo", retiring: "Aposentadoria", normal: "—" } as Record<string, string>)[market] ?? "—";
