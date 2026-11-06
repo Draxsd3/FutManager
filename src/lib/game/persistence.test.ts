@@ -71,6 +71,7 @@ it("reads every cloud page and uploads imported players in bounded batches", asy
   const template=database.players[0];
   database.clubs=database.clubs.slice(0,1);
   database.players=Array.from({length:35},(_,i)=>({...template,id:`p-${i}`,clubId:database.clubs[0].id,shirtNumber:i+1}));
+  database.players[0].transfermarkt = { id: "641458", collectedAt: "2026-11-04T00:00:00Z", season: "2026", photoUrl: "https://img.a.transfermarkt.technology/portrait/big/641458-1718990783.jpg" };
   const fullRemote=Array.from({length:1001},(_,i)=>({id:`remote-${i}`,name:`Jogador ${i}`,club_id:"remote-club",average_rating:null}));
   const ranges: number[]=[];
   client.from.mockImplementation((table:string)=>({
@@ -85,6 +86,7 @@ it("reads every cloud page and uploads imported players in bounded batches", asy
   expect(loaded?.players).toHaveLength(1001);
   expect(ranges).toEqual([0,500,1000]);
   await writeCloudDatabase(database,"alice");
+  expect(client.upsert.mock.calls.flatMap(([rows]) => rows).find(row => row.id === "p-0")?.transfermarkt?.photoUrl).toBe(database.players[0].transfermarkt?.photoUrl);
   expect(client.upsert.mock.calls.every(([rows])=>rows.length<=250)).toBe(true);
   expect(client.upsert.mock.calls.flatMap(([rows])=>rows).every(row=>row.owner_id==="alice")).toBe(true);
 });

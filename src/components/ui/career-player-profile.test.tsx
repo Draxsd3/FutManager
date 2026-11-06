@@ -48,3 +48,23 @@ it("apresenta erro sem trocar a foto para arquivos inválidos", async () => {
   expect(await screen.findByText("Escolha uma imagem JPG, PNG ou WebP.")).toBeTruthy();
   expect(onPhotoChange).not.toHaveBeenCalled();
 });
+
+it("usa a foto da fonte, prioriza a manual e volta para a silhueta se a imagem falhar", () => {
+  const player = squad[0];
+  const sourcePhotoUrl = "https://img.a.transfermarkt.technology/portrait/big/641458-1718990783.jpg";
+  const props = { player, sourcePhotoUrl, club: "Clube", record: createPlayerCareer(player, "Clube"), onPhotoChange: vi.fn(), onMarketAction: vi.fn(), onClose: vi.fn() };
+  const view = render(<CareerPlayerProfile {...props} />);
+  const portrait = () => screen.getByRole("img", { name: `Retrato de ${player.name}` }) as HTMLImageElement;
+  expect(portrait().getAttribute("src")).toBe(sourcePhotoUrl);
+  expect(screen.getByLabelText("Alterar foto")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Remover foto" })).toBeNull();
+  view.rerender(<CareerPlayerProfile {...props} player={{ ...player, photoDataUrl: "data:image/png;base64,manual" }} />);
+  expect(portrait().getAttribute("src")).toBe("data:image/png;base64,manual");
+  fireEvent.click(screen.getByRole("button", { name: "Remover foto" }));
+  expect(props.onPhotoChange).toHaveBeenCalledWith(null);
+  view.rerender(<CareerPlayerProfile {...props} />);
+  expect(portrait().getAttribute("src")).toBe(sourcePhotoUrl);
+  fireEvent.error(portrait());
+  expect(portrait().getAttribute("src")).toBe("/game-assets/player-silhouette.png");
+  expect(screen.getByLabelText("Adicionar foto")).toBeTruthy();
+});
