@@ -13,10 +13,7 @@ export function LoadingScreen({ phase = "game" }: { phase?: LoadingPhase }) {
   return (
     <section className={styles.screen} aria-label="Carregamento do FutManager" data-loading-phase={phase}>
       <div className={styles.content}>
-        <div className={styles.brand}>
-          <GameLogo />
-          <span>FUTMANAGER</span>
-        </div>
+        <GameLogo variant="full" className={styles.brand} />
         <div className={styles.status} role="status" aria-live="polite" aria-atomic="true">
           <span className={styles.spinner} aria-hidden="true" />
           <span>{labels[phase]}</span>

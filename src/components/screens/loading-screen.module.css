@@ -10,8 +10,7 @@
 }
 
 .content { display: grid; justify-items: center; gap: 32px; max-width: 100%; }
-.brand { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 800; letter-spacing: .1em; }
-.brand > span:first-child { width: 64px; height: 44px; padding: 0; }
+.content .brand { width: min(280px, 75vw); height: auto; }
 .status { display: flex; align-items: center; gap: 10px; color: #b0bdb4; font-size: 13px; line-height: 1.5; }
 .spinner { width: 16px; height: 16px; flex: none; border: 2px solid #ffffff26; border-top-color: #a6bdaa; border-radius: 50%; animation: spin .9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
