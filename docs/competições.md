@@ -14,11 +14,11 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Brasileirão Série A
 
-[Série A — REC 2026, arts. 5–8 e 14–15](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_Brasileiro_SA_rie_A_2026_v15_12_2025_final_02692c1077.pdf): 20 clubes; turno e returno; G4 grupos, 5º preliminar, seis melhores não classificados à Libertadores na Sul-Americana, quatro últimos rebaixados. O campeão da Copa do Brasil obtém vaga na fase de grupos e o vice na preliminar; as regras de duplicidade e repasse incluem exceções específicas (art. 6º, §§ 2–5), inclusive possível redirecionamento ao vice. O campeão da Série A disputa a Supercopa 2027; se também vencer a Copa do Brasil, enfrenta o vice da Série A. Critérios de desempate incluem confronto direto somente para dois clubes, cartões e sorteio.
+**REC CBF 2026, arts. 5–15:** 20 clubes em turno e returno (38 jogos); campeão é o líder e os quatro últimos caem. Na distribuição básica para a Libertadores 2027, 1º–4º entram nos grupos e 5º na preliminar; os seis melhores não classificados à Libertadores vão à Sul-Americana. A Copa do Brasil também concede vagas e sua interação exige análise dos arts. 6º e 7º e das regras de elegibilidade e repasse. O campeão disputa a Supercopa 2027; se também vencer a Copa do Brasil, enfrenta o vice da Série A. Desempate: vitórias, saldo, gols pró, confronto direto somente entre dois (pontos e depois saldo dos dois jogos), menos vermelhos, menos amarelos e sorteio. Inscrição: mínimo 25 antes da estreia, máximo 50 até 07/10/2026 e até oito substituições até 30/10; atuação por outro clube da Série A sujeita às condições do art. 12. [REC oficial](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_Brasileiro_SA_rie_A_2026_v15_12_2025_final_02692c1077.pdf). Verificar alterações posteriores e aplicar limites conforme os sistemas efetivamente simulados.
 
 ### Brasileirão Série B
 
-[Série B — REC 2026, arts. 5 e 11–14](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_Brasileiro_Serie_B_2026_85d55b9f72.pdf): 20 clubes; 38 rodadas; 1º e 2º sobem; 3º × 6º e 4º × 5º em ida e volta definem mais dois acessos; quatro últimos caem. Playoff considera pontos, saldo e posição na liga.
+**REC CBF 2026, arts. 5–6 e 11–14:** 20 clubes, 38 rodadas; 1º e 2º sobem; 3º×6º e 4º×5º em ida e volta definem mais dois acessos; quatro últimos caem. Nos playoffs, pontos, saldo e melhor posição na classificação da liga; 3º e 4º mandam a volta. Desempate da liga: vitórias, saldo, gols pró, confronto direto apenas entre dois (resultado agregado dos dois jogos), menos vermelhos, menos amarelos e sorteio. Inscrição: mínimo 25 antes da estreia, máximo 50 até 19/09/2026 e até oito substituições até 17/10. [REC oficial](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_Brasileiro_Serie_B_2026_85d55b9f72.pdf); verificar alterações posteriores e elegibilidade.
 
 ### Brasileirão Série C
 
@@ -26,11 +26,11 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Brasileirão Série D
 
-[Série D — Conselho Técnico 2026](https://www.cbf.com.br/futebol-brasileiro/noticias/campeonato-brasileiro/a/com-aumento-nas-cotas-de-participacao-cbf-realiza-conselho-tecnico-da-nova-serie-d): 96 clubes, 16 grupos de seis, quatro avançam por grupo; mata-mata de ida e volta; semifinalistas e dois vencedores de playoff dos eliminados nas quartas sobem à Série C.
+**REC CBF 2026, arts. 6–8 e 13–21:** 96 clubes em 16 grupos de seis; turno e returno (dez jogos), quatro avançam por grupo. Desempate na fase de grupos: vitórias, saldo, gols pró, confronto direto apenas entre dois (agregado), menos vermelhos, menos amarelos e sorteio. Eliminatórias em ida e volta; semifinalistas sobem e os quatro eliminados nas quartas disputam playoffs por dois acessos adicionais. Os playoffs são 1º×4º e 2º×3º pela campanha acumulada; mando da volta dos dois melhores. **Ressalva:** art. 17 cita pênaltis também nos playoffs, mas o art. 21 §5 específico prevê pontos, saldo e melhor posição; a [notícia da CBF](https://www.cbf.com.br/futebol-brasileiro/noticias/selecao-feminina/vitoria-1/cbf-publica-documentos-tecnicos-da-nova-serie-d) também cita pênaltis, enquanto a [cobertura posterior dos playoffs](https://www.futebolinterior.com.br/serie-d-datas-semifinais-playoffs/) registra vantagem da melhor campanha. Confirmar esclarecimento oficial; não tratar o conflito como inexistente. O campeão vai à 3ª fase da Copa do Brasil 2027, sujeito ao REC de destino. Inscrição: mínimo 25 antes da estreia e máximo 50 até 07/08/2026. [REC oficial](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_Brasileiro_Serie_D_2026_2def4ff8f2.pdf).
 
 ### Copa do Brasil
 
-[Copa do Brasil — CBF](https://www.cbf.com.br/futebol-brasileiro/noticias/jogos-/a/copa-do-brasil-de-2026-tera-recorde-de-participantes-e-17-estreantes): 126 clubes; fases 1 a 4 em jogo único; fases 5 a semifinal em ida e volta; final em jogo único. [As 20 equipes da Série A entram na quinta fase](https://www.cbf.com.br/futebol-brasileiro/noticias/copa-brasil/a/sorteio-da-copa-do-brasil-define-confrontos-da-5-fase). Conferir REC e critérios de entrada/sorteio antes de implementar.
+**REC CBF 2026, arts. 2–7 e 10–24:** 126 clubes: 102 vagas estaduais, quatro de campeões regionais e nacionais de 2025, e 20 participantes da Série A 2026. Primeira fase: 28 estaduais de menor posição no ranking; 14 vencedores juntam-se a 74 estaduais na segunda (88). Quatro classificados pelo critério 2 entram na terceira (48); os 12 sobreviventes da quarta juntam-se aos 20 da Série A na quinta (32). Fases 1–4 e final em jogo único; 5–8 ida e volta. Empate em jogo único: pênaltis; em duas partidas, pontos, saldo e pênaltis. Primeira fase segue confrontos por ranking com mandos sorteados; 2ª e 5ª–7ª têm sorteios, com detalhes e chaveamento no REC e anexo B; a CBF define local e mando da final. Campeão e vice têm vagas na Libertadores, com condições e repasses específicos, inclusive elegibilidade à Série A seguinte (art. 4). Inscrição ilimitada até o primeiro dia útil anterior à primeira ida da semifinal, respeitando regras de atletas transferidos e jogos de ida (arts. 5–7). O art. 2 §17 previa 128 clubes em 2027, mas isso não deve ser presumido definitivo nem aplicado automaticamente a temporadas futuras. [REC oficial](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_Copa_do_Brasil_2026_66989a5426.pdf); conferir decisões posteriores e regras de vagas em conjunto com os regulamentos de destino.
 
 ## Regionais
 
@@ -70,7 +70,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Capixaba
 
-**Referência 2026 (resumo; conferir REC integral):** 10 clubes, turno único; oito às quartas, dois últimos caem. Quartas, semi e final em ida e volta; nas quartas o melhor colocado tem vantagem no empate do agregado, nas demais fases há pênaltis. [Fonte](https://www.agazeta.com.br/futebol-capixaba/capixabao-2026-federacao-e-times-mantem-formato-de-disputa-da-competicao-1025).
+**Referência 2026, resumo oficial da FES:** 10 clubes em turno único; oito às quartas, dois últimos caem. Quartas, semi e final em ida e volta; melhor da primeira fase manda a volta e tem vantagem no empate do agregado apenas nas quartas; nas demais fases, empate vai a pênaltis. A FES informa vagas para o campeão na Série D, Copa do Brasil e Copa Verde e para o vice na Copa do Brasil de 2027, sujeitas às regras da competição de destino. [Publicação oficial da FES](https://futebolcapixaba.com/2025/12/fes-publica-tabela-e-regulamento-do-capixabao-2026/); o REC está incorporado na página, mas ainda não foi possível verificar seu texto integral, desempates, repasses e revisões.
 
 ### Campeonato Catarinense
 
@@ -82,7 +82,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Carioca
 
-[Carioca — FERJ](https://www.fferj.com.br/Noticias/View/23148): 12 clubes em dois grupos, que jogam contra o outro grupo; quatro de cada avançam às quartas; sem vantagem de empate nas quartas e semifinais. [FERJ explica rebaixamento e formato](http://www.fferj.com.br/noticias/a-bola-vai-rolar-no-campeonato-carioca-superbet). Confirmar REC integral e classificação antes de implementar.
+**Referência 2026, comunicações da FERJ:** 12 clubes em dois grupos de seis, cada um enfrentando o outro grupo; quatro de cada passam às quartas internas (1º×4º e 2º×3º), em jogo único. Os quatro eliminados disputam Taça Rio. Semifinais são em ida e volta e a final em jogo único; a FERJ informa que não há vantagem de empate nas quartas e semifinais. O último da classificação da Taça Guanabara cai diretamente; o penúltimo disputa permanência contra o vice da Série A2. [Guia da FERJ](https://www.fferj.com.br/noticias/a-bola-vai-rolar-no-campeonato-carioca-superbet) e [comunicação da reunião](https://www.fferj.com.br/Noticias/View/23148). **Pendente:** obter REC integral para confirmar desempates, Taça Rio, playoff, vagas e revisões.
 
 ### Campeonato Gaúcho
 
@@ -102,7 +102,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Mineiro
 
-**Referência 2026 (resumo; conferir REC integral):** 12 clubes em três grupos de quatro, oito jogos contra outros grupos. Três líderes e melhor segundo às semifinais em ida e volta; final única. Caem os dois piores entre os últimos de cada grupo. [Fonte](https://esumula.fmf.com.br/Arquivos/ArquivosCompeticao/1899/Arquivo_18992870.pdf).
+**REC FMF 2026, arts. 5–9, 12–14, 17, 19–25 e 27:** 12 clubes em três grupos de quatro, oito jogos contra os outros grupos. Classificação geral da fase é ordenada por posição dentro do grupo: primeiro os três líderes, depois os três segundos, depois os três terceiros e os três quartos; desempate por vitórias, saldo, gols pró, confronto direto apenas entre dois, menos vermelhos, menos amarelos e sorteio. Os três líderes e o melhor segundo chegam à semifinal, em ida e volta (pontos, saldo, pênaltis); final única sob mando da FMF, com pênaltis no empate. Os dois piores quartos caem. O 5º ao 8º disputam Troféu Inconfidência em semis e final ida e volta; campeão e vice ficam em 5º e 6º na classificação final. O Troféu do Interior tem condições próprias e pode exigir dois jogos. [REC oficial](https://esumula.fmf.com.br/Arquivos/ArquivosCompeticao/1899/Arquivo_18992870.pdf); conferir revisões, vagas nacionais e regras de inscrição integralmente.
 
 ### Campeonato Paraense
 
@@ -118,7 +118,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Paulista
 
-[Paulista A1 — REC 2026](https://futebolpaulista.com.br/Repositorio/Competicao/Regulamento/1551/1551_639033989807692307.pdf): 16 clubes em quatro potes de agendamento, não grupos classificatórios; oito jogos e tabela geral única. Oito melhores vão às quartas, dois últimos caem; quartas e semifinais únicas e final em ida e volta. Conferir chave e desempates no REC antes de implementar.
+**REC FPF 2026, arts. 5 e 9–17:** 16 clubes distribuídos em quatro potes de sorteio; todos enfrentam os três do próprio pote e mais cinco de outros potes conforme art. 5. Há **classificação única**, não quatro grupos classificatórios. Após oito jogos, oito melhores vão às quartas: 1º×8º, 2º×7º, 3º×6º e 4º×5º, em jogo único; dois últimos caem. Semifinais são únicas; pênaltis em empates nas quartas e semifinais. Desempate da primeira fase: vitórias, saldo, gols pró, menos vermelhos, menos amarelos e sorteio. O REC deixou a final única ou em ida e volta sujeita a acordo FPF/CBF; [decisão posterior divulgada](https://www.espn.com.br/futebol/artigo/_/id/16135685/cbf-acata-pedido-fpf-final-campeonato-paulista-sera-disputada-dois-jogos) definiu dois jogos. Lista A comporta até 35 atletas e admite até quatro substituições após a primeira fase nas condições do art. 17; lista B tem requisitos próprios. [REC oficial](https://futebolpaulista.com.br/Repositorio/Competicao/Regulamento/1551/1551_639033989807692307.pdf); conferir chave das semifinais, vagas, decisão formal e atualizações.
 
 ### Campeonato Pernambucano
 
@@ -154,7 +154,25 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ## Situação da conferência
 
-Os resumos da Copa do Nordeste, Copa Verde, Série C, Amapaense, Alagoano, Amazonense, Cearense (cópia externa), Goiano, Mato-Grossense, Potiguar e Sergipano acima foram confrontados com os artigos dos RECs vinculados, mas isso **não é certificação integral**: inscrições, sorteios, eventuais revisões posteriores e todas as regras de elegibilidade ainda precisam de auditoria. Os demais resumos continuam em pesquisa; uma fonte listada não significa que todos os seus artigos foram verificados. Nenhuma dessas alterações implementa automaticamente os formatos no motor.
+Os resumos da Copa do Brasil, Copa do Nordeste, Copa Verde, Séries A, B, C e D, Paulista, Mineiro, Amapaense, Alagoano, Amazonense, Cearense (cópia externa), Goiano, Mato-Grossense, Potiguar e Sergipano acima foram confrontados com os artigos dos RECs vinculados, mas isso **não é certificação integral**: inscrições, sorteios, eventuais revisões posteriores e todas as regras de elegibilidade ainda precisam de auditoria. Os demais resumos continuam em pesquisa; uma fonte listada não significa que todos os seus artigos foram verificados. Nenhuma dessas alterações implementa automaticamente os formatos no motor.
+
+## Auditoria dos lotes 1–3 (em andamento)
+
+| Competição | Evidência já examinada | Pendência antes de certificar |
+| --- | --- | --- |
+| Série A | REC oficial: formato, desempate, inscrições e vagas | Revisões e aplicação conjunta dos repasses internacionais |
+| Série B | REC oficial: formato, playoff, desempate e inscrições | Revisões e elegibilidade |
+| Série C | REC oficial: fases, acesso, desempate e vaga | Revisões, elegibilidade e casos de inscrição |
+| Série D | REC oficial: formato, acesso, desempate e inscrições | Conflito entre artigos 17 e 21 sobre playoff; revisões e composição |
+| Copa do Brasil | REC oficial: vagas, fases, sorteios e inscrições | Revisões, anexo de chaveamento e repasses com outras competições |
+| Copa do Nordeste | REC oficial: formato, desempates e vaga | Sorteios, inscrições, elegibilidade e revisões |
+| Copa Verde | REC oficial: formato, desempates e vagas | Sorteios, inscrições, elegibilidade e revisões |
+| Paulista | REC oficial e notícia sobre final | Decisão formal da final, chave das semifinais, vagas e revisões |
+| Carioca | Comunicação oficial sobre formato | Obter REC integral, vagas, descenso e revisões |
+| Mineiro | REC oficial: classificação, fases e torneios paralelos | Inscrições, vagas e revisões |
+| Capixaba | Resumo oficial da FES | Obter REC integral, desempates, vagas e revisões |
+
+Esta tabela documenta a conferência, não comprova implementação nem garante ausência de alterações posteriores.
 
 ## Pendências gerais
 
