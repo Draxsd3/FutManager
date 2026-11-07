@@ -38,25 +38,24 @@
 .rosterTools { display:grid; grid-template-columns:minmax(0,1fr) 155px; gap:8px; }
 .rosterTools input::placeholder { color:#5f705e; }
 .selectAll { display:flex; align-items:center; gap:8px; width:fit-content; color:#536b55; font-size:11px; cursor:pointer; }
-.selectAll input,.playerRow input,.playerUnavailable input { width:14px; height:14px; accent-color:#3c7350; flex:none; }
-.playerList { display:block; max-height:300px; overflow:auto; border-top:1px solid #dce3da; border-bottom:1px solid #dce3da; scrollbar-width:thin; scrollbar-color:#b4c4b3 transparent; overscroll-behavior:contain; }
-.playerRow,.playerUnavailable { display:flex; align-items:center; gap:10px; min-height:43px; padding:6px 7px; border-bottom:1px solid #e4e9e0; cursor:pointer; }
-.playerRow:last-child,.playerUnavailable:last-child { border-bottom:0; }
-.playerRow:hover { background:#edf3e7; }
-.playerRow:has(input:checked) { background:#edf2e9; }
-.playerUnavailable { color:#5f705e; background:#f0f1ed; cursor:not-allowed; }
-.playerPosition { display:grid; place-items:center; flex:none; width:26px; height:26px; border-radius:5px; background:#e3ebdf; color:#536e54; font-size:10px; font-weight:750; }
-.playerInfo { display:grid; gap:3px; flex:1; min-width:0; }
-.playerInfo b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; font-weight:650; }
-.playerInfo small { color:#5f705e; font-size:9px; }
-.playerEnergy { display:grid; gap:5px; width:46px; color:#4b6650; text-align:right; font-size:10px; font-variant-numeric:tabular-nums; }
-.playerEnergy b { font-weight:650; }
-.energyTrack { height:3px; overflow:hidden; border-radius:3px; background:#dbe4d5; }
-.energyTrack i { display:block; height:100%; border-radius:inherit; background:#75a374; }
-.playerUnavailable .energyTrack i { background:#bc965f; }
-.playerState { min-width:50px; color:#48734c; text-align:right; font-size:8px; font-weight:700; letter-spacing:.04em; }
+.selectAll input { width:14px; height:14px; accent-color:#3c7350; flex:none; }
+.playerList { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); align-content:start; gap:8px; max-height:300px; overflow:auto; padding:8px 2px; border-top:1px solid #dce3da; border-bottom:1px solid #dce3da; scrollbar-width:thin; scrollbar-color:#b4c4b3 transparent; overscroll-behavior:contain; }
+.playerCard,.playerUnavailable { position:relative; display:flex; min-width:0; flex-direction:column; align-items:center; gap:4px; padding:9px 6px 8px; border:1px solid #dce5d9; border-radius:9px; background:#fafbf8; text-align:center; cursor:pointer; }
+.playerCard:hover { border-color:#8aaa91; background:#f0f5ed; }
+.playerCard:has(input:checked) { border-color:#4f865b; background:#e8f0e4; box-shadow:inset 0 0 0 1px #4f865b33; }
+.playerUnavailable { color:#66766a; background:#eff1ed; cursor:not-allowed; }
+.playerCard input,.playerUnavailable input { position:absolute; top:8px; left:8px; width:15px; height:15px; margin:0; accent-color:#3c7350; }
+.playerCard:has(input:focus-visible),.playerUnavailable:has(input:focus-visible) { outline:2px solid #438657; outline-offset:2px; }
+.jersey { display:block; width:62px; height:70px; flex:none; }
+.jersey svg { display:block; width:100%; height:100%; }
+.playerName { width:100%; min-height:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#30483a; font-size:11px; font-weight:750; }
+.playerDetails { color:#5f705e; font-size:10px; }
+.playerEnergy { display:grid; gap:4px; width:min(100%,88px); color:#4b6650; font-size:9px; font-weight:700; font-variant-numeric:tabular-nums; }
+.energyTrack { height:4px; overflow:hidden; border-radius:3px; background:#dbe4d5; }
+.energyTrack i { display:block; height:100%; border-radius:inherit; }
+.playerState { color:#48734c; font-size:9px; font-weight:700; letter-spacing:.03em; }
 .playerUnavailable .playerState { color:#987849; }
-.emptyRoster { margin:0; padding:24px 12px; color:#5f705e; text-align:center; font-size:11px; }
+.emptyRoster { grid-column:1 / -1; margin:0; padding:24px 12px; color:#5f705e; text-align:center; font-size:11px; }
 .applyRow { position:sticky; bottom:0; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:6px 0 4px; background:#f5f6f3; }
 .applyRow>div { display:grid; gap:5px; }
 .applyRow b { font-size:11px; }
@@ -101,7 +100,7 @@
   .weekPanel { overflow:auto; }
 }
 @media(max-width:1000px) { .layout { grid-template-columns:1fr; gap:26px; } .weekPanel { position:static; border-left:0; border-top:1px solid #dce3da; padding:20px 0 0; } .weekStats { max-width:400px; } .emptyWeek { padding:16px; } }
-@media(max-width:600px) { .center { padding:12px 14px; } .heading { align-items:flex-start; flex-direction:column; gap:6px; margin-bottom:8px; padding-bottom:8px; } .heading h2 { gap:5px; font-size:20px; } .heading p { font-size:10px; } .weekStamp { padding:7px 10px; } .drills { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; } .drill,.drillActive { padding:7px 5px; gap:3px; } .drill b,.drillActive b { font-size:10px; } .drill>svg,.drillActive>svg { width:38px; height:38px; } .days { gap:4px; } .day,.dayActive { min-height:40px; } .rosterTools { grid-template-columns:minmax(0,1fr) 135px; } .sectionHead>small { font-size:9px; } .loadRow { flex-wrap:wrap; } .applyRow { align-items:stretch; flex-direction:column; gap:10px; padding:12px 0 8px; } .applyRow button { min-height:42px; } .playerRow,.playerUnavailable { gap:7px; } .playerState { min-width:44px; font-size:7px; } }
+@media(max-width:600px) { .center { padding:12px 14px; } .heading { align-items:flex-start; flex-direction:column; gap:6px; margin-bottom:8px; padding-bottom:8px; } .heading h2 { gap:5px; font-size:20px; } .heading p { font-size:10px; } .weekStamp { padding:7px 10px; } .drills { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; } .drill,.drillActive { padding:7px 5px; gap:3px; } .drill b,.drillActive b { font-size:10px; } .drill>svg,.drillActive>svg { width:38px; height:38px; } .days { gap:4px; } .day,.dayActive { min-height:40px; } .rosterTools { grid-template-columns:minmax(0,1fr) 135px; } .sectionHead>small { font-size:9px; } .loadRow { flex-wrap:wrap; } .applyRow { align-items:stretch; flex-direction:column; gap:10px; padding:12px 0 8px; } .applyRow button { min-height:42px; } .playerList { grid-template-columns:repeat(auto-fill,minmax(105px,1fr)); } .playerState { font-size:8px; } }
 @media(prefers-reduced-motion:reduce) { .center button { transition:none; } }
 
 /* Compact the screen heading while retaining the current week and guidance. */

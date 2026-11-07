@@ -18,6 +18,9 @@ import { projectStadiumGate, stadiumCapacity, newStadium, type StadiumSector, ty
 import type { ManagerJobsProps } from "./manager-jobs";
 import { AgendaScreen, type AgendaView } from "./agenda-screen";
 import { canJoinTraining, sessionEnergyDelta, TRAINING_DAYS, TRAINING_DRILLS, trainingDrillLabel, trainingWeekSessions, type TrainingDay, type TrainingDrillId, type TrainingIntensity, type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
+import { PlayerJersey } from "@/components/ui/player-jersey";
+import { fifaPosition } from "@/lib/game/fifa-position";
+import type { ClubColorIdentity } from "@/lib/kits/goalkeeper";
 import { TrainingIcon } from "@/components/ui/training-icon";
 import trainingStyles from "./training-center.module.css";
 
@@ -34,6 +37,7 @@ export function ClubSectionScreen({
   round,
   budget,
   squad,
+  kit = 1,
   season,
   competition = "Campeonato Estadual",
   inGameDate = "2026-01-22",
@@ -65,6 +69,7 @@ export function ClubSectionScreen({
   round: number;
   budget: number;
   squad: Player[];
+  kit?: 1 | 2 | 3;
   fixtures: RoundFixture[];
   season?: CareerSeason;
   competition?: string;
@@ -108,7 +113,7 @@ export function ClubSectionScreen({
 
   if (section === "agenda") return <AgendaScreen jobs={jobs} club={club} coach={coach} competition={competition} inGameDate={inGameDate} round={round} season={season} database={database} view={agendaView} onViewChange={onAgendaViewChange ?? (() => undefined)} onBack={onBack} onPrepare={onPrepare ?? onBack} />;
 
-  if (section === "training") return <TrainingCenter squad={squad} starters={starters} week={trainingWeek} season={trainingSeason} sessions={trainingSessions} onTrain={onTrainPlayers} />;
+  if (section === "training") return <TrainingCenter squad={squad} club={club} clubColors={currentClub} kit={kit} starters={starters} week={trainingWeek} season={trainingSeason} sessions={trainingSessions} onTrain={onTrainPlayers} />;
 
   return (
     <div className={surface.screen} data-management-surface={section}>
@@ -158,7 +163,7 @@ function DataTable({ headers, children }: { headers: string[]; children: React.R
 function Cell({ children }: { children: React.ReactNode }) { return <td className="px-3 py-2">{children}</td>; }
 
 
-function TrainingCenter({ squad, starters, week, season, sessions, onTrain }: { squad: Player[]; starters: number[]; week: number; season: number; sessions: TrainingSessionRecord[]; onTrain: (input: Omit<TrainingSessionInput, "season" | "week">) => { record?: TrainingSessionRecord; error?: string } }) {
+function TrainingCenter({ squad, club, clubColors, kit, starters, week, season, sessions, onTrain }: { squad: Player[]; club: string; clubColors?: ClubColorIdentity; kit: 1 | 2 | 3; starters: number[]; week: number; season: number; sessions: TrainingSessionRecord[]; onTrain: (input: Omit<TrainingSessionInput, "season" | "week">) => { record?: TrainingSessionRecord; error?: string } }) {
   const embedded = useContext(WindowHeaderContext);
   const weekly = trainingWeekSessions(sessions, season, week);
   const completedDays = new Set(weekly.map((session) => session.day));
@@ -218,7 +223,14 @@ function TrainingCenter({ squad, starters, week, season, sessions, onTrain }: { 
         <div className={trainingStyles.playerList} role="region" aria-label="Escolha os atletas" tabIndex={0}>
           {visiblePlayers.map((player) => {
             const eligible = canJoinTraining(player, drill, intensity);
-            return <label key={player.id} className={eligible ? trainingStyles.playerRow : trainingStyles.playerUnavailable}><input type="checkbox" checked={selectedSet.has(player.id)} disabled={!eligible} onChange={() => togglePlayer(player.id)} /><span className={trainingStyles.playerPosition}>{player.position}</span><span className={trainingStyles.playerInfo}><b>{player.name}</b><small>Força {player.overall}</small></span><span className={trainingStyles.playerEnergy}><b>{player.energy}%</b><span className={trainingStyles.energyTrack}><i style={{ width: `${Math.max(0, Math.min(100, player.energy))}%` }} /></span></span><span className={trainingStyles.playerState}>{eligible ? "APTO" : drill === "recuperacao" ? "OK" : "DESCANSO"}</span></label>;
+            return <label key={player.id} className={eligible ? trainingStyles.playerCard : trainingStyles.playerUnavailable}>
+              <input type="checkbox" aria-label={`Selecionar ${player.name}`} checked={selectedSet.has(player.id)} disabled={!eligible} onChange={() => togglePlayer(player.id)} />
+              <span className={trainingStyles.jersey}><PlayerJersey player={player} club={club} clubColors={clubColors} kit={kit} /></span>
+              <span className={trainingStyles.playerName} title={player.name}>{player.name}</span>
+              <span className={trainingStyles.playerDetails}>{fifaPosition(player)} · Força {player.overall}</span>
+              <span className={trainingStyles.playerEnergy}><span>Energia {player.energy}%</span><span className={trainingStyles.energyTrack}><i style={{ width: `${Math.max(0, Math.min(100, player.energy))}%`, backgroundColor: player.energy < 40 ? "#d76565" : player.energy < 65 ? "#c79542" : "#75a374" }} /></span></span>
+              <span className={trainingStyles.playerState}>{eligible ? "APTO" : drill === "recuperacao" ? "OK" : "DESCANSO"}{player.shirtNumber != null ? ` · Nº ${player.shirtNumber}` : ""}</span>
+            </label>;
           })}
           {!visiblePlayers.length && <p className={trainingStyles.emptyRoster}>Nenhum atleta encontrado. Ajuste a busca ou a posição.</p>}
         </div>

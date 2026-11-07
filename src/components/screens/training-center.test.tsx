@@ -83,3 +83,24 @@ it("preserves recovery eligibility and the exact payload after changing the dril
   expect(apply).toHaveBeenCalledWith({ day: "Segunda", drill: "recuperacao", intensity: "Moderada", playerIds: [players[0].id] });
   expect(screen.getByRole("status").textContent).toBe("Sessão indisponível");
 });
+
+it("mostra camisas de goleiro e linha com uniforme escolhido, força, energia e seleção acessível", async () => {
+  const { clubKitAsset } = await import("@/lib/game/assets");
+  const goalkeeper = { ...squad.find(player => player.position === "G")!, energy: 10 };
+  const outfield = { ...squad.find(player => player.position !== "G")!, energy: 72, shirtNumber: 10 };
+  const apply = setup({ squad: [goalkeeper, outfield], starters: [], kit: 2 });
+  const keeperCard = screen.getByRole("checkbox", { name: `Selecionar ${goalkeeper.name}` }).closest("label")!;
+  const fieldCard = screen.getByRole("checkbox", { name: `Selecionar ${outfield.name}` }).closest("label")!;
+  expect(keeperCard.querySelector('svg[data-jersey-role="goalkeeper"]')).toBeTruthy();
+  expect((within(keeperCard).getByRole("checkbox") as HTMLInputElement).disabled).toBe(true);
+  expect(within(keeperCard).getByText("DESCANSO")).toBeTruthy();
+  expect(fieldCard.querySelector('svg[data-jersey-role="outfield"] image')?.getAttribute("href")).toBe(clubKitAsset("Flamengo", 2));
+  expect(within(fieldCard).getByText(new RegExp(`Força ${outfield.overall}`))).toBeTruthy();
+  expect(within(fieldCard).getByText("Energia 72%")).toBeTruthy();
+  expect(within(fieldCard).getByText("APTO · Nº 10")).toBeTruthy();
+  fireEvent.click(within(fieldCard).getByRole("checkbox"));
+  expect((within(fieldCard).getByRole("checkbox") as HTMLInputElement).checked).toBe(false);
+  fireEvent.click(within(fieldCard).getByText(outfield.name));
+  fireEvent.click(screen.getByRole("button", { name: /APLICAR SESSÃO/ }));
+  expect(apply).toHaveBeenCalledWith({ day: "Segunda", drill: "passe", intensity: "Moderada", playerIds: [outfield.id] });
+});

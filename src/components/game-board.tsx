@@ -1677,6 +1677,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             round={competitionRound}
             budget={budget}
             squad={squad}
+            kit={kit}
             fixtures={fixtures}
             season={competitionSeason}
             competition={competitionName}
