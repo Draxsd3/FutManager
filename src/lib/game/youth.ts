@@ -1,8 +1,8 @@
 import type { PositionCode, Player } from "./mock-data";
 import type { EditorClub } from "./editor-data";
 
-export type YouthPlayer = { id: string; name: string; age: number; position: PositionCode; overall: number; nationality: string | null; origin: "simulado" | "transfermarkt"; positionEstimated?: boolean; ageEstimated?: boolean; externalId?: string };
-export type YouthTeam = { players: YouthPlayer[]; origin: "simulado" | "transfermarkt"; note: string; collectedAt?: string; promoted?: string[] };
+export type YouthPlayer = { birthYear?: number; id: string; name: string; age: number; position: PositionCode; overall: number; nationality: string | null; origin: "simulado" | "transfermarkt"; positionEstimated?: boolean; ageEstimated?: boolean; externalId?: string };
+export type YouthTeam = { season?: number;cpuPromotedIn?:number; players: YouthPlayer[]; origin: "simulado" | "transfermarkt"; note: string; collectedAt?: string; promoted?: string[] };
 const firstNames = ["João", "Pedro", "Lucas", "Gabriel", "Matheus", "Rafael", "Gustavo", "Felipe", "Bruno", "Daniel", "Caio", "Arthur", "Leonardo", "Davi", "Enzo", "Igor", "André", "Murilo", "Vitor", "Thiago", "Nicolas", "Eduardo", "Vinícius", "Miguel", "Samuel", "Henrique", "Anderson", "Júlio", "Paulo", "Diego"];
 const surnames = ["Silva", "Santos", "Oliveira", "Souza", "Pereira", "Lima", "Costa", "Rodrigues", "Almeida", "Ferreira", "Ribeiro", "Carvalho", "Martins", "Rocha", "Gomes", "Dias", "Nunes", "Moraes", "Cardoso", "Barbosa", "Freitas", "Azevedo", "Moreira", "Melo", "Barros", "Mendes"];
 const roles: PositionCode[] = ["G", "G", "L", "L", "L", "L", "Z", "Z", "Z", "Z", "M", "M", "M", "M", "M", "M", "A", "A", "A", "A"];

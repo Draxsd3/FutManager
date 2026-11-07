@@ -12,6 +12,7 @@ export function proposedRole(player: EditorPlayer, roster: EditorPlayer[]): Mark
 export function assessMove(player: EditorPlayer, roster: EditorPlayer[], kind: TransferKind, salaryBrl: number): MoveAssessment {
   const role = proposedRole(player,roster);
   const result = (accepted: boolean, reason: string): MoveAssessment => ({accepted,role,reason,representation:"unknown"});
+  if(player.condition?.retiredOn) return result(false,"Atleta aposentado não aceita novo vínculo.");
   if (!Number.isFinite(salaryBrl) || salaryBrl <= 0 || !Number.isFinite(player.salaryMonthlyBrl) || player.salaryMonthlyBrl < 0) return result(false,"Salário sem condições verificáveis.");
   if (kind === "loan") return result(role !== "desenvolvimento",role === "desenvolvimento" ? "Empréstimo recusado: não há perspectiva de utilização." : "Empréstimo oferece espaço de jogo.");
   if (salaryBrl < player.salaryMonthlyBrl) return result(false,"Remuneração inferior ao vínculo atual.");

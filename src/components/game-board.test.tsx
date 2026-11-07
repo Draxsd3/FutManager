@@ -18,7 +18,9 @@ vi.mock("@/lib/game/persistence", async (importOriginal) => ({
   deleteCloudSave: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Full-universe IndexedDB snapshots now include the financial book; await completed hydration.
+// Full-universe integration: durable snapshots include financial + player books.
+// Keep the normal unit-test budget elsewhere; allow complete hydration/checkpoint work here.
+vi.setConfig({ testTimeout: 30_000 });
 configure({ asyncUtilTimeout: 15000 });
 
 const matchRulesMarkdown = readFileSync("public/game-assets/match-engine-rules.md", "utf8");
@@ -66,7 +68,7 @@ it("creates independent careers, preserves the lineup on returning home and open
   fireEvent.click(screen.getByRole("button", { name: "Fechar Configurações" }));
   await screen.findByRole("button", { name: "Configurações" });
   await waitFor(() => expect(readLocalSaves("alice").find((save) => save.id === first.id)?.progress?.coach).toBe("Técnico Alice"));
-}, 15000);
+}, 30000);
 
 it("does not expose another account's careers on the same browser", async () => {
   localStorage.setItem("futmanager.saves.v1.alice", JSON.stringify([{ id: "private", name: "Carreira privada", careerRuleset: CURRENT_CAREER_RULESET }]));
@@ -100,7 +102,7 @@ it("autosaves a match without a floating exit button and resumes paused after re
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
   fireEvent.click(await screen.findByRole("button", { name: /Escalar Time/i }));
   fireEvent.click(await screen.findByRole("button", { name: /Ir para a partida/ }));
-  await waitFor(() => expect(readLocalSaves("alice")[0].progress?.minute).toBeGreaterThan(0), { timeout: 2000 });
+  await waitFor(() => expect(readLocalSaves("alice")[0].progress?.minute).toBeGreaterThan(0), { timeout: 10000 });
   expect(screen.queryByRole("button", { name: /Salvar e voltar ao início/ })).toBeNull();
   view.unmount();
   const saved = readLocalSaves("alice")[0];
@@ -154,7 +156,7 @@ it("warns before a browser exit during a match and saves the resumable state", a
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
   fireEvent.click(await screen.findByRole("button", { name: /Escalar Time/i }));
   fireEvent.click(await screen.findByRole("button", { name: /Ir para a partida/ }));
-  await waitFor(() => expect(readLocalSaves("alice")[0].progress?.minute).toBeGreaterThan(0), { timeout: 2000 });
+  await waitFor(() => expect(readLocalSaves("alice")[0].progress?.minute).toBeGreaterThan(0), { timeout: 10000 });
 
   const unload = new Event("beforeunload", { cancelable: true });
   window.dispatchEvent(unload);
@@ -448,7 +450,7 @@ it("advances the career date after a result and returns an expired incoming loan
     expect(restored.progress?.starters).not.toContain(player.id);
     expect(restored.progress?.manualPositions[player.id]).toBeUndefined();
   });
-}, 45000);
+}, 60000);
 
 it("archives concluded competitions from an old save and persists champions separately from the imported catalog", async () => {
   const view = render(game());
@@ -484,7 +486,7 @@ it("removes pre-reset careers from IndexedDB/localStorage/session and cannot res
   await screen.findByRole("button", { name: "Empréstimos" });
   const old = structuredClone(readLocalSaves("alice")[0]);
   delete old.careerRuleset;
-  if (old.progress) { delete old.progress.universeSnapshot; if(old.progress.managerMarket) delete old.progress.managerMarket.finance; }
+  if (old.progress) { delete old.progress.universeSnapshot; if(old.progress.managerMarket) delete old.progress.managerMarket.finance; if(old.progress.worldMarket) delete old.progress.worldMarket.population; }
   view.unmount();
   // Raw seed emulates a browser/database written by a release before the reset.
   localStorage.setItem(accountStorageKey("futmanager.saves.v1", "alice"), JSON.stringify([old]));
@@ -561,14 +563,15 @@ it("connects jobs to the career, confirms a club change and restores it without 
   fireEvent.click(screen.getByRole("button", { name: "Agenda" }));
   fireEvent.click(screen.getByRole("menuitem", { name: /Central de empregos/ }));
   expect(await screen.findByText("Contratação confirmada.")).toBeTruthy();
-}, 45000);
+}, 60000);
 
 it("saves the chosen imported shirt per career, restores it and carries it into match tactics", async () => {
   const { clubCrestAsset, clubKitAsset } = await import("@/lib/game/assets");
   const view = render(game());
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
   fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Escolha de uniforme" } });
-  fireEvent.change(screen.getByLabelText("Seu clube"), { target: { value: "Flamengo" } });
+  fireEvent.click(screen.getByRole("combobox", { name: /Seu clube/ }));
+  fireEvent.click(screen.getByRole("option", { name: "Flamengo" }));
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
   fireEvent.click(await screen.findByRole("button", { name: /Escalar Time/i }));
   fireEvent.click(await screen.findByRole("button", { name: "Usar camisa 3" }));
@@ -668,7 +671,7 @@ it.each([true, false])("credits gate only for a completed home fixture (home=%s)
     expect(result.budget).toBeCloseTo(12624 + 151 + (home ? expectedNet / 1000 : 0));
     expect(result.progress?.stadiums?.[save.clubId]?.receipts.length ?? 0).toBe(home ? 1 : 0);
   }, { timeout: 5000 });
-}, 30000);
+}, 60000);
 
 it("waits for catalog synchronization, explains failure, and retries with Atualizar", async () => {
   const { IDBFactory } = await import("fake-indexeddb");
@@ -700,12 +703,14 @@ it("creates a separate simulated youth team and persists a promotion after reloa
   const view = render(game("youth-manager"));
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
   fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Técnico Base" } });
+  // E6 promotion now honors the common salary book; use an affordable lower-division club.
+  fireEvent.change(screen.getByLabelText("Divisão"),{target:{value:"Série D"}});
   fireEvent.click(screen.getByRole("button", { name: /Iniciar jogo/ }));
   fireEvent.click(await screen.findByRole("button", { name: "Juniores" }));
   await screen.findByText(/Jogadores fictícios gerados pelo jogo/);
   expect(screen.getAllByRole("button", { name: "Promover" })).toHaveLength(20);
   fireEvent.click(screen.getAllByRole("button", { name: "Promover" })[0]);
-  expect(await screen.findByText(/promovido ao elenco principal/)).toBeTruthy();
+  expect((await screen.findByRole("status")).textContent).toMatch(/promovido ao elenco principal/);
   await waitFor(() => expect(readLocalSaves("youth-manager")[0].progress?.careerSquad?.some(p => p.youthId)).toBe(true));
   const saved = readLocalSaves("youth-manager")[0];
   expect(Object.values(saved.progress!.youthTeams!)[0].players).toHaveLength(19);

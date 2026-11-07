@@ -24,7 +24,7 @@ it("real advance, mode, chosen action and compressed market commitments survive 
  const provider={decide:vi.fn(async(_id,ctx)=>({decisionId:ctx.decisionId,stateRevision:ctx.stateRevision,actionId:"wait",reason:"Preservar caixa."}))};
  const next=await advanceCareerWithMarketPolicy(enabled,database,command,provider);
  expect(writeLocalSaves([next],"market-account")).toBe(true);
- const encoded=Object.values(localStorage).join(""); expect(encoded).toContain("market-deflate-v1");
+ const encoded=Object.values(localStorage).join(""); expect(encoded).toContain("market-dictionary-deflate-v1");
  const reopened=readLocalSaves("market-account")[0];
  expect(reopened.progress!.worldMarket!.marketState).toEqual(next.progress!.worldMarket!.marketState);
  expect(reopened.progress!.managerMarket!.finance).toEqual(next.progress!.managerMarket!.finance);

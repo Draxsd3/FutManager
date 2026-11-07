@@ -198,6 +198,7 @@ export function settleTransfer(state: FinanceState, db: EditorDatabase, deal: Tr
   // Exotic terms are not silently interpreted as an immediate cash deal.
   if ("instalments" in deal || "commissionBrl" in deal || deal.commission || (deal.paymentTerms && deal.paymentTerms.kind !== "cash")) throw new Error("Parcelas e comissões ainda não habilitadas.");
   const s=accrueFinance(state,date), p=db.players.find(p=>p.id===deal.playerId), current=s.contracts[deal.playerId];
+  if(p?.condition?.retiredOn) throw new Error("Atleta aposentado não pode assumir novo vínculo.");
   const owner=current ? current.status === "expired" ? "" : current.clubId : p?.clubId;
   const loan=s.loans[deal.playerId];
   if (!p || owner!==deal.sourceClubId || loan && (!loan.endsOn || date < loan.endsOn) && loan.status === "active") throw new Error("O vínculo mudou ou há empréstimo vigente. Revalide a proposta.");

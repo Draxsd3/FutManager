@@ -290,7 +290,7 @@ function athleteSkill(player: Player, index: number, team: MatchTeamInput, skill
   const acuteWear = (played / 90) * 2.4 * roleFatigueMultiplier(role, wide) * ageFatigueMultiplier(player.age);
   const energyPenalty = Math.max(0, 74 - effectiveEnergy) * 0.16 + Math.max(0, 55 - effectiveEnergy) * 0.14;
   const fatigue = (acuteWear + energyPenalty) * skillFatigueSensitivity;
-  return clamp(player.overall - fitPenalty(player, index, team) + bonus + (team.motivation - 65) * .12 + freshness - fatigue, 1, 100);
+  return clamp(player.overall - fitPenalty(player, index, team) + bonus + ((player.condition?.morale ?? 50)-50)*.03 + (team.motivation - 65) * .12 + freshness - fatigue, 1, 100);
 }
 
 type TeamProfile = {

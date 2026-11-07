@@ -178,7 +178,7 @@ it("round-trips a large financial checkpoint atomically without storing its raw 
   const financial=migrateFinanceSave(current,db);
   expect(writeLocalSaves([financial],"finance-owner")).toBe(true);
   const raw=localStorage.getItem("futmanager.saves.v1.finance-owner")!;
-  expect(raw).toContain("finance-deflate-v1");
+  expect(raw).toContain("managers-dictionary-deflate-v1");
   expect(readLocalSaves("finance-owner")[0]).toEqual(financial);
   expect(readLocalSaves("other-owner")).toEqual([]);
 });
@@ -194,4 +194,27 @@ it("releases a deleted career's in-memory universe without evicting another acco
   expect(writeLocalSaves([thin],"prune-owner")).toBe(true);
   expect(readLocalSaves("prune-owner")[0].progress?.universeSnapshot).toBeUndefined();
   expect(readLocalSaves("other-prune-owner")[0].progress?.universeSnapshot).toEqual(db);
+});
+
+it("keeps reading the E3 financial-only codec after adopting aggregate compression",async()=>{
+  const {strToU8,zlibSync}=await import("fflate");
+  const {marketFixture}=await import("./simulation/market-test-fixture");
+  const f=marketFixture(),finance=f.save.progress!.managerMarket!.finance!,bytes=strToU8(JSON.stringify(finance));
+  const encoded={codec:"finance-deflate-v1",size:bytes.length,data:btoa(Array.from(zlibSync(bytes),b=>String.fromCharCode(b)).join(""))};
+  const legacy={...f.save,progress:{...f.save.progress!,managerMarket:{...f.save.progress!.managerMarket!,finance:encoded}}};
+  localStorage.setItem("futmanager.saves.v1.legacy-codec",JSON.stringify([legacy]));
+  expect(readLocalSaves("legacy-codec")[0]).toEqual(f.save);
+  expect(writeLocalSaves(readLocalSaves("legacy-codec"),"legacy-codec")).toBe(true);
+  expect(readLocalSaves("legacy-codec")[0]).toEqual(f.save);
+});
+
+
+it("sends E6 population as a normal cloud snapshot and keeps the civil date in the real row column",async()=>{
+  const {marketFixture}=await import("./simulation/market-test-fixture"),{migratePlayerSave}=await import("./simulation/players");
+  const f=marketFixture(),current=migratePlayerSave(f.save,f.database);
+  await writeCloudSave(current,"alice");
+  const row=client.upsert.mock.calls[0][0];
+  expect(row.in_game_date).toBe(current.inGameDate);expect(row.state.inGameDate).toBeUndefined();
+  expect(row.state.progress.worldMarket.population).toEqual(current.progress!.worldMarket!.population);
+  expect(row.state.progress.worldMarket.population.codec).toBeUndefined();
 });

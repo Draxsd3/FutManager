@@ -64,6 +64,7 @@ export function playerAskingFeeBrl(player: EditorPlayer) {
 
 export function proposeTransfer(database: EditorDatabase, existing: TransferNegotiation[], input: TransferOfferInput): { negotiation?: TransferNegotiation; message: string } {
   const player = database.players.find((item) => item.id === input.playerId);
+  if(player?.condition?.retiredOn) return {message:"Atleta aposentado não pode ser contratado."};
   const buyer = database.clubs.find((item) => item.id === input.buyerClubId);
   const seller = player && database.clubs.find((item) => item.id === player.clubId);
   const free = player ? isFreeAgent(player) : false;

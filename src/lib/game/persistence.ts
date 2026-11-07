@@ -1,3 +1,4 @@
+import { binaryText,textBinary,packCheckpoint,unpackCheckpoint } from "./simulation/checkpoint-dictionary";
 import { strToU8, strFromU8, zlibSync, unzlibSync } from "fflate";
 import { EngineConflict } from "./simulation/foundation";
 import { currentCareerSaves, isCurrentCareerSave } from "./career-rules";
@@ -17,18 +18,28 @@ export type CloudCareer = {
 
 const DATABASE_KEY = "futmanager.editor.v1";
 const SAVES_KEY = "futmanager.saves.v1";
+const aggregateCodecs:Record<string,string>={finance:"finance-deflate-v1",marketState:"market-deflate-v1",staff:"staff-deflate-v1",population:"players-deflate-v1",managerMarket:"managers-deflate-v1",competitionSeason:"season-deflate-v1",youthTeams:"youth-deflate-v1",jobClubSnapshots:"club-snapshots-deflate-v1"};
+function compressAggregate(key:string,value:unknown) {
+  if(!value || typeof value!=="object") return false;
+  const v=value as Record<string,unknown>;
+  return (key==="finance" && v.rulesVersion==="finance-v1") || (key==="marketState" && v.version===1) || (key==="staff" && v.rulesVersion==="coaches-v1") || (key==="population" && v.rulesVersion==="players-v1")
+    || (key==="managerMarket" && (v.finance as {rulesVersion?:string})?.rulesVersion==="finance-v1")
+    || (key==="competitionSeason" && Array.isArray(v.fixtures))
+    || (["youthTeams","jobClubSnapshots"].includes(key) && Object.keys(v).length>0);
+}
 const packedFinance = new WeakMap<object, string>();
 const unpackedFinance = new Map<string, unknown>();
 function decodeSaveIndex(raw: string | null): CareerSave[] {
   return JSON.parse(raw ?? "[]",(key,value)=>{
-    if (!((key === "finance" && value?.codec === "finance-deflate-v1") || (key === "marketState" && value?.codec === "market-deflate-v1") || (key === "staff" && value?.codec === "staff-deflate-v1"))) return value;
+    const legacy=aggregateCodecs[key],dictionary=legacy?.replace("-deflate-v1","-dictionary-deflate-v1");
+    if (!legacy || ![legacy,dictionary].includes(value?.codec)) return value;
     let finance=unpackedFinance.get(value.data);
     if (!finance) {
       if (!Number.isSafeInteger(value.size) || value.size < 2 || value.size > 64_000_000) throw new Error("Checkpoint financeiro inválido.");
-      const bytes=Uint8Array.from(atob(value.data),c=>c.charCodeAt(0));
+      const bytes=value.encoding==="utf15" ? textBinary(value.data,value.bytes) : Uint8Array.from(atob(value.data),c=>c.charCodeAt(0));
       // A corrupt local payload must fail closed, not allocate arbitrary decompression output.
       const text=strFromU8(unzlibSync(bytes,{out:new Uint8Array(value.size)}));
-      finance=JSON.parse(text); if(unpackedFinance.size>=4) unpackedFinance.clear(); unpackedFinance.set(value.data,finance);
+      finance=value.codec===dictionary ? unpackCheckpoint(text) : JSON.parse(text); if(unpackedFinance.size>=4) unpackedFinance.clear(); unpackedFinance.set(value.data,finance);
     }
     const restored=structuredClone(finance);
     if(restored && typeof restored === "object") packedFinance.set(restored,JSON.stringify(value));
@@ -37,11 +48,11 @@ function decodeSaveIndex(raw: string | null): CareerSave[] {
 }
 function encodeSaveIndex(index: CareerSave[]) {
   return JSON.stringify(index,(key,value)=>{
-    if (!((key === "finance" && value?.rulesVersion === "finance-v1") || (key === "marketState" && value?.version === 1) || (key === "staff" && value?.rulesVersion === "coaches-v1"))) return value;
+    if (!compressAggregate(key,value)) return value;
     let packed=packedFinance.get(value);
     if (!packed) {
-      const bytes=strToU8(JSON.stringify(value)), zipped=zlibSync(bytes,{level:6});
-      packed=JSON.stringify({codec:key === "staff" ? "staff-deflate-v1" : key === "marketState" ? "market-deflate-v1" : "finance-deflate-v1",size:bytes.length,data:btoa(Array.from(zipped,b=>String.fromCharCode(b)).join(""))});
+      const bytes=strToU8(packCheckpoint(value)), zipped=zlibSync(bytes,{level:6});
+      packed=JSON.stringify({codec:aggregateCodecs[key].replace("-deflate-v1","-dictionary-deflate-v1"),size:bytes.length,encoding:"utf15",bytes:zipped.length,data:binaryText(zipped)});
       packedFinance.set(value,packed);
     }
     return JSON.parse(packed);
@@ -86,6 +97,10 @@ export function writeLocalSaves(saves: CareerSave[], userId: string) {
   try {
     const previous = decodeSaveIndex(localStorage.getItem(accountStorageKey(SAVES_KEY,userId)));
     if (index.some(save => (previous.find(old => old.id === save.id)?.progress?.engine?.revision ?? 0) > (save.progress?.engine?.revision ?? 0))) return false;
+    for(const save of index) {
+      const old=previous.find(v=>v.id===save.id)?.progress?.worldMarket?.population,current=save.progress?.worldMarket?.population;
+      if(old && (!current || current.rulesVersion!==old.rulesVersion || current.version!==old.version || Object.keys(old.people).some(id=>!current.people[id]) || Object.keys(old.generated).some(id=>!current.generated[id]))) return false;
+    }
     localStorage.setItem(accountStorageKey(SAVES_KEY, userId), encodeSaveIndex(index));
     // Retain only careers still present in this account's durable index. In particular,
     // deleted/replaced careers must not pin whole frozen universes for the life of the tab.

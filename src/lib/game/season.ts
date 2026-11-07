@@ -1,3 +1,4 @@
+import { playerEligible } from "./simulation/players";
 import { advanceTournaments } from "./tournament-progression";
 import { buildRegisteredTournament, type TournamentRegistration } from "./tournament-schedule";
 import { applyBrazilianCalendar } from "./brazilian-calendar";
@@ -192,16 +193,16 @@ export function buildRoundRobinGroups(input: {
   return groups;
 }
 
-function clubStrength(database: EditorDatabase, clubId: string) {
-  const players = database.players.filter((player) => player.clubId === clubId && player.registrationStatus !== "pending");
-  return players.length ? players.reduce((sum, player) => sum + player.overall, 0) / players.length : 65;
+function clubStrength(database: EditorDatabase, clubId: string,date?:string) {
+  const players = database.players.filter((player) => player.clubId === clubId && playerEligible(player,date));
+  return players.length ? players.reduce((sum, player) => sum + player.overall + (player.condition ? (player.energy-80)*.04+(player.condition.morale-50)*.03 : 0), 0) / players.length : 65;
 }
 
 function selectScorers(database: EditorDatabase, fixture: SeasonFixture, homeGoals: number, awayGoals: number): SeasonPlayerContribution[] {
   const random = seededRandom(`${fixture.id}|players`);
   const contributions = new Map<string, SeasonPlayerContribution>();
   const scoreSide = (clubId: string, goals: number) => {
-    const squad = database.players.filter((player) => player.clubId === clubId && player.registrationStatus !== "pending");
+    const squad = database.players.filter((player) => player.clubId === clubId && playerEligible(player,fixture.scheduledDate));
     if (!squad.length) return;
     const lineup = [...squad].sort((a, b) => b.overall - a.overall).slice(0, 11);
     const goalkeeper = squad.filter((player) => player.primaryPosition === "G").sort((a, b) => b.overall - a.overall)[0];
@@ -255,7 +256,7 @@ export function backgroundFixtureScore(fixture: SeasonFixture, minute: number, h
 }
 
 function simulateFixture(database: EditorDatabase, fixture: SeasonFixture): SeasonFixture {
-  const [homeScore, awayScore] = backgroundFixtureScore(fixture, 90, clubStrength(database, fixture.homeClubId), clubStrength(database, fixture.awayClubId));
+  const [homeScore, awayScore] = backgroundFixtureScore(fixture, 90, clubStrength(database, fixture.homeClubId,fixture.scheduledDate), clubStrength(database, fixture.awayClubId,fixture.scheduledDate));
   const winnerClubId = fixture.type === "cup"
     ? homeScore > awayScore ? fixture.homeClubId : awayScore > homeScore ? fixture.awayClubId : seededRandom(`${fixture.id}|penalties`)() < 0.5 ? fixture.homeClubId : fixture.awayClubId
     : undefined;
@@ -557,7 +558,7 @@ export function playerContributionsFromMatch(input: {
   participation: Record<number, { entered: number; left?: number }>;
   ratings: Record<number, number>;
 }): SeasonPlayerContribution[] {
-  const clubPlayers = input.database.players.filter((player) => player.clubId === input.clubId && player.registrationStatus !== "pending");
+  const clubPlayers = input.database.players.filter((player) => player.clubId === input.clubId && playerEligible(player));
   const bySourceId = new Map(clubPlayers.map((player) => [player.id, player]));
   const result = new Map<string, SeasonPlayerContribution>();
   const add = (playerId: number, field: "goals" | "assists") => {
