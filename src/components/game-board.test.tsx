@@ -18,7 +18,8 @@ vi.mock("@/lib/game/persistence", async (importOriginal) => ({
   deleteCloudSave: vi.fn().mockResolvedValue(undefined),
 }));
 
-configure({ asyncUtilTimeout: 5000 });
+// Full-universe IndexedDB snapshots now include the financial book; await completed hydration.
+configure({ asyncUtilTimeout: 15000 });
 
 const matchRulesMarkdown = readFileSync("public/game-assets/match-engine-rules.md", "utf8");
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
@@ -418,6 +419,7 @@ it("advances the career date after a result and returns an expired incoming loan
   const player = state.careerSquad![0];
   const loan = { owner: { name: "Origem externa", externalId: "99999999" }, borrower: { name: save.clubName, clubId: save.clubId }, startsOn: "2026-01-01", endsOn: expiresOn, status: "active" as const, source: "transfermarkt" as const };
   player.loan = loan; player.acquisitionType = "loan"; player.loanExpiresOn = loan.endsOn;
+  delete state.managerMarket!.finance; // Legacy E2 fixture: finance adopts this external loan without inventing its owner club.
   state.loanContracts = { [player.sourceId!]: loan }; state.page = "result"; state.minute = 90;
   state.starters = [player.id, ...state.starters.filter(id => id !== player.id)].slice(0, 11);
   state.manualPositions = { [player.id]: { left: 50, top: 50 } };
@@ -480,7 +482,7 @@ it("removes pre-reset careers from IndexedDB/localStorage/session and cannot res
   await screen.findByRole("button", { name: "Empréstimos" });
   const old = structuredClone(readLocalSaves("alice")[0]);
   delete old.careerRuleset;
-  if (old.progress) delete old.progress.universeSnapshot;
+  if (old.progress) { delete old.progress.universeSnapshot; if(old.progress.managerMarket) delete old.progress.managerMarket.finance; }
   view.unmount();
   // Raw seed emulates a browser/database written by a release before the reset.
   localStorage.setItem(accountStorageKey("futmanager.saves.v1", "alice"), JSON.stringify([old]));
@@ -547,7 +549,7 @@ it("connects jobs to the career, confirms a club change and restores it without 
   fireEvent.click(screen.getByRole("button", { name: "Agenda" }));
   fireEvent.click(screen.getByRole("menuitem", { name: /Central de empregos/ }));
   expect(await screen.findByText("Contratação confirmada.")).toBeTruthy();
-}, 20000);
+}, 45000);
 
 it("saves the chosen imported shirt per career, restores it and carries it into match tactics", async () => {
   const { clubCrestAsset, clubKitAsset } = await import("@/lib/game/assets");
@@ -654,7 +656,7 @@ it.each([true, false])("credits gate only for a completed home fixture (home=%s)
     expect(result.budget).toBeCloseTo(12624 + 151 + (home ? expectedNet / 1000 : 0));
     expect(result.progress?.stadiums?.[save.clubId]?.receipts.length ?? 0).toBe(home ? 1 : 0);
   }, { timeout: 5000 });
-}, 20000);
+}, 30000);
 
 it("waits for catalog synchronization, explains failure, and retries with Atualizar", async () => {
   const { IDBFactory } = await import("fake-indexeddb");
@@ -787,4 +789,4 @@ it("receives automatic club offers after the match, persists and rejects them af
   expect(within(profile).getByText(offer.club)).toBeTruthy();
   fireEvent.click(within(profile).getByRole("button", { name: "Recusar" }));
   await waitFor(() => expect(readLocalSaves("alice")[0].progress?.playerCareers[player.id]?.transferOffers?.[0].status).toBe("rejected"));
-}, 30000);
+}, 45000);

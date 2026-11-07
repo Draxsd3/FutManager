@@ -41,3 +41,7 @@ Cobertura integral por capítulo do anexo (27/27). Inventário granular dos 22 m
 - Cap. 21: proprietário e clube de atuação diferem em empréstimo; a regra de unicidade não pode proibir empréstimos válidos.
 - Cap. 24: [IA-HIBRIDA](IA-HIBRIDA.md) amplia o uso para propostas estratégicas validadas conforme direção do usuário. Não concede execução arbitrária.
 - Cap. 25: suíte verde não declara economia equilibrada nem comprova todas as fases/temporadas; campanha longa está planejada, não executada nesta etapa.
+
+## Atualização E3 (sem reclassificar o diagnóstico original como motor completo)
+
+Finanças e contratos de jogador têm agora livro/compromissos, liquidação bilateral, folha civil e inscrição básica em `simulation/finance.ts` e `settlement.ts`; integração e limites em [ETAPA-3.md](ETAPA-3.md). Capítulos 6–9 e 21 continuam parciais em relação à especificação inteira: agentes, planejamento de mercado, contratos de técnicos, toda a economia e transações distribuídas não foram declarados concluídos.

@@ -168,3 +168,17 @@ it("does not upgrade an unrelated stale cloud lineage to the latest acknowledged
   await expect(writeCloudSave(stale,"alice")).rejects.toThrow(/mudou/);
   expect(client.upsert.mock.calls.at(-1)![0].state.sync.parent).toBe("another-device-old-token");
 });
+
+it("round-trips a large financial checkpoint atomically without storing its raw book in the small index",async()=>{
+  const {createDefaultDatabase,buildSquadFromDatabase}=await import("./editor-data");
+  const {createCareerSeason}=await import("./season");
+  const {migrateFinanceSave}=await import("./simulation/settlement");
+  const db=createDefaultDatabase(), club=db.clubs[0], season=createCareerSeason(db,club.id,2026)!;
+  const current={...save(),clubId:club.id,clubName:club.name,progress:{competitionSeason:season,careerSquad:buildSquadFromDatabase(db,club.name),playerCareers:{},loanContracts:{}}} as CareerSave;
+  const financial=migrateFinanceSave(current,db);
+  expect(writeLocalSaves([financial],"finance-owner")).toBe(true);
+  const raw=localStorage.getItem("futmanager.saves.v1.finance-owner")!;
+  expect(raw).toContain("finance-deflate-v1");
+  expect(readLocalSaves("finance-owner")[0]).toEqual(financial);
+  expect(readLocalSaves("other-owner")).toEqual([]);
+});

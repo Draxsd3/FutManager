@@ -41,3 +41,7 @@ Os textos abaixo são extrações do anexo, com seus capítulos originais preser
 - `public/game-assets/match-engine-rules.md` continua sendo o arquivo lido pelo motor de partidas via `match-rules.ts`. Este diretório não é carregado em runtime. Não colocar especificação de universo no parser numérico de partidas.
 - Calendário e regulamentos brasileiros seguem `../REGULAMENTOS-2026.md` e `../brazilian-calendar.md`; não inventar novos formatos a partir de texto genérico.
 - A **etapa 2** possui implementação no recorte pós-partida, documentada em ETAPA-2.md. A próxima frente é E3 (finanças e contratos); nenhuma etapa seguinte está implicitamente implementada ou ativada.
+
+## Etapa 3 integrada
+
+Finanças, contratos e registro básico: [entrega, regras e limites](ETAPA-3.md). Liquidação bilateral comum, folha por competência e migração aditiva; sem iniciar E4 ou ativar Gemini.

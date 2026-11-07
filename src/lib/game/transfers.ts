@@ -14,6 +14,9 @@ export type TransferNegotiation = {
   kind: TransferKind;
   freeAgent?: boolean;
   completedOn?: string;
+  /** Modeled now; non-cash settlements and commissions remain disabled until their ledger exists. */
+  paymentTerms?: { kind: "cash" } | { kind: "instalments"; schedule: { dueOn: string; amountBrl: number }[] };
+  commission?: { agentId: string; amountBrl: number; payerClubId: string };
   askingFeeBrl: number;
   offerFeeBrl: number;
   wageSharePercent: number;
@@ -89,7 +92,7 @@ export function respondToTransferNegotiation(negotiation: TransferNegotiation, a
     return { negotiation: next, message: next.message };
   }
   if (action.type === "reject") {
-    if (negotiation.status !== "countered") return { negotiation, message: "Não há contraproposta ativa para recusar." };
+    if (negotiation.status !== "countered" && negotiation.status !== "agreed") return { negotiation, message: "Não há negociação ativa para recusar." };
     const next = { ...negotiation, status: "rejected" as const, message: "Negociação encerrada sem acordo." };
     return { negotiation: next, message: next.message };
   }

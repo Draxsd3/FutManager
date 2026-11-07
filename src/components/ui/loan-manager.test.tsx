@@ -7,8 +7,8 @@ import { buildSquadFromDatabase, createDefaultDatabase } from "@/lib/game/editor
 import { createPlayerCareer } from "@/lib/game/career";
 import type { LoanContract } from "@/lib/game/loans";
 const loan: LoanContract = { owner: { name: "Origem", clubId: "owner" }, borrower: { name: "Destino", clubId: "borrower" }, startsOn: "2025-07-01", endsOn: "2026-06-30", status: "active", source: "transfermarkt" };
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
-it("shows real ownership and loan end, submits only after confirmation and reports the result", () => {
+afterEach(async () => { cleanup(); vi.restoreAllMocks(); });
+it("shows real ownership and loan end, submits only after confirmation and reports the result", async () => {
   vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);
   const onPropose = vi.fn().mockReturnValue("Prorrogação aceita"), close = vi.fn();
   const player = { ...createDefaultDatabase().players[0], loan };
@@ -17,16 +17,16 @@ it("shows real ownership and loan end, submits only after confirmation and repor
   const send = screen.getByRole("button", { name: "Propor prorrogação" });
   fireEvent.click(send); expect(onPropose).not.toHaveBeenCalled();
   fireEvent.click(send); expect(onPropose).toHaveBeenCalledWith(player.id, 6, Math.round(player.salaryMonthlyBrl * 1.5), 50);
-  expect(screen.getByRole("status").textContent).toBe("Prorrogação aceita");
+  expect((await screen.findByRole("status")).textContent).toBe("Prorrogação aceita");
   fireEvent.click(screen.getByRole("button", { name: "Fechar" })); expect(close).toHaveBeenCalledOnce();
 });
-it("does not offer renewal with unknown end or after expiration", () => {
+it("does not offer renewal with unknown end or after expiration", async () => {
   const player = createDefaultDatabase().players[0];
   render(<LoanManager players={[{ ...player, loan: { ...loan, endsOn: null } }]} clubId="borrower" date="2026-06-01" onPropose={vi.fn()} onClose={vi.fn()}/>);
   expect(screen.getByText("Prazo não informado na fonte")).toBeTruthy();
   expect(screen.queryByRole("button", { name: "Propor prorrogação" })).toBeNull();
 });
-it("borrowed players cannot be listed, sold, re-loaned or renew definitive contracts in player market", () => {
+it("borrowed players cannot be listed, sold, re-loaned or renew definitive contracts in player market", async () => {
   const db = createDefaultDatabase(), player = { ...buildSquadFromDatabase(db, db.clubs[0].name)![0], loan, acquisitionType: "loan" as const };
   render(<PlayerMarket player={player} record={createPlayerCareer(player, "Destino")} club="Destino" clubs={["Origem", "Destino"]} onAction={vi.fn()}/>);
   expect(screen.getByText("Contrato de empréstimo")).toBeTruthy();

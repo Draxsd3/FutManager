@@ -1,16 +1,17 @@
+import { adoptFinance, accrueFinance, financeDatabase, projectFinance, settleTransfer, type FinanceState } from "./simulation/finance";
 import { ENGINE_CONFIG } from "./simulation/foundation";
 import type { EditorDatabase, EditorPlayer } from "./editor-data";
-import { databaseWithLoans, dateAfterMonths, type CareerLoans } from "./loans";
+import { databaseWithLoans, type CareerLoans } from "./loans";
 import { appointManager, type ManagerMarket } from "./manager-market";
 import { databaseWithCompletedTransfers, playerAskingFeeBrl, proposeTransfer, respondToTransferNegotiation, type TransferNegotiation } from "./transfers";
 
 export type WorldMarket = {
   lastWeek?: number;
-  listings: Record<string, "sale" | "loan">;
+  listings: Record<string, "sale" | "loan" | "normal">;
   events: { date: string; text: string }[];
 };
-export function worldDatabase(database: EditorDatabase, deals: TransferNegotiation[], loans: CareerLoans, world?: WorldMarket): EditorDatabase {
-  const effective = databaseWithLoans(databaseWithCompletedTransfers({ ...database, players: database.players.map(p => ({ ...p, loan: undefined })) }, deals), loans);
+export function worldDatabase(database: EditorDatabase, deals: TransferNegotiation[], loans: CareerLoans, world?: WorldMarket, finance?: FinanceState): EditorDatabase {
+  const effective = financeDatabase(databaseWithLoans(databaseWithCompletedTransfers({ ...database, players: database.players.map(p => ({ ...p, loan: undefined })) }, deals), loans), finance);
   return world ? { ...effective, players: effective.players.map(p => world.listings[p.id] && p.loan?.status !== "active" ? { ...p, marketStatus: world.listings[p.id] } : p) } : effective;
 }
 const hash = (value: string) => { let n = 2166136261; for (const c of value) n = Math.imul(n ^ c.charCodeAt(0), 16777619); return n >>> 0; };
@@ -28,11 +29,12 @@ export function simulateWorldMarket(input: { database: EditorDatabase; humanClub
   let loans = input.loans;
   if (!Number.isFinite(week) || week <= (world.lastWeek ?? previousWeek)) return { world, managers, negotiations, loans };
   world = { ...world, lastWeek: week, listings: { ...world.listings }, events: [...world.events] };
-  managers = { ...managers, clubs: { ...managers.clubs } };
+  managers = adoptFinance(managers, worldDatabase(input.database,negotiations,loans,world),managers.finance?.through ?? input.previousDate,loans);
+  managers = projectFinance({...managers,finance:accrueFinance(managers.finance!,input.date)});
   negotiations = [...negotiations]; loans = { ...loans };
   const record = (text: string) => world.events.unshift({ date: input.date, text });
   const protectedPlayers = new Set(negotiations.filter(d => d.status === "agreed" || d.status === "countered" || (d.status === "completed" && d.completedOn && Date.parse(`${input.date}T12:00:00Z`)-Date.parse(`${d.completedOn}T12:00:00Z`) < ENGINE_CONFIG.worldMarket.cooldownDays*86400000)).map(d => d.playerId));
-  const db = worldDatabase(input.database, negotiations, loans, world);
+  const db = worldDatabase(input.database, negotiations, loans, world, managers.finance);
   const rosters = new Map<string, EditorPlayer[]>();
   for (const player of db.players) { const roster = rosters.get(player.clubId) ?? []; roster.push(player); rosters.set(player.clubId, roster); }
   const moved = new Set<string>();
@@ -69,15 +71,11 @@ export function simulateWorldMarket(input: { database: EditorDatabase; humanClub
     let deal = result.negotiation;
     if (deal.status === "countered") deal = respondToTransferNegotiation(deal, { type: "accept-counter" }).negotiation;
     if (deal.status !== "agreed") continue;
-    deal = { ...respondToTransferNegotiation(deal, { type: "complete" }).negotiation, completedOn: input.date };
-    const fee = deal.agreedFeeBrl ?? 0;
-    const cost = Math.ceil((fee+player.salaryMonthlyBrl*(deal.kind === "loan" ? 3 : 12))/1000);
-    if (cost > finances.budget*ENGINE_CONFIG.worldMarket.budgetFraction) continue;
-    managers.clubs[buyer.id] = { ...finances, budget: finances.budget-cost };
-    const seller = managers.clubs[player.clubId];
-    if (seller) managers.clubs[player.clubId] = { ...seller, budget: seller.budget+Math.floor(fee/1000) };
-    if (deal.kind === "loan") loans[player.id] = { owner: { clubId: player.clubId, name: deal.sourceClub }, borrower: { clubId: buyer.id, name: buyer.name }, startsOn: input.date, endsOn: dateAfterMonths(input.date, 6), status: "active", source: "game", wageSharePercent: 50 };
-    else delete loans[player.id];
+    try {
+      const settled = settleTransfer(managers.finance!,db,deal,input.date);
+      deal = settled.deal; loans = settled.loans;
+      managers = projectFinance({...managers,finance:settled.finance});
+    } catch { continue; } // Revalidate budget, property, employment and loan coverage at execution.
     negotiations.unshift(deal);
     delete world.listings[player.id];
     rosters.set(player.clubId, (rosters.get(player.clubId) ?? []).filter(p => p.id !== player.id));
@@ -86,7 +84,7 @@ export function simulateWorldMarket(input: { database: EditorDatabase; humanClub
     record(`${buyer.name} ${deal.kind === "loan" ? "recebeu por empréstimo" : "contratou"} ${player.name}${deal.sourceClubId ? `, do ${deal.sourceClub}` : ", livre de contrato"}.`);
   }
   // Recompute payroll from actual ownership/loan shares; keep the existing match economy.
-  const effective = worldDatabase(input.database, negotiations, loans, world);
+  const effective = worldDatabase(input.database, negotiations, loans, world, managers.finance);
   const payroll: Record<string, number> = {};
   for (const p of effective.players) {
     const loan = p.loan;
@@ -109,5 +107,5 @@ export function simulateWorldMarket(input: { database: EditorDatabase; humanClub
     if (appointed) { managers = appointed; record(`${club.name} contratou o técnico ${name}.`); }
   }
   world.events = world.events.slice(0,100);
-  return { world, managers, negotiations, loans };
+  return { world, managers:projectFinance(managers), negotiations, loans };
 }

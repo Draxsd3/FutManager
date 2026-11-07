@@ -38,7 +38,7 @@ export function TeamDirectory({
   records: Record<number, PlayerCareerRecord>;
   negotiations: TransferNegotiation[];
   onOpenPlayer: (id: number) => void;
-  onTransferOffer: (playerId: string, feeBrl: number, wageSharePercent: number) => string;
+  onTransferOffer: (playerId: string, feeBrl: number, wageSharePercent: number) => string | Promise<string>;
   onBack: () => void;
 }) {
   const [query, setQuery] = useState("");
@@ -133,7 +133,7 @@ export function TeamDirectory({
     if (kind === "loan") setWageShare("50");
   }
 
-  function submitOffer() {
+  async function submitOffer() {
     if (!selected || selected.careerPlayer || !currentSeller) return;
     const feeBrl = Number(offerFee) * 1_000_000;
     const share = selected.profile.marketStatus === "loan" ? Number(wageShare) : 0;
@@ -142,7 +142,7 @@ export function TeamDirectory({
       return;
     }
     if (!window.confirm(`Enviar proposta de ${formatBrl(feeBrl)}${selected.profile.marketStatus === "loan" ? `, pagando ${share}% do salário por 6 meses` : ""} por ${selected.profile.name}?`)) return;
-    setMessage(onTransferOffer(selected.profile.id, feeBrl, share));
+    setMessage(await onTransferOffer(selected.profile.id, feeBrl, share));
     setOfferOpen(false);
   }
 
@@ -172,7 +172,7 @@ export function TeamDirectory({
               const expanded = expandedGroups[key] ?? !!query.trim();
               return <section key={key} aria-label={`${divisionLabel(group.division, group.country)} · ${group.country}`} className="mb-3 last:mb-0">
               <h2 className="sticky top-0 z-10 mb-1 rounded-lg border-b border-[#dce3da] bg-[#f5f6f3] text-xs font-bold text-[#354d3c]">
-                <button type="button" aria-expanded={expanded} onClick={() => setExpandedGroups(current => ({ ...current, [key]: !expanded }))} className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left hover:bg-[#eaf1e4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#438657]">
+                <button type="button" aria-expanded={expanded} onClick={async () => setExpandedGroups(current => ({ ...current, [key]: !expanded }))} className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left hover:bg-[#eaf1e4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#438657]">
                   <span className="min-w-0 flex-1">{divisionLabel(group.division, group.country)}{countryOptions.length > 1 && <small className="mt-1 block text-[10px] font-normal text-[#5f705e]">{group.country}</small>}</span>
                   <span className="rounded-md bg-[#e5eedf] px-2 py-1 text-[10px] tabular-nums" aria-label={`${group.clubs.length} clubes`}>{group.clubs.length}</span>
                   <span aria-hidden="true" className="text-[12px] text-[#5f705e]">{expanded ? "▾" : "▸"}</span>
@@ -181,7 +181,7 @@ export function TeamDirectory({
               {expanded && group.clubs.map((item) => {
               const isActive = activeClub?.id === item.id;
               const rosterCount = item.name === club ? squad.length : database.players.filter((player) => player.clubId === item.id && !completedTransfers.has(player.id)).length;
-              return <button key={item.id} aria-pressed={isActive} onClick={() => chooseClub(item)} className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${isActive ? "border-[#81b48d] bg-[#eef7f0] shadow-sm" : "border-transparent hover:border-[#e3ece4] hover:bg-[#f7faf7]"}`}>
+              return <button key={item.id} aria-pressed={isActive} onClick={async () => chooseClub(item)} className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${isActive ? "border-[#81b48d] bg-[#eef7f0] shadow-sm" : "border-transparent hover:border-[#e3ece4] hover:bg-[#f7faf7]"}`}>
                 <Crest club={item.name} size="sm" />
                 <span className="min-w-0 flex-1"><b className="block truncate text-[13px]">{item.name}</b><small className="mt-0.5 block truncate text-[10px] text-[#718477]">{item.country} · {item.division}</small></span>
                 <span className="text-[10px] font-bold text-[#789080]">{rosterCount}</span>
@@ -221,7 +221,7 @@ export function TeamDirectory({
                     {teamPlayers.map(({ profile }) => {
                       const isSelected = selected?.profile.id === profile.id;
                       const listed = profile.marketStatus === "sale" || profile.marketStatus === "loan";
-                      return <tr key={profile.id} aria-selected={isSelected} tabIndex={0} onClick={() => { setSelectedPlayerId(profile.id); setOfferOpen(false); setMessage(""); }} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedPlayerId(profile.id); setOfferOpen(false); setMessage(""); } }} className={`cursor-pointer border-t border-[#edf1ed] transition hover:bg-[#f5faf5] focus:bg-[#f1f8f2] ${isSelected ? "bg-[#edf7ef]" : "bg-white"}`}>
+                      return <tr key={profile.id} aria-selected={isSelected} tabIndex={0} onClick={async () => { setSelectedPlayerId(profile.id); setOfferOpen(false); setMessage(""); }} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedPlayerId(profile.id); setOfferOpen(false); setMessage(""); } }} className={`cursor-pointer border-t border-[#edf1ed] transition hover:bg-[#f5faf5] focus:bg-[#f1f8f2] ${isSelected ? "bg-[#edf7ef]" : "bg-white"}`}>
                         <td className="px-3 py-3 text-center font-bold text-[#718477]">{profile.shirtNumber}</td><td className="px-3 py-3"><span className="rounded-md bg-[#f0f4f0] px-2 py-1 font-bold text-[#52675a]">{profile.primaryPosition}</span></td><td className="px-3 py-3"><span className="font-bold text-[#263d30]">{profile.name}</span><span className="ml-2 hidden text-[10px] text-[#809085] md:inline">{profile.preferredFoot === "E" ? "Canhoto" : profile.preferredFoot === "D" ? "Destro" : "Ambidestro"}</span></td><td className="px-3 py-3 text-center"><span className={`inline-grid h-8 min-w-8 place-items-center rounded-lg font-black ${profile.overall >= 80 ? "bg-[#e5f2e6] text-[#277246]" : "bg-[#f0f3f0] text-[#51665a]"}`}>{profile.overall}</span></td><td className="px-3 py-3 text-center text-[#607267]">{profile.age}</td><td className="px-3 py-3 whitespace-nowrap text-[#53685a]">{formatCompactBrl(profile.salaryMonthlyBrl)}/mês</td><td className="px-3 py-3 whitespace-nowrap font-semibold text-[#53685a]">{formatCompactBrl(profile.marketValueBrl)}</td><td className="px-3 py-3">{listed ? <span className={`rounded-full px-2 py-1 text-[9px] font-bold ${profile.marketStatus === "loan" ? "bg-[#e9efff] text-[#354e93]" : "bg-[#e7f4e9] text-[#2d7147]"}`}>{profile.marketStatus === "loan" ? "EMPRÉSTIMO" : "À VENDA"}</span> : <span className="text-[10px] text-[#a1ada4]">Não listado</span>}</td>
                       </tr>;
                     })}
@@ -245,14 +245,14 @@ export function TeamDirectory({
                   {selected.careerPlayer && <div className="grid grid-cols-3 rounded-xl bg-[#f3f7f3] p-3 text-center"><CareerStat label="Jogos" value={careerGames} /><CareerStat label="Gols" value={careerGoals} /><CareerStat label="Assistências" value={careerAssists} /></div>}
                   {!selected.careerPlayer && activeClub.name !== club && <p className="rounded-xl bg-[#f6f8f6] p-3 text-[10px] leading-relaxed text-[#718477]">Estatísticas de carreira ainda não registradas para este atleta nesta carreira.</p>}
 
-                  {selected.careerPlayer ? <button className={`${secondaryButton} w-full`} onClick={() => onOpenPlayer(selected.careerPlayer!.id)}>Abrir ficha completa</button> : selected.profile.loan?.status !== "active" ? <>
+                  {selected.careerPlayer ? <button className={`${secondaryButton} w-full`} onClick={async () => onOpenPlayer(selected.careerPlayer!.id)}>Abrir ficha completa</button> : selected.profile.loan?.status !== "active" ? <>
                     {currentNegotiation ? <div className="rounded-xl border border-[#edd99c] bg-[#fff9e9] p-3"><p className="text-[10px] font-bold uppercase tracking-wide text-[#826a27]">Negociação em andamento</p><p className="mt-1 text-xs font-bold text-[#4f4527]">{currentNegotiation.message}</p><p className="mt-1 text-[10px] text-[#776b48]">Para responder, use a seção Mercado e revise o custo antes de confirmar.</p></div> : <>
                       <p className="rounded-xl bg-[#f3f7f3] p-3 text-xs text-[#53685a]">{selected.profile.marketStatus === "loan" ? "Clube pede " : "Clube pede "}<b>{formatCompactBrl(asking)}</b>{selected.profile.marketStatus === "loan" ? " de taxa · salário negociável" : " de transferência"}</p>
                       {!offerOpen ? <button className={`${primaryButton} w-full`} onClick={startOffer}>Fazer proposta</button> : <div className="space-y-3 rounded-xl border border-[#dce9de] bg-[#f8fbf8] p-3">
                         <label className="block text-[10px] font-bold text-[#53685a]">{selected.profile.marketStatus === "loan" ? "Taxa de empréstimo (R$ milhões)" : "Oferta de compra (R$ milhões)"}<input aria-label="Valor da proposta" className={`${control} mt-1 w-full`} type="number" min="0.01" step="0.01" value={offerFee} onChange={(event) => setOfferFee(event.target.value)} /></label>
                         {selected.profile.marketStatus === "loan" && <label className="block text-[10px] font-bold text-[#53685a]">Parte do salário paga pelo seu clube (%)<input aria-label="Parte do salário" className={`${control} mt-1 w-full`} type="number" min="0" max="100" step="5" value={wageShare} onChange={(event) => setWageShare(event.target.value)} /></label>}
                         <p className="text-[10px] leading-relaxed text-[#718477]">Uma proposta não conclui a contratação. O clube vendedor pode aceitar, recusar ou fazer uma contraproposta.</p>
-                        <div className="grid grid-cols-2 gap-2"><button className={primaryButton} onClick={submitOffer}>Enviar proposta</button><button className={secondaryButton} onClick={() => setOfferOpen(false)}>Cancelar</button></div>
+                        <div className="grid grid-cols-2 gap-2"><button className={primaryButton} onClick={submitOffer}>Enviar proposta</button><button className={secondaryButton} onClick={async () => setOfferOpen(false)}>Cancelar</button></div>
                       </div>}
                     </>}
                   </> : <div className="rounded-xl bg-[#f5f7f5] p-3 text-center text-[10px] text-[#829087]">Atleta em empréstimo vigente: não pode ser transferido novamente.</div>}

@@ -193,7 +193,7 @@ export function buildRoundRobinGroups(input: {
 }
 
 function clubStrength(database: EditorDatabase, clubId: string) {
-  const players = database.players.filter((player) => player.clubId === clubId);
+  const players = database.players.filter((player) => player.clubId === clubId && player.registrationStatus !== "pending");
   return players.length ? players.reduce((sum, player) => sum + player.overall, 0) / players.length : 65;
 }
 
@@ -201,7 +201,7 @@ function selectScorers(database: EditorDatabase, fixture: SeasonFixture, homeGoa
   const random = seededRandom(`${fixture.id}|players`);
   const contributions = new Map<string, SeasonPlayerContribution>();
   const scoreSide = (clubId: string, goals: number) => {
-    const squad = database.players.filter((player) => player.clubId === clubId);
+    const squad = database.players.filter((player) => player.clubId === clubId && player.registrationStatus !== "pending");
     if (!squad.length) return;
     const lineup = [...squad].sort((a, b) => b.overall - a.overall).slice(0, 11);
     const goalkeeper = squad.filter((player) => player.primaryPosition === "G").sort((a, b) => b.overall - a.overall)[0];
@@ -557,7 +557,7 @@ export function playerContributionsFromMatch(input: {
   participation: Record<number, { entered: number; left?: number }>;
   ratings: Record<number, number>;
 }): SeasonPlayerContribution[] {
-  const clubPlayers = input.database.players.filter((player) => player.clubId === input.clubId);
+  const clubPlayers = input.database.players.filter((player) => player.clubId === input.clubId && player.registrationStatus !== "pending");
   const bySourceId = new Map(clubPlayers.map((player) => [player.id, player]));
   const result = new Map<string, SeasonPlayerContribution>();
   const add = (playerId: number, field: "goals" | "assists") => {

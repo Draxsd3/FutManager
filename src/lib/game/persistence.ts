@@ -1,3 +1,4 @@
+import { strToU8, strFromU8, zlibSync, unzlibSync } from "fflate";
 import { EngineConflict } from "./simulation/foundation";
 import { currentCareerSaves, isCurrentCareerSave } from "./career-rules";
 import { cacheCareerSaves } from "@/lib/importer/database-cache";
@@ -16,6 +17,36 @@ export type CloudCareer = {
 
 const DATABASE_KEY = "futmanager.editor.v1";
 const SAVES_KEY = "futmanager.saves.v1";
+const packedFinance = new WeakMap<object, string>();
+const unpackedFinance = new Map<string, unknown>();
+function decodeSaveIndex(raw: string | null): CareerSave[] {
+  return JSON.parse(raw ?? "[]",(key,value)=>{
+    if (key !== "finance" || value?.codec !== "finance-deflate-v1") return value;
+    let finance=unpackedFinance.get(value.data);
+    if (!finance) {
+      if (!Number.isSafeInteger(value.size) || value.size < 2 || value.size > 64_000_000) throw new Error("Checkpoint financeiro inválido.");
+      const bytes=Uint8Array.from(atob(value.data),c=>c.charCodeAt(0));
+      // A corrupt local payload must fail closed, not allocate arbitrary decompression output.
+      const text=strFromU8(unzlibSync(bytes,{out:new Uint8Array(value.size)}));
+      finance=JSON.parse(text); if(unpackedFinance.size>=4) unpackedFinance.clear(); unpackedFinance.set(value.data,finance);
+    }
+    const restored=structuredClone(finance);
+    if(restored && typeof restored === "object") packedFinance.set(restored,JSON.stringify(value));
+    return restored;
+  }) as CareerSave[];
+}
+function encodeSaveIndex(index: CareerSave[]) {
+  return JSON.stringify(index,(key,value)=>{
+    if (key !== "finance" || value?.rulesVersion !== "finance-v1") return value;
+    let packed=packedFinance.get(value);
+    if (!packed) {
+      const bytes=strToU8(JSON.stringify(value)), zipped=zlibSync(bytes,{level:1});
+      packed=JSON.stringify({codec:"finance-deflate-v1",size:bytes.length,data:btoa(Array.from(zipped,b=>String.fromCharCode(b)).join(""))});
+      packedFinance.set(value,packed);
+    }
+    return JSON.parse(packed);
+  });
+}
 // Large immutable universes live in IndexedDB/cloud, not the 5 MB localStorage index.
 const cloudTokens = new Map<string, { token: string; ancestors: Set<string | null> }>();
 const universeMemory = new Map<string, EditorDatabase>();
@@ -39,7 +70,7 @@ export function writeLocalDatabase(database: EditorDatabase, userId: string) {
 export function readLocalSaves(userId: string): CareerSave[] {
   try {
     const value = localStorage.getItem(accountStorageKey(SAVES_KEY, userId));
-    const parsed = value ? JSON.parse(value) : [];
+    const parsed = decodeSaveIndex(value);
     return Array.isArray(parsed) ? currentCareerSaves(parsed as CareerSave[]).map(save => {
       const snapshot = universeMemory.get(`${userId}:${save.id}`);
       return snapshot && save.progress ? { ...save, progress: { ...save.progress, universeSnapshot: save.progress.universeSnapshot ?? snapshot } } : save;
@@ -53,9 +84,9 @@ export function writeLocalSaves(saves: CareerSave[], userId: string) {
   saves = currentCareerSaves(saves);
   const index = saves.map(save => save.progress ? { ...save, progress: { ...save.progress, universeSnapshot: undefined } } : save);
   try {
-    const previous = JSON.parse(localStorage.getItem(accountStorageKey(SAVES_KEY,userId)) ?? "[]") as CareerSave[];
+    const previous = decodeSaveIndex(localStorage.getItem(accountStorageKey(SAVES_KEY,userId)));
     if (index.some(save => (previous.find(old => old.id === save.id)?.progress?.engine?.revision ?? 0) > (save.progress?.engine?.revision ?? 0))) return false;
-    localStorage.setItem(accountStorageKey(SAVES_KEY, userId), JSON.stringify(index));
+    localStorage.setItem(accountStorageKey(SAVES_KEY, userId), encodeSaveIndex(index));
     for (const save of saves) if (save.progress?.universeSnapshot) universeMemory.set(`${userId}:${save.id}`, save.progress.universeSnapshot);
     void cacheCareerSaves(saves, userId).catch(() => undefined);
     return true;
@@ -297,8 +328,8 @@ async function performCloudSave(save: CareerSave, expectedUserId: string) {
       try {
         const raw = localStorage.getItem(accountStorageKey(SAVES_KEY,userId));
         if (raw) {
-          const index = JSON.parse(raw) as CareerSave[];
-          localStorage.setItem(accountStorageKey(SAVES_KEY,userId),JSON.stringify(index.map(item => item.id === save.id ? { ...item,syncToken:token } : item)));
+          const index = decodeSaveIndex(raw);
+          localStorage.setItem(accountStorageKey(SAVES_KEY,userId),encodeSaveIndex(index.map(item => item.id === save.id ? { ...item,syncToken:token } : item)));
         }
       } catch { /* Cloud commit succeeded; local storage may be unavailable. */ }
     });
