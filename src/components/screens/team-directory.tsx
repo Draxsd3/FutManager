@@ -8,7 +8,7 @@ import type { EditorClub, EditorDatabase, EditorPlayer } from "@/lib/game/editor
 import type { Player, PositionCode } from "@/lib/game/mock-data";
 import { positionLabel } from "@/lib/game/mock-data";
 import type { PlayerCareerRecord } from "@/lib/game/career";
-import { askingFeeBrl, formatBrl, type TransferNegotiation } from "@/lib/game/transfers";
+import { playerAskingFeeBrl, formatBrl, type TransferNegotiation } from "@/lib/game/transfers";
 import { Crest } from "@/components/ui/club-sidebar";
 
 const panel = "min-w-0 border-t border-[#dce3da] bg-transparent";
@@ -114,7 +114,7 @@ export function TeamDirectory({
   const careerGoals = careerSeasons.reduce((sum, season) => sum + season.goals, 0);
   const careerAssists = careerSeasons.reduce((sum, season) => sum + season.assists, 0);
   const currentSeller = selected ? clubsById.get(selected.profile.clubId) : undefined;
-  const asking = selected ? askingFeeBrl(selected.profile.marketStatus === "loan" ? "loan" : "sale", selected.profile.marketValueBrl) : 0;
+  const asking = selected ? playerAskingFeeBrl(selected.profile) : 0;
 
   function chooseClub(item: EditorClub) {
     setActiveClubId(item.id);
@@ -245,7 +245,7 @@ export function TeamDirectory({
                   {selected.careerPlayer && <div className="grid grid-cols-3 rounded-xl bg-[#f3f7f3] p-3 text-center"><CareerStat label="Jogos" value={careerGames} /><CareerStat label="Gols" value={careerGoals} /><CareerStat label="Assistências" value={careerAssists} /></div>}
                   {!selected.careerPlayer && activeClub.name !== club && <p className="rounded-xl bg-[#f6f8f6] p-3 text-[10px] leading-relaxed text-[#718477]">Estatísticas de carreira ainda não registradas para este atleta nesta carreira.</p>}
 
-                  {selected.careerPlayer ? <button className={`${secondaryButton} w-full`} onClick={() => onOpenPlayer(selected.careerPlayer!.id)}>Abrir ficha completa</button> : selected.profile.marketStatus === "sale" || selected.profile.marketStatus === "loan" ? <>
+                  {selected.careerPlayer ? <button className={`${secondaryButton} w-full`} onClick={() => onOpenPlayer(selected.careerPlayer!.id)}>Abrir ficha completa</button> : selected.profile.loan?.status !== "active" ? <>
                     {currentNegotiation ? <div className="rounded-xl border border-[#edd99c] bg-[#fff9e9] p-3"><p className="text-[10px] font-bold uppercase tracking-wide text-[#826a27]">Negociação em andamento</p><p className="mt-1 text-xs font-bold text-[#4f4527]">{currentNegotiation.message}</p><p className="mt-1 text-[10px] text-[#776b48]">Para responder, use a seção Mercado e revise o custo antes de confirmar.</p></div> : <>
                       <p className="rounded-xl bg-[#f3f7f3] p-3 text-xs text-[#53685a]">{selected.profile.marketStatus === "loan" ? "Clube pede " : "Clube pede "}<b>{formatCompactBrl(asking)}</b>{selected.profile.marketStatus === "loan" ? " de taxa · salário negociável" : " de transferência"}</p>
                       {!offerOpen ? <button className={`${primaryButton} w-full`} onClick={startOffer}>Fazer proposta</button> : <div className="space-y-3 rounded-xl border border-[#dce9de] bg-[#f8fbf8] p-3">
@@ -255,7 +255,7 @@ export function TeamDirectory({
                         <div className="grid grid-cols-2 gap-2"><button className={primaryButton} onClick={submitOffer}>Enviar proposta</button><button className={secondaryButton} onClick={() => setOfferOpen(false)}>Cancelar</button></div>
                       </div>}
                     </>}
-                  </> : <div className="rounded-xl bg-[#f5f7f5] p-3 text-center text-[10px] text-[#829087]">Este jogador não está listado para transferência.</div>}
+                  </> : <div className="rounded-xl bg-[#f5f7f5] p-3 text-center text-[10px] text-[#829087]">Atleta em empréstimo vigente: não pode ser transferido novamente.</div>}
                   {message && <p role="status" className="text-xs font-bold text-[#276b44]">{message}</p>}
                 </div>
               </> : <div className="p-6 text-sm text-[#718477]">Selecione um jogador para consultar os detalhes.</div>}

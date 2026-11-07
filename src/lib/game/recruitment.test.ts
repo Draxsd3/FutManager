@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { createDefaultDatabase, buildSquadFromDatabase } from "./editor-data";
+import { MAX_CLUB_SQUAD_SIZE, createDefaultDatabase, buildSquadFromDatabase } from "./editor-data";
 import { recruitPlayer } from "./recruitment";
 it("valida saldo, duplicação e limite de elenco antes de contratar", () => {
   const db = createDefaultDatabase(), club = db.clubs[0];
@@ -13,7 +13,7 @@ it("valida saldo, duplicação e limite de elenco antes de contratar", () => {
   expect(result.squad.at(-1)?.sourceId).toBe(source.id);
   expect(result.squad.at(-1)?.acquisitionType).toBe("permanent");
   expect(recruitPlayer(db, result.squad, club.name, price, source.id).squad).toBe(result.squad);
-  expect(recruitPlayer(db, Array.from({ length: 35 }, (_, i) => ({ ...squad[0], id: i })), club.name, price, source.id).message).toContain("limite");
+  expect(recruitPlayer(db, Array.from({ length: MAX_CLUB_SQUAD_SIZE }, (_, i) => ({ ...squad[0], id: i })), club.name, price, source.id).message).toContain("limite");
 });
 
 it("cadastra empréstimo com taxa, participação salarial e data de retorno", () => {
@@ -28,4 +28,14 @@ it("cadastra empréstimo com taxa, participação salarial e data de retorno", (
   expect(result.budget).toBe(0);
   expect(result.squad.at(-1)).toMatchObject({ acquisitionType: "loan", loanExpiresOn: "2026-07-31", contractUntil: "2026-07-31", sourceId: source.id });
   expect(recruitPlayer(db, squad, club.name, totalCost - 1, source.id, [], { feeBrl, kind: "loan", wageSharePercent: share, loanMonths: months }).squad).toBe(squad);
+});
+
+it("permite contratar não listado mesmo com 35 contratados, sem confundir inscrição com elenco", () => {
+  const db = createDefaultDatabase(), club = db.clubs[0];
+  const source = db.players.find(p => p.clubId !== club.id && p.marketStatus === "normal" && !p.loan)!;
+  const base = buildSquadFromDatabase(db, club.name)!;
+  const squad = Array.from({ length: 35 }, (_, i) => ({ ...base[0], id: i+1 }));
+  const result = recruitPlayer(db, squad, club.name, 999999999, source.id, [], { feeBrl: source.marketValueBrl * 1.5, kind: "sale", wageSharePercent: 100, gameDate: "2026-01-18" });
+  expect(result.squad).toHaveLength(36);
+  expect(result.squad.at(-1)?.sourceId).toBe(source.id);
 });

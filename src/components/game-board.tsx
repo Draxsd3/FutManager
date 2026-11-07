@@ -1,4 +1,5 @@
 "use client";
+import { simulateWorldMarket, worldDatabase, type WorldMarket } from "@/lib/game/world-market";
 
 import { withTimeout } from "@/lib/with-timeout";
 import { LoadingScreen } from "@/components/screens/loading-screen";
@@ -257,12 +258,13 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [confidenceHistory, setConfidenceHistory] = useState<ConfidenceMatch[]>([]);
   const [confidenceStartBudget, setConfidenceStartBudget] = useState<number | undefined>();
   const [activeFixtureId, setActiveFixtureId] = useState<string>();
+  const [worldMarket, setWorldMarket] = useState<WorldMarket | undefined>();
   const [transferNegotiations, setTransferNegotiations] = useState<TransferNegotiation[]>([]);
   const [loanContracts, setLoanContracts] = useState<CareerLoans>({});
   const [youthTeams, setYouthTeams] = useState<Record<string, YouthTeam>>({});
   const [retryYouthClub, setRetryYouthClub] = useState<string | null>(null);
   const [loansOpen, setLoansOpen] = useState(false);
-  const careerDatabase = useMemo(() => database ? databaseWithLoans(databaseWithCompletedTransfers({ ...database, players: database.players.map(player => ({ ...player, loan: undefined })) }, transferNegotiations), loanContracts) : null, [database, transferNegotiations, loanContracts]);
+  const careerDatabase = useMemo(() => database ? worldDatabase(database, transferNegotiations, loanContracts, worldMarket) : null, [database, transferNegotiations, loanContracts, worldMarket]);
 
   const [minute, setMinute] = useState(0);
   const [homeScore, setHomeScore] = useState(0);
@@ -288,7 +290,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     universeSnapshot: universeSnapshot.current, page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore,
     events, participation, matchBenchIds, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
-    stadiums, managerMarket, jobClubSnapshots, managerAppointments, youthTeams, competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
+    stadiums, managerMarket, worldMarket, jobClubSnapshots, managerAppointments, youthTeams, competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
 
   };
   const progressRef = useRef(progress);
@@ -335,7 +337,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }, [userId]);
 
   const divisionClubNames = useMemo(() => database?.clubs.filter((item) => item.country.toLocaleLowerCase("pt-BR") === "brasil" && item.division === division).map((item) => item.name) ?? [], [database, division]);
-  const managementDatabase = useMemo(() => database ? { ...database, clubs: database.clubs.map(item => ({ ...item, coachName: managerMarket?.clubs[item.id] ? managerMarket.clubs[item.id].coach ?? "" : item.coachName })) } : null, [database, managerMarket]);
+  const managementDatabase = useMemo(() => careerDatabase ? { ...careerDatabase, clubs: careerDatabase.clubs.map(item => ({ ...item, coachName: managerMarket?.clubs[item.id] ? managerMarket.clubs[item.id].coach ?? "" : item.coachName })) } : null, [careerDatabase, managerMarket]);
   const managedClubRecord = database?.clubs.find((item) => item.name === club);
   useEffect(() => {
     if (page !== "juniors" || !careerLoaded || !activeSaveId || !managedClubRecord || (youthTeams[managedClubRecord.id] && retryYouthClub !== managedClubRecord.id)) return;
@@ -719,7 +721,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     if (!database) return "Banco de dados indisponível.";
     const buyer = database.clubs.find((item) => item.name === club);
     if (!buyer) return "Clube comprador não encontrado.";
-    const result = proposeTransfer(database, transferNegotiations, {
+    const result = proposeTransfer(careerDatabase ?? database, transferNegotiations, {
       id: crypto.randomUUID(), playerId, buyerClubId: buyer.id, feeBrl, wageSharePercent,
     });
     if (!result.negotiation) return result.message;
@@ -738,6 +740,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     }
     if (!database || negotiation.status !== "agreed" || negotiation.agreedFeeBrl === undefined) return "A proposta ainda não foi acordada.";
     const gameDate = saves.find((save) => save.id === activeSaveId)?.inGameDate ?? new Date().toISOString().slice(0, 10);
+    const currentSource = careerDatabase?.players.find(player => player.id === negotiation.playerId);
+    if (!currentSource || currentSource.clubId !== negotiation.sourceClubId) return "O vínculo do jogador mudou. Encerre este acordo e envie uma nova proposta.";
     const result = recruitPlayer(careerDatabase ?? database, squad, club, budget, negotiation.playerId, Object.keys(playerCareers).map(Number), {
       feeBrl: negotiation.agreedFeeBrl,
       kind: negotiation.kind,
@@ -747,10 +751,22 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     });
     if (result.squad === squad) return result.message;
     const completed = respondToTransferNegotiation(negotiation, action);
+    completed.negotiation.completedOn = gameDate;
     const nextNegotiations = transferNegotiations.map((item) => item.id === id ? completed.negotiation : item);
     setCareerSquad(result.squad);
     setBudget(result.budget);
     setTransferNegotiations(nextNegotiations);
+    const nextWorld = worldMarket ? { ...worldMarket, listings: { ...worldMarket.listings } } : undefined;
+    if (nextWorld) delete nextWorld.listings[negotiation.playerId];
+    setWorldMarket(nextWorld);
+    const nextManagers = managerMarket ? { ...managerMarket, clubs: { ...managerMarket.clubs } } : undefined;
+    if (nextManagers) {
+      const seller = nextManagers.clubs[negotiation.sourceClubId];
+      if (seller) nextManagers.clubs[seller.clubId] = { ...seller, budget: seller.budget + Math.floor(negotiation.agreedFeeBrl / 1000) };
+      const buyer = nextManagers.clubs[negotiation.buyerClubId];
+      if (buyer) nextManagers.clubs[buyer.clubId] = { ...buyer, budget: result.budget };
+      setManagerMarket(nextManagers);
+    }
     const acquired = result.squad.at(-1);
     const nextLoans = { ...loanContracts };
     if (acquired?.sourceId) { if (acquired.loan) nextLoans[acquired.sourceId] = acquired.loan; else delete nextLoans[acquired.sourceId]; }
@@ -758,7 +774,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     if (activeSaveId) {
       const current = saves.find((save) => save.id === activeSaveId);
       if (current) void persistSave({ ...current, budget: result.budget, updatedAt: new Date().toISOString(), playerCareers, manualPositions,
-        progress: { ...progressRef.current, careerSquad: result.squad, budget: result.budget, transferNegotiations: nextNegotiations, loanContracts: nextLoans, playerCareers, manualPositions } });
+        progress: { ...progressRef.current, careerSquad: result.squad, budget: result.budget, managerMarket: nextManagers, worldMarket: nextWorld, transferNegotiations: nextNegotiations, loanContracts: nextLoans, playerCareers, manualPositions } });
     }
     return `${result.message} ${completed.message}`;
   }
@@ -956,6 +972,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setConfidenceStartBudget(12624);
     setActiveFixtureId(firstFixture?.id);
     setTransferNegotiations([]);
+    setWorldMarket(undefined);
     setRound(1);
     setDefaultMatchSpeed(1);
     setBudget(12624);
@@ -1039,6 +1056,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setYouthTeams(save.progress?.youthTeams ?? {}); setRetryYouthClub(null);
     setManualPositions(save.manualPositions ?? {});
     setTransferNegotiations(save.progress?.transferNegotiations ?? []);
+    setWorldMarket(save.progress?.worldMarket);
     setLoanContracts(save.progress?.loanContracts ?? Object.fromEntries((save.progress?.careerSquad ?? []).filter(player => player.sourceId && player.loan).map(player => [player.sourceId!, player.loan!])));
     setLoansOpen(false);
     setHomeScore(0);
@@ -1642,7 +1660,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return (
       <>
         <CareerWorkspace {...workspace} title={windowTitles[page]} titleIcon={managementSection === "teams" ? "group" : undefined}>
-          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens youthTeam={managedClubRecord ? youthTeams[managedClubRecord.id] : undefined} youthLoading={!!managedClubRecord && (!youthTeams[managedClubRecord.id] || retryYouthClub === managedClubRecord.id)}  onPromoteYouth={promoteJunior} embedded championHistory={championHistory} section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={managementDatabase ?? database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations.filter(deal => deal.buyerClubId === managedClubRecord?.id)} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
+          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens youthTeam={managedClubRecord ? youthTeams[managedClubRecord.id] : undefined} youthLoading={!!managedClubRecord && (!youthTeams[managedClubRecord.id] || retryYouthClub === managedClubRecord.id)}  onPromoteYouth={promoteJunior} embedded championHistory={championHistory} worldEvents={worldMarket?.events} section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={managementDatabase ?? database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations.filter(deal => deal.buyerClubId === managedClubRecord?.id)} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
             jobs={managerMarket && careerDatabase && managedClubRecord ? { market: managerMarket, database: careerDatabase, currentClubId: managedClubRecord.id, date: saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11", appointments: managerAppointments, onApply: applyToManagerJob, onDecline: declineJob, onAccept: acceptJob } : undefined}
             championHistory={championHistory}
             stadium={managedClubRecord ? stadiums[managedClubRecord.id] : undefined}
@@ -1845,11 +1863,17 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         setActiveFixtureId(nextFixture?.id);
         const previousDate = savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11";
         const date = careerCalendarDate(previousDate, competitionSeason, nextFixture);
-        const nextManagerMarket = managerMarket ? refreshJobOffers(managerMarket, date) : undefined;
-        setManagerMarket(nextManagerMarket);
-        const nextLoans = expireLoans(loanContracts, date);
+        let nextManagerMarket = managerMarket ? refreshJobOffers(managerMarket, date) : undefined;
+        let nextLoans = expireLoans(loanContracts, date);
+        let nextWorld = worldMarket;
+        let nextDeals = transferNegotiations;
+        if (database && nextManagerMarket) {
+          const simulated = simulateWorldMarket({ database, humanClubId: managedClubRecord?.id ?? "", date, previousDate, world: worldMarket, negotiations: transferNegotiations, loans: nextLoans, managers: nextManagerMarket });
+          nextWorld = simulated.world; nextDeals = simulated.negotiations; nextLoans = simulated.loans; nextManagerMarket = simulated.managers;
+        }
+        setWorldMarket(nextWorld); setTransferNegotiations(nextDeals); setManagerMarket(nextManagerMarket);
         const ownClubId = database?.clubs.find(item => item.name === club)?.id ?? "";
-        const nextDatabase = careerDatabase ? databaseWithLoans(careerDatabase, nextLoans) : null;
+        const nextDatabase = database ? worldDatabase(database, nextDeals, nextLoans, nextWorld) : null;
         const reconciledSquad = reconcileLoanSquad(squad, nextDatabase ? buildSquadFromDatabase(nextDatabase, club, true) ?? [] : [], nextLoans, ownClubId, Object.keys(playerCareers).map(Number));
         const nextSquad = recoverSquadBetweenMatches(reconciledSquad, previousDate, date);
         const remaining = new Set(nextSquad.map(player => player.id));
@@ -1860,7 +1884,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         setPlayerCareers(nextCareers);
         setLoanContracts(nextLoans); setCareerSquad(nextSquad); setStarters(nextStarters); setMatchBenchIds(nextBench); setManualPositions(nextPositions);
         setProfilePlayer(null); setSelectedPlayer(null);
-        saveCurrentCareer(nextRound, { managerMarket: nextManagerMarket, activeFixtureId: nextFixture?.id, loanContracts: nextLoans, careerSquad: nextSquad, starters: nextStarters, matchBenchIds: nextBench, manualPositions: nextPositions, playerCareers: nextCareers }, date);
+        saveCurrentCareer(nextRound, { worldMarket: nextWorld, transferNegotiations: nextDeals, managerMarket: nextManagerMarket, activeFixtureId: nextFixture?.id, loanContracts: nextLoans, careerSquad: nextSquad, starters: nextStarters, matchBenchIds: nextBench, manualPositions: nextPositions, playerCareers: nextCareers }, date);
         setPage("hub");
       }}
     />

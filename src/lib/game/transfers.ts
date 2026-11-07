@@ -1,5 +1,5 @@
 import { isFreeAgent } from "./player-contract";
-import type { EditorDatabase } from "./editor-data";
+import type { EditorPlayer, EditorDatabase } from "./editor-data";
 
 export type TransferKind = "sale" | "loan";
 export type TransferNegotiationStatus = "countered" | "agreed" | "rejected" | "completed";
@@ -13,6 +13,7 @@ export type TransferNegotiation = {
   buyerClubId: string;
   kind: TransferKind;
   freeAgent?: boolean;
+  completedOn?: string;
   askingFeeBrl: number;
   offerFeeBrl: number;
   wageSharePercent: number;
@@ -43,16 +44,21 @@ export function askingFeeBrl(kind: TransferKind, marketValueBrl: number) {
   return kind === "sale" ? Math.max(100_000, Math.round(marketValueBrl)) : Math.max(25_000, Math.round(marketValueBrl * 0.05));
 }
 
+/** A listing signals willingness, not a prerequisite for approaching another club. */
+export function playerAskingFeeBrl(player: EditorPlayer) {
+  return isFreeAgent(player) ? 0 : askingFeeBrl(player.marketStatus === "loan" ? "loan" : "sale", player.marketValueBrl) * (player.marketStatus === "normal" ? 1.5 : 1);
+}
+
 export function proposeTransfer(database: EditorDatabase, existing: TransferNegotiation[], input: TransferOfferInput): { negotiation?: TransferNegotiation; message: string } {
   const player = database.players.find((item) => item.id === input.playerId);
   const buyer = database.clubs.find((item) => item.id === input.buyerClubId);
   const seller = player && database.clubs.find((item) => item.id === player.clubId);
   const free = player ? isFreeAgent(player) : false;
   if (!player || !buyer || (!seller && !free) || seller?.id === buyer.id || !input.id) return { message: "Jogador ou clube inválido." };
-  if (!free && player.marketStatus !== "sale" && player.marketStatus !== "loan") return { message: "Este atleta não está listado para venda ou empréstimo." };
+  if (player.loan?.status === "active") return { message: "Atleta em empréstimo vigente: o vínculo precisa ser resolvido antes de uma nova transferência." };
   if (existing.some((item) => item.playerId === player.id && item.status !== "rejected" && item.status !== "completed")) return { message: "Já existe uma negociação ativa por este atleta." };
-  const kind = free ? "sale" : player.marketStatus as TransferKind;
-  const askingFee = free ? 0 : askingFeeBrl(kind, player.marketValueBrl);
+  const kind: TransferKind = !free && player.marketStatus === "loan" ? "loan" : "sale";
+  const askingFee = playerAskingFeeBrl(player);
   const wageSharePercent = kind === "loan" ? input.wageSharePercent ?? 50 : 0;
   const validation = free ? input.feeBrl !== 0 ? "Jogador livre não tem taxa de transferência." : null : validateOffer(input.feeBrl, wageSharePercent, askingFee, kind);
   if (validation) return { message: validation };

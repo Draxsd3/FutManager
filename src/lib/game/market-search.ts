@@ -1,5 +1,5 @@
 import type { EditorDatabase, EditorPlayer } from "./editor-data";
-import { askingFeeBrl } from "./transfers";
+import { playerAskingFeeBrl } from "./transfers";
 
 export type MarketAvailability = "all" | "available" | "sale" | "loan" | "free";
 export const searchText = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR").trim();
@@ -19,7 +19,7 @@ export function searchMarket(database: EditorDatabase, club: string, hired: Set<
     const listed = p.marketStatus === "sale" || p.marketStatus === "loan";
     if (filters.availability === "free" ? !free : filters.availability === "available" ? !listed && !free : filters.availability !== "all" && (free || p.marketStatus !== filters.availability)) return false;
     const nationalities = playerNationalities(p);
-    const fee = free ? 0 : askingFeeBrl(p.marketStatus === "loan" ? "loan" : "sale", p.marketValueBrl);
+    const fee = playerAskingFeeBrl(p);
     const haystack = searchText([p.name,team?.name,team?.country,...nationalities,positions[p.primaryPosition],positions[p.secondaryPosition ?? ""],free ? "sem clube sem contrato livre" : ""].join(" "));
     return (!filters.country || team?.country === filters.country)
       && (!filters.division || team?.division === filters.division)

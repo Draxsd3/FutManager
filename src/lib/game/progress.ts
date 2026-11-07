@@ -26,6 +26,7 @@ export type CareerProgress = {
   youthTeams?: Record<string, import("./youth").YouthTeam>;
   stadiums?: Record<string, StadiumState>;
   managerMarket?: ManagerMarket;
+  worldMarket?: import("./world-market").WorldMarket;
   jobClubSnapshots?: Record<string, JobClubSnapshot>;
   managerAppointments?: ManagerAppointment[];
   championHistory?: ChampionshipRecord[];

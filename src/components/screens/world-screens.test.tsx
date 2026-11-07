@@ -74,7 +74,7 @@ it("explora por perfil sem nome, combina atuação/nacionalidade e limpa a busca
   database.players = [{ ...database.players[0], id: "scout", name: "Talento Observado", clubId: foreign.id, nationalities: ["Argentina", "Itália"], marketStatus: "normal", primaryPosition: "G", age: 21 }];
   render(<WorldScreens section="search" database={database} club={club.name} coach="Teste" squad={[]} budget={1000} records={{}} negotiations={[]} historyView="players" onHistoryView={vi.fn()} onOpenPlayer={vi.fn()} onTransferOffer={vi.fn()} onTransferAction={vi.fn()} onBack={vi.fn()} />);
   expect(screen.getByText("Talento Observado")).toBeTruthy();
-  expect(screen.getByRole("button", {name: /Fazer proposta por Talento/}).hasAttribute("disabled")).toBe(true);
+  expect(screen.getByRole("button", {name: /Fazer proposta por Talento/}).hasAttribute("disabled")).toBe(false);
   fireEvent.click(screen.getByText("Mais filtros"));
   fireEvent.change(screen.getByLabelText("País onde atua"),{target: {value: "Portugal"}});
   fireEvent.change(screen.getByLabelText("Nacionalidade"),{target: {value: "Itália"}});
