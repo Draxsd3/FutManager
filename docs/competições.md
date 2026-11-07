@@ -14,7 +14,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Brasileirão Série A
 
-[Série A — REC 2026, arts. 5–8 e 14–15](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_Brasileiro_SA_rie_A_2026_v15_12_2025_final_02692c1077.pdf): 20 clubes; turno e returno; G4 grupos, 5º preliminar, seis melhores não classificados à Libertadores na Sul-Americana, quatro últimos rebaixados. Vagas podem ser repassadas por outras competições. Critérios de desempate incluem confronto direto somente para dois clubes, cartões e sorteio.
+[Série A — REC 2026, arts. 5–8 e 14–15](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_Brasileiro_SA_rie_A_2026_v15_12_2025_final_02692c1077.pdf): 20 clubes; turno e returno; G4 grupos, 5º preliminar, seis melhores não classificados à Libertadores na Sul-Americana, quatro últimos rebaixados. O campeão da Copa do Brasil obtém vaga na fase de grupos e o vice na preliminar; as regras de duplicidade e repasse incluem exceções específicas (art. 6º, §§ 2–5), inclusive possível redirecionamento ao vice. O campeão da Série A disputa a Supercopa 2027; se também vencer a Copa do Brasil, enfrenta o vice da Série A. Critérios de desempate incluem confronto direto somente para dois clubes, cartões e sorteio.
 
 ### Brasileirão Série B
 
@@ -36,11 +36,11 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Copa do Nordeste
 
-[Copa do Nordeste — CBF](https://www.cbf.com.br/futebol-brasileiro/noticias/serie-a/a/confira-os-documentos-tecnicos-da-copa-do-nordeste-de-2026): 20 clubes em quatro grupos de cinco, enfrentando equipes de outros grupos; dois melhores de cada grupo às quartas em jogo único, semifinais e final em ida e volta. [Sorteio e formato pela CBF](https://www.cbf.com.br/futebol-brasileiro/noticias/copa-nordeste/a/cbf-sorteia-grupos-da-copa-do-nordeste-2026). Conferir REC para cruzamentos e desempates.
+**REC CBF 2026, arts. 12–21:** 20 clubes em grupos A, B, C e D de cinco. A joga contra B e C contra D, cinco partidas por clube; dois melhores de cada chave avançam. Desempate nos grupos: vitórias, saldo, gols pró, menos vermelhos, menos amarelos e sorteio. Quartas em jogo único: 1ºA×2ºC (E), 1ºB×2ºD (F), 1ºC×2ºA (G), 1ºD×2ºB (H); os líderes mandam. Semifinais E×H e F×G, e final em ida e volta. Empate no jogo único: pênaltis; em duas partidas, pontos, saldo e pênaltis. Campeão entra na terceira fase da Copa do Brasil 2027. [REC oficial](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_Copa_do_Nordeste_2026_25c8b8939c.pdf); conferir também sorteio, elegibilidade e determinações posteriores antes de implementar.
 
 ### Copa Verde
 
-[Copa Verde — CBF](https://www.cbf.com.br/futebol-brasileiro/noticias/competicoes-ranking/a/cbf-detalha-formato-do-sorteio-da-copa-verde-2026): 24 clubes, quatro grupos de seis, divididos em Copa Norte e Copa Centro-Oeste; turno único dentro do grupo, quartas em jogo único, semifinais e final em ida e volta. Confirmar critérios de classificação e sorteio no REC.
+**REC CBF 2026, arts. 7 e 13–23:** 24 clubes em blocos Norte e Centro-Oeste (este inclui ES e TO), cada qual com dois grupos de seis; turno único dentro dos grupos e dois classificados por grupo. As quartas são jogos únicos dentro do bloco, 1ºA×2ºB e 1ºB×2ºA, com mando dos líderes. As semifinais em ida e volta decidem os títulos da Copa Norte e Copa Centro-Oeste; os vencedores disputam a final da Copa Verde em ida e volta. Empate em jogo único vai a pênaltis; nos confrontos de dois jogos verificar pontos, saldo e pênaltis. Ambos os campeões de bloco acessam a 3ª fase da Copa do Brasil 2027, conforme REC da copa. Desempate dos grupos: vitórias, saldo, gols pró, menos vermelhos, menos amarelos e sorteio. [REC oficial](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_COPA_VERDE_2026_733ec5eed1.pdf). Conferir sorteio, elegibilidade e eventuais alterações posteriores.
 
 ## Estaduais
 
@@ -50,11 +50,11 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Alagoano
 
-**Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; quatro avançam; último cai. Semifinais 1º×4º e 2º×3º e final em ida e volta, pênaltis em igualdade no agregado. [Fonte](https://www.alagoas24horas.com.br/1704942/faf-define-formato-do-campeonato-alagoano-2026-e-ja-tem-jogo-de-abertura-definida-confira/).
+**REC FAF 2026, arts. 4–11:** 8 clubes em turno único, quatro às semifinais e último rebaixado. Semifinais 1º×4º e 2º×3º e final em ida e volta: pontos, saldo e pênaltis; mando da volta da semi é do melhor da primeira fase e da final, da melhor campanha acumulada. Desempate inicial: vitórias, saldo, gols pró, confronto direto somente entre dois clubes, menos vermelhos, menos amarelos e sorteio. Campeão e vice têm vagas em Série D e Copa do Brasil, com repasses conforme elegibilidade; o terceiro, definido pela campanha acumulada entre os semifinalistas eliminados, tem vaga na Copa do Brasil. Vagas na Copa do Nordeste dependem dos critérios da CBF. [REC oficial](https://www.futeboldealagoas.net/assets/uploads/176832886543.pdf). Confirmar eventuais atualizações, inclusive inscrições.
 
 ### Campeonato Amapaense
 
-**Referência 2026 (resumo; conferir REC integral):** 8 clubes, turno único; quatro primeiros vão às semifinais. Fontes consultadas indicam rebaixamento dos últimos, sem quantificar; conferir REC, jogos eliminatórios e critérios. [Fonte](https://agenciaamapa.com.br/noticia/34344/com-apoio-do-governo-do-estado-amapazao-2026-inicia-com-classico-entre-trem-e-macapa).
+**REC FAF 2026, arts. 7, 8, 13 e 14:** 8 clubes em turno único; quatro às semifinais; os dois últimos caem. Semifinais 1º×4º e 2º×3º em ida e volta, com volta na casa dos dois melhores; empate no saldo favorece o melhor da fase inicial. Final única, empate decidido nos pênaltis. Desempate na primeira fase: vitórias, saldo, gols pró, confronto direto, menos vermelhos, menos amarelos e sorteio. Para 2027, campeão e vice têm vagas na Copa do Brasil e Série D, campeão também na Copa Norte; o art. 7 indica terceira vaga na Copa do Brasil ao terceiro da primeira fase. [REC oficial](https://fafamapa.com.br/wp-content/uploads/2025/11/REC-AMAPAZAO-SERIE-A-2026.pdf). Confirmar eventuais alterações e elegibilidade.
 
 ### Campeonato Amazonense
 
@@ -142,7 +142,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Sergipano
 
-**Referência 2026 (resumo; conferir REC integral):** 10 clubes em turno único; líder direto à semifinal; 2º×7º, 3º×6º e 4º×5º em jogo único. Vencedores juntam-se ao líder nas semifinais; semi e final ida e volta. Dois últimos caem. [Fonte](https://ge.globo.com/se/futebol/campeonato-sergipano/noticia/2026/01/09/guia-do-campeonato-sergipano-2026-tudo-sobre-o-torneio-que-comeca-neste-sabado.ghtml).
+**REC FSF 2026, revisão I, arts. 15–17:** 10 clubes em turno único; líder direto à semifinal; 2º×7º, 3º×6º e 4º×5º em jogo único com mando do melhor e pênaltis no empate. Semifinal ida e volta: o líder enfrenta o classificado de pior posição na primeira fase; os outros dois se enfrentam. Os perdedores fazem disputa de terceiro em jogo único. Final em ida e volta, mando da volta ao melhor na primeira fase; empate em pontos resolve-se por saldo e pênaltis. Dois últimos caem. Desempate da fase inicial: vitórias, saldo, gols pró, confronto direto entre dois, menos vermelhos, menos amarelos e sorteio. [REC oficial revisado](https://fsf-se.com.br/wp-content/uploads/2025/12/Regulamento-Campeonato-Sergipano-de-Futebol-Profissional-da-Serie-A1-2026-REVISAO-I.pdf). Conferir eventuais atualizações e elegibilidade para vagas.
 
 ### Campeonato Sul-Mato-Grossense
 
@@ -151,6 +151,10 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 ### Campeonato Tocantinense
 
 **Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; quatro às semifinais; dois últimos caem. Semifinais e final em ida e volta; conferir desempates e vagas no REC. [Fonte](https://ge.globo.com/to/futebol/campeonato-tocantinense/noticia/2025/12/05/campeonato-tocantinense-2026-ftf-divulga-a-tabela-e-o-regulamento.ghtml).
+
+## Situação da conferência
+
+Os resumos da Copa do Nordeste, Copa Verde, Amapaense, Alagoano e Sergipano acima foram confrontados com os artigos dos RECs vinculados, mas isso **não é certificação integral**: inscrições, sorteios, eventuais revisões posteriores e todas as regras de elegibilidade ainda precisam de auditoria. Os demais resumos continuam em pesquisa; uma fonte listada não significa que todos os seus artigos foram verificados. Nenhuma dessas alterações implementa automaticamente os formatos no motor.
 
 ## Pendências gerais
 
