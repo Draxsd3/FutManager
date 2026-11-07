@@ -46,7 +46,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Acreano
 
-**Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; quatro semifinalistas; últimos dois caem. Semifinais ida e volta: empate em pontos favorece melhor colocado, sem usar saldo; final e disputa de terceiro em jogo único, com pênaltis. Os três primeiros obtêm vagas na Copa do Brasil, sujeitas às regras de elegibilidade. [Fonte](https://ge.globo.com/ac/futebol/campeonato-acreano/noticia/2026/01/15/guia-do-acreano-2026-regulamento-clubes-participantes-e-mais-detalhes-sobre-o-estadual.ghtml).
+**Referência 2026 (fontes secundárias; REC integral pendente):** 8 clubes em turno único; quatro semifinalistas; os dois últimos da fase inicial caem. Semifinais 1º×4º e 2º×3º em ida e volta: empate em pontos favorece o melhor da primeira fase, sem usar saldo; final e disputa de terceiro em jogo único, com pênaltis. Campeão e vice têm vagas em Copa do Brasil, Copa Norte e Série D de 2027; o terceiro tem vaga na Copa do Brasil, sujeitas à elegibilidade e às regras de destino. [Guia do estadual](https://ge.globo.com/ac/futebol/campeonato-acreano/noticia/2026/01/15/guia-do-acreano-2026-regulamento-clubes-participantes-e-mais-detalhes-sobre-o-estadual.ghtml) e [conselho técnico](https://ge.globo.com/ac/futebol/campeonato-acreano/noticia/2025/10/17/acreano-2026-tem-formato-renovado-e-jogo-decisivo-valendo-3a-vaga-na-copa-do-brasil.ghtml). Obter REC para classificação, inscrições, repasses e revisões.
 
 ### Campeonato Alagoano
 
@@ -106,7 +106,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Paraense
 
-**Referência 2026 (resumo; conferir REC integral):** 12 clubes em dois grupos de seis, enfrentando o outro grupo. Pela classificação geral oito avançam e dois últimos caem. Quartas e semifinais únicas; final ida e volta; pênaltis em caso de empate nas fases únicas. [Fonte](https://www.portalcultura.com.br/pt-br/com-novo-formato-campeonato-paraense-comeca-no-dia-24-de-janeiro).
+**Referência 2026 (primeira proposta de REC FPF, arts. 11–30):** 12 clubes em dois grupos de seis, cada um enfrenta o outro grupo; oito melhores da classificação geral avançam e os dois últimos caem. Quartas 1º×8º, 2º×7º, 3º×6º e 4º×5º; semifinais D×G e E×F, em jogos únicos com pênaltis no empate. Final em ida e volta: pontos, saldo e pênaltis. Desempate inicial: vitórias, saldo, gols, menos vermelhos, menos amarelos e sorteio. A proposta prevê até 50 inscritos, exceção para atletas da base e prazo até o último dia útil anterior às quartas, com condições específicas (art. 33). Finalistas e campeão da Copa Grão-Pará têm vagas na Copa do Brasil 2027, sujeitas às regras de destino; essa copa é independente. [Primeira proposta oficial](https://www.fpfpara.com.br/images/blog/REC2026_1a%20PROPOSTA_24.11.25.docx%20(1).pdf); [REC da Copa Grão-Pará](https://www.fpfpara.com.br/files/d7cc35cca25edaf96ce85dd199d69589.pdf). **Pendente:** obter REC A1 definitivo e revisões: a proposta contém referências de ano e dispositivos inconsistentes e não certifica o texto final.
 
 ### Campeonato Paraibano
 
@@ -134,11 +134,11 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Rondoniense
 
-**Referência 2026 (resumo; conferir REC integral):** 7 clubes, turno e returno; quatro às semifinais 1º×4º e 2º×3º em ida e volta. Confirmar formato da final e rebaixamento no REC 2026 antes de implementar. [Fonte](https://www.folhadosulonline.com.br/noticias/detalhe/2025/ffer-divulga-regulamento-do-rondoniense-2026-campeao-e-vice-asseguram-vagas-para-brasileiro-serie-d-copa-do-brasil-e-copa-norte).
+**Referência 2026 (tabela FFER e resumo; REC integral pendente):** 7 clubes em turno e returno, com folga a cada rodada; quatro às semifinais 1º×4º e 2º×3º em ida e volta. A [tabela oficial da FFER](https://ffer.com.br/Publicacao.aspx?id=640220) registra também final em ida e volta. Campeão e vice têm vagas em Série D, Copa do Brasil e Copa Norte 2027 conforme [resumo do REC](https://www.folhadosulonline.com.br/noticias/detalhe/2025/ffer-divulga-regulamento-do-rondoniense-2026-campeao-e-vice-asseguram-vagas-para-brasileiro-serie-d-copa-do-brasil-e-copa-norte), sujeitas à elegibilidade. Uma [classificação jornalística](https://www.365scores.com/pt-br/football/league/rondoniense-7030/standings) marca o último como rebaixado; confirmar regra e condições no REC, assim como desempates, inscrição e revisões. A FFER vincula o REC em arquivo externo, ainda não examinado integralmente.
 
 ### Campeonato Roraimense
 
-**Referência 2026 (resumo; conferir REC integral):** 9 clubes em turno único após desistência; quatro às semifinais 1º×4º e 2º×3º. Semifinais e final únicas, pênaltis em caso de empate; último rebaixado. [Fonte](https://ge.globo.com/rr/futebol/campeonato-roraimense/noticia/2026/01/06/frf-divulga-tabela-do-roraimense-2026-veja-datas-e-horarios.ghtml).
+**Referência 2026 (tabela FRF e fontes secundárias; REC integral pendente):** 9 clubes em turno único após desistência; quatro às semifinais 1º×4º e 2º×3º. Semifinais e final únicas, pênaltis em caso de empate; a [tabela básica da FRF](https://roraimaemtempo.com.br/wp-content/uploads/2026/01/TABELA-BASICA-RORAIMENSE-2026.pdf) prevê mando da final ao melhor da fase inicial. O último foi [reportado como rebaixado](https://www.folhabv.com.br/esporte/atletico-atletico-roraima-cai-e-nautico-e-rio-negro-permanecem-na-elite/), embora [guia anterior](https://esportenewsmundo.com.br/confira-o-guia-completo-de-todos-os-estaduais-de-2026-veja-os-duelos) dissesse que não haveria queda. Outra [cobertura](https://www.folhabv.com.br/esporte/campeonato-roraimense-2026-comeca-em-24-de-janeiro-veja-clubes-formato-e-premiacao/) descreve desempates incomuns, começando por confronto direto; obter REC e alterações para confirmar aplicação, descenso, vagas e inscrições.
 
 ### Campeonato Sergipano
 
@@ -150,11 +150,11 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Tocantinense
 
-**Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; quatro às semifinais; dois últimos caem. Semifinais e final em ida e volta; conferir desempates e vagas no REC. [Fonte](https://ge.globo.com/to/futebol/campeonato-tocantinense/noticia/2025/12/05/campeonato-tocantinense-2026-ftf-divulga-a-tabela-e-o-regulamento.ghtml).
+**Referência 2026 (resumos; REC integral pendente):** 8 clubes em turno único; quatro às semifinais; dois últimos caem. Semifinais e final em ida e volta. Campeão e vice têm vagas em Série D e Copa do Brasil 2027, sujeitas às regras de destino, segundo [cobertura da publicação](https://www.jornaldotocantins.com.br/esporte/tocantinense-2026-ftf-divulga-a-tabela-e-o-regulamento-1.3346298). Outra [fonte](https://gpinews.com.br/esporte/tocantinense-2026-ftf-define-tabela-e-regulamento-do-estadual/) relata desempates na fase inicial por vitórias, saldo, gols, confronto direto e sorteio; não confirma de forma suficiente o desempate completo das eliminatórias. Obter REC da primeira divisão, prazos, vagas e revisões antes de implementar.
 
 ## Situação da conferência
 
-Os resumos da Copa do Brasil, Copa do Nordeste, Copa Verde, Séries A, B, C e D, Paulista, Mineiro, Amapaense, Alagoano, Amazonense, Cearense (cópia externa), Goiano, Mato-Grossense, Potiguar e Sergipano acima foram confrontados com os artigos dos RECs vinculados, mas isso **não é certificação integral**: inscrições, sorteios, eventuais revisões posteriores e todas as regras de elegibilidade ainda precisam de auditoria. As conferências adicionais dos lotes 4–5 estão detalhadas abaixo; os demais resumos continuam em pesquisa. Uma fonte listada não significa que todos os seus artigos foram verificados. Nenhuma dessas alterações implementa automaticamente os formatos no motor.
+Os resumos da Copa do Brasil, Copa do Nordeste, Copa Verde, Séries A, B, C e D, Paulista, Mineiro, Amapaense, Alagoano, Amazonense, Cearense (cópia externa), Goiano, Mato-Grossense, Potiguar e Sergipano acima foram confrontados com os artigos dos RECs vinculados, mas isso **não é certificação integral**: inscrições, sorteios, eventuais revisões posteriores e todas as regras de elegibilidade ainda precisam de auditoria. As conferências adicionais dos lotes 4–5 e dos lotes finais estão detalhadas abaixo; permanecem pendências em todos os lotes. Uma fonte listada não significa que todos os seus artigos foram verificados. Nenhuma dessas alterações implementa automaticamente os formatos no motor.
 
 ## Auditoria dos lotes 1–3 (em andamento)
 
@@ -192,6 +192,24 @@ Esta tabela documenta a conferência, não comprova implementação nem garante 
 | Sul-Mato-Grossense | Cobertura da publicação do regulamento | REC integral, prazos, desempates, vagas e revisões |
 
 A conferência é documental e parcial; não verifica nem altera o motor. Em especial, formatos adaptados e histórico de carreiras devem ser preservados na implementação futura.
+
+## Auditoria complementar dos lotes finais (em andamento)
+
+| Competição | Evidência examinada | Pendência antes de certificar |
+| --- | --- | --- |
+| Acreano | Guias e conselho técnico: fases, terceiro lugar e vagas | Obter REC, desempates, inscrições e repasses |
+| Amapaense | REC FAF: fases, desempates e vagas | Revisões, inscrições e elegibilidade |
+| Amazonense | REC FAF: turnos, classificação, desempates e descenso | Inscrições, vagas, notas e revisões |
+| Cearense | Cópia externa do REC: fases, posições e vagas | Original da FCF, inscrições e revisões |
+| Goiano | REC FGF: grupos, playoffs e permanência condicional | Inscrições, vagas e revisões; implementação de permanência |
+| Mato-Grossense | REC FMF: fases, desempates e vagas | Conflito entre arts. 6 e 18 sobre descenso; inscrições e revisões |
+| Paraense | Primeira proposta de REC FPF e REC da Copa Grão-Pará | Obter REC A1 definitivo; referências de ano inconsistentes na proposta, inscrições e repasses |
+| Potiguar | REC FNF: fases, desempates e classificação final | Inscrições, vagas e revisões |
+| Rondoniense | Página oficial FFER com resultados e vínculo ao REC, resumos | Examinar REC integral, desempates, rebaixamento, inscrições e vagas |
+| Roraimense | Tabela básica FRF e cobertura posterior | Obter REC e alterações; fontes divergem sobre descenso; desempates e vagas |
+| Tocantinense | Resumos da publicação do regulamento | Obter REC da primeira divisão; desempates, inscrições, vagas e revisões |
+
+As 34 competições agora possuem registro e uma linha de acompanhamento nos quadros, mas **a auditoria integral não está concluída**. Documentação não comprova que o motor ou a interface reproduzam as regras; fontes provisórias ou secundárias não substituem regulamentos finais.
 
 ## Pendências gerais
 
