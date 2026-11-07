@@ -49,3 +49,7 @@ Finanças, contratos e registro básico: [entrega, regras e limites](ETAPA-3.md)
 ## Etapa 4 integrada
 
 Planejamento e negociação CPU/humana com preço/prazo/concorrência e piloto de IA limitado: [entrega, configuração e limites](ETAPA-4.md). Modos interno/assistido/comparação são da carreira; Gemini real exige configuração server-only e permanece sem ativação automática. E5–E8 não iniciadas.
+
+## Entrega E5
+
+Técnicos com identidade, contrato e folha comuns, diretorias com expectativas relativas, contratação CPU e desemprego humano jogável: [ETAPA-5.md](ETAPA-5.md). Sem ativação de Gemini e sem antecipar E6–E8.

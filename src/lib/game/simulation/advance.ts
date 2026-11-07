@@ -1,3 +1,6 @@
+import { isUnemployed, processCoaches } from "./coaches";
+import { advanceSeasonBeforeDate } from "../season";
+import { updateCareerMarket } from "../manager-jobs";
 import { migrateFinanceSave, localEmploymentKey } from "./settlement";
 import { reconcileContractSquad } from "./contract-squad";
 import { adoptFinance, accrueFinance, projectFinance } from "./finance";
@@ -23,16 +26,29 @@ export function advanceCareer(save: CareerSave, database: EditorDatabase, comman
   }
   if (engine.revision !== command.expectedRevision || command.fromDate !== save.inGameDate) throw new EngineConflict();
   const p = structuredClone(migrateFinanceSave(save,database).progress!);
-  const nextFixture = nextCareerFixture(p.competitionSeason);
-  const date = civilDate(command.targetDate ?? careerCalendarDate(save.inGameDate,p.competitionSeason,nextFixture));
+  const unemployed = isUnemployed(p.managerMarket);
+  const nextFixture = unemployed ? undefined : nextCareerFixture(p.competitionSeason);
+  const date = civilDate(command.targetDate ?? (unemployed ? new Date(Date.parse(`${save.inGameDate}T12:00:00Z`)+7*86400000).toISOString().slice(0,10) : careerCalendarDate(save.inGameDate,p.competitionSeason,nextFixture)));
   const days = (Date.parse(`${date}T12:00:00Z`)-Date.parse(`${save.inGameDate}T12:00:00Z`))/86400000;
   if (days < 0 || days > ENGINE_CONFIG.maxAdvanceDays) throw new Error("Intervalo de simulação inválido ou muito longo.");
   const revision = engine.revision+1;
   let loans = p.loanContracts ?? {};
   let managers = p.managerMarket;
   if (managers) {
-    managers = adoptFinance(managers,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance),save.inGameDate,loans,{clubId:save.clubId,budget:save.budget});
+    managers = adoptFinance(managers,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance),save.inGameDate,loans,unemployed ? undefined : {clubId:save.clubId,budget:save.budget});
     managers = projectFinance({...managers,finance:accrueFinance(managers.finance!,date)});
+  }
+  if (unemployed && p.competitionSeason && managers) {
+    p.competitionSeason=advanceSeasonBeforeDate(p.competitionSeason,date,database);
+    managers=updateCareerMarket(managers,p.competitionSeason,{clubId:"__unemployed__",budget:0,payroll:0},date);
+    managers=adoptFinance(managers,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance),date,loans);
+  }
+  if(managers?.staff) {
+    const count=managers.staff.events.length;
+    managers=processCoaches(managers,database,p.competitionSeason,date);
+    for(const event of managers.staff!.events.slice(count)) engine.events.push({id:event.id,operationId:command.operationId,date:event.date,type:"coach-processed",entityIds:[event.coachId,event.clubId],revision});
+    const human=managers.staff!.coaches[managers.staff!.humanId];
+    if(!human.clubId) p.managerAppointments=p.managerAppointments?.map(a=>!a.endedOn ? {...a,endedOn:date} : a);
   }
   const agenda: ScheduledEvent[] = [];
   for (const [id,loan] of Object.entries(loans)) if (loan.status === "active" && loan.endsOn && loan.endsOn <= date) agenda.push({ id: `loan:${id}:${loan.endsOn}`, date: loan.endsOn <= save.inGameDate ? save.inGameDate : loan.endsOn, priority: 1, kind: "loan", entityId: id });
@@ -59,7 +75,7 @@ export function advanceCareer(save: CareerSave, database: EditorDatabase, comman
     return deal;
   });
   if (managers) {
-    const simulation = simulateWorldMarket({ database,humanClubId: save.clubId,date,previousDate: save.inGameDate,world,negotiations: deals,loans,managers,season:p.competitionSeason,revision:engine.revision,careerId:save.id,selection:command.marketSelection });
+    const simulation = simulateWorldMarket({ database,humanClubId: isUnemployed(managers) ? "__unemployed__" : save.clubId,date,previousDate: save.inGameDate,world,negotiations: deals,loans,managers,season:p.competitionSeason,revision:engine.revision,careerId:save.id,selection:command.marketSelection });
     world = simulation.world; deals = simulation.negotiations; loans = simulation.loans; managers = simulation.managers;
     if (world.lastWeek !== p.worldMarket?.lastWeek) {
       engine.events.push({ id: `${command.operationId}:market`, operationId: command.operationId,date,type: "market-processed",entityIds: [],revision });

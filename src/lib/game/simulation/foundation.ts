@@ -7,7 +7,7 @@ export const ENGINE_CONFIG = Object.freeze({
   maxAdvanceDays: 3660,
   worldMarket: Object.freeze({ maxDeals: 6, minimumSellerRoster: 20, maximumBuyerRoster: 30, cooldownDays: 90, budgetFraction: 0.25 }),
 });
-export type EngineEvent = { id: string; operationId: string; date: string; type: "finance-committed" | "loan-returned" | "job-expired" | "market-processed" | "market-deal-completed" | "checkpoint"; entityIds: string[]; revision: number };
+export type EngineEvent = { id: string; operationId: string; date: string; type: "coach-processed" | "finance-committed" | "loan-returned" | "job-expired" | "market-processed" | "market-deal-completed" | "checkpoint"; entityIds: string[]; revision: number };
 export type DecisionRecord = { id: string; sector: string; mode: "internal" | "assisted" | "comparison"; actionId: string; fallback?: string; comparedActionId?: string; rulesVersion: string; stateRevision: number; options: string[]; reason: string; eventIds: string[] };
 export type EngineState = {
   schemaVersion: 1;

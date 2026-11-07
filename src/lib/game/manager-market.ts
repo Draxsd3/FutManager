@@ -14,7 +14,7 @@ export type ManagerClub = {
   processedFixtures: string[];
 };
 export type ManagerApplication = { id: string; clubId: string; vacancyVersion: number; appliedOn: string; expiresOn: string; status: "offered" | "rejected" | "declined" | "accepted" | "expired" | "cancelled"; message: string };
-export type ManagerMarket = { finance?: import("./simulation/finance").FinanceState; applications?: ManagerApplication[]; clubs: Record<string, ManagerClub>; dismissals: { clubId: string; coach: string; fixtureId: string; board: number; fans: number }[] };
+export type ManagerMarket = { staff?: import("./simulation/coaches").CoachState; finance?: import("./simulation/finance").FinanceState; applications?: ManagerApplication[]; clubs: Record<string, ManagerClub>; dismissals: { clubId: string; coach: string; fixtureId: string; board: number; fans: number }[] };
 
 /** Until a club economy exists, every AI club starts with the same cash as a new human career.
  * Existing results are marked processed: we cannot reconstruct previous managers or finances.
@@ -45,7 +45,7 @@ export function applyManagerFixture(market: ManagerMarket, season: CareerSeason,
     const budget = isHuman ? human.budget : old.budget + 151 - (market.finance ? 0 : old.payroll / 4);
     const payroll = isHuman ? human.payroll : old.payroll;
     const confidence = clubConfidence({ ...season, clubId, fixtures: [] }, history, budget, payroll, old.startingBudget);
-    const fired = (!isHuman || human.allowDismissal !== false) && old.coach !== null && confidence !== null && confidence.matches >= 5 && (confidence.fans <= 30 || confidence.board <= 20);
+    const fired = !market.staff && (!isHuman || human.allowDismissal !== false) && old.coach !== null && confidence !== null && confidence.matches >= 5 && (confidence.fans <= 30 || confidence.board <= 20);
     if (fired) dismissals.push({ clubId, coach: old.coach!, fixtureId: fixture.id, board: confidence!.board, fans: confidence!.fans });
     clubs[clubId] = { ...old, vacancyVersion: (old.vacancyVersion ?? 0) + Number(fired), coach: fired ? null : old.coach, budget, payroll, history, processedFixtures: [...old.processedFixtures, fixture.id] };
   }

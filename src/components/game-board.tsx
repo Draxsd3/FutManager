@@ -1,4 +1,6 @@
 "use client";
+import { coachCheckpoint, isUnemployed, migrateCoachSave } from "@/lib/game/simulation/coaches";
+import { UnemploymentScreen } from "./screens/unemployment-screen";
 import { reconcileContractSquad } from "@/lib/game/simulation/contract-squad";
 import { applyCareerPlayerAction, extendCareerLoan, migrateFinanceSave, settleCareerTransfer, updateCareerNegotiation } from "@/lib/game/simulation/settlement";
 import { advanceCareerWithMarketPolicy } from "@/lib/game/simulation/market-policy";
@@ -702,7 +704,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   function navigate(next: Page) {
     setStandingsOpen(false);
-    setPage(next);
+    setPage(isUnemployed(managerMarket) && !["coaches","settings","hub"].includes(next) ? "hub" : next);
   }
 
   function leaveActiveCareer(nextPage: Extract<Page, "menu" | "new" | "saves" | "editor">) {
@@ -954,7 +956,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, confidenceHistory: [], confidenceStartBudget: 12624, managerMarket: initializeCareerMarket(database, newSeason, coach.trim(), 12624), jobClubSnapshots: {}, managerAppointments: [{ clubId: selectedClub.id, club: selectedClub.name, startedOn: save.inGameDate }], youthTeams: {}, activeFixtureId: firstFixture?.id, transferNegotiations: [], loanContracts: initialLoans, championHistory: [] };
     setActiveSaveId(save.id);
     setCompetitionSeason(newSeason);
-    save.progress = migrateFinanceSave(save,database).progress!;
+    save.progress = migrateCoachSave(migrateFinanceSave(save,database),database).progress!;
     setManagerMarket(save.progress.managerMarket); setJobClubSnapshots({}); setManagerAppointments(save.progress.managerAppointments ?? []);
     setChampionHistory([]);
     setYouthTeams({}); setRetryYouthClub(null);
@@ -1012,7 +1014,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     const loadingFixture = resumingMatch ? restoredSeason?.fixtures.find(f => f.id === save.progress?.activeFixtureId) : nextCareerFixture(restoredSeason);
     save = { ...save, inGameDate: save.progress?.engine ? save.inGameDate : careerCalendarDate(save.inGameDate, undefined, loadingFixture),
       ...(save.progress ? { progress: { ...save.progress, competitionSeason: restoredSeason } } : {}) };
-    try { save = migrateEngineSave(save); if (database) save = migrateFinanceSave(save,database); } catch (error) { setSyncLabel(error instanceof Error ? error.message : "Save incompatível; preservado."); return false; }
+    try { save = migrateEngineSave(save); if (database) save = migrateCoachSave(migrateFinanceSave(save,database),database); } catch (error) { setSyncLabel(error instanceof Error ? error.message : "Save incompatível; preservado."); return false; }
     // Keep the civil date in the same account-local snapshot used by autosave and loan expiry.
     const normalizedSaves = savesRef.current.map(item => item.id === save.id ? save : item);
     savesRef.current = normalizedSaves;
@@ -1252,30 +1254,45 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   const jobActionInProgress = useRef(false);
-  function storeManagerMarket(next: ManagerMarket) {
-    setManagerMarket(next);
-    const current = savesRef.current.find(save => save.id === activeSaveId);
-    if (current) void persistSave({ ...current, progress: { ...progressRef.current, managerMarket: next }, updatedAt: new Date().toISOString() });
+  async function applyToManagerJob(clubId: string): Promise<string> {
+    return commitFinancialChange((save,db)=>{
+      const market=save.progress?.managerMarket;
+      if(!market) throw new Error("Mercado indisponível.");
+      const result=applyForManagerJob(market,db,save.clubId,clubId,save.inGameDate);
+      return {save:result.market===market ? save : coachCheckpoint(save,result.market,`coach-apply:${clubId}:${result.market.clubs[clubId]?.vacancyVersion ?? 0}`),message:result.error ?? "Candidatura analisada. Confira a resposta da diretoria."};
+    });
   }
-  function applyToManagerJob(clubId: string): string | undefined {
-    if (!managerMarket || !careerDatabase || !managedClubRecord) return "Mercado indisponível.";
-    const date = savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11";
-    const result = applyForManagerJob(managerMarket, careerDatabase, managedClubRecord.id, clubId, date);
-    storeManagerMarket(result.market);
-    return result.error;
+  async function declineJob(id: string) {
+    await commitFinancialChange((save)=>{
+      const market=save.progress!.managerMarket!;
+      return {save:coachCheckpoint(save,declineManagerJob(market,id,save.inGameDate),`coach-decline:${id}`),message:"Proposta recusada."};
+    });
   }
-  function declineJob(id: string) {
-    if (!managerMarket) return;
-    storeManagerMarket(declineManagerJob(managerMarket, id, savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"));
+  async function advanceUnemployed(): Promise<string | undefined> {
+    if(advancing.current || jobActionInProgress.current) return "Aguarde a confirmação em andamento.";
+    const current=savesRef.current.find(save=>save.id===activeSaveId);
+    if(!current || !careerDatabase || !isUnemployed(managerMarket)) return "Carreira indisponível.";
+    advancing.current=true;
+    try {
+      const snapshot={...current,progress:progressRef.current};
+      const next=await advanceCareerWithMarketPolicy(snapshot,careerDatabase,{operationId:`unemployed:${current.inGameDate}:${engine?.revision ?? 0}`,expectedRevision:engine?.revision ?? 0,fromDate:current.inGameDate},browserMarketProvider);
+      await publishLocalCheckpoint(next,userId,engine?.revision ?? 0);
+      savesRef.current=[next,...savesRef.current.filter(s=>s.id!==next.id)];
+      progressRef.current=next.progress!;
+      await loadCareer(next); void persistSave(next);
+    } catch(error) { return error instanceof Error ? error.message : "Não foi possível avançar."; }
+    finally { advancing.current=false; }
   }
   async function acceptJob(id: string): Promise<string | undefined> {
-    if (jobActionInProgress.current) return "Aguarde a confirmação em andamento.";
+    if (jobActionInProgress.current || advancing.current) return "Aguarde a confirmação em andamento.";
     const current = savesRef.current.find(save => save.id === activeSaveId);
     if (!current || !careerDatabase) return "Carreira indisponível.";
     jobActionInProgress.current = true;
     try {
       const result = acceptManagerJob({ ...current, budget, playerCareers, manualPositions, progress: { ...progressRef.current, managerMarket } }, careerDatabase, id);
       if (!result.save) return result.error;
+      await publishLocalCheckpoint(result.save,userId,current.progress?.engine?.revision ?? 0);
+      savesRef.current=[result.save,...savesRef.current.filter(s=>s.id!==result.save!.id)];
       // Write the account-local snapshot first and prevent autosave of the outgoing club.
       setCareerLoaded(false);
       void persistSave(result.save);
@@ -1286,6 +1303,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   function openLineup() {
+    if(isUnemployed(managerMarket)) { setPage("hub"); return; }
     if (!scheduledFixture) {
       setSyncLabel("Temporada encerrada — não há partidas pendentes nesta carreira.");
       return;
@@ -1545,7 +1563,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     nav, teamName: club, clubColors: database.clubs.find((item) => item.name === club),
     date: formatCalendarDate(saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"), onClose: () => navigate("hub"),
     background: (
-          <HubScreen
+          isUnemployed(managerMarket) && managerMarket && careerDatabase && managedClubRecord ? <UnemploymentScreen coach={coach} jobs={{market:managerMarket,database:careerDatabase,currentClubId:managedClubRecord.id,date:saves.find(s=>s.id===activeSaveId)?.inGameDate ?? "2026-01-11",appointments:managerAppointments,onApply:applyToManagerJob,onDecline:declineJob,onAccept:acceptJob}} onAdvance={advanceUnemployed}/> : <HubScreen
             kit={kit}
             club={club}
             clubColors={database.clubs.find((item) => item.name === club)}
@@ -1574,6 +1592,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           />
     ),
   };
+
+  if (isUnemployed(managerMarket) && !["coaches","settings"].includes(page)) return <CareerWorkspace {...workspace}/>;
 
   if (page === "hub")
     return (
@@ -1815,7 +1835,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           progressRef.current = p;
           savesRef.current = [next,...savesRef.current.filter(save => save.id !== next.id)];
           setStandingsOpen(false); setBudget(next.budget); budgetRef.current = next.budget; setRound(next.round); setActiveFixtureId(p.activeFixtureId);
-          setEngine(p.engine); setWorldMarket(p.worldMarket); setTransferNegotiations(p.transferNegotiations ?? []); setManagerMarket(p.managerMarket);
+          setEngine(p.engine); setWorldMarket(p.worldMarket); setTransferNegotiations(p.transferNegotiations ?? []); setManagerMarket(p.managerMarket); setManagerAppointments(p.managerAppointments ?? []);
           setLoanContracts(p.loanContracts ?? {}); setCareerSquad(p.careerSquad); setStarters(p.starters); setMatchBenchIds(p.matchBenchIds); setManualPositions(p.manualPositions); setPlayerCareers(p.playerCareers);
           setProfilePlayer(null); setSelectedPlayer(null); setPage("hub");
           void persistSave({ ...next,updatedAt:new Date().toISOString() });

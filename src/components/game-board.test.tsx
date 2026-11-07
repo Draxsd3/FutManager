@@ -420,6 +420,7 @@ it("advances the career date after a result and returns an expired incoming loan
   const player = state.careerSquad![0];
   const loan = { owner: { name: "Origem externa", externalId: "99999999" }, borrower: { name: save.clubName, clubId: save.clubId }, startsOn: "2026-01-01", endsOn: expiresOn, status: "active" as const, source: "transfermarkt" as const };
   player.loan = loan; player.acquisitionType = "loan"; player.loanExpiresOn = loan.endsOn;
+  delete state.managerMarket!.staff;
   delete state.managerMarket!.finance; // Legacy E2 fixture: finance adopts this external loan without inventing its owner club.
   state.loanContracts = { [player.sourceId!]: loan }; state.page = "result"; state.minute = 90;
   state.starters = [player.id, ...state.starters.filter(id => id !== player.id)].slice(0, 11);
@@ -515,7 +516,16 @@ it("connects jobs to the career, confirms a club change and restores it without 
   const current = database.clubs.find(c => c.id === save.clubId)!;
   const target = database.clubs.find(c => c.id !== current.id && c.division === current.division && c.level <= current.level + 2 && database.players.filter(p => p.clubId === c.id).length >= 11)!;
   save.budget = 9000; save.progress!.budget = 9000;
-  save.progress!.managerMarket!.clubs[target.id].coach = null;
+  const { processCoaches } = await import("@/lib/game/simulation/coaches");
+  const targetCoach=Object.values(save.progress!.managerMarket!.staff!.coaches).find(c=>c.clubId===target.id);
+  if(targetCoach) {
+    const yesterday=new Date(Date.parse(`${save.inGameDate}T12:00:00Z`)-86400000).toISOString().slice(0,10);
+    targetCoach.contract!.endsOn=yesterday;
+    save.progress!.managerMarket!.finance!.contracts[`coach:${targetCoach.id}`].endsOn=yesterday;
+    save.progress!.managerMarket=processCoaches(save.progress!.managerMarket!,database,undefined,save.inGameDate);
+  }
+  // An affordable target roster: employment now requires twelve months of salary cover.
+  for(const c of Object.values(save.progress!.managerMarket!.finance!.contracts)) if(c.clubId===target.id && c.personKind!=="coach") c.monthlyCents=100_000;
   save.progress!.managerMarket!.clubs[target.id].budget = 4321;
   const originalSquad = structuredClone(save.progress!.careerSquad);
   const otherSave = { ...structuredClone(save), id: "independent-career", name: "Outra carreira", progress: { ...save.progress!, activeSaveId: "independent-career" } };
@@ -536,7 +546,8 @@ it("connects jobs to the career, confirms a club change and restores it without 
   await waitFor(() => {
     const changed = readLocalSaves("alice").find(item => item.id === save.id)!;
     expect(changed.clubId).toBe(target.id);
-    expect(changed.budget).toBe(4321);
+    const contract=changed.progress!.managerMarket!.staff!.coaches[changed.progress!.managerMarket!.staff!.humanId].contract!;
+    expect(changed.budget).toBe(4321-contract.monthlyCents/100_000);
     expect(changed.progress?.club).toBe(target.name);
     expect(changed.progress?.managerMarket?.clubs[target.id].coach).toBe("Técnico no mercado");
     expect(changed.progress?.managerAppointments).toHaveLength(2);
@@ -792,3 +803,32 @@ it("receives automatic club offers after the match, persists and rejects them af
   fireEvent.click(within(profile).getByRole("button", { name: "Recusar" }));
   await waitFor(() => expect(readLocalSaves("alice")[0].progress?.playerCareers[player.id]?.transferOffers?.[0].status).toBe("rejected"));
 }, 60000);
+
+it("loads a real unemployed checkpoint, advances without a fixture and preserves unemployment after reload", async () => {
+  const { IDBFactory } = await import("fake-indexeddb"); vi.stubGlobal("indexedDB",new IDBFactory());
+  const { marketFixture } = await import("@/lib/game/simulation/market-test-fixture");
+  const { migrateCoachSave, processCoaches } = await import("@/lib/game/simulation/coaches");
+  const { cacheCareerSaves } = await import("@/lib/importer/database-cache");
+  const f=marketFixture();
+  const save=migrateCoachSave(f.save,f.database), p=save.progress!, human=p.managerMarket!.staff!.coaches[p.managerMarket!.staff!.humanId];
+  human.contract!.endsOn="2026-01-10";p.managerMarket!.finance!.contracts[`coach:${human.id}`].endsOn="2026-01-10";
+  p.managerMarket=processCoaches(p.managerMarket!,f.database,undefined,save.inGameDate);
+  p.universeSnapshot=f.database; p.competitionSeason={...p.competitionSeason!,fixtures:[]};p.activeFixtureId=undefined;
+  expect(writeLocalSaves([save],"unemployed")).toBe(true);await cacheCareerSaves([save],"unemployed");
+  const view=render(game("unemployed"));
+  fireEvent.click(await screen.findByRole("button",{name:/CONTINUAR JOGANDO/}));
+  fireEvent.click(await screen.findByRole("button",{name:"CONTINUAR"}));
+  await screen.findByRole("heading",{name:/Sem clube/});
+  expect(screen.queryByRole("region",{name:"Elenco do clube"})).toBeNull();
+  fireEvent.click(screen.getByRole("button",{name:"Avançar uma semana"}));
+  await waitFor(()=>expect(readLocalSaves("unemployed")[0].inGameDate).toBe("2026-01-18"));
+  await screen.findByRole("heading",{name:/Sem clube/});
+  expect(readLocalSaves("unemployed")[0].progress!.engine!.revision).toBe(1);
+  view.unmount();sessionStorage.clear();
+  render(game("unemployed"));
+  fireEvent.click(await screen.findByRole("button",{name:/CONTINUAR JOGANDO/}));
+  fireEvent.click(await screen.findByRole("button",{name:"CONTINUAR"}));
+  await screen.findByRole("heading",{name:/Sem clube/});
+  expect(screen.getByRole("heading",{name:"Central de empregos"})).toBeTruthy();
+  expect(readLocalSaves("unemployed")[0].progress!.engine!.revision).toBe(1);
+},30000);

@@ -16,12 +16,12 @@ export const thousandsToCents = (value: number) => brlToCents(value * 1000);
 export const centsToThousands = (value: number) => value / 100_000;
 export const FINANCE_RULES = Object.freeze({ version: "finance-v1", salaryHorizonMonths: 12, newContractMonths: 12, loanMonths: 6, commissionSupported: false, instalmentsSupported: false });
 export type Employment = {
-  id: string; playerId: string; clubId: string; startsOn: string; endsOn: string | null;
+  personKind?: "coach"; id: string; playerId: string; clubId: string; startsOn: string; endsOn: string | null;
   monthlyCents: number | null; accruedThrough: string; origin: "legacy" | "game"; status: "active" | "expired";
 };
 export type Registration = { clubId: string; status: "registered" | "pending"; reason: string };
 export type RegistrationPolicy = { source: string; validFrom: string; validUntil: string; windows: { from: string; to: string }[] };
-export type LedgerEntry = { id: string; date: string; clubId: string; kind: "opening" | "legacy-adjustment" | "transfer" | "wage-accrual" | "wage-payment"; amountCents: number; cashDeltaCents: number; reference: string };
+export type LedgerEntry = { id: string; date: string; clubId: string; kind: "opening" | "legacy-adjustment" | "coach-fee" | "transfer" | "wage-accrual" | "wage-payment"; amountCents: number; cashDeltaCents: number; reference: string };
 export type FinanceState = {
   version: 1; rulesVersion: "finance-v1"; adoptedOn: string; through: string;
   clubs: Record<string, { cashCents: number; projectedThousands: number }>;
@@ -142,7 +142,7 @@ export function accrueFinance(state: FinanceState, date: string): FinanceState {
       post(s,{id:`${key}:${date}`,date,clubId,kind:"wage-accrual",amountCents:amount,cashDeltaCents:0,reference:key});
     });
     c.accruedThrough=date;
-    if (c.endsOn && c.endsOn < date && c.status === "active") { c.status="expired"; s.registrations[c.playerId]={clubId:"",status:"pending",reason:"Contrato encerrado pelo calendário da carreira."}; }
+    if (c.endsOn && c.endsOn < date && c.status === "active") { c.status="expired"; if(c.personKind!=="coach") s.registrations[c.playerId]={clubId:"",status:"pending",reason:"Contrato encerrado pelo calendário da carreira."}; }
   }
   s.through=date;
   for (const [key,p] of Object.entries(s.payables).sort(([a],[b])=>a.localeCompare(b))) if (p.dueOn <= date && p.paidCents < p.amountCents) {

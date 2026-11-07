@@ -12,14 +12,14 @@ function setup() {
   const market = initializeCareerMarket(database, createCareerSeason(database, club.id, 2026)!, "Técnico", 9000);
   return { database, club, target, market };
 }
-it("lista vagas reais da simulação e envia a candidatura sem trocar de clube", () => {
+it("lista vagas reais da simulação e envia a candidatura sem trocar de clube", async () => {
   const { database, club, target, market } = setup();
   const onApply = vi.fn(), onAccept = vi.fn();
   render(<ManagerJobs database={database} market={market} currentClubId={club.id} date="2026-03-10" onApply={onApply} onDecline={vi.fn()} onAccept={onAccept} />);
   fireEvent.click(screen.getByRole("button", { name: `Candidatar-se ao ${target.name}` }));
   expect(onApply).toHaveBeenCalledWith(target.id);
   expect(onAccept).not.toHaveBeenCalled();
-  expect(screen.getByRole("status").textContent).toMatch(/Candidatura analisada/);
+  expect((await screen.findByRole("status")).textContent).toMatch(/Candidatura analisada/);
 });
 it("exige confirmação, permite cancelar e só aceita a proposta no segundo passo", async () => {
   const { database, club, target, market } = setup();

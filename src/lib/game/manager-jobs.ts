@@ -1,3 +1,4 @@
+import { hireCoach, isUnemployed, coachCheckpoint } from "./simulation/coaches";
 import { buildSquadFromDatabase, type CareerSave, type EditorDatabase } from "./editor-data";
 import { buildStartingXI } from "./mock-data";
 import { applyManagerFixture, appointManager, createManagerMarket, type ManagerMarket, type ManagerApplication } from "./manager-market";
@@ -28,7 +29,7 @@ export function refreshJobOffers(market: ManagerMarket, date: string): ManagerMa
 }
 
 /** Only actual career results can create dismissals, never catalog rankings or fake vacancies.
- * Human dismissal/unemployment is not introduced here; the current career remains playable.
+ * Legacy markets retain their original behavior; adopted E5 staff is evaluated by processCoaches.
  */
 export function updateCareerMarket(market: ManagerMarket, season: CareerSeason, human: { clubId: string; budget: number; payroll: number }, date: string): ManagerMarket {
   let next = market;
@@ -39,7 +40,7 @@ export function updateCareerMarket(market: ManagerMarket, season: CareerSeason, 
 }
 
 export function availableManagerJobs(database: EditorDatabase, market: ManagerMarket, currentClubId: string) {
-  return database.clubs.filter(club => club.id !== currentClubId && club.country.toLocaleLowerCase("pt-BR") === "brasil" && club.division !== "Sem divisão nacional" && market.clubs[club.id]?.coach === null
+  return database.clubs.filter(club => (club.id !== currentClubId || isUnemployed(market)) && club.country.toLocaleLowerCase("pt-BR") === "brasil" && club.division !== "Sem divisão nacional" && market.clubs[club.id]?.coach === null
     && (() => { const squad = buildSquadFromDatabase(database, club.name, true); return !!squad && squad.length >= 11 && squad.some(player => player.position === "G"); })())
     .sort((a, b) => a.division.localeCompare(b.division) || a.name.localeCompare(b.name, "pt-BR"));
 }
@@ -52,9 +53,12 @@ export function applyForManagerJob(market: ManagerMarket, database: EditorDataba
   const vacancyVersion = refreshed.clubs[clubId].vacancyVersion ?? 0;
   const id = `${clubId}:${vacancyVersion}`;
   if (refreshed.applications?.some(application => application.id === id)) return { market: refreshed, error: "Você já se candidatou a esta vaga." };
+  const human=refreshed.staff?.coaches[refreshed.staff.humanId];
+  if(human && human.availableOn>date) return {market:refreshed,error:`Você estará disponível para um novo emprego em ${human.availableOn}.`};
   const tenure = refreshed.clubs[currentClubId]?.history ?? [];
-  const successful = tenure.length >= 5 && tenure.reduce((sum, game) => sum + game.points, 0) / tenure.length >= 2;
-  const accepted = target.level <= current.level + (successful ? 4 : 2);
+  const ownTenure=human?.history.at(-1);
+  const successful = human ? !!ownTenure && ownTenure.games>=5 && ownTenure.points/ownTenure.games>=2 : tenure.length>=5 && tenure.reduce((sum,game)=>sum+game.points,0)/tenure.length>=2;
+  const accepted = target.level <= (human?.reputation ?? current.level) + (successful ? 4 : 2);
   const expiration = new Date(`${date}T12:00:00Z`); expiration.setUTCDate(expiration.getUTCDate() + 7);
   return { market: { ...refreshed, applications: [{ id, clubId, vacancyVersion, appliedOn: date, expiresOn: expiration.toISOString().slice(0, 10), status: accepted ? "offered" : "rejected",
     message: accepted ? "A diretoria aprovou sua candidatura. Confirme a mudança dentro do prazo." : "A diretoria procura mais experiência para o nível deste clube." }, ...(refreshed.applications ?? [])] } };
@@ -77,7 +81,9 @@ export function acceptManagerJob(save: CareerSave, database: EditorDatabase, app
   if (!offer) return { error: "A proposta expirou ou não está mais disponível." };
   const target = availableManagerJobs(database, market, save.clubId).find(club => club.id === offer.clubId);
   if (!target) return { error: "O clube não possui uma vaga e um elenco disponíveis." };
-  const appointment = appointManager(market, target.id, save.managerName);
+  let appointment: ManagerMarket | null;
+  try { appointment = market.staff ? hireCoach(market,market.staff.humanId,target.id,save.inGameDate,true) : appointManager(market,target.id,save.managerName); }
+  catch(error) { return {error:error instanceof Error ? error.message : "Não foi possível contratar."}; }
   if (!appointment) return { error: "Não foi possível confirmar a contratação." };
   const oldSeason = progress.competitionSeason;
   const cached = progress.jobClubSnapshots?.[target.id];
@@ -93,15 +99,17 @@ export function acceptManagerJob(save: CareerSave, database: EditorDatabase, app
   const previous: JobClubSnapshot = { kit: progress.kit, careerSquad: progress.careerSquad, starters: progress.starters, playerCareers: progress.playerCareers, manualPositions: progress.manualPositions, trainingSessions: progress.trainingSessions,
     competitionSeason: oldSeason, formation: progress.formation, style: progress.style, marking: progress.marking, focus: progress.focus, confidenceHistory: progress.confidenceHistory, confidenceStartBudget: progress.confidenceStartBudget };
   const oldClub = appointment.clubs[save.clubId];
-  const clubs = { ...appointment.clubs, [save.clubId]: { ...oldClub, coach: null, budget: save.budget, vacancyVersion: (oldClub.vacancyVersion ?? 0) + 1 }, [target.id]: { ...appointment.clubs[target.id], processedFixtures: season.fixtures.filter(f => f.status === "played" && [f.homeClubId, f.awayClubId].includes(target.id)).map(f => f.id) } };
+  const clubs = { ...appointment.clubs, [save.clubId]: market.staff ? oldClub : { ...oldClub, coach: null, budget: save.budget, vacancyVersion: (oldClub.vacancyVersion ?? 0) + 1 }, [target.id]: { ...appointment.clubs[target.id], processedFixtures: season.fixtures.filter(f => f.status === "played" && [f.homeClubId, f.awayClubId].includes(target.id)).map(f => f.id) } };
   const nextMarket: ManagerMarket = { ...appointment, clubs, applications: appointment.applications?.map(application => application.id === applicationId ? { ...application, status: "accepted", message: "Contratação confirmada." } : application.status === "offered" ? { ...application, status: "cancelled", message: "Você aceitou outra proposta." } : application) };
+  if(nextMarket.staff) nextMarket.staff.boards[target.id].seen=[...new Set([...nextMarket.staff.boards[target.id].seen,...clubs[target.id].processedFixtures])];
   const appointments = progress.managerAppointments ?? [{ clubId: save.clubId, club: save.clubName, startedOn: "Data não registrada" }];
   const nextProgress: CareerProgress = { ...progress, ...(cached ?? {}), managerMarket: nextMarket, jobClubSnapshots: { ...progress.jobClubSnapshots, [save.clubId]: previous },
-    managerAppointments: [...appointments.map((item, index) => index === appointments.length - 1 ? { ...item, endedOn: save.inGameDate } : item), { clubId: target.id, club: target.name, startedOn: save.inGameDate }],
+    managerAppointments: [...appointments.map((item, index) => index === appointments.length - 1 && !item.endedOn ? { ...item, endedOn: save.inGameDate } : item), { clubId: target.id, club: target.name, startedOn: save.inGameDate }],
     club: target.name, division: target.division, budget: clubs[target.id].budget, careerSquad: squad, starters: cached?.starters ?? buildStartingXI("4-3-3", squad), playerCareers: cached?.playerCareers ?? {}, manualPositions: cached?.manualPositions ?? {}, trainingSessions: cached?.trainingSessions ?? [],
     kit: cached?.kit ?? 1, formation: cached?.formation ?? "4-3-3", style: cached?.style ?? "Equilibrado", marking: cached?.marking ?? "Leve", focus: cached?.focus ?? "Pelo meio",
     competitionSeason: season, confidenceHistory: [], confidenceStartBudget: clubs[target.id].budget, activeFixtureId: nextCareerFixture(season)?.id,
     transferNegotiations: progress.transferNegotiations?.map(deal => deal.buyerClubId === save.clubId && (deal.status === "countered" || deal.status === "agreed") ? { ...deal, status: "rejected", message: "Negociação encerrada com a saída do treinador." } : deal),
     page: "hub", minute: 0, homeScore: 0, awayScore: 0, events: [], participation: {}, matchBenchIds: undefined, matchPreparation: undefined, detailOpen: false, matchRunning: false, halftimeWaiting: false, substitutionsLeft: 5 };
-  return { save: { ...save, name: `${target.name} — ${save.managerName}`, clubId: target.id, clubName: target.name, division: target.division, budget: clubs[target.id].budget, playerCareers: nextProgress.playerCareers, manualPositions: nextProgress.manualPositions, progress: nextProgress, updatedAt: new Date().toISOString() } };
+  const switched: CareerSave = { ...save, name: `${target.name} — ${save.managerName}`, clubId: target.id, clubName: target.name, division: target.division, budget: clubs[target.id].budget, playerCareers: nextProgress.playerCareers, manualPositions: nextProgress.manualPositions, progress: nextProgress, updatedAt: new Date().toISOString() };
+  return {save:market.staff ? coachCheckpoint(switched,nextMarket,`coach-accept:${applicationId}`) : switched};
 }
