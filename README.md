@@ -302,3 +302,7 @@ Coletor, vínculos dos clubes cadastrados, validações e integração do snapsh
 [docs/transfermarkt.md](docs/transfermarkt.md). Comandos: `npm run transfermarkt:discover`,
 `npm run transfermarkt:sync` (simulação por padrão) e `npm run transfermarkt:test`.
 O modo por competição (`transfermarkt:competitions` / `transfermarkt:competition-sync`) cria clubes ausentes e importa elencos completos. O modo legado usa vínculos aprovados. Nenhum modo altera saves em andamento.
+
+## Especificação e evolução do motor
+
+O diagnóstico da etapa 1, a especificação original dividida por setor e o plano incremental estão em [docs/motor/README.md](docs/motor/README.md). O índice distingue recursos existentes, lacunas e propostas futuras; a documentação não ativa uma integração de IA nem muda as regras em execução.
