@@ -22,7 +22,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Brasileirão Série C
 
-[Série C — documentos 2026](https://www.cbf.com.br/futebol-brasileiro/noticias/supercopa-sub17/a/cbf-publica-documentos-tecnicos-da-serie-c-de-2026): 20 clubes em turno único; oito avançam e dois últimos caem. Dois grupos de quatro em turno e returno: 1º, 4º, 5º, 8º e 2º, 3º, 6º, 7º; dois primeiros de cada grupo sobem e os líderes fazem a final. A CBF anunciou mudança para 24 clubes em 2027. [REC 2026](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_Brasileiro_Serie_C_2026_f894bdfed3.pdf). Conferir desempates antes de implementar.
+**REC CBF 2026, arts. 14–26:** 20 clubes em turno único; oito avançam e dois últimos caem. Quadrangulares em turno e returno: 1º, 4º, 5º, 8º e 2º, 3º, 6º, 7º; dois primeiros de cada grupo sobem e os líderes fazem final ida e volta. Desempate da primeira fase: vitórias, saldo, gols pró, menos vermelhos, menos amarelos e sorteio; nos quadrangulares, confronto direto entre dois clubes entra após gols pró. Final: pontos, saldo e pênaltis. Terceiro e quarto são os vice-líderes dos grupos ordenados pela campanha acumulada. O campeão acessa a terceira fase da Copa do Brasil 2027, sujeito ao REC desta competição. [REC oficial](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_Brasileiro_Serie_C_2026_f894bdfed3.pdf); conferir revisões e critérios de inscrição. A CBF anunciou mudança para 24 clubes em 2027, não aplicável automaticamente à simulação baseada em 2026.
 
 ### Brasileirão Série D
 
@@ -58,7 +58,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Amazonense
 
-**Referência 2026 (resumo; conferir REC integral):** 8 clubes em dois grupos de quatro e dois turnos: no primeiro enfrentam o outro grupo, no segundo o próprio. Cada turno tem eliminatórias e campeão; se o mesmo vencer ambos, é campeão geral. Um rebaixado. Fontes divergem sobre quantos avançam às eliminatórias; confirmar REC antes de implementar. [Fonte](https://fafamazonas.com.br/site/noticia/barezao-2026-faf-e-clubes-aprovam-regulamento-da-competicao/).
+**REC FAF 2026, arts. 5 e 10–15:** 8 clubes em dois grupos de quatro. No primeiro turno jogam contra o outro grupo (4 jogos); no segundo contra o próprio (3 jogos). Em cada turno, três por grupo avançam, líderes direto às semis e segundos enfrentam terceiros em jogo único, com vantagem do empate aos segundos. No primeiro turno os confrontos são dentro do grupo; no segundo, cruzados. Semis e finais de turno são únicas e empatadas vão a pênaltis. Campeões de turno distintos fazem final geral única, também com pênaltis; o mesmo campeão nos dois turnos conquista o título diretamente. Rebaixamento de um clube considera a soma das duas fases classificatórias, protegendo campeões de turno; demais posições seguem essa soma, ressalvados os finalistas. Desempate: vitórias, saldo, gols pró, menos gols sofridos, confronto direto conforme art. 14, menos vermelhos, menos amarelos e sorteio. Vagas seguem art. 5 e critérios das competições de destino. [REC oficial](https://fafamazonas.com.br/site//arquivos/download/arqeditor/regulamento_amazonense_2026.pdf); conferir notas e revisões posteriores.
 
 ### Campeonato Baiano
 
@@ -78,7 +78,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Cearense
 
-**Referência 2026 (resumo; conferir REC integral):** 10 clubes em dois grupos de cinco, turno único interno; três de cada avançam à segunda fase em novos grupos de três, jogos contra outro grupo com pontos zerados. Dois por grupo vão às semifinais no próprio grupo; semifinal e final ida e volta. Quadrangular de permanência em turno único, dois caem. [Fonte](https://ge.globo.com/ce/futebol/campeonato-cearense/noticia/2026/01/06/guia-do-cearense-2026-saiba-tudo-sobre-campeonato-e-times.ghtml).
+**REC FCF 2026, arts. 5 e 11–18 (cópia de terceiro):** 10 clubes em dois grupos de cinco, turno único interno; três de cada avançam a grupos C e D, com pontos zerados e jogos contra o outro grupo. Dois por grupo vão às semifinais dentro do próprio grupo; semifinal e final em ida e volta, desempate por pontos, saldo e pênaltis. Os dois últimos de cada grupo inicial disputam quadrangular de permanência com pontos zerados em turno único; dois caem. Há jogo único pelo 3º e pelo 5º lugar, com pênaltis em caso de empate. Nas fases de grupo e permanência: vitórias, saldo, gols pró, menos vermelhos, menos amarelos e sorteio. Copa do Brasil: três primeiros e uma vaga da Taça Fares Lopes, com repasses e regra alternativa se ela não ocorrer; Série D: três melhores elegíveis. [Cópia do REC](https://www.srgoool.com.br/downloads.php?id_anexo=1573); localizar original da FCF e verificar revisões.
 
 ### Campeonato Carioca
 
@@ -90,7 +90,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Goiano
 
-**Referência 2026 (resumo; conferir REC integral):** 12 clubes em três grupos de quatro, oito jogos contra outros grupos, classificação geral; oito às quartas. Quartas, semifinais e final em ida e volta. Último cai diretamente; 10º×11º em ida e volta decide outro rebaixado. [Fonte](https://ge.globo.com/go/futebol/campeonato-goiano/noticia/2025/11/26/veja-a-tabela-do-goianao-2026.ghtml).
+**REC FGF 2026, arts. 5–24:** 12 clubes em três grupos de quatro, oito jogos contra outros grupos; oito melhores da tabela geral vão às quartas. Quartas, semifinais e final em ida e volta, com pontos, saldo e pênaltis; semifinais são reordenadas pela campanha acumulada. Eliminados nas quartas disputam playoff de 5º a 8º. O 12º cai; 10º e 11º disputam permanência somente se a diferença na primeira fase for de até seis pontos; se for maior, o 11º cai diretamente. No playoff somam-se os pontos da primeira fase e dos jogos de permanência; após a ida, se a diferença exceder três pontos, o 11º cai sem jogo de volta. Vagas nacionais dependem dos critérios da CBF. [REC oficial](https://www.fgf.esp.br/assets/uploads/176833012335.pdf); conferir revisões posteriores.
 
 ### Campeonato Maranhense
 
@@ -98,7 +98,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Mato-Grossense
 
-**Referência 2026 (resumo; conferir REC integral):** 10 clubes em turno único; 1º e 2º direto às semifinais; 3º×6º e 4º×5º em quartas únicas. Dois últimos caem. Confirmar jogos das fases seguintes e desempates no REC. [Fonte](https://ge.globo.com/mt/futebol/campeonato-mato-grossense/noticia/2025/12/31/campeonato-mato-grossense-2026-comeca-com-cinco-jogos-no-sabado.ghtml).
+**REC FMF 2026, arts. 5–6 e 14–24:** 10 clubes em turno único; 1º e 2º direto às semifinais; 3º×6º e 4º×5º em jogo único, empate nos pênaltis. Semifinais e final em ida e volta, pontos, saldo e pênaltis; 1º enfrenta vencedor de 4º×5º, 2º enfrenta vencedor de 3º×6º. Desempate inicial: vitórias, saldo, gols pró, confronto direto, menos amarelos, menos vermelhos e sorteio. **Contradição no próprio REC:** art. 6 menciona somente o último rebaixado, mas art. 18 determina descenso de 9º e 10º; confirmar retificação ou decisão antes de implementar. Art. 5 prevê vagas e repasses para Série D, Copa do Brasil e Copa Verde, inclusive quarta vaga na Copa do Brasil condicionada à inexistência de seletivo. [REC oficial](https://www.fmfmt.com.br/assets/uploads/176461945683.pdf); conferir revisões, elegibilidade e seletivo.
 
 ### Campeonato Mineiro
 
@@ -130,7 +130,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Potiguar
 
-**Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; 1º e 2º direto às semifinais, 3º×6º e 4º×5º em ida e volta. Semifinal e final ida e volta; dois últimos rebaixados. Pênaltis para empate nos confrontos eliminatórios. [Fonte](https://ge.globo.com/rn/futebol/campeonato-potiguar/noticia/2025/11/11/campeonato-potiguar-2026-tera-finais-na-arena-das-dunas.ghtml).
+**REC FNF 2026, arts. 6–12 e 16:** 8 clubes em turno único; 1º e 2º direto às semifinais, 3º×6º e 4º×5º em ida e volta. Semifinais e final em ida e volta, desempate por pontos, saldo e pênaltis. Na semifinal o 1º enfrenta o vencedor com pior campanha inicial; o 2º enfrenta o outro. A classificação de 3º a 6º soma fase de grupo e semifinal, excluindo pontos do mata-mata classificatório; 7º e 8º caem. Desempate: vitórias, saldo, gols pró, confronto direto apenas entre dois, menos vermelhos, menos amarelos e sorteio. Vagas nacionais seguem critérios da CBF. [REC oficial](https://www.fnf.org.br/files/REC_Campeonato_Potiguar_2026.pdf); conferir alterações posteriores.
 
 ### Campeonato Rondoniense
 
@@ -154,7 +154,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ## Situação da conferência
 
-Os resumos da Copa do Nordeste, Copa Verde, Amapaense, Alagoano e Sergipano acima foram confrontados com os artigos dos RECs vinculados, mas isso **não é certificação integral**: inscrições, sorteios, eventuais revisões posteriores e todas as regras de elegibilidade ainda precisam de auditoria. Os demais resumos continuam em pesquisa; uma fonte listada não significa que todos os seus artigos foram verificados. Nenhuma dessas alterações implementa automaticamente os formatos no motor.
+Os resumos da Copa do Nordeste, Copa Verde, Série C, Amapaense, Alagoano, Amazonense, Cearense (cópia externa), Goiano, Mato-Grossense, Potiguar e Sergipano acima foram confrontados com os artigos dos RECs vinculados, mas isso **não é certificação integral**: inscrições, sorteios, eventuais revisões posteriores e todas as regras de elegibilidade ainda precisam de auditoria. Os demais resumos continuam em pesquisa; uma fonte listada não significa que todos os seus artigos foram verificados. Nenhuma dessas alterações implementa automaticamente os formatos no motor.
 
 ## Pendências gerais
 
