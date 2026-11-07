@@ -32,6 +32,10 @@ No checkout-base `5a15be314b0085700d1dae65e0b316ca95a07ab1`, com estes documento
 
 Esses testes validam a base atual, **não** implementam nem aprovam requisitos futuros. Os logs completos de execução são temporários do ambiente, não dados a versionar. Não foi feita campanha de dez temporadas, avaliação de desempenho de Gemini, auditoria de dados privados ou teste real de serviço externo. Não foi necessária inspeção visual: nenhuma tela foi alterada.
 
+## Integração da main antes da publicação
+
+Integrada a main `d82d0e76354788998e52753316f65b2ece5f4d4c` (PR153, apresentação de treinamento). Diagnóstico continua aplicável: a alteração é de apresentação e não cria motor de treino universal. Após integrar: **36 testes em dois arquivos** (`game-board.test.tsx` e `training-center.test.tsx`) aprovados; novo build, TypeScript, ESLint e diff-check aprovados. O diff desta entrega contra main contém exclusivamente README, CONTEXTO e `docs/motor/`; nenhum arquivo de execução alterado pela etapa 1.
+
 ## Como reproduzir a conferência documental
 
 A cópia original pode ser conferida com `sha256sum docs/motor/ESPECIFICACAO-ORIGINAL-v1.0.md` e o valor de ORIGEM.md. Para a divisão, identificar os títulos `# N.` do original e de `setores/*.md`: todos os números de 1 a 27 devem aparecer exatamente uma vez nos setores, com o mesmo corpo (ignorando apenas whitespace terminal). Conferir links relativos a partir da pasta de cada documento. `DIAGNOSTICO.md` usa prefixos G/B/S declarados para arquivos reais; referência a teste não comprova toda a área.
