@@ -1,3 +1,4 @@
+import { ENGINE_CONFIG } from "./simulation/foundation";
 import type { EditorDatabase, EditorPlayer } from "./editor-data";
 import { databaseWithLoans, dateAfterMonths, type CareerLoans } from "./loans";
 import { appointManager, type ManagerMarket } from "./manager-market";
@@ -30,7 +31,7 @@ export function simulateWorldMarket(input: { database: EditorDatabase; humanClub
   managers = { ...managers, clubs: { ...managers.clubs } };
   negotiations = [...negotiations]; loans = { ...loans };
   const record = (text: string) => world.events.unshift({ date: input.date, text });
-  const protectedPlayers = new Set(negotiations.filter(d => d.status === "agreed" || d.status === "countered" || (d.status === "completed" && d.completedOn && Date.parse(`${input.date}T12:00:00Z`)-Date.parse(`${d.completedOn}T12:00:00Z`) < 90*86400000)).map(d => d.playerId));
+  const protectedPlayers = new Set(negotiations.filter(d => d.status === "agreed" || d.status === "countered" || (d.status === "completed" && d.completedOn && Date.parse(`${input.date}T12:00:00Z`)-Date.parse(`${d.completedOn}T12:00:00Z`) < ENGINE_CONFIG.worldMarket.cooldownDays*86400000)).map(d => d.playerId));
   const db = worldDatabase(input.database, negotiations, loans, world);
   const rosters = new Map<string, EditorPlayer[]>();
   for (const player of db.players) { const roster = rosters.get(player.clubId) ?? []; roster.push(player); rosters.set(player.clubId, roster); }
@@ -38,7 +39,7 @@ export function simulateWorldMarket(input: { database: EditorDatabase; humanClub
   // A youngster behind several teammates can develop on loan; surplus seniors may be sold.
   for (const club of db.clubs) {
     const roster = rosters.get(club.id) ?? [];
-    if (club.id === input.humanClubId || roster.length <= 20 || hash(`${week}:${club.id}:list`) % 3 !== 0) continue;
+    if (club.id === input.humanClubId || roster.length <= ENGINE_CONFIG.worldMarket.minimumSellerRoster || hash(`${week}:${club.id}:list`) % 3 !== 0) continue;
     const surplus = roster.filter(p => p.marketStatus === "normal" && p.loan?.status !== "active" && !protectedPlayers.has(p.id) && roster.filter(other => other.primaryPosition === p.primaryPosition).length > (p.primaryPosition === "G" ? 2 : 3)).sort((a,b) => a.overall-b.overall || a.id.localeCompare(b.id));
     const candidate = surplus[0];
     if (!candidate || world.listings[candidate.id]) continue;
@@ -51,16 +52,16 @@ export function simulateWorldMarket(input: { database: EditorDatabase; humanClub
   for (const buyer of [...db.clubs].sort((a,b) => hash(`${week}:${a.id}`)-hash(`${week}:${b.id}`))) {
     const finances = managers.clubs[buyer.id];
     const roster = rosters.get(buyer.id) ?? [];
-    if (completed >= 6 || buyer.id === input.humanClubId || !finances || finances.budget <= 0 || roster.length < 11 || roster.length >= 30) continue;
+    if (completed >= ENGINE_CONFIG.worldMarket.maxDeals || buyer.id === input.humanClubId || !finances || finances.budget <= 0 || roster.length < 11 || roster.length >= ENGINE_CONFIG.worldMarket.maximumBuyerRoster) continue;
     const average = roster.reduce((sum,p) => sum+p.overall,0)/roster.length;
     const player = candidates.filter(p => {
       const sellerRoster = rosters.get(p.clubId) ?? [];
       if (moved.has(p.id) || p.clubId === buyer.id || !Number.isFinite(p.salaryMonthlyBrl) || p.salaryMonthlyBrl < 0) return false;
-      if (p.clubId && (sellerRoster.length <= 20 || sellerRoster.filter(o => o.primaryPosition === p.primaryPosition).length <= (p.primaryPosition === "G" ? 2 : 3))) return false;
+      if (p.clubId && (sellerRoster.length <= ENGINE_CONFIG.worldMarket.minimumSellerRoster || sellerRoster.filter(o => o.primaryPosition === p.primaryPosition).length <= (p.primaryPosition === "G" ? 2 : 3))) return false;
       const atPosition = roster.filter(o => o.primaryPosition === p.primaryPosition);
       if (atPosition.length >= (p.primaryPosition === "G" ? 3 : 8) || (atPosition.length >= 2 && p.overall <= Math.min(...atPosition.map(o => o.overall)))) return false;
       const cost = Math.ceil((playerAskingFeeBrl(p)+p.salaryMonthlyBrl*(p.marketStatus === "loan" ? 3 : 12))/1000);
-      return p.overall >= average-5 && p.overall <= average+12 && cost <= finances.budget*0.25;
+      return p.overall >= average-5 && p.overall <= average+12 && cost <= finances.budget*ENGINE_CONFIG.worldMarket.budgetFraction;
     }).sort((a,b) => b.overall-a.overall || playerAskingFeeBrl(a)-playerAskingFeeBrl(b) || a.id.localeCompare(b.id))[0];
     if (!player) continue;
     const result = proposeTransfer(db, negotiations, { id: `cpu:${week}:${buyer.id}:${player.id}`, playerId: player.id, buyerClubId: buyer.id, feeBrl: playerAskingFeeBrl(player)*0.8, wageSharePercent: 50 });
@@ -71,7 +72,7 @@ export function simulateWorldMarket(input: { database: EditorDatabase; humanClub
     deal = { ...respondToTransferNegotiation(deal, { type: "complete" }).negotiation, completedOn: input.date };
     const fee = deal.agreedFeeBrl ?? 0;
     const cost = Math.ceil((fee+player.salaryMonthlyBrl*(deal.kind === "loan" ? 3 : 12))/1000);
-    if (cost > finances.budget*0.25) continue;
+    if (cost > finances.budget*ENGINE_CONFIG.worldMarket.budgetFraction) continue;
     managers.clubs[buyer.id] = { ...finances, budget: finances.budget-cost };
     const seller = managers.clubs[player.clubId];
     if (seller) managers.clubs[player.clubId] = { ...seller, budget: seller.budget+Math.floor(fee/1000) };

@@ -21,6 +21,7 @@ export type MatchPreparation = {
 };
 
 export type CareerProgress = {
+  engine?: import("./simulation/foundation").EngineState;
   /** Frozen club/player catalog, independent of future editor imports. */
   universeSnapshot?: import("./editor-data").EditorDatabase;
   youthTeams?: Record<string, import("./youth").YouthTeam>;

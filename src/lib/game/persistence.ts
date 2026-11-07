@@ -1,3 +1,4 @@
+import { EngineConflict } from "./simulation/foundation";
 import { currentCareerSaves, isCurrentCareerSave } from "./career-rules";
 import { cacheCareerSaves } from "@/lib/importer/database-cache";
 import { accountStorageKey } from "./save-utils";
@@ -16,6 +17,7 @@ export type CloudCareer = {
 const DATABASE_KEY = "futmanager.editor.v1";
 const SAVES_KEY = "futmanager.saves.v1";
 // Large immutable universes live in IndexedDB/cloud, not the 5 MB localStorage index.
+const cloudTokens = new Map<string, { token: string; ancestors: Set<string | null> }>();
 const universeMemory = new Map<string, EditorDatabase>();
 
 export function readLocalDatabase(userId: string): EditorDatabase | null {
@@ -49,11 +51,13 @@ export function readLocalSaves(userId: string): CareerSave[] {
 
 export function writeLocalSaves(saves: CareerSave[], userId: string) {
   saves = currentCareerSaves(saves);
-  void cacheCareerSaves(saves, userId).catch(() => undefined);
-  for (const save of saves) if (save.progress?.universeSnapshot) universeMemory.set(`${userId}:${save.id}`, save.progress.universeSnapshot);
   const index = saves.map(save => save.progress ? { ...save, progress: { ...save.progress, universeSnapshot: undefined } } : save);
   try {
+    const previous = JSON.parse(localStorage.getItem(accountStorageKey(SAVES_KEY,userId)) ?? "[]") as CareerSave[];
+    if (index.some(save => (previous.find(old => old.id === save.id)?.progress?.engine?.revision ?? 0) > (save.progress?.engine?.revision ?? 0))) return false;
     localStorage.setItem(accountStorageKey(SAVES_KEY, userId), JSON.stringify(index));
+    for (const save of saves) if (save.progress?.universeSnapshot) universeMemory.set(`${userId}:${save.id}`, save.progress.universeSnapshot);
+    void cacheCareerSaves(saves, userId).catch(() => undefined);
     return true;
   } catch { return false; }
 }
@@ -236,6 +240,7 @@ export async function readCloudSaves(userId: string): Promise<CareerSave[]> {
   const saves = rows.map((row) => ({
     id: row.id, name: row.name, managerName: row.manager_name,
     careerRuleset: row.state?.careerRuleset,
+    syncToken: row.state?.sync?.token,
     clubId: String(row.state?.clubId ?? ""), clubName: row.club_name ?? "Clube",
     division: row.division ?? "Série A", round: row.round, budget: Number(row.budget_brl),
     inGameDate: row.in_game_date, updatedAt: row.updated_at, progress: row.state?.progress,
@@ -254,6 +259,11 @@ export async function readCloudSaves(userId: string): Promise<CareerSave[]> {
 async function performCloudSave(save: CareerSave, expectedUserId: string) {
   if (!isCurrentCareerSave(save)) throw new Error("Esta carreira foi encerrada na atualização do calendário CBF. Inicie uma nova carreira.");
   const { client, userId } = await authenticatedClient(expectedUserId);
+  const key = `${userId}:${save.id}`;
+  const token = crypto.randomUUID();
+  const lineage = cloudTokens.get(key);
+  const supplied = save.syncToken ?? null;
+  const parent = lineage?.ancestors.has(supplied) ? lineage.token : supplied;
   const { error } = await client.from("game_saves").upsert({
     id: save.id,
     owner_id: userId,
@@ -265,6 +275,7 @@ async function performCloudSave(save: CareerSave, expectedUserId: string) {
     budget_brl: save.budget,
     in_game_date: save.inGameDate,
     state: {
+      sync: { token, parent },
       careerRuleset: save.careerRuleset,
       clubId: save.clubId,
       progress: save.progress,
@@ -273,7 +284,25 @@ async function performCloudSave(save: CareerSave, expectedUserId: string) {
     },
     updated_at: save.updatedAt,
   });
-  if (error) throw error;
+  if (error) {
+    if (error.code === "40001") throw new EngineConflict();
+    throw error;
+  }
+  const ancestors = new Set(lineage?.ancestors ?? []); ancestors.add(parent); ancestors.add(token);
+  cloudTokens.set(key,{token,ancestors});
+  save.syncToken = token;
+  // Do not race a command's local checkpoint publication while acknowledging cloud lineage.
+  if (typeof navigator !== "undefined" && navigator.locks) {
+    await navigator.locks.request(`futmanager:${userId}:${save.id}`,() => {
+      try {
+        const raw = localStorage.getItem(accountStorageKey(SAVES_KEY,userId));
+        if (raw) {
+          const index = JSON.parse(raw) as CareerSave[];
+          localStorage.setItem(accountStorageKey(SAVES_KEY,userId),JSON.stringify(index.map(item => item.id === save.id ? { ...item,syncToken:token } : item)));
+        }
+      } catch { /* Cloud commit succeeded; local storage may be unavailable. */ }
+    });
+  }
 }
 
 export async function deleteCloudSave(id: string, expectedUserId: string) {
@@ -281,6 +310,7 @@ export async function deleteCloudSave(id: string, expectedUserId: string) {
   const { client } = await authenticatedClient(expectedUserId);
   const { error } = await client.from("game_saves").delete().eq("id", id);
   if (error) throw error;
+  cloudTokens.delete(`${expectedUserId}:${id}`);
 }
 
 export async function writeCloudCareer(
