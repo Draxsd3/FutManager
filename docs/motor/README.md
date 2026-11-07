@@ -2,6 +2,10 @@
 
 **Escopo fechado:** documentação e plano de execução. Não altera jogo, UI, saves, banco, API, configuração, balanceamento ou regulamento. Não implementa ainda o motor descrito no anexo. Um jogador humano; todos os demais agentes devem adquirir autonomia contextual ao longo das etapas.
 
+## Evolução implementada
+
+A fundação executável de avanço pós-partida está descrita em [ETAPA-2.md](ETAPA-2.md), com arquivos, migração, testes, compatibilidade e limites. O restante deste índice preserva a entrega documental da etapa 1; não confundir o diagnóstico histórico com o estado após a etapa 2. Gemini continua desativado.
+
 ## Ordem de leitura
 
 1. [Origem, versão e integridade do anexo](ORIGEM.md).
@@ -36,4 +40,4 @@ Os textos abaixo são extrações do anexo, com seus capítulos originais preser
 - `CONTEXTO.md` continua a registrar instruções do projeto. Não substituir `AGENTS.md`, `MECANICA-JOGO.md` ou a documentação de partidas/regulamentos.
 - `public/game-assets/match-engine-rules.md` continua sendo o arquivo lido pelo motor de partidas via `match-rules.ts`. Este diretório não é carregado em runtime. Não colocar especificação de universo no parser numérico de partidas.
 - Calendário e regulamentos brasileiros seguem `../REGULAMENTOS-2026.md` e `../brazilian-calendar.md`; não inventar novos formatos a partir de texto genérico.
-- O próximo trabalho executável é a **etapa 2**, limitada à fundação. Nenhuma etapa seguinte está implicitamente implementada ou ativada.
+- A **etapa 2** possui implementação no recorte pós-partida, documentada em ETAPA-2.md. A próxima frente é E3 (finanças e contratos); nenhuma etapa seguinte está implicitamente implementada ou ativada.

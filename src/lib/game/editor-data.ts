@@ -82,6 +82,8 @@ export function enforceEditorSquadLimit(players: EditorPlayer[]) {
 }
 
 export type CareerSave = {
+  /** Opaque cloud CAS lineage, never a game rule or credential. */
+  syncToken?: string;
   /** Absent on careers retired by the CBF calendar reset. */
   careerRuleset?: string;
   progress?: import("./progress").CareerProgress;

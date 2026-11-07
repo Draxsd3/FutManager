@@ -1,5 +1,8 @@
 "use client";
-import { simulateWorldMarket, worldDatabase, type WorldMarket } from "@/lib/game/world-market";
+import { advanceCareer } from "@/lib/game/simulation/advance";
+import { EngineConflict, engineState as createEngineState, migrateEngineSave, type EngineState } from "@/lib/game/simulation/foundation";
+import { publishLocalCheckpoint } from "@/lib/game/simulation/local-checkpoint";
+import { worldDatabase, type WorldMarket } from "@/lib/game/world-market";
 
 import { withTimeout } from "@/lib/with-timeout";
 import { LoadingScreen } from "@/components/screens/loading-screen";
@@ -58,7 +61,6 @@ import {
   type Player,
 } from "@/lib/game/mock-data";
 import { buildSquadFromDatabase, upgradeEditorDatabase, type CareerSave, type EditorDatabase } from "@/lib/game/editor-data";
-import { generateIncomingOffers } from "@/lib/game/incoming-offers";
 import { createPlayerCareer, recordPlayerMatch, applyNegotiation, type MarketAction, type MatchParticipation, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
 import { deployLineupPlayer } from "@/lib/game/lineup";
 import { mergeCareerSaves } from "@/lib/game/save-utils";
@@ -73,7 +75,7 @@ import { generateYouthTeam, promoteYouth, type YouthTeam } from "@/lib/game/yout
 
 import type { CareerProgress, MatchPreparation } from "@/lib/game/progress";
 import { applyTrainingSession, type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
-import { calculateMatchStatistics, calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, recoverSquadBetweenMatches, resolveMatchPlayerRole, seededRandom, simulateAction } from "@/lib/game/live-match";
+import { calculateMatchStatistics, calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, resolveMatchPlayerRole, seededRandom, simulateAction } from "@/lib/game/live-match";
 import { completeCareerFixture, createCareerSeason, upgradeUnplayedSeason, getCompetitionPlayerStats, getCompetitionStandings, nextCareerFixture, playerContributionsFromMatch, type CareerSeason } from "@/lib/game/season";
 import { reconcileCareerSaveWithDatabase } from "@/lib/game/save-reconciliation";
 import { backgroundClubStrengths, roundFixtures } from "@/lib/game/round-fixtures";
@@ -258,6 +260,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [confidenceHistory, setConfidenceHistory] = useState<ConfidenceMatch[]>([]);
   const [confidenceStartBudget, setConfidenceStartBudget] = useState<number | undefined>();
   const [activeFixtureId, setActiveFixtureId] = useState<string>();
+  const advancing = useRef(false);
+  const [engine, setEngine] = useState<EngineState | undefined>();
+  const [advanceError, setAdvanceError] = useState("");
   const [worldMarket, setWorldMarket] = useState<WorldMarket | undefined>();
   const [transferNegotiations, setTransferNegotiations] = useState<TransferNegotiation[]>([]);
   const [loanContracts, setLoanContracts] = useState<CareerLoans>({});
@@ -290,7 +295,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     universeSnapshot: universeSnapshot.current, page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore,
     events, participation, matchBenchIds, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
-    stadiums, managerMarket, worldMarket, jobClubSnapshots, managerAppointments, youthTeams, competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
+    stadiums, managerMarket, engine, worldMarket, jobClubSnapshots, managerAppointments, youthTeams, competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
 
   };
   const progressRef = useRef(progress);
@@ -310,7 +315,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     pendingCloudSave.current = next;
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore, events,
-    participation, matchBenchIds, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, managerMarket, jobClubSnapshots, managerAppointments, youthTeams, stadiums, userId]);
+    participation, matchBenchIds, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, managerMarket, engine, jobClubSnapshots, managerAppointments, youthTeams, stadiums, userId]);
 
 
   useEffect(() => {
@@ -327,7 +332,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       if (!next) return;
       pendingCloudSave.current = null;
       void writeCloudSave(next, userId).then(() => setSyncLabel("Carreira salva na sua conta"))
-        .catch(() => {
+        .catch((error) => {
+          if (error instanceof EngineConflict) { setSyncLabel(error.message); return; }
           const latest = savesRef.current.find((save) => save.id === next.id);
           if (latest?.updatedAt === next.updatedAt) pendingCloudSave.current ??= next;
           setSyncLabel("Sincronização pendente — verifique sua conexão");
@@ -898,7 +904,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     writeLocalSaves(nextSaves, userId);
     return writeCloudSave(nextSave, userId)
       .then(() => setSyncLabel("Carreira salva no Supabase"))
-      .catch(() => setSyncLabel("Carreira salva neste dispositivo"));
+      .catch((error) => setSyncLabel(error instanceof EngineConflict ? error.message : "Carreira salva neste dispositivo"));
   }
 
   function persistCareerExtras(nextCareers: Record<number, PlayerCareerRecord>, nextPositions: Record<number, ManualPosition>, nextStarters = starters) {
@@ -921,7 +927,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       progress: { ...progressRef.current, playerCareers: nextCareers, manualPositions: nextPositions, starters: nextStarters },
     })
       .then(() => setSyncLabel("Carreira e elenco sincronizados"))
-      .catch(() => setSyncLabel("Carreira salva neste dispositivo"));
+      .catch((error) => setSyncLabel(error instanceof EngineConflict ? error.message : "Carreira salva neste dispositivo"));
   }
 
   function beginCareer() {
@@ -958,7 +964,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setLoanContracts(initialLoans);
     setLoansOpen(false);
     const initialStarters = buildStartingXI("4-3-3", baseSquad);
-    save.progress = { ...progressRef.current, universeSnapshot: universeSnapshot.current, page: "hub", matchPreparation: undefined, activeSaveId: save.id, coach: coach.trim(),
+    save.progress = { ...progressRef.current, engine: createEngineState(undefined,save.id,save.inGameDate), universeSnapshot: universeSnapshot.current, page: "hub", matchPreparation: undefined, activeSaveId: save.id, coach: coach.trim(),
       round: 1, budget: 12624, stadiums: {}, kit: 1, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
       careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, trainingSessions: [], manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
@@ -973,6 +979,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setActiveFixtureId(firstFixture?.id);
     setTransferNegotiations([]);
     setWorldMarket(undefined);
+    setEngine(save.progress.engine); setAdvanceError("");
     setRound(1);
     setDefaultMatchSpeed(1);
     setBudget(12624);
@@ -1019,8 +1026,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     const restoredSeason = formatSeason ? applyBrazilianCalendar(save.progress?.competitionSeason ? formatSeason : { ...formatSeason, calendarVersion: undefined }, save.inGameDate) : undefined;
     const resumingMatch = save.progress?.page === "result" || save.progress?.page === "matchOverview";
     const loadingFixture = resumingMatch ? restoredSeason?.fixtures.find(f => f.id === save.progress?.activeFixtureId) : nextCareerFixture(restoredSeason);
-    save = { ...save, inGameDate: careerCalendarDate(save.inGameDate, undefined, loadingFixture),
+    save = { ...save, inGameDate: save.progress?.engine ? save.inGameDate : careerCalendarDate(save.inGameDate, undefined, loadingFixture),
       ...(save.progress ? { progress: { ...save.progress, competitionSeason: restoredSeason } } : {}) };
+    try { save = migrateEngineSave(save); } catch (error) { setSyncLabel(error instanceof Error ? error.message : "Save incompatível; preservado."); return false; }
     // Keep the civil date in the same account-local snapshot used by autosave and loan expiry.
     const normalizedSaves = savesRef.current.map(item => item.id === save.id ? save : item);
     savesRef.current = normalizedSaves;
@@ -1057,6 +1065,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setManualPositions(save.manualPositions ?? {});
     setTransferNegotiations(save.progress?.transferNegotiations ?? []);
     setWorldMarket(save.progress?.worldMarket);
+    setEngine(save.progress?.engine); setAdvanceError("");
     setLoanContracts(save.progress?.loanContracts ?? Object.fromEntries((save.progress?.careerSquad ?? []).filter(player => player.sourceId && player.loan).map(player => [player.sourceId!, player.loan!])));
     setLoansOpen(false);
     setHomeScore(0);
@@ -1832,6 +1841,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const opponentRatings = calculatePlayerRatings(opponentStarters, events, "away");
   return (
     <>
+      {advanceError && <p role="alert" className="p-3 text-sm text-red-300">{advanceError}</p>}
       <ResultScreen
       trophyAsset={matchTrophy}
       competition={competitionName}
@@ -1856,37 +1866,27 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       awayPlayerRatings={userIsHome ? opponentRatings : playerRatings}
       statistics={displayedStatistics}
       onOpenStandings={() => setStandingsOpen(true)}
-      onContinue={() => {
-        setStandingsOpen(false);
-        const nextRound = round + 1;
-        const nextFixture = nextCareerFixture(competitionSeason);
-        setRound(nextRound);
-        setActiveFixtureId(nextFixture?.id);
-        const previousDate = savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11";
-        const date = careerCalendarDate(previousDate, competitionSeason, nextFixture);
-        let nextManagerMarket = managerMarket ? refreshJobOffers(managerMarket, date) : undefined;
-        let nextLoans = expireLoans(loanContracts, date);
-        let nextWorld = worldMarket;
-        let nextDeals = transferNegotiations;
-        if (database && nextManagerMarket) {
-          const simulated = simulateWorldMarket({ database, humanClubId: managedClubRecord?.id ?? "", date, previousDate, world: worldMarket, negotiations: transferNegotiations, loans: nextLoans, managers: nextManagerMarket });
-          nextWorld = simulated.world; nextDeals = simulated.negotiations; nextLoans = simulated.loans; nextManagerMarket = simulated.managers;
-        }
-        setWorldMarket(nextWorld); setTransferNegotiations(nextDeals); setManagerMarket(nextManagerMarket);
-        const ownClubId = database?.clubs.find(item => item.name === club)?.id ?? "";
-        const nextDatabase = database ? worldDatabase(database, nextDeals, nextLoans, nextWorld) : null;
-        const reconciledSquad = reconcileLoanSquad(squad, nextDatabase ? buildSquadFromDatabase(nextDatabase, club, true) ?? [] : [], nextLoans, ownClubId, Object.keys(playerCareers).map(Number));
-        const nextSquad = recoverSquadBetweenMatches(reconciledSquad, previousDate, date);
-        const remaining = new Set(nextSquad.map(player => player.id));
-        const nextStarters = starters.filter(id => remaining.has(id));
-        const nextBench = matchBenchIds?.filter(id => remaining.has(id));
-        const nextPositions = Object.fromEntries(Object.entries(manualPositions).filter(([id]) => remaining.has(Number(id))));
-        const nextCareers = nextDatabase ? generateIncomingOffers({ squad: nextSquad, records: playerCareers, database: nextDatabase, managerMarket: nextManagerMarket, clubId: ownClubId, club, eventId: activeFixture?.id ?? `round-${round}`, date }) : playerCareers;
-        setPlayerCareers(nextCareers);
-        setLoanContracts(nextLoans); setCareerSquad(nextSquad); setStarters(nextStarters); setMatchBenchIds(nextBench); setManualPositions(nextPositions);
-        setProfilePlayer(null); setSelectedPlayer(null);
-        saveCurrentCareer(nextRound, { worldMarket: nextWorld, transferNegotiations: nextDeals, managerMarket: nextManagerMarket, activeFixtureId: nextFixture?.id, loanContracts: nextLoans, careerSquad: nextSquad, starters: nextStarters, matchBenchIds: nextBench, manualPositions: nextPositions, playerCareers: nextCareers }, date);
-        setPage("hub");
+      onContinue={async () => {
+        if (advancing.current || !activeSaveId || !database) return;
+        advancing.current = true; setAdvanceError("");
+        try {
+          const current = savesRef.current.find(save => save.id === activeSaveId);
+          if (!current) throw new Error("Carreira não encontrada.");
+          const snapshot = { ...current, round, budget, playerCareers, manualPositions, progress: progressRef.current };
+          const next = advanceCareer(snapshot,database, { operationId: `after-match:${activeFixture?.id ?? `round-${round}`}`, expectedRevision: engine?.revision ?? 0, fromDate: current.inGameDate, fixtureId: activeFixture?.id });
+          if (next === snapshot) return;
+          await publishLocalCheckpoint(next,userId,engine?.revision ?? 0);
+          const p = next.progress!;
+          // Publish the already validated checkpoint, not a succession of business rules in the UI.
+          progressRef.current = p;
+          savesRef.current = [next,...savesRef.current.filter(save => save.id !== next.id)];
+          setStandingsOpen(false); setRound(next.round); setActiveFixtureId(p.activeFixtureId);
+          setEngine(p.engine); setWorldMarket(p.worldMarket); setTransferNegotiations(p.transferNegotiations ?? []); setManagerMarket(p.managerMarket);
+          setLoanContracts(p.loanContracts ?? {}); setCareerSquad(p.careerSquad); setStarters(p.starters); setMatchBenchIds(p.matchBenchIds); setManualPositions(p.manualPositions); setPlayerCareers(p.playerCareers);
+          setProfilePlayer(null); setSelectedPlayer(null); setPage("hub");
+          void persistSave({ ...next,updatedAt:new Date().toISOString() });
+        } catch (error) { setAdvanceError(error instanceof Error ? error.message : "Não foi possível avançar. O checkpoint anterior foi preservado."); }
+        finally { advancing.current = false; }
       }}
     />
       {renderStandings()}

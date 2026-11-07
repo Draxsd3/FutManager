@@ -1,5 +1,7 @@
 # Diagnóstico do motor existente
 
+Registro histórico da etapa 1. Evolução posterior da fundação em [ETAPA-2.md](ETAPA-2.md); as classificações abaixo descrevem a base de ORIGEM.md, não devem ser interpretadas como nova auditoria após cada etapa.
+
 Base e limites em [ORIGEM](ORIGEM.md). Prefixos das evidências: **G** = `src/lib/game/`; **B** = `src/components/game-board.tsx`; **S** = `supabase/migrations/`. Os arquivos citados possuem caminho real no checkout. Testes são evidência de cenários específicos, não prova de simulação completa de um setor. Não contamos telas como implementação do respectivo sistema.
 
 ## Legenda

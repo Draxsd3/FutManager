@@ -23,6 +23,7 @@ configure({ asyncUtilTimeout: 5000 });
 const matchRulesMarkdown = readFileSync("public/game-assets/match-engine-rules.md", "utf8");
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 beforeEach(() => {
+  Object.defineProperty(navigator,"locks",{configurable:true,value:{request:async (_key: string, task: () => unknown) => task()}});
   localStorage.clear();
   sessionStorage.clear();
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, text: async () => matchRulesMarkdown }));
@@ -434,6 +435,9 @@ it("advances the career date after a result and returns an expired incoming loan
   await waitFor(() => {
     const restored = readLocalSaves("alice")[0];
     expect(restored.inGameDate).toBe(expectedDate);
+    expect(restored.progress?.engine?.revision).toBe(1);
+    expect(restored.progress?.engine?.date).toBe(expectedDate);
+    expect(restored.progress?.engine?.events.some(event => event.type === "checkpoint")).toBe(true);
     expect(restored.progress?.competitionSeason?.calendarVersion).toBe(3);
     expect(restored.progress?.loanContracts?.[player.sourceId!].status).toBe("returned");
     expect(restored.progress?.careerSquad?.some(item => item.id === player.id)).toBe(false);

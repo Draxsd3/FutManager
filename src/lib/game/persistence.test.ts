@@ -147,3 +147,24 @@ it("removes obsolete roster rows from the cloud when updating the catalog", asyn
   expect(removed.editor_clubs).toBeUndefined();
   expect(client.upsert.mock.calls.flatMap(([rows]) => rows).filter(row => row.club_id).map(row => row.id)).toEqual(database.players.map(player => player.id));
 });
+
+it("chains successful cloud checkpoints and converts database CAS conflicts into a reload-required error", async () => {
+  const next = save();
+  await writeCloudSave(next,"alice");
+  const first = client.upsert.mock.calls.at(-1)![0].state.sync;
+  await writeCloudSave({...next,round:2},"alice");
+  const second = client.upsert.mock.calls.at(-1)![0].state.sync;
+  expect(second.parent).toBe(first.token);
+  expect(second.token).not.toBe(first.token);
+  client.upsert.mockResolvedValueOnce({error:{code:"40001",message:"conflict"}});
+  await expect(writeCloudSave({...next,round:3},"alice")).rejects.toThrow(/outra aba ou dispositivo/);
+  await writeCloudSave({...next,round:4},"alice");
+  expect(client.upsert.mock.calls.at(-1)![0].state.sync.parent).toBe(second.token);
+});
+
+it("does not upgrade an unrelated stale cloud lineage to the latest acknowledged token",async()=>{
+  const stale={...save(),syncToken:"another-device-old-token"};
+  client.upsert.mockResolvedValueOnce({error:{code:"40001",message:"conflict"}});
+  await expect(writeCloudSave(stale,"alice")).rejects.toThrow(/mudou/);
+  expect(client.upsert.mock.calls.at(-1)![0].state.sync.parent).toBe("another-device-old-token");
+});
