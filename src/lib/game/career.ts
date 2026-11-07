@@ -147,7 +147,7 @@ export function recordPlayerMatch(
 
 /** Values: salary in R$ thousands per month, transfer fees in R$ millions. */
 export type ContractOffer = { salary: number; years: number; releaseClause: number };
-export type TransferOffer = { id: string; club: string; fee: number; status: "pending" | "rejected" | "accepted" };
+export type TransferOffer = { id: string; club: string; clubId?: string; sentOn?: string; fee: number; status: "pending" | "rejected" | "accepted" };
 export type MarketAction =
   | { type: "list" }
   | { type: "loan" }
