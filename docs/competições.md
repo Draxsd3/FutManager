@@ -22,7 +22,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Brasileirão Série C
 
-[Série C — documentos 2026](https://www.cbf.com.br/futebol-brasileiro/noticias/supercopa-sub17/a/cbf-publica-documentos-tecnicos-da-serie-c-de-2026): 20 clubes em 2026; a CBF anunciou mudança para 24 em 2027. Conferir REC integral, acesso e desempates antes de implementar.
+[Série C — documentos 2026](https://www.cbf.com.br/futebol-brasileiro/noticias/supercopa-sub17/a/cbf-publica-documentos-tecnicos-da-serie-c-de-2026): 20 clubes em turno único; oito avançam e dois últimos caem. Dois grupos de quatro em turno e returno: 1º, 4º, 5º, 8º e 2º, 3º, 6º, 7º; dois primeiros de cada grupo sobem e os líderes fazem a final. A CBF anunciou mudança para 24 clubes em 2027. [REC 2026](https://stcbfsiteprdimgbrs.blob.core.windows.net/img-site/cdn/REC_Brasileiro_Serie_C_2026_f894bdfed3.pdf). Conferir desempates antes de implementar.
 
 ### Brasileirão Série D
 
@@ -36,49 +36,49 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Copa do Nordeste
 
-[Copa do Nordeste — CBF](https://www.cbf.com.br/futebol-brasileiro/noticias/serie-a/a/confira-os-documentos-tecnicos-da-copa-do-nordeste-de-2026): 20 clubes, primeira fase com quatro grupos de cinco. Conferir REC para cruzamentos e desempates.
+[Copa do Nordeste — CBF](https://www.cbf.com.br/futebol-brasileiro/noticias/serie-a/a/confira-os-documentos-tecnicos-da-copa-do-nordeste-de-2026): 20 clubes em quatro grupos de cinco, enfrentando equipes de outros grupos; dois melhores de cada grupo às quartas em jogo único, semifinais e final em ida e volta. [Sorteio e formato pela CBF](https://www.cbf.com.br/futebol-brasileiro/noticias/copa-nordeste/a/cbf-sorteia-grupos-da-copa-do-nordeste-2026). Conferir REC para cruzamentos e desempates.
 
 ### Copa Verde
 
-[Copa Verde — CBF](https://www.cbf.com.br/futebol-brasileiro/noticias/competicoes-ranking/a/cbf-detalha-formato-do-sorteio-da-copa-verde-2026): 24 clubes, quatro grupos de seis, divididos em Copa Norte e Copa Centro-Oeste; quartas em jogo único, semifinais e final em ida e volta.
+[Copa Verde — CBF](https://www.cbf.com.br/futebol-brasileiro/noticias/competicoes-ranking/a/cbf-detalha-formato-do-sorteio-da-copa-verde-2026): 24 clubes, quatro grupos de seis, divididos em Copa Norte e Copa Centro-Oeste; turno único dentro do grupo, quartas em jogo único, semifinais e final em ida e volta. Confirmar critérios de classificação e sorteio no REC.
 
 ## Estaduais
 
 ### Campeonato Acreano
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; quatro semifinalistas; últimos dois caem. Semifinais ida e volta: empate em pontos favorece melhor colocado, sem usar saldo; final e disputa de terceiro em jogo único, com pênaltis. Os três primeiros obtêm vagas na Copa do Brasil, sujeitas às regras de elegibilidade. [Fonte](https://ge.globo.com/ac/futebol/campeonato-acreano/noticia/2026/01/15/guia-do-acreano-2026-regulamento-clubes-participantes-e-mais-detalhes-sobre-o-estadual.ghtml).
 
 ### Campeonato Alagoano
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; quatro avançam; último cai. Semifinais 1º×4º e 2º×3º e final em ida e volta, pênaltis em igualdade no agregado. [Fonte](https://www.alagoas24horas.com.br/1704942/faf-define-formato-do-campeonato-alagoano-2026-e-ja-tem-jogo-de-abertura-definida-confira/).
 
 ### Campeonato Amapaense
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 8 clubes, turno único; quatro primeiros vão às semifinais. Fontes consultadas indicam rebaixamento dos últimos, sem quantificar; conferir REC, jogos eliminatórios e critérios. [Fonte](https://agenciaamapa.com.br/noticia/34344/com-apoio-do-governo-do-estado-amapazao-2026-inicia-com-classico-entre-trem-e-macapa).
 
 ### Campeonato Amazonense
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 8 clubes em dois grupos de quatro e dois turnos: no primeiro enfrentam o outro grupo, no segundo o próprio. Cada turno tem eliminatórias e campeão; se o mesmo vencer ambos, é campeão geral. Um rebaixado. Fontes divergem sobre quantos avançam às eliminatórias; confirmar REC antes de implementar. [Fonte](https://fafamazonas.com.br/site/noticia/barezao-2026-faf-e-clubes-aprovam-regulamento-da-competicao/).
 
 ### Campeonato Baiano
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 10 clubes, turno único; quatro às semifinais e dois últimos rebaixados. Semifinais 1º×4º e 2º×3º e final em jogo único, mando pela campanha e pênaltis em caso de empate. [Fonte](https://www.itatiaia.com.br/esportes/futebol/futebol-nacional/campeonato-baiano/com-mudanca-no-formato-campeonato-baiano-2026-e-lancado-oficialmente).
 
 ### Campeonato Brasiliense
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 10 clubes em turno único; quatro às semifinais, dois últimos caem. Semifinais ida e volta com vantagem aos melhores da primeira fase; final única, pênaltis em caso de empate. [Fonte](https://ge.globo.com/df/futebol/campeonato-brasiliense/noticia/2025/10/27/candangao-2026-comecara-em-10-de-janeiro-e-tera-decisao-no-mane-garrincha.ghtml).
 
 ### Campeonato Capixaba
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 10 clubes, turno único; oito às quartas, dois últimos caem. Quartas, semi e final em ida e volta; nas quartas o melhor colocado tem vantagem no empate do agregado, nas demais fases há pênaltis. [Fonte](https://www.agazeta.com.br/futebol-capixaba/capixabao-2026-federacao-e-times-mantem-formato-de-disputa-da-competicao-1025).
 
 ### Campeonato Catarinense
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 12 clubes em dois grupos de seis, jogos contra o outro grupo; quatro de cada avançam às quartas, seguidas de semifinal cruzada e final, todas em ida e volta. Os não classificados disputam quadrangular de permanência; três caem e o melhor quinto recebe ponto de bônus. [Fonte](https://fcf.com.br/catarinense-fort-atacadista-2026-comeca-em-07-de-janeiro/).
 
 ### Campeonato Cearense
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 10 clubes em dois grupos de cinco, turno único interno; três de cada avançam à segunda fase em novos grupos de três, jogos contra outro grupo com pontos zerados. Dois por grupo vão às semifinais no próprio grupo; semifinal e final ida e volta. Quadrangular de permanência em turno único, dois caem. [Fonte](https://ge.globo.com/ce/futebol/campeonato-cearense/noticia/2026/01/06/guia-do-cearense-2026-saiba-tudo-sobre-campeonato-e-times.ghtml).
 
 ### Campeonato Carioca
 
@@ -86,72 +86,76 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Gaúcho
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 12 clubes em dois grupos de seis, jogos contra outro grupo; quatro por grupo às quartas internas, em jogo único. Semifinal reordenada e final em ida e volta; quadrangular de permanência ida e volta, dois últimos caem. [Fonte](https://fgf.com.br/Layout/documentos/693c9f182f677gaucha%CC%83o-superbet-2026---rec.pdf).
 
 ### Campeonato Goiano
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 12 clubes em três grupos de quatro, oito jogos contra outros grupos, classificação geral; oito às quartas. Quartas, semifinais e final em ida e volta. Último cai diretamente; 10º×11º em ida e volta decide outro rebaixado. [Fonte](https://ge.globo.com/go/futebol/campeonato-goiano/noticia/2025/11/26/veja-a-tabela-do-goianao-2026.ghtml).
 
 ### Campeonato Maranhense
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; quatro às semifinais e final, ambas em ida e volta. O 8º cai diretamente; 6º×7º decidem o segundo rebaixado em ida e volta. [Fonte](https://futebolmaranhense.com.br/noticias/v/84).
 
 ### Campeonato Mato-Grossense
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 10 clubes em turno único; 1º e 2º direto às semifinais; 3º×6º e 4º×5º em quartas únicas. Dois últimos caem. Confirmar jogos das fases seguintes e desempates no REC. [Fonte](https://ge.globo.com/mt/futebol/campeonato-mato-grossense/noticia/2025/12/31/campeonato-mato-grossense-2026-comeca-com-cinco-jogos-no-sabado.ghtml).
 
 ### Campeonato Mineiro
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 12 clubes em três grupos de quatro, oito jogos contra outros grupos. Três líderes e melhor segundo às semifinais em ida e volta; final única. Caem os dois piores entre os últimos de cada grupo. [Fonte](https://esumula.fmf.com.br/Arquivos/ArquivosCompeticao/1899/Arquivo_18992870.pdf).
 
 ### Campeonato Paraense
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 12 clubes em dois grupos de seis, enfrentando o outro grupo. Pela classificação geral oito avançam e dois últimos caem. Quartas e semifinais únicas; final ida e volta; pênaltis em caso de empate nas fases únicas. [Fonte](https://www.portalcultura.com.br/pt-br/com-novo-formato-campeonato-paraense-comeca-no-dia-24-de-janeiro).
 
 ### Campeonato Paraibano
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 10 clubes em turno único; quatro às semifinais e dois últimos caem. Semifinais 1º×4º e 2º×3º, e final, em ida e volta. [Fonte](https://ne45.com.br/2025/11/24/fpf-pb-anuncia-datas-campeonato-paraibano/).
 
 ### Campeonato Paranaense
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 12 clubes em dois grupos de seis, contra o outro grupo; quatro por grupo às quartas internas. Quartas, semi e final em ida e volta; quatro não classificados disputam dois confrontos de permanência, perdedores caem. [Fonte](https://federacaopr.sfo3.digitaloceanspaces.com/wp-content/uploads/2023/09/19162139/REC-1a-Divisao-2026.pdf).
 
 ### Campeonato Paulista
 
-[Paulista A1 — REC 2026](https://futebolpaulista.com.br/Repositorio/Competicao/Regulamento/1551/1551_639033989807692307.pdf): 16 clubes; oito melhores na primeira fase vão às quartas e os dois últimos caem. Conferir sorteio e confrontos no REC antes de implementar; não reutilizar o regulamento de 2025.
+[Paulista A1 — REC 2026](https://futebolpaulista.com.br/Repositorio/Competicao/Regulamento/1551/1551_639033989807692307.pdf): 16 clubes em quatro potes de agendamento, não grupos classificatórios; oito jogos e tabela geral única. Oito melhores vão às quartas, dois últimos caem; quartas e semifinais únicas e final em ida e volta. Conferir chave e desempates no REC antes de implementar.
 
 ### Campeonato Pernambucano
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; 1º e 2º direto às semifinais; 3º×6º e 4º×5º em playoff; último rebaixado. Playoff, semifinais e final em ida e volta. A federação informa mudança de estrutura para 2027. [Fonte](https://www.fpf-pe.com.br/pt/noticias/view.php?q=11945).
 
 ### Campeonato Piauiense
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; quatro às semifinais em ida e volta e final também em ida e volta. Conferir rebaixamento, desempates e vagas no REC. [Fonte](https://www.al.pi.leg.br/comunicacao/tv-assembleia/noticias-tv/campeonato-piauiense-tera-novo-formato-e-estreia-prevista-para-10-de-janeiro).
 
 ### Campeonato Potiguar
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; 1º e 2º direto às semifinais, 3º×6º e 4º×5º em ida e volta. Semifinal e final ida e volta; dois últimos rebaixados. Pênaltis para empate nos confrontos eliminatórios. [Fonte](https://ge.globo.com/rn/futebol/campeonato-potiguar/noticia/2025/11/11/campeonato-potiguar-2026-tera-finais-na-arena-das-dunas.ghtml).
 
 ### Campeonato Rondoniense
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 7 clubes, turno e returno; quatro às semifinais 1º×4º e 2º×3º em ida e volta. Confirmar formato da final e rebaixamento no REC 2026 antes de implementar. [Fonte](https://www.folhadosulonline.com.br/noticias/detalhe/2025/ffer-divulga-regulamento-do-rondoniense-2026-campeao-e-vice-asseguram-vagas-para-brasileiro-serie-d-copa-do-brasil-e-copa-norte).
 
 ### Campeonato Roraimense
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 9 clubes em turno único após desistência; quatro às semifinais 1º×4º e 2º×3º. Semifinais e final únicas, pênaltis em caso de empate; último rebaixado. [Fonte](https://ge.globo.com/rr/futebol/campeonato-roraimense/noticia/2026/01/06/frf-divulga-tabela-do-roraimense-2026-veja-datas-e-horarios.ghtml).
 
 ### Campeonato Sergipano
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 10 clubes em turno único; líder direto à semifinal; 2º×7º, 3º×6º e 4º×5º em jogo único. Vencedores juntam-se ao líder nas semifinais; semi e final ida e volta. Dois últimos caem. [Fonte](https://ge.globo.com/se/futebol/campeonato-sergipano/noticia/2026/01/09/guia-do-campeonato-sergipano-2026-tudo-sobre-o-torneio-que-comeca-neste-sabado.ghtml).
 
 ### Campeonato Sul-Mato-Grossense
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 10 clubes em turno único; 1º e 2º direto às semifinais, 3º×6º e 4º×5º na fase seguinte. Essa fase, semifinais e final em ida e volta; dois últimos caem. [Fonte](https://ge.globo.com/ms/futebol/campeonato-sul-mato-grossense/noticia/2026/01/15/guia-do-sul-mato-grossense-2026-tudo-sobre-o-campeonato-que-comeca-no-domingo.ghtml).
 
 ### Campeonato Tocantinense
 
-**Pendente:** registrar e conferir o regulamento, a fonte e o funcionamento no jogo.
+**Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; quatro às semifinais; dois últimos caem. Semifinais e final em ida e volta; conferir desempates e vagas no REC. [Fonte](https://ge.globo.com/to/futebol/campeonato-tocantinense/noticia/2025/12/05/campeonato-tocantinense-2026-ftf-divulga-a-tabela-e-o-regulamento.ghtml).
 
 ## Pendências gerais
 
-As informações acima são um ponto de partida, não regulamentos completos. Confirmar os detalhes de cada competição, especialmente desempates, inscrições, critérios de avanço, calendário e interação entre competições. Testar a implementação sem recalcular resultados persistidos.
+As informações acima são um ponto de partida, não regulamentos completos. Muitas referências estaduais são resumos jornalísticos de decisões das federações e precisam ser confrontadas com os RECs definitivos, sobretudo onde há divergências. Confirmar os detalhes de cada competição, especialmente desempates, inscrições, critérios de avanço, calendário e interação entre competições. Testar a implementação sem recalcular resultados persistidos.
+
+## Vagas para competições futuras
+
+A Libertadores e a Sul-Americana ainda não são competições jogáveis. O cadastro de uma vaga deve identificar a temporada de destino, competição, fase de entrada, clube e competição de origem; a efetivação depende do encerramento e da elegibilidade. Vagas duplicadas, repasses e mudanças de regulamento exigem apuração conjunta com as outras competições, e não podem ser resolvidos apenas pelas faixas visuais da tabela. **Essa estrutura e a distribuição automática ainda não estão implementadas.**
