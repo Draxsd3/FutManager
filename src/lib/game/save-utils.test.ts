@@ -25,3 +25,9 @@ describe("account and career separation", () => {
     expect(local[0].round).toBe(2);
   });
 });
+
+it("prefers the committed engine revision over a stale cache with a newer wall-clock timestamp",()=>{
+  const base={id:"revision-test",careerRuleset:CURRENT_CAREER_RULESET,updatedAt:"2026-01-01T00:00:00Z",progress:{engine:{revision:2}}} as CareerSave;
+  const stale={...base,updatedAt:"2030-01-01T00:00:00Z",progress:{engine:{revision:1}}} as CareerSave;
+  expect(mergeCareerSaves([base],[stale])[0]).toEqual(base);
+});

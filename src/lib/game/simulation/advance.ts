@@ -1,3 +1,6 @@
+import { migrateFinanceSave, localEmploymentKey } from "./settlement";
+import { reconcileContractSquad } from "./contract-squad";
+import { adoptFinance, accrueFinance, projectFinance } from "./finance";
 import { buildSquadFromDatabase, type CareerSave, type EditorDatabase } from "../editor-data";
 import { nextCareerFixture } from "../season";
 import { careerCalendarDate } from "../brazilian-calendar";
@@ -19,7 +22,7 @@ export function advanceCareer(save: CareerSave, database: EditorDatabase, comman
     return save;
   }
   if (engine.revision !== command.expectedRevision || command.fromDate !== save.inGameDate) throw new EngineConflict();
-  const p = structuredClone(save.progress);
+  const p = structuredClone(migrateFinanceSave(save,database).progress!);
   const nextFixture = nextCareerFixture(p.competitionSeason);
   const date = civilDate(command.targetDate ?? careerCalendarDate(save.inGameDate,p.competitionSeason,nextFixture));
   const days = (Date.parse(`${date}T12:00:00Z`)-Date.parse(`${save.inGameDate}T12:00:00Z`))/86400000;
@@ -27,6 +30,10 @@ export function advanceCareer(save: CareerSave, database: EditorDatabase, comman
   const revision = engine.revision+1;
   let loans = p.loanContracts ?? {};
   let managers = p.managerMarket;
+  if (managers) {
+    managers = adoptFinance(managers,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance),save.inGameDate,loans,{clubId:save.clubId,budget:save.budget});
+    managers = projectFinance({...managers,finance:accrueFinance(managers.finance!,date)});
+  }
   const agenda: ScheduledEvent[] = [];
   for (const [id,loan] of Object.entries(loans)) if (loan.status === "active" && loan.endsOn && loan.endsOn <= date) agenda.push({ id: `loan:${id}:${loan.endsOn}`, date: loan.endsOn <= save.inGameDate ? save.inGameDate : loan.endsOn, priority: 1, kind: "loan", entityId: id });
   for (const application of managers?.applications ?? []) if (application.status === "offered") {
@@ -59,15 +66,17 @@ export function advanceCareer(save: CareerSave, database: EditorDatabase, comman
     engine.events.push({ id:eventId,operationId:command.operationId,date,type:"market-deal-completed",entityIds:[deal.playerId,deal.sourceClubId,deal.buyerClubId].filter(Boolean),revision });
     engine.decisions.push({ id:eventId,sector:"market",mode:"internal",actionId:deal.id,rulesVersion:engine.rulesVersion,stateRevision:engine.revision,options:[deal.id],reason:deal.message,eventIds:[eventId] });
   }
-  const effective = worldDatabase(database,deals,loans,world);
+  const effective = worldDatabase(database,deals,loans,world,managers?.finance);
   const squad = recoverSquadBetweenMatches(reconcileLoanSquad(p.careerSquad ?? [], buildSquadFromDatabase(effective,save.clubName,true) ?? [],loans,save.clubId,Object.keys(p.playerCareers).map(Number)),save.inGameDate,date);
-  const remaining = new Set(squad.map(player => player.id));
+  const ownedSquad = reconcileContractSquad(squad,buildSquadFromDatabase(effective,save.clubName,true) ?? [],new Set(effective.players.map(p=>p.id)),Object.keys(p.playerCareers).map(Number)).filter(player=>player.sourceId || managers?.finance?.contracts[localEmploymentKey(save.id,save.clubId,player.id)]?.status !== "expired");
+  const remaining = new Set(ownedSquad.filter(player=>player.registrationStatus !== "pending").map(player => player.id));
+  const nextBudget = managers?.clubs[save.clubId]?.budget ?? save.budget;
   const positions = Object.fromEntries(Object.entries(p.manualPositions).filter(([id]) => remaining.has(Number(id))));
-  const records = generateIncomingOffers({ squad,records:p.playerCareers,database:effective,managerMarket:managers,clubId:save.clubId,club:save.clubName,eventId:command.fixtureId ?? p.activeFixtureId ?? `round-${p.round}`,date });
+  const records = generateIncomingOffers({ squad:ownedSquad,records:p.playerCareers,database:effective,managerMarket:managers,clubId:save.clubId,club:save.clubName,eventId:command.fixtureId ?? p.activeFixtureId ?? `round-${p.round}`,date });
   engine.operations.push({ id:command.operationId,from:save.inGameDate,to:date,revision });
   engine.events.push({ id:`${command.operationId}:checkpoint`,operationId:command.operationId,date,type:"checkpoint",entityIds:[save.id],revision });
   engine.revision=revision; engine.date=date;
-  return { ...save,round:save.round+1,inGameDate:date,playerCareers:records,manualPositions:positions,progress: { ...p,engine,page:"hub",round:save.round+1,activeFixtureId:nextFixture?.id,worldMarket:world,transferNegotiations:deals,managerMarket:managers,loanContracts:loans,careerSquad:squad,starters:p.starters.filter(id=>remaining.has(id)),matchBenchIds:p.matchBenchIds?.filter(id=>remaining.has(id)),manualPositions:positions,playerCareers:records } };
+  return { ...save,round:save.round+1,budget:nextBudget,inGameDate:date,playerCareers:records,manualPositions:positions,progress: { ...p,engine,page:"hub",budget:nextBudget,round:save.round+1,activeFixtureId:nextFixture?.id,worldMarket:world,transferNegotiations:deals,managerMarket:managers,loanContracts:loans,careerSquad:ownedSquad,starters:p.starters.filter(id=>remaining.has(id)),matchBenchIds:p.matchBenchIds?.filter(id=>remaining.has(id)),manualPositions:positions,playerCareers:records } };
 }
 
 export interface CheckpointRepository {

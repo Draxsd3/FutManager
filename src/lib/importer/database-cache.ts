@@ -45,11 +45,22 @@ export function cacheDatabase(database: EditorDatabase, userId: string, pendingS
 function readCache(userId: string) {
   return read<{database: EditorDatabase; pendingSync: boolean}>(accountStorageKey("imported-database", userId));
 }
+const pendingCareerSnapshots = new Map<string,{latest: CareerSave[] | null; job: Promise<void>}>();
+/** Cache is a projection, not a journal: coalesce queued renders to the latest full snapshot. */
 export function cacheCareerSaves(saves: CareerSave[], userId: string): Promise<void> {
-  return store(accountStorageKey("imported-saves", userId), saves);
+  const key=accountStorageKey("imported-saves",userId), previous=pendingCareerSnapshots.get(key);
+  if(previous) {previous.latest=saves;return previous.job;}
+  const pending={latest:saves as CareerSave[] | null,job:Promise.resolve()};
+  pending.job=Promise.resolve().then(async()=>{
+    while(pending.latest) { const latest=pending.latest; pending.latest=null; await store(key,latest); }
+  }).finally(()=>{if(pendingCareerSnapshots.get(key)===pending) pendingCareerSnapshots.delete(key);});
+  pendingCareerSnapshots.set(key,pending);
+  return pending.job;
 }
-export function readCachedCareerSaves(userId: string): Promise<CareerSave[] | null> {
-  return read<CareerSave[]>(accountStorageKey("imported-saves", userId));
+export async function readCachedCareerSaves(userId: string): Promise<CareerSave[] | null> {
+  const key=accountStorageKey("imported-saves",userId);
+  await pendingCareerSnapshots.get(key)?.job.catch(()=>undefined);
+  return read<CareerSave[]>(key);
 }
 export async function readCachedDatabase(userId: string): Promise<EditorDatabase | null> {
   return (await readCache(userId))?.database ?? null;

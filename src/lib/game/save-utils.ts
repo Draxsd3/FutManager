@@ -6,7 +6,7 @@ export function mergeCareerSaves(local: CareerSave[], cloud: CareerSave[]): Care
   const byId = new Map(currentCareerSaves(cloud).map((save) => [save.id, save]));
   for (const save of currentCareerSaves(local)) {
     const remote = byId.get(save.id);
-    if (!remote || Date.parse(save.updatedAt) > Date.parse(remote.updatedAt)) byId.set(save.id, save);
+    if (!remote || (save.progress?.engine?.revision ?? 0) > (remote.progress?.engine?.revision ?? 0) || ((save.progress?.engine?.revision ?? 0) === (remote.progress?.engine?.revision ?? 0) && Date.parse(save.updatedAt) > Date.parse(remote.updatedAt))) byId.set(save.id, save);
   }
   return [...byId.values()].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
 }

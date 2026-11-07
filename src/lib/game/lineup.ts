@@ -151,7 +151,7 @@ export function deployLineupPlayer(
 ) {
   const player = squad.find((item) => item.id === id);
   const slots = formationSlots[formation] ?? formationSlots["4-3-3"];
-  if (!player || !Number.isInteger(slot) || slot < 0 || slot >= slots.length)
+  if (!player || player.registrationStatus === "pending" || !Number.isInteger(slot) || slot < 0 || slot >= slots.length)
     return null;
   if (point && (!Number.isFinite(point.left) || !Number.isFinite(point.top)))
     return null;

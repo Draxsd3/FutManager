@@ -14,7 +14,7 @@ export type ManagerClub = {
   processedFixtures: string[];
 };
 export type ManagerApplication = { id: string; clubId: string; vacancyVersion: number; appliedOn: string; expiresOn: string; status: "offered" | "rejected" | "declined" | "accepted" | "expired" | "cancelled"; message: string };
-export type ManagerMarket = { applications?: ManagerApplication[]; clubs: Record<string, ManagerClub>; dismissals: { clubId: string; coach: string; fixtureId: string; board: number; fans: number }[] };
+export type ManagerMarket = { finance?: import("./simulation/finance").FinanceState; applications?: ManagerApplication[]; clubs: Record<string, ManagerClub>; dismissals: { clubId: string; coach: string; fixtureId: string; board: number; fans: number }[] };
 
 /** Until a club economy exists, every AI club starts with the same cash as a new human career.
  * Existing results are marked processed: we cannot reconstruct previous managers or finances.
@@ -42,7 +42,7 @@ export function applyManagerFixture(market: ManagerMarket, season: CareerSeason,
     const isHuman = human?.clubId === clubId;
     const oneMatch = { ...season, clubId, fixtures: [fixture] };
     const history = old.coach ? mergeConfidenceHistory(old.history, oneMatch) : old.history;
-    const budget = isHuman ? human.budget : old.budget + 151 - old.payroll / 4;
+    const budget = isHuman ? human.budget : old.budget + 151 - (market.finance ? 0 : old.payroll / 4);
     const payroll = isHuman ? human.payroll : old.payroll;
     const confidence = clubConfidence({ ...season, clubId, fixtures: [] }, history, budget, payroll, old.startingBudget);
     const fired = (!isHuman || human.allowDismissal !== false) && old.coach !== null && confidence !== null && confidence.matches >= 5 && (confidence.fans <= 30 || confidence.board <= 20);

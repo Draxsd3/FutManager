@@ -36,6 +36,7 @@ export type EditorClub = {
 export type EditorPlayerMarketStatus = "normal" | "sale" | "loan";
 
 export type EditorPlayer = {
+  registrationStatus?: "registered" | "pending";
   /** Source-supplied nationalities; never infer from the club country. */
   nationalities?: string[];
   loan?: LoanContract;
@@ -242,6 +243,7 @@ export function buildSquadFromDatabase(database: EditorDatabase, clubName: strin
   return players.map((player, index) => ({
     id: index + 1,
     sourceId: player.id,
+    registrationStatus: player.registrationStatus,
     shirtNumber: player.shirtNumber,
     name: player.name,
     position: player.primaryPosition,

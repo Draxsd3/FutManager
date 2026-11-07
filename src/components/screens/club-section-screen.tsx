@@ -1,4 +1,5 @@
 "use client";
+import { availableCents, monthlyPayroll as financialPayroll, type FinanceState } from "@/lib/game/simulation/finance";
 import { ManagementHeader } from "@/components/ui/management-header";
 import { WindowHeaderContext } from "@/components/ui/window-header";
 import surface from "@/components/ui/management-surface.module.css";
@@ -36,6 +37,7 @@ export function ClubSectionScreen({
   coach,
   round,
   budget,
+  finance,
   squad,
   kit = 1,
   season,
@@ -68,6 +70,7 @@ export function ClubSectionScreen({
   coach: string;
   round: number;
   budget: number;
+  finance?: FinanceState;
   squad: Player[];
   kit?: 1 | 2 | 3;
   fixtures: RoundFixture[];
@@ -94,7 +97,7 @@ export function ClubSectionScreen({
       .filter((player) => player.name.toLocaleLowerCase("pt-BR").includes(normalized))
       .slice(0, 30);
   }, [database.players, query]);
-  const monthlyPayroll = squad.reduce((total, player) => total + player.salary * 1000, 0);
+  const monthlyPayroll = finance && currentClub ? financialPayroll(finance,currentClub.id)/100 : squad.reduce((total, player) => total + player.salary * 1000, 0);
   const squadValue = squad.reduce((total, player) => total + player.marketValue, 0);
   const title = {
     agenda: "AGENDA",
@@ -144,8 +147,8 @@ export function ClubSectionScreen({
 
         {section === "finances" && (
           <div className={surface.grid}>
-            <Panel title="RESUMO FINANCEIRO"><div className="mb-5 flex items-center gap-3"><ClassicIcon name="money" size={32}/><div><p className="text-[11px] text-[#68757b]">SALDO DISPONÍVEL</p><b className="text-2xl text-[#07552f]">R$ {(budget / 1000).toFixed(2)} milhões</b></div></div><Info label="Folha salarial mensal" value={`R$ ${monthlyPayroll.toLocaleString("pt-BR")}`}/><Info label="Valor de mercado do elenco" value={`R$ ${squadValue.toFixed(1)} milhões`}/><Info label="Jogadores sob contrato" value={String(squad.length)}/></Panel>
-            <Panel title="PROJEÇÃO DO MÊS"><Info label="Bilheteria líquida estimada (jogo em casa)" value={`R$ ${projectStadiumGate(stadiumCapacity(currentClub?.stadiumCapacity ?? 0, stadium ?? newStadium(), inGameDate), (stadium ?? newStadium()).prices).net.toLocaleString("pt-BR")}`}/><Info label="Patrocínios" value="R$ 450.000"/><Info label="Salários" value={`- R$ ${monthlyPayroll.toLocaleString("pt-BR")}`}/><Info label="Manutenção do estádio" value={`- R$ ${Math.round((currentClub?.stadiumCapacity ?? 15000) * 2.4).toLocaleString("pt-BR")}`}/><p className="mt-4 border-t pt-3 text-[11px] text-[#68757b]">Somente a bilheteria líquida de jogos em casa é creditada ao fim da partida. Patrocínios, salários e manutenção acima são projeções.</p></Panel>
+            <Panel title="RESUMO FINANCEIRO"><div className="mb-5 flex items-center gap-3"><ClassicIcon name="money" size={32}/><div><p className="text-[11px] text-[#68757b]">CAIXA DO CLUBE</p><b className="text-2xl text-[#07552f]">R$ {(budget / 1000).toFixed(2)} milhões</b></div></div>{finance && currentClub && <><Info label="Disponível após compromissos (12 meses)" value={`R$ ${(availableCents(finance,currentClub.id)/100).toLocaleString("pt-BR")}`}/><Info label="Salários acumulados a pagar" value={`R$ ${(Object.values(finance.payables).filter(p=>p.clubId===currentClub.id).reduce((sum,p)=>sum+p.amountCents-p.paidCents,0)/100).toLocaleString("pt-BR")}`}/><Info label="Reservas de negociações" value={`R$ ${(Object.values(finance.reservations).filter(r=>r.clubId===currentClub.id).reduce((sum,r)=>sum+r.cents,0)/100).toLocaleString("pt-BR")}`}/></>}<Info label="Folha salarial mensal" value={`R$ ${monthlyPayroll.toLocaleString("pt-BR")}`}/><Info label="Valor de mercado do elenco" value={`R$ ${squadValue.toFixed(1)} milhões`}/><Info label="Jogadores sob contrato" value={String(squad.length)}/></Panel>
+            <Panel title="PROJEÇÃO DO MÊS"><Info label="Bilheteria líquida estimada (jogo em casa)" value={`R$ ${projectStadiumGate(stadiumCapacity(currentClub?.stadiumCapacity ?? 0, stadium ?? newStadium(), inGameDate), (stadium ?? newStadium()).prices).net.toLocaleString("pt-BR")}`}/><Info label="Patrocínios" value="R$ 450.000"/><Info label="Salários" value={`- R$ ${monthlyPayroll.toLocaleString("pt-BR")}`}/><Info label="Manutenção do estádio" value={`- R$ ${Math.round((currentClub?.stadiumCapacity ?? 15000) * 2.4).toLocaleString("pt-BR")}`}/><p className="mt-4 border-t pt-3 text-[11px] text-[#68757b]">Bilheteria e receita legada de partida entram no caixa ao fim do jogo. Salários acumulam pelo calendário e vencem no início do mês seguinte, sem depender da quantidade de partidas. Patrocínio e manutenção acima continuam projeções.</p></Panel>
           </div>
         )}
 

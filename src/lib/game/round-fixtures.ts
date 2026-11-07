@@ -6,6 +6,7 @@ import { backgroundFixtureScore, type CareerSeason, type SeasonFixture } from ".
 export function backgroundClubStrengths(database: EditorDatabase): Map<string, number> {
   const totals = new Map<string, { sum: number; count: number }>();
   for (const player of database.players) {
+    if (player.registrationStatus === "pending") continue;
     const old = totals.get(player.clubId) ?? { sum: 0, count: 0 };
     totals.set(player.clubId, { sum: old.sum + player.overall, count: old.count + 1 });
   }

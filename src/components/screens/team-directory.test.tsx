@@ -6,7 +6,7 @@ import { TeamDirectory } from "./team-directory";
 
 afterEach(cleanup);
 
-it("mostra o elenco do clube selecionado e permite iniciar uma proposta de transferência", () => {
+it("mostra o elenco do clube selecionado e permite iniciar uma proposta de transferência", async () => {
   const database = createDefaultDatabase();
   const managedClub = database.clubs[0];
   const player = database.players.find((item) => item.clubId !== managedClub.id && item.marketStatus === "sale")!;
@@ -26,7 +26,7 @@ it("mostra o elenco do clube selecionado e permite iniciar uma proposta de trans
   fireEvent.click(within(team).getByRole("button", { name: "Enviar proposta" }));
 
   expect(propose).toHaveBeenCalledWith(player.id, expect.any(Number), 0);
-  expect(screen.getByRole("status").textContent).toContain("Proposta enviada");
+  expect((await screen.findByRole("status")).textContent).toContain("Proposta enviada");
   confirm.mockRestore();
 });
 

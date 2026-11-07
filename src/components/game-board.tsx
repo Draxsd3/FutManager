@@ -1,4 +1,6 @@
 "use client";
+import { reconcileContractSquad } from "@/lib/game/simulation/contract-squad";
+import { applyCareerPlayerAction, extendCareerLoan, migrateFinanceSave, settleCareerTransfer, updateCareerNegotiation } from "@/lib/game/simulation/settlement";
 import { advanceCareer } from "@/lib/game/simulation/advance";
 import { EngineConflict, engineState as createEngineState, migrateEngineSave, type EngineState } from "@/lib/game/simulation/foundation";
 import { publishLocalCheckpoint } from "@/lib/game/simulation/local-checkpoint";
@@ -12,13 +14,13 @@ import { applyStructuralDatabaseUpdates, createCareerUniverseSnapshot } from "@/
 
 
 import { newStadium, recordGate, setSectorPrice, startExpansion, type StadiumSector, type StadiumState } from "@/lib/game/stadium";
-import { CURRENT_CAREER_RULESET, currentCareerSaves, isCurrentCareerSave } from "@/lib/game/career-rules";
+import { CURRENT_CAREER_RULESET, isCurrentCareerSave } from "@/lib/game/career-rules";
 import { applyBrazilianCalendar, BRAZILIAN_REFERENCE_SEASON, careerCalendarDate, formatCalendarDate } from "@/lib/game/brazilian-calendar";
 import { acceptManagerJob, applyForManagerJob, declineManagerJob, initializeCareerMarket, refreshJobOffers, updateCareerMarket, type JobClubSnapshot, type ManagerAppointment } from "@/lib/game/manager-jobs";
 import type { ManagerMarket } from "@/lib/game/manager-market";
 import { archiveChampionships, type ChampionshipRecord } from "@/lib/game/honours";
 import { LoanManager } from "@/components/ui/loan-manager";
-import { databaseWithLoans, expireLoans, loanExpiryReminders, proposeLoanExtension, reconcileLoanSquad, recoverCareerLoans, type CareerLoans } from "@/lib/game/loans";
+import { expireLoans, loanExpiryReminders, reconcileLoanSquad, recoverCareerLoans, type CareerLoans } from "@/lib/game/loans";
 
 import { clubConfidence, mergeConfidenceHistory, type ConfidenceMatch } from "@/lib/game/confidence";
 
@@ -48,8 +50,7 @@ import { StartMenuScreen } from "@/components/screens/start-menu-screen";
 import { SavesScreen } from "@/components/screens/saves-screen";
 import { EditorScreen } from "@/components/screens/editor-screen";
 import { WorldScreens, historyOptions, type HistoryView } from "@/components/screens/world-screens";
-import { recruitPlayer } from "@/lib/game/recruitment";
-import { databaseWithCompletedTransfers, proposeTransfer, respondToTransferNegotiation, type TransferNegotiation, type TransferNegotiationAction } from "@/lib/game/transfers";
+import { proposeTransfer, type TransferNegotiation, type TransferNegotiationAction } from "@/lib/game/transfers";
 import { ClubSectionScreen, type ClubSection } from "@/components/screens/club-section-screen";
 import {
   squad as initialSquad,
@@ -61,7 +62,7 @@ import {
   type Player,
 } from "@/lib/game/mock-data";
 import { buildSquadFromDatabase, upgradeEditorDatabase, type CareerSave, type EditorDatabase } from "@/lib/game/editor-data";
-import { createPlayerCareer, recordPlayerMatch, applyNegotiation, type MarketAction, type MatchParticipation, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
+import { createPlayerCareer, recordPlayerMatch, type MarketAction, type MatchParticipation, type ManualPosition, type PlayerCareerRecord } from "@/lib/game/career";
 import { deployLineupPlayer } from "@/lib/game/lineup";
 import { mergeCareerSaves } from "@/lib/game/save-utils";
 import {
@@ -154,9 +155,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       const pendingDatabaseSync = await withTimeout(hasPendingDatabaseSync(userId), 2500).catch(() => false);
       const localDatabase = upgradeEditorDatabase(await withTimeout(readCachedDatabase(userId), 2500).catch(() => null) ?? readLocalDatabase(userId) ?? (await (await import("@/lib/importer/november-database")).applyNovemberDatabase(await importBrazilDatabase())).database);
       if (cancelled) return;
-      const localSaves = currentCareerSaves(await withTimeout(readCachedCareerSaves(userId), 2500).catch(() => null) ?? readLocalSaves(userId))
+      const cachedSaves = await withTimeout(readCachedCareerSaves(userId), 2500).catch(() => null) ?? [];
+      const localSaves = mergeCareerSaves(readLocalSaves(userId),cachedSaves)
         .map((save) => {
-          const snapshot = save.progress?.universeSnapshot ?? createCareerUniverseSnapshot(localDatabase);
+          const snapshot = save.progress?.universeSnapshot ?? cachedSaves.find(old=>old.id===save.id)?.progress?.universeSnapshot ?? createCareerUniverseSnapshot(localDatabase);
           const reconciled = reconcileCareerSaveWithDatabase(save, snapshot).save;
           return reconciled.progress ? { ...reconciled, progress: { ...reconciled.progress, universeSnapshot: snapshot } } : reconciled;
         });
@@ -269,7 +271,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [youthTeams, setYouthTeams] = useState<Record<string, YouthTeam>>({});
   const [retryYouthClub, setRetryYouthClub] = useState<string | null>(null);
   const [loansOpen, setLoansOpen] = useState(false);
-  const careerDatabase = useMemo(() => database ? worldDatabase(database, transferNegotiations, loanContracts, worldMarket) : null, [database, transferNegotiations, loanContracts, worldMarket]);
+  const careerDatabase = useMemo(() => database ? worldDatabase(database, transferNegotiations, loanContracts, worldMarket, managerMarket?.finance) : null, [database, transferNegotiations, loanContracts, worldMarket, managerMarket?.finance]);
 
   const [minute, setMinute] = useState(0);
   const [homeScore, setHomeScore] = useState(0);
@@ -381,11 +383,11 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     [opponentSquad, opponentFormation],
   );
   const startersData = useMemo(
-    () => starters.map((id) => squad.find((p) => p.id === id)!).filter(Boolean),
+    () => starters.map((id) => squad.find((p) => p.id === id)!).filter(p=>p && p.registrationStatus !== "pending"),
     [starters, squad],
   );
   const bench = useMemo(
-    () => squad.filter((p) => !starters.includes(p.id)),
+    () => squad.filter((p) => !starters.includes(p.id) && p.registrationStatus !== "pending"),
     [starters, squad],
   );
   // Old saves have no nominated bench; recover the first eligible reserves deterministically.
@@ -723,66 +725,45 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
 
-  function makeTransferOffer(playerId: string, feeBrl: number, wageSharePercent: number): string {
-    if (!database) return "Banco de dados indisponível.";
-    const buyer = database.clubs.find((item) => item.name === club);
-    if (!buyer) return "Clube comprador não encontrado.";
-    const result = proposeTransfer(careerDatabase ?? database, transferNegotiations, {
-      id: crypto.randomUUID(), playerId, buyerClubId: buyer.id, feeBrl, wageSharePercent,
-    });
-    if (!result.negotiation) return result.message;
-    setTransferNegotiations((current) => [result.negotiation!, ...current]);
-    return result.message;
-  }
-
-  function handleTransferAction(id: string, action: TransferNegotiationAction): string {
-    const negotiation = transferNegotiations.find((item) => item.id === id);
-    if (!negotiation) return "Negociação não encontrada.";
-    if (negotiation.buyerClubId !== managedClubRecord?.id) return "Esta negociação pertence a outro clube.";
-    if (action.type !== "complete") {
-      const result = respondToTransferNegotiation(negotiation, action);
-      setTransferNegotiations((current) => current.map((item) => item.id === id ? result.negotiation : item));
+  async function commitFinancialChange(calculate: (save: CareerSave, database: EditorDatabase) => {save: CareerSave; message: string}): Promise<string> {
+    if (advancing.current || jobActionInProgress.current) return "Aguarde a confirmação em andamento.";
+    const current = savesRef.current.find(save => save.id === activeSaveId);
+    if (!current || !database) return "Carreira indisponível.";
+    advancing.current = true;
+    try {
+      const snapshot = {...current,budget,playerCareers,manualPositions,progress:progressRef.current};
+      const result = calculate(snapshot,database);
+      if (result.save === snapshot) return result.message;
+      const next = {...result.save,updatedAt:new Date().toISOString()}, p = next.progress!;
+      await publishLocalCheckpoint(next,userId,snapshot.progress?.engine?.revision ?? 0);
+      progressRef.current = p;
+      savesRef.current = [next,...savesRef.current.filter(save=>save.id!==next.id)];
+      setEngine(p.engine); setBudget(next.budget); budgetRef.current = next.budget;
+      setManagerMarket(p.managerMarket); setWorldMarket(p.worldMarket); setTransferNegotiations(p.transferNegotiations ?? []);
+      setCareerSquad(p.careerSquad); setPlayerCareers(p.playerCareers); setLoanContracts(p.loanContracts ?? {});
+      setStarters(p.starters); setMatchBenchIds(p.matchBenchIds); setManualPositions(p.manualPositions);
+      if (profilePlayer !== null && !p.careerSquad?.some(player=>player.id===profilePlayer)) { setProfilePlayer(null); setSelectedPlayer(null); }
+      void persistSave(next);
       return result.message;
-    }
-    if (!database || negotiation.status !== "agreed" || negotiation.agreedFeeBrl === undefined) return "A proposta ainda não foi acordada.";
-    const gameDate = saves.find((save) => save.id === activeSaveId)?.inGameDate ?? new Date().toISOString().slice(0, 10);
-    const currentSource = careerDatabase?.players.find(player => player.id === negotiation.playerId);
-    if (!currentSource || currentSource.clubId !== negotiation.sourceClubId) return "O vínculo do jogador mudou. Encerre este acordo e envie uma nova proposta.";
-    const result = recruitPlayer(careerDatabase ?? database, squad, club, budget, negotiation.playerId, Object.keys(playerCareers).map(Number), {
-      feeBrl: negotiation.agreedFeeBrl,
-      kind: negotiation.kind,
-      wageSharePercent: negotiation.agreedWageSharePercent ?? 0,
-      loanMonths: 6,
-      gameDate,
+    } catch (error) { return error instanceof Error ? error.message : "Não foi possível concluir. O save anterior foi preservado."; }
+    finally { advancing.current = false; }
+  }
+  async function makeTransferOffer(playerId: string, feeBrl: number, wageSharePercent: number): Promise<string> {
+    const id = crypto.randomUUID();
+    return commitFinancialChange((save,db)=>{
+      const p=save.progress!;
+      const effective=worldDatabase(db,p.transferNegotiations ?? [],p.loanContracts ?? {},p.worldMarket,p.managerMarket?.finance);
+      const result=proposeTransfer(effective,p.transferNegotiations ?? [],{id,playerId,buyerClubId:save.clubId,feeBrl,wageSharePercent});
+      return {save:result.negotiation ? updateCareerNegotiation(save,db,result.negotiation) : save,message:result.message};
     });
-    if (result.squad === squad) return result.message;
-    const completed = respondToTransferNegotiation(negotiation, action);
-    completed.negotiation.completedOn = gameDate;
-    const nextNegotiations = transferNegotiations.map((item) => item.id === id ? completed.negotiation : item);
-    setCareerSquad(result.squad);
-    setBudget(result.budget);
-    setTransferNegotiations(nextNegotiations);
-    const nextWorld = worldMarket ? { ...worldMarket, listings: { ...worldMarket.listings } } : undefined;
-    if (nextWorld) delete nextWorld.listings[negotiation.playerId];
-    setWorldMarket(nextWorld);
-    const nextManagers = managerMarket ? { ...managerMarket, clubs: { ...managerMarket.clubs } } : undefined;
-    if (nextManagers) {
-      const seller = nextManagers.clubs[negotiation.sourceClubId];
-      if (seller) nextManagers.clubs[seller.clubId] = { ...seller, budget: seller.budget + Math.floor(negotiation.agreedFeeBrl / 1000) };
-      const buyer = nextManagers.clubs[negotiation.buyerClubId];
-      if (buyer) nextManagers.clubs[buyer.clubId] = { ...buyer, budget: result.budget };
-      setManagerMarket(nextManagers);
-    }
-    const acquired = result.squad.at(-1);
-    const nextLoans = { ...loanContracts };
-    if (acquired?.sourceId) { if (acquired.loan) nextLoans[acquired.sourceId] = acquired.loan; else delete nextLoans[acquired.sourceId]; }
-    setLoanContracts(nextLoans);
-    if (activeSaveId) {
-      const current = saves.find((save) => save.id === activeSaveId);
-      if (current) void persistSave({ ...current, budget: result.budget, updatedAt: new Date().toISOString(), playerCareers, manualPositions,
-        progress: { ...progressRef.current, careerSquad: result.squad, budget: result.budget, managerMarket: nextManagers, worldMarket: nextWorld, transferNegotiations: nextNegotiations, loanContracts: nextLoans, playerCareers, manualPositions } });
-    }
-    return `${result.message} ${completed.message}`;
+  }
+  async function handleTransferAction(id: string, action: TransferNegotiationAction): Promise<string> {
+    return commitFinancialChange((save,db)=>{
+      const deal=save.progress?.transferNegotiations?.find(d=>d.id===id);
+      if(!deal || deal.buyerClubId!==save.clubId) throw new Error("Negociação indisponível para este clube.");
+      const next=action.type === "complete" ? settleCareerTransfer(save,db,id) : updateCareerNegotiation(save,db,deal,action);
+      return {save:next,message:next.progress?.transferNegotiations?.find(d=>d.id===id)?.message ?? deal.message};
+    });
   }
 
   function openQuickAction(action: "roster" | "finances" | "trophies" | "training") {
@@ -971,6 +952,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, confidenceHistory: [], confidenceStartBudget: 12624, managerMarket: initializeCareerMarket(database, newSeason, coach.trim(), 12624), jobClubSnapshots: {}, managerAppointments: [{ clubId: selectedClub.id, club: selectedClub.name, startedOn: save.inGameDate }], youthTeams: {}, activeFixtureId: firstFixture?.id, transferNegotiations: [], loanContracts: initialLoans, championHistory: [] };
     setActiveSaveId(save.id);
     setCompetitionSeason(newSeason);
+    save.progress = migrateFinanceSave(save,database).progress!;
     setManagerMarket(save.progress.managerMarket); setJobClubSnapshots({}); setManagerAppointments(save.progress.managerAppointments ?? []);
     setChampionHistory([]);
     setYouthTeams({}); setRetryYouthClub(null);
@@ -1028,7 +1010,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     const loadingFixture = resumingMatch ? restoredSeason?.fixtures.find(f => f.id === save.progress?.activeFixtureId) : nextCareerFixture(restoredSeason);
     save = { ...save, inGameDate: save.progress?.engine ? save.inGameDate : careerCalendarDate(save.inGameDate, undefined, loadingFixture),
       ...(save.progress ? { progress: { ...save.progress, competitionSeason: restoredSeason } } : {}) };
-    try { save = migrateEngineSave(save); } catch (error) { setSyncLabel(error instanceof Error ? error.message : "Save incompatível; preservado."); return false; }
+    try { save = migrateEngineSave(save); if (database) save = migrateFinanceSave(save,database); } catch (error) { setSyncLabel(error instanceof Error ? error.message : "Save incompatível; preservado."); return false; }
     // Keep the civil date in the same account-local snapshot used by autosave and loan expiry.
     const normalizedSaves = savesRef.current.map(item => item.id === save.id ? save : item);
     savesRef.current = normalizedSaves;
@@ -1036,9 +1018,9 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     if (save.progress?.careerSquad && database) {
       const loans = expireLoans(recoverCareerLoans(save.progress.careerSquad ?? [], save.progress.transferNegotiations ?? [], database, save.progress.loanContracts), save.inGameDate);
       const ownClubId = database.clubs.find(item => item.name === save.clubName)?.id ?? save.clubId;
-      const restoredDatabase = databaseWithLoans(databaseWithCompletedTransfers({ ...database, players: database.players.map(player => ({ ...player, loan: undefined })) }, save.progress.transferNegotiations ?? []), loans);
-      const restoredSquad = reconcileLoanSquad(save.progress.careerSquad ?? [], buildSquadFromDatabase(restoredDatabase, save.clubName, true) ?? [], loans, ownClubId, Object.keys(save.progress.playerCareers).map(Number));
-      const remaining = new Set(restoredSquad.map(player => player.id));
+      const restoredDatabase = worldDatabase(database,save.progress.transferNegotiations ?? [],loans,save.progress.worldMarket,save.progress.managerMarket?.finance);
+      const restoredSquad = reconcileContractSquad(reconcileLoanSquad(save.progress.careerSquad ?? [], buildSquadFromDatabase(restoredDatabase, save.clubName, true) ?? [], loans, ownClubId, Object.keys(save.progress.playerCareers).map(Number)),buildSquadFromDatabase(restoredDatabase,save.clubName,true) ?? [],new Set(restoredDatabase.players.map(p=>p.id)),Object.keys(save.progress.playerCareers).map(Number));
+      const remaining = new Set(restoredSquad.filter(player=>player.registrationStatus !== "pending").map(player => player.id));
       save = { ...save, progress: { ...save.progress, loanContracts: loans, careerSquad: restoredSquad, starters: save.progress.starters.filter(id => remaining.has(id)), matchBenchIds: save.progress.matchBenchIds?.filter(id => remaining.has(id)), manualPositions: Object.fromEntries(Object.entries(save.progress.manualPositions).filter(([id]) => remaining.has(Number(id)))) } };
     }
     sessionRestoreVersion.current += 1;
@@ -1326,48 +1308,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setProfilePlayer(id);
   }
 
-  function applyPlayerMarketAction(id: number, action: MarketAction): string {
-    const player = squad.find((item) => item.id === id);
-    if (!player) return "Atleta não encontrado.";
-    if (player.loan?.status === "active" || player.acquisitionType === "loan") return "Atleta emprestado: use Plantel → Empréstimos para negociar com o proprietário. Venda e renovação definitiva não são permitidas.";
-    if (action.type === "offer" && !database?.clubs.some((item) => item.name === action.club && item.name !== club)) return "Clube inválido.";
-    const current = playerCareers[id] ?? createPlayerCareer(player, club);
-    const gameDate = saves.find((save) => save.id === activeSaveId)?.inGameDate ?? "2026-01-22";
-    const result = applyNegotiation(current, action, gameDate, club);
-    if (result.record === current) return result.message;
-    const nextCareers = { ...playerCareers, [id]: result.record };
-    setPlayerCareers(nextCareers);
-    if (!result.transfer) {
-      void persistCareerExtras(nextCareers, manualPositions);
-      return result.message;
-    }
-    const nextSquad = squad.filter((item) => item.id !== id);
-    const nextStarters = starters.filter((starterId) => starterId !== id);
-    const nextBudget = budget + Math.round(result.transfer.fee * 1000);
-    const nextLoans = { ...loanContracts };
-    if (player.sourceId) delete nextLoans[player.sourceId];
-    setLoanContracts(nextLoans);
-    const nextPositions = { ...manualPositions };
-    delete nextPositions[id];
-    setCareerSquad(nextSquad);
-    setStarters(nextStarters);
-    setManualPositions(nextPositions);
-    setBudget(nextBudget);
-    setSelectedPlayer(null);
-    setProfilePlayer(null);
-    setSyncLabel(result.message);
-    if (activeSaveId) {
-      const currentSave = saves.find((save) => save.id === activeSaveId);
-      const selectedClub = database?.clubs.find((item) => item.name === club);
-      void persistSave({
-        id: activeSaveId, name: currentSave?.name ?? `${club} — ${coach}`, managerName: coach,
-        clubId: selectedClub?.id ?? currentSave?.clubId ?? "", clubName: club, division, round, budget: nextBudget,
-        inGameDate: currentSave?.inGameDate ?? "2026-01-22", updatedAt: new Date().toISOString(),
-        playerCareers: nextCareers, manualPositions: nextPositions,
-        progress: { ...progressRef.current, careerSquad: nextSquad, starters: nextStarters, playerCareers: nextCareers, manualPositions: nextPositions, budget: nextBudget, loanContracts: nextLoans },
-      });
-    }
-    return result.message;
+  async function applyPlayerMarketAction(id: number, action: MarketAction): Promise<string> {
+    return commitFinancialChange((save,db)=>applyCareerPlayerAction(save,db,id,action));
   }
 
   function resetManualPositions() {
@@ -1392,6 +1334,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   async function startMatch() {
+    if (starters.some(id=>squad.find(p=>p.id===id)?.registrationStatus === "pending")) { setMatchRulesError("Há atleta com inscrição pendente na escalação."); return; }
     if (!scheduledFixture) {
       setMatchRulesError("A temporada não possui partidas pendentes.");
       return;
@@ -1635,19 +1578,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       <>
         <CareerWorkspace {...workspace} />
         {renderStandings()}
-        {loansOpen && careerDatabase && <LoanManager players={careerDatabase.players.filter(player => player.loan && [player.loan.owner.clubId, player.loan.borrower.clubId].includes(database?.clubs.find(item => item.name === club)?.id))} clubId={database?.clubs.find(item => item.name === club)?.id ?? ""} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-22"} onClose={() => setLoansOpen(false)} onPropose={(id, months, fee, share) => {
-          const player = careerDatabase.players.find(item => item.id === id);
-          if (!player?.loan) return "Empréstimo não encontrado.";
-          const date = saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-22";
-          const result = proposeLoanExtension(player.loan, date, budget, player.salaryMonthlyBrl, database?.clubs.find(item => item.name === club)?.id ?? "", months, fee, share);
-          if (result.loan === player.loan) return result.message;
-          const nextLoans = { ...loanContracts, [id]: result.loan };
-          const nextSquad = squad.map(item => item.sourceId === id ? { ...item, loan: result.loan, loanExpiresOn: result.loan.endsOn ?? undefined } : item);
-          setLoanContracts(nextLoans); setCareerSquad(nextSquad); setBudget(result.budget);
-          const current = savesRef.current.find(save => save.id === activeSaveId);
-          if (current) void persistSave({ ...current, budget: result.budget, updatedAt: new Date().toISOString(), progress: { ...progressRef.current, loanContracts: nextLoans, careerSquad: nextSquad, budget: result.budget } });
-          return result.message;
-        }}/>}
+        {loansOpen && careerDatabase && <LoanManager players={careerDatabase.players.filter(player => player.loan && [player.loan.owner.clubId, player.loan.borrower.clubId].includes(database?.clubs.find(item => item.name === club)?.id))} clubId={database?.clubs.find(item => item.name === club)?.id ?? ""} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-22"} onClose={() => setLoansOpen(false)} onPropose={(id, months, fee, share) => commitFinancialChange((save,db)=>extendCareerLoan(save,db,id,months,fee,share))}/>}
         {profilePlayer !== null && (() => {
           const player = squad.find((item) => item.id === profilePlayer);
           if (!player) return null;
@@ -1675,6 +1606,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             stadium={managedClubRecord ? stadiums[managedClubRecord.id] : undefined}
             onStadiumPriceChange={changeStadiumPrice}
             onStadiumExpand={expandStadium}
+            finance={managerMarket?.finance}
             section={managementSection}
             agendaView={agendaView}
             onAgendaViewChange={setAgendaView}
@@ -1880,7 +1812,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           // Publish the already validated checkpoint, not a succession of business rules in the UI.
           progressRef.current = p;
           savesRef.current = [next,...savesRef.current.filter(save => save.id !== next.id)];
-          setStandingsOpen(false); setRound(next.round); setActiveFixtureId(p.activeFixtureId);
+          setStandingsOpen(false); setBudget(next.budget); budgetRef.current = next.budget; setRound(next.round); setActiveFixtureId(p.activeFixtureId);
           setEngine(p.engine); setWorldMarket(p.worldMarket); setTransferNegotiations(p.transferNegotiations ?? []); setManagerMarket(p.managerMarket);
           setLoanContracts(p.loanContracts ?? {}); setCareerSquad(p.careerSquad); setStarters(p.starters); setMatchBenchIds(p.matchBenchIds); setManualPositions(p.manualPositions); setPlayerCareers(p.playerCareers);
           setProfilePlayer(null); setSelectedPlayer(null); setPage("hub");

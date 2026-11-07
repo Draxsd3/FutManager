@@ -5,7 +5,7 @@ import { WorldScreens } from "./world-screens";
 import { createDefaultDatabase, buildSquadFromDatabase } from "@/lib/game/editor-data";
 afterEach(cleanup);
 
-it("filtra jogadores listados para venda ou empréstimo e envia uma proposta, não uma contratação imediata", () => {
+it("filtra jogadores listados para venda ou empréstimo e envia uma proposta, não uma contratação imediata", async () => {
   const database = createDefaultDatabase(), club = database.clubs[0];
   const player = database.players.find((item) => item.clubId !== club.id && item.marketStatus === "sale")!;
   const offer = vi.fn().mockReturnValue("O clube fez uma contraproposta.");
@@ -19,11 +19,11 @@ it("filtra jogadores listados para venda ou empréstimo e envia uma proposta, n�
   fireEvent.click(screen.getByRole("button", { name: "Enviar proposta" }));
   expect(offer).toHaveBeenCalledWith(player.id, expect.any(Number), 0);
   expect(action).not.toHaveBeenCalled();
-  expect(screen.getByRole("status").textContent).toContain("contraproposta");
+  expect((await screen.findByRole("status")).textContent).toContain("contraproposta");
   confirm.mockRestore();
 });
 
-it("filtra somente empréstimos quando essa disponibilidade é selecionada", () => {
+it("filtra somente empréstimos quando essa disponibilidade é selecionada", async () => {
   const database = createDefaultDatabase(), club = database.clubs[0];
   const player = database.players.find((item) => item.clubId !== club.id && item.marketStatus === "loan")!;
   render(<WorldScreens section="search" database={database} club={club.name} coach="Treinador" squad={buildSquadFromDatabase(database, club.name)!} budget={100000} records={{}} negotiations={[]} historyView="players" onHistoryView={vi.fn()} onOpenPlayer={vi.fn()} onTransferOffer={vi.fn()} onTransferAction={vi.fn()} onBack={vi.fn()} />);
@@ -33,7 +33,7 @@ it("filtra somente empréstimos quando essa disponibilidade é selecionada", () 
   expect(screen.queryByText("À VENDA")).toBeNull();
 });
 
-it("separa a busca das negociações e mantém as ações de contraproposta e confirmação", () => {
+it("separa a busca das negociações e mantém as ações de contraproposta e confirmação", async () => {
   const database = createDefaultDatabase(), club = database.clubs[0];
   const player = database.players.find((item) => item.clubId !== club.id && item.marketStatus === "sale")!;
   const seller = database.clubs.find((item) => item.id === player.clubId)!;
@@ -55,7 +55,7 @@ it("separa a busca das negociações e mantém as ações de contraproposta e co
   expect(screen.getByLabelText("Buscar jogadores")).toBeTruthy();
 });
 
-it("mostra estado vazio das negociações e disponibiliza filtros avançados", () => {
+it("mostra estado vazio das negociações e disponibiliza filtros avançados", async () => {
   const database = createDefaultDatabase(), club = database.clubs[0];
   render(<WorldScreens section="search" database={database} club={club.name} coach="Teste" squad={[]} budget={1000} records={{}} negotiations={[]} historyView="players" onHistoryView={vi.fn()} onOpenPlayer={vi.fn()} onTransferOffer={vi.fn()} onTransferAction={vi.fn()} onBack={vi.fn()} />);
   fireEvent.click(screen.getByText("Mais filtros"));
@@ -67,7 +67,7 @@ it("mostra estado vazio das negociações e disponibiliza filtros avançados", (
   expect(screen.getByLabelText("Disponibilidade")).toBeTruthy();
 });
 
-it("explora por perfil sem nome, combina atuação/nacionalidade e limpa a busca", () => {
+it("explora por perfil sem nome, combina atuação/nacionalidade e limpa a busca", async () => {
   const database = createDefaultDatabase(), club = database.clubs[0];
   const foreign = { ...database.clubs[1], country: "Portugal", name: "Clube Lisboa" };
   database.clubs = [club, foreign];
@@ -87,7 +87,7 @@ it("explora por perfil sem nome, combina atuação/nacionalidade e limpa a busca
   expect((screen.getByLabelText("Nacionalidade") as HTMLSelectElement).value).toBe("");
 });
 
-it("encontra livres sem nome e envia proposta sem taxa, sem contratar automaticamente", () => {
+it("encontra livres sem nome e envia proposta sem taxa, sem contratar automaticamente", async () => {
   const database = createDefaultDatabase(), club = database.clubs[0];
   database.players = [{ ...database.players[0], id: "free", name: "Atleta Livre", clubId: "", marketStatus: "normal" }];
   const offer = vi.fn().mockReturnValue("Condições aceitas. Confirme para assinar."), action = vi.fn();

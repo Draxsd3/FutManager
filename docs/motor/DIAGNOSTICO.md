@@ -75,3 +75,7 @@ Navegador mantém índice dos saves em localStorage, catálogo/snapshots por mec
 | R12 | P1 persistência | Atleta promovido pode ter youthId sem sourceId; reconciliação em nuvem por source_player_id exige cuidado com identidade nula | E2/E6: IDs persistentes sem colidir promoções nem corromper histórico |
 
 P0 indica o que bloqueia aumentar a autoridade da IA, não uma autorização para mudar agora o jogo. Esses achados exigem cenários reproduzíveis na implementação; não são relatos de corrupção confirmada dos saves do usuário.
+
+## Resolução posterior: E3
+
+O diagnóstico acima registra o estado de E1. A divergência de venda humana (R01) e a incidência salarial/reserva (R02) passam pelo executor financeiro comum nos fluxos novos de E3; ver [ETAPA-3.md](ETAPA-3.md). Saves antigos são adotados no saldo/data atuais, sem reconstituir negócios históricos incompletos. Os demais riscos não são encerrados por essa alteração.

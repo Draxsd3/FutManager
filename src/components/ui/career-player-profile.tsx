@@ -13,7 +13,7 @@ import { fifaPosition } from "@/lib/game/fifa-position";
 type Tab = "resumo" | "temporada" | "historico" | "mercado";
 const tabs: Record<Tab, string> = { resumo: "Resumo", temporada: "Temporada", historico: "Histórico", mercado: "Mercado" };
 
-export function CareerPlayerProfile({ player, club, kit = 1, clubColors, record, clubs = [], date, onMarketAction, onClose }: { player: Player; club: string; kit?: 1 | 2 | 3; clubColors?: ClubColorIdentity; record: PlayerCareerRecord; clubs?: string[]; date?: string; onMarketAction: (action: MarketAction) => string; onClose: () => void }) {
+export function CareerPlayerProfile({ player, club, kit = 1, clubColors, record, clubs = [], date, onMarketAction, onClose }: { player: Player; club: string; kit?: 1 | 2 | 3; clubColors?: ClubColorIdentity; record: PlayerCareerRecord; clubs?: string[]; date?: string; onMarketAction: (action: MarketAction) => string | Promise<string>; onClose: () => void }) {
   const [tab, setTab] = useState<Tab>("resumo");
   const season = [...record.seasons].reverse().find((item) => item.club === club);
   const matches = [...(record.matches ?? [])].reverse();

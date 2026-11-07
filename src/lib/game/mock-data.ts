@@ -2,6 +2,7 @@ import type { LoanContract } from "./loans";
 export type PositionCode = "G" | "L" | "Z" | "M" | "A";
 
 export type Player = {
+  registrationStatus?: "registered" | "pending";
   loan?: LoanContract;
   id: number;
   sourceId?: string;
@@ -160,7 +161,7 @@ const formationRoles: Record<string, PositionCode[]> = {
 // Preenche cada slot pela função natural, depois pela secundária e só então improvisa.
 export function buildStartingXI(formation: string, players: Player[]): number[] {
   const roles = formationRoles[formation] ?? formationRoles["4-3-3"];
-  const available = [...players];
+  const available = players.filter(p => p.registrationStatus !== "pending");
   return roles.map((role) => {
     const ranked = available
       .filter((player) => role === "G" ? player.position === "G" : player.position !== "G")
