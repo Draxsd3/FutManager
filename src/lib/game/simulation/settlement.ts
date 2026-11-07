@@ -1,3 +1,4 @@
+import { playerEligible } from "./players";
 import { isUnemployed } from "./coaches";
 import { reconcileContractSquad } from "./contract-squad";
 import { buildSquadFromDatabase, type CareerSave, type EditorDatabase } from "../editor-data";
@@ -68,7 +69,7 @@ function checkpoint(save: CareerSave, database: EditorDatabase, finance: Finance
   const squad=reconcileContractSquad(p.careerSquad ?? [],all,new Set(effective.players.map(p=>p.id)),Object.keys(p.playerCareers).map(Number));
   const records={...p.playerCareers};
   for(const player of squad) if(!records[player.id]) records[player.id]=createPlayerCareer(player,save.clubName,Number(save.inGameDate.slice(0,4)));
-  const eligible=new Set(squad.filter(p=>p.registrationStatus!=="pending").map(p=>p.id));
+  const eligible=new Set(squad.filter(player=>playerEligible(player)).map(p=>p.id));
   const positions=Object.fromEntries(Object.entries(p.manualPositions).filter(([id])=>eligible.has(Number(id))));
   const budget=managerMarket.clubs[save.clubId].budget;
   engine.revision++;

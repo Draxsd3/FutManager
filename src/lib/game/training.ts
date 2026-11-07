@@ -1,3 +1,4 @@
+import { playerEligible } from "./simulation/players";
 import type { Player } from "./mock-data";
 
 export const TRAINING_DAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"] as const;
@@ -47,6 +48,7 @@ export function sessionEnergyDelta(drill: TrainingDrillId, intensity: TrainingIn
 }
 
 export function canJoinTraining(player: Player, drill: TrainingDrillId, intensity: TrainingIntensity) {
+  if(!playerEligible(player)) return false;
   if (drill === "recuperacao") return player.energy < 99;
   return player.energy >= (intensity === "Intensa" ? 25 : 15);
 }

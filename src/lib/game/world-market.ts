@@ -1,3 +1,4 @@
+import { populationDatabase, type PlayerPopulation } from "./simulation/players";
 import { buildClubPlan, marketOptions, rosterIndex, marketContextKey, type MarketStrategy, type MarketSelection, type MarketContext } from "./simulation/market-planning";
 import { MARKET_RULES } from "./simulation/market-rules";
 import type { CareerSeason } from "./season";
@@ -9,13 +10,15 @@ import { appointManager, type ManagerMarket } from "./manager-market";
 import { databaseWithCompletedTransfers, proposeTransfer, respondToTransferNegotiation, type TransferNegotiation } from "./transfers";
 
 export type WorldMarket = {
+  population?: PlayerPopulation;
   marketState?: MarketStrategy;
   lastWeek?: number;
   listings: Record<string, "sale" | "loan" | "normal">;
   events: { date: string; text: string }[];
 };
 export function worldDatabase(database: EditorDatabase, deals: TransferNegotiation[], loans: CareerLoans, world?: WorldMarket, finance?: FinanceState): EditorDatabase {
-  const effective = financeDatabase(databaseWithLoans(databaseWithCompletedTransfers({ ...database, players: database.players.map(p => ({ ...p, loan: undefined })) }, deals), loans), finance);
+  const base=populationDatabase(database,world?.population);
+  const effective = financeDatabase(databaseWithLoans(databaseWithCompletedTransfers({ ...base, players: base.players.map(p => ({ ...p, loan: undefined })) }, deals), loans), finance);
   return world ? { ...effective, players: effective.players.map(p => world.listings[p.id] && p.loan?.status !== "active" ? { ...p, marketStatus: world.listings[p.id] } : p) } : effective;
 }
 const hash = (value: string) => { let n = 2166136261; for (const c of value) n = Math.imul(n ^ c.charCodeAt(0), 16777619); return n >>> 0; };

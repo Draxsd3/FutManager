@@ -36,6 +36,7 @@ export type EditorClub = {
 export type EditorPlayerMarketStatus = "normal" | "sale" | "loan";
 
 export type EditorPlayer = {
+  condition?: import("./simulation/players").PlayerCondition;
   registrationStatus?: "registered" | "pending";
   /** Source-supplied nationalities; never infer from the club country. */
   nationalities?: string[];
@@ -244,6 +245,7 @@ export function buildSquadFromDatabase(database: EditorDatabase, clubName: strin
     id: index + 1,
     sourceId: player.id,
     registrationStatus: player.registrationStatus,
+    condition: player.condition,
     shirtNumber: player.shirtNumber,
     name: player.name,
     position: player.primaryPosition,

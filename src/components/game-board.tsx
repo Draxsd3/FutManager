@@ -1,4 +1,6 @@
 "use client";
+import { migratePlayerSave, playerEligible, projectSquadCondition } from "@/lib/game/simulation/players";
+import { trainCareerPlayers, promoteCareerYouth, playerCareAction, youthCohort } from "@/lib/game/simulation/player-commands";
 import { coachCheckpoint, isUnemployed, migrateCoachSave } from "@/lib/game/simulation/coaches";
 import { UnemploymentScreen } from "./screens/unemployment-screen";
 import { reconcileContractSquad } from "@/lib/game/simulation/contract-squad";
@@ -76,10 +78,10 @@ import {
   writeActiveCareerSession,
 } from "@/lib/game/session";
 import { agendaOptions, type AgendaView } from "@/components/screens/agenda-screen";
-import { generateYouthTeam, promoteYouth, type YouthTeam } from "@/lib/game/youth";
+import { type YouthTeam } from "@/lib/game/youth";
 
 import type { CareerProgress, MatchPreparation } from "@/lib/game/progress";
-import { applyTrainingSession, type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
+import { type TrainingSessionInput, type TrainingSessionRecord } from "@/lib/game/training";
 import { calculateMatchStatistics, calculatePlayerRatings, createMatchWeather, createMinuteRandom, matchEnergyAfter, resolveMatchPlayerRole, seededRandom, simulateAction } from "@/lib/game/live-match";
 import { completeCareerFixture, createCareerSeason, upgradeUnplayedSeason, getCompetitionPlayerStats, getCompetitionStandings, nextCareerFixture, playerContributionsFromMatch, type CareerSeason } from "@/lib/game/season";
 import { reconcileCareerSaveWithDatabase } from "@/lib/game/save-reconciliation";
@@ -273,7 +275,6 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [transferNegotiations, setTransferNegotiations] = useState<TransferNegotiation[]>([]);
   const [loanContracts, setLoanContracts] = useState<CareerLoans>({});
   const [youthTeams, setYouthTeams] = useState<Record<string, YouthTeam>>({});
-  const [retryYouthClub, setRetryYouthClub] = useState<string | null>(null);
   const [loansOpen, setLoansOpen] = useState(false);
   const careerDatabase = useMemo(() => database ? worldDatabase(database, transferNegotiations, loanContracts, worldMarket, managerMarket?.finance) : null, [database, transferNegotiations, loanContracts, worldMarket, managerMarket?.finance]);
 
@@ -352,25 +353,24 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const managementDatabase = useMemo(() => careerDatabase ? { ...careerDatabase, clubs: careerDatabase.clubs.map(item => ({ ...item, coachName: managerMarket?.clubs[item.id] ? managerMarket.clubs[item.id].coach ?? "" : item.coachName })) } : null, [careerDatabase, managerMarket]);
   const managedClubRecord = database?.clubs.find((item) => item.name === club);
   useEffect(() => {
-    if (page !== "juniors" || !careerLoaded || !activeSaveId || !managedClubRecord || (youthTeams[managedClubRecord.id] && retryYouthClub !== managedClubRecord.id)) return;
+    if (page !== "juniors" || !careerLoaded || !activeSaveId || !managedClubRecord || youthTeams[managedClubRecord.id]) return;
     let cancelled = false;
     const team = managedClubRecord;
     async function loadYouth() {
-      const result = generateYouthTeam(team, activeSaveId!, "Base simulada para esta carreira. Consultas externas ficam no Editor de Universo.");
+      const result = youthCohort(team,activeSaveId!,Number(savesRef.current.find(s=>s.id===activeSaveId)?.inGameDate.slice(0,4) ?? 2026));
       if (!cancelled) {
         setYouthTeams(current => {
           const previous = current[team.id];
           const promoted = previous?.promoted ?? [];
-          // Keep a real roster if retry fails; a generated retry must not resurrect promoted players.
+          // Keep saved imported rosters and never resurrect promoted identities.
           const next = previous?.origin === "transfermarkt" && result.origin === "simulado" ? previous : { ...result, promoted, players: result.players.filter(player => !promoted.includes(player.id)) };
           return { ...current, [team.id]: next };
         });
-        setRetryYouthClub(null);
       }
     }
     void loadYouth();
     return () => { cancelled = true; };
-  }, [page, careerLoaded, activeSaveId, managedClubRecord, youthTeams, database, retryYouthClub]);
+  }, [page, careerLoaded, activeSaveId, managedClubRecord, youthTeams, database]);
   const scheduledFixture = nextCareerFixture(competitionSeason);
   const activeFixture = competitionSeason?.fixtures.find((item) => item.id === activeFixtureId) ?? scheduledFixture;
   const userIsHome = !activeFixture || activeFixture.homeClubId === managedClubRecord?.id;
@@ -387,17 +387,17 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     [opponentSquad, opponentFormation],
   );
   const startersData = useMemo(
-    () => starters.map((id) => squad.find((p) => p.id === id)!).filter(p=>p && p.registrationStatus !== "pending"),
+    () => starters.map((id) => squad.find((p) => p.id === id)!).filter(p=>p && playerEligible(p)),
     [starters, squad],
   );
   const bench = useMemo(
-    () => squad.filter((p) => !starters.includes(p.id) && p.registrationStatus !== "pending"),
+    () => squad.filter((p) => !starters.includes(p.id) && playerEligible(p)),
     [starters, squad],
   );
   // Old saves have no nominated bench; recover the first eligible reserves deterministically.
   const eligibleMatchBench = (matchBenchIds ?? bench.filter((p) => !participation[p.id]).slice(0, 12).map((p) => p.id))
     .map((id) => squad.find((p) => p.id === id))
-    .filter((p): p is Player => !!p && !starters.includes(p.id) && !participation[p.id]);
+    .filter((p): p is Player => !!p && playerEligible(p) && !starters.includes(p.id) && !participation[p.id]);
   const sentOffHomeMinuteById = Object.fromEntries(
     events
       .filter((item) => item.card === "red" && item.scene?.team === "home" && item.actorId !== undefined)
@@ -744,7 +744,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       savesRef.current = [next,...savesRef.current.filter(save=>save.id!==next.id)];
       setEngine(p.engine); setBudget(next.budget); budgetRef.current = next.budget;
       setManagerMarket(p.managerMarket); setWorldMarket(p.worldMarket); setTransferNegotiations(p.transferNegotiations ?? []);
-      setCareerSquad(p.careerSquad); setPlayerCareers(p.playerCareers); setLoanContracts(p.loanContracts ?? {});
+      setCareerSquad(p.careerSquad); setTrainingSessions(p.trainingSessions ?? []); setYouthTeams(p.youthTeams ?? {}); setPlayerCareers(p.playerCareers); setLoanContracts(p.loanContracts ?? {});
       setStarters(p.starters); setMatchBenchIds(p.matchBenchIds); setManualPositions(p.manualPositions);
       if (profilePlayer !== null && !p.careerSquad?.some(player=>player.id===profilePlayer)) { setProfilePlayer(null); setSelectedPlayer(null); }
       void persistSave(next);
@@ -774,33 +774,20 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     navigate(action === "roster" ? "hub" : action);
   }
 
-  function trainPlayers(input: Omit<TrainingSessionInput, "season" | "week">) {
-    const season = competitionSeason?.season ?? 2026;
-    if (trainingSessions.some((session) => session.season === season && session.week === round && session.day === input.day)) {
-      return { error: `A sessão de ${input.day.toLocaleLowerCase("pt-BR")} já foi concluída nesta semana.` };
-    }
-    const result = applyTrainingSession(squad, { ...input, season, week: round });
-    if (!result.record) return { error: result.error ?? "Não foi possível aplicar o treino." };
-    setCareerSquad(result.squad);
-    setTrainingSessions((current) => [...current, result.record!].slice(-240));
-    setSyncLabel("Treino aplicado — salvando carreira...");
-    return { record: result.record };
+  async function trainPlayers(input: Omit<TrainingSessionInput,"season"|"week">) {
+    let record: import("@/lib/game/training").TrainingSessionRecord | undefined;
+    const ok="Treino aplicado e salvo.";
+    const message=await commitFinancialChange((save,db)=>{
+      const result=trainCareerPlayers(save,db,{...input,season:Number(save.inGameDate.slice(0,4)),week:round});record=result.record;
+      return {save:result.save,message:result.error ?? ok};
+    });
+    return message===ok && record ? {record} : {error:message};
   }
-
-  function promoteJunior(youthId: string) {
-    if (!managedClubRecord || !activeSaveId) return "Carreira indisponível.";
-    const team = youthTeams[managedClubRecord.id];
-    const junior = team?.players.find(player => player.id === youthId);
-    if (!junior) return "Jogador não encontrado na base.";
-    if (squad.length >= 200) return "Elenco principal atingiu o limite de 200 jogadores.";
-    const promoted = promoteYouth(junior, squad, Object.keys(playerCareers).map(Number));
-    if (!promoted) return "Jogador já promovido.";
-    const nextSquad = [...squad, promoted];
-    const nextTeams = { ...youthTeams, [managedClubRecord.id]: { ...team, players: team.players.filter(player => player.id !== youthId), promoted: [...(team.promoted ?? []), youthId] } };
-    setCareerSquad(nextSquad); setYouthTeams(nextTeams);
-    const current = savesRef.current.find(save => save.id === activeSaveId);
-    if (current) void persistSave({ ...current, updatedAt: new Date().toISOString(), progress: { ...progressRef.current, careerSquad: nextSquad, youthTeams: nextTeams } });
-    return `${junior.name} promovido ao elenco principal.`;
+  async function promoteJunior(youthId:string) {
+    return commitFinancialChange((save,db)=>promoteCareerYouth(save,db,youthId));
+  }
+  async function carePlayer(id:number,action:"rest"|"rehabilitation"|"promise") {
+    return commitFinancialChange((save,db)=>playerCareAction(save,db,id,action));
   }
 
   function renderStandings() {
@@ -951,20 +938,20 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     const initialStarters = buildStartingXI("4-3-3", baseSquad);
     save.progress = { ...progressRef.current, engine: createEngineState(undefined,save.id,save.inGameDate), universeSnapshot: universeSnapshot.current, page: "hub", matchPreparation: undefined, activeSaveId: save.id, coach: coach.trim(),
       round: 1, budget: 12624, stadiums: {}, kit: 1, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
-      careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, trainingSessions: [], manualPositions: {},
+      worldMarket:undefined, careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, trainingSessions: [], manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
       detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, confidenceHistory: [], confidenceStartBudget: 12624, managerMarket: initializeCareerMarket(database, newSeason, coach.trim(), 12624), jobClubSnapshots: {}, managerAppointments: [{ clubId: selectedClub.id, club: selectedClub.name, startedOn: save.inGameDate }], youthTeams: {}, activeFixtureId: firstFixture?.id, transferNegotiations: [], loanContracts: initialLoans, championHistory: [] };
     setActiveSaveId(save.id);
     setCompetitionSeason(newSeason);
-    save.progress = migrateCoachSave(migrateFinanceSave(save,database),database).progress!;
+    save.progress = migratePlayerSave(migrateCoachSave(migrateFinanceSave(save,database),database),worldDatabase(database,save.progress?.transferNegotiations ?? [],save.progress?.loanContracts ?? {},save.progress?.worldMarket,save.progress?.managerMarket?.finance)).progress!;
     setManagerMarket(save.progress.managerMarket); setJobClubSnapshots({}); setManagerAppointments(save.progress.managerAppointments ?? []);
     setChampionHistory([]);
-    setYouthTeams({}); setRetryYouthClub(null);
+    setYouthTeams({});
     setConfidenceHistory([]);
     setConfidenceStartBudget(12624);
     setActiveFixtureId(firstFixture?.id);
     setTransferNegotiations([]);
-    setWorldMarket(undefined);
+    setWorldMarket(save.progress.worldMarket);
     setEngine(save.progress.engine); setAdvanceError("");
     setRound(1);
     setDefaultMatchSpeed(1);
@@ -984,7 +971,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setHalftimeWaiting(false);
     setSubstitutionsLeft(5);
     setCareerLoaded(true);
-    setCareerSquad(baseSquad);
+    setCareerSquad(save.progress.careerSquad ?? baseSquad);
     setStarters(initialStarters);
     setPlayerCareers({});
     setTrainingSessions([]);
@@ -1014,7 +1001,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     const loadingFixture = resumingMatch ? restoredSeason?.fixtures.find(f => f.id === save.progress?.activeFixtureId) : nextCareerFixture(restoredSeason);
     save = { ...save, inGameDate: save.progress?.engine ? save.inGameDate : careerCalendarDate(save.inGameDate, undefined, loadingFixture),
       ...(save.progress ? { progress: { ...save.progress, competitionSeason: restoredSeason } } : {}) };
-    try { save = migrateEngineSave(save); if (database) save = migrateCoachSave(migrateFinanceSave(save,database),database); } catch (error) { setSyncLabel(error instanceof Error ? error.message : "Save incompatível; preservado."); return false; }
+    try { save = migrateEngineSave(save); if (database) save = migratePlayerSave(migrateCoachSave(migrateFinanceSave(save,database),database),worldDatabase(database,save.progress?.transferNegotiations ?? [],save.progress?.loanContracts ?? {},save.progress?.worldMarket,save.progress?.managerMarket?.finance)); } catch (error) { setSyncLabel(error instanceof Error ? error.message : "Save incompatível; preservado."); return false; }
     // Keep the civil date in the same account-local snapshot used by autosave and loan expiry.
     const normalizedSaves = savesRef.current.map(item => item.id === save.id ? save : item);
     savesRef.current = normalizedSaves;
@@ -1023,8 +1010,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       const loans = expireLoans(recoverCareerLoans(save.progress.careerSquad ?? [], save.progress.transferNegotiations ?? [], database, save.progress.loanContracts), save.inGameDate);
       const ownClubId = database.clubs.find(item => item.name === save.clubName)?.id ?? save.clubId;
       const restoredDatabase = worldDatabase(database,save.progress.transferNegotiations ?? [],loans,save.progress.worldMarket,save.progress.managerMarket?.finance);
-      const restoredSquad = reconcileContractSquad(reconcileLoanSquad(save.progress.careerSquad ?? [], buildSquadFromDatabase(restoredDatabase, save.clubName, true) ?? [], loans, ownClubId, Object.keys(save.progress.playerCareers).map(Number)),buildSquadFromDatabase(restoredDatabase,save.clubName,true) ?? [],new Set(restoredDatabase.players.map(p=>p.id)),Object.keys(save.progress.playerCareers).map(Number));
-      const remaining = new Set(restoredSquad.filter(player=>player.registrationStatus !== "pending").map(player => player.id));
+      const restoredSquad = projectSquadCondition(reconcileContractSquad(reconcileLoanSquad(save.progress.careerSquad ?? [], buildSquadFromDatabase(restoredDatabase, save.clubName, true) ?? [], loans, ownClubId, Object.keys(save.progress.playerCareers).map(Number)),buildSquadFromDatabase(restoredDatabase,save.clubName,true) ?? [],new Set(restoredDatabase.players.map(p=>p.id)),Object.keys(save.progress.playerCareers).map(Number)),save.progress.worldMarket?.population);
+      const remaining = new Set(restoredSquad.filter(player=>playerEligible(player)).map(player => player.id));
       save = { ...save, progress: { ...save.progress, loanContracts: loans, careerSquad: restoredSquad, starters: save.progress.starters.filter(id => remaining.has(id)), matchBenchIds: save.progress.matchBenchIds?.filter(id => remaining.has(id)), manualPositions: Object.fromEntries(Object.entries(save.progress.manualPositions).filter(([id]) => remaining.has(Number(id)))) } };
     }
     sessionRestoreVersion.current += 1;
@@ -1047,7 +1034,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setPlayerCareers(save.playerCareers ?? {});
     setKit(save.progress?.kit === 2 || save.progress?.kit === 3 ? save.progress.kit : 1);
     setTrainingSessions(save.progress?.trainingSessions ?? []);
-    setYouthTeams(save.progress?.youthTeams ?? {}); setRetryYouthClub(null);
+    setYouthTeams(save.progress?.youthTeams ?? {});
     setManualPositions(save.manualPositions ?? {});
     setTransferNegotiations(save.progress?.transferNegotiations ?? []);
     setWorldMarket(save.progress?.worldMarket);
@@ -1354,7 +1341,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   async function startMatch() {
-    if (starters.some(id=>squad.find(p=>p.id===id)?.registrationStatus === "pending")) { setMatchRulesError("Há atleta com inscrição pendente na escalação."); return; }
+    if (starters.length!==11 || starters.some(id=>!squad.some(p=>p.id===id && playerEligible(p)))) { setMatchRulesError("Escalação incompleta ou com atleta inelegível (inscrição, lesão, suspensão ou aposentadoria)."); return; }
     if (!scheduledFixture) {
       setMatchRulesError("A temporada não possui partidas pendentes.");
       return;
@@ -1605,7 +1592,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           const player = squad.find((item) => item.id === profilePlayer);
           if (!player) return null;
           const record = playerCareers[profilePlayer] ?? createPlayerCareer(player, club);
-          return <CareerPlayerProfile key={player.id} player={player} kit={kit} clubColors={database?.clubs.find((item) => item.name === club)} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onClose={() => setProfilePlayer(null)} />;
+          return <CareerPlayerProfile onCare={(action)=>carePlayer(player.id,action)} key={player.id} player={player} kit={kit} clubColors={database?.clubs.find((item) => item.name === club)} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onClose={() => setProfilePlayer(null)} />;
         })()}
       </>
     );
@@ -1622,7 +1609,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return (
       <>
         <CareerWorkspace {...workspace} title={windowTitles[page]} titleIcon={managementSection === "teams" ? "group" : undefined}>
-          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens marketState={worldMarket?.marketState} onMarketMode={(mode)=>commitFinancialChange(save=>({save:setMarketMode(save,mode),message:"Política de mercado salva nesta carreira."}))} managerMarket={managerMarket} gameDate={saves.find(save => save.id === activeSaveId)?.inGameDate} youthTeam={managedClubRecord ? youthTeams[managedClubRecord.id] : undefined} youthLoading={!!managedClubRecord && (!youthTeams[managedClubRecord.id] || retryYouthClub === managedClubRecord.id)}  onPromoteYouth={promoteJunior} embedded championHistory={championHistory} worldEvents={worldMarket?.events} section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={managementDatabase ?? database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations.filter(deal => deal.buyerClubId === managedClubRecord?.id)} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
+          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens marketState={worldMarket?.marketState} onMarketMode={(mode)=>commitFinancialChange(save=>({save:setMarketMode(save,mode),message:"Política de mercado salva nesta carreira."}))} managerMarket={managerMarket} gameDate={saves.find(save => save.id === activeSaveId)?.inGameDate} youthTeam={managedClubRecord ? youthTeams[managedClubRecord.id] : undefined} youthLoading={!!managedClubRecord && !youthTeams[managedClubRecord.id]}  onPromoteYouth={promoteJunior} embedded championHistory={championHistory} worldEvents={worldMarket?.events} section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={managementDatabase ?? database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations.filter(deal => deal.buyerClubId === managedClubRecord?.id)} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
             jobs={managerMarket && careerDatabase && managedClubRecord ? { market: managerMarket, database: careerDatabase, currentClubId: managedClubRecord.id, date: saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11", appointments: managerAppointments, onApply: applyToManagerJob, onDecline: declineJob, onAccept: acceptJob } : undefined}
             championHistory={championHistory}
             stadium={managedClubRecord ? stadiums[managedClubRecord.id] : undefined}
@@ -1659,7 +1646,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           const player = squad.find((item) => item.id === profilePlayer);
           if (!player) return null;
           const record = playerCareers[profilePlayer] ?? createPlayerCareer(player, club);
-          return <CareerPlayerProfile key={player.id} player={player} kit={kit} clubColors={database?.clubs.find((item) => item.name === club)} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onClose={() => setProfilePlayer(null)} />;
+          return <CareerPlayerProfile onCare={(action)=>carePlayer(player.id,action)} key={player.id} player={player} kit={kit} clubColors={database?.clubs.find((item) => item.name === club)} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onClose={() => setProfilePlayer(null)} />;
         })()}
       </>
     );
@@ -1835,7 +1822,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           progressRef.current = p;
           savesRef.current = [next,...savesRef.current.filter(save => save.id !== next.id)];
           setStandingsOpen(false); setBudget(next.budget); budgetRef.current = next.budget; setRound(next.round); setActiveFixtureId(p.activeFixtureId);
-          setEngine(p.engine); setWorldMarket(p.worldMarket); setTransferNegotiations(p.transferNegotiations ?? []); setManagerMarket(p.managerMarket); setManagerAppointments(p.managerAppointments ?? []);
+          setEngine(p.engine); setWorldMarket(p.worldMarket); setTransferNegotiations(p.transferNegotiations ?? []); setManagerMarket(p.managerMarket); setManagerAppointments(p.managerAppointments ?? []); setYouthTeams(p.youthTeams ?? {});
           setLoanContracts(p.loanContracts ?? {}); setCareerSquad(p.careerSquad); setStarters(p.starters); setMatchBenchIds(p.matchBenchIds); setManualPositions(p.manualPositions); setPlayerCareers(p.playerCareers);
           setProfilePlayer(null); setSelectedPlayer(null); setPage("hub");
           void persistSave({ ...next,updatedAt:new Date().toISOString() });

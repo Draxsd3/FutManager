@@ -79,7 +79,7 @@ export function ClubSectionScreen({
   inGameDate?: string;
   onBack: () => void;
   onOpenPlayer: (id: number) => void;
-  onTrainPlayers: (input: Omit<TrainingSessionInput, "season" | "week">) => { record?: TrainingSessionRecord; error?: string };
+  onTrainPlayers: (input: Omit<TrainingSessionInput, "season" | "week">) => { record?: TrainingSessionRecord; error?: string } | Promise<{ record?: TrainingSessionRecord; error?: string }>;
   starters?: number[];
   trainingSessions?: TrainingSessionRecord[];
   trainingWeek?: number;
@@ -166,7 +166,7 @@ function DataTable({ headers, children }: { headers: string[]; children: React.R
 function Cell({ children }: { children: React.ReactNode }) { return <td className="px-3 py-2">{children}</td>; }
 
 
-function TrainingCenter({ squad, club, clubColors, kit, starters, week, season, sessions, onTrain }: { squad: Player[]; club: string; clubColors?: ClubColorIdentity; kit: 1 | 2 | 3; starters: number[]; week: number; season: number; sessions: TrainingSessionRecord[]; onTrain: (input: Omit<TrainingSessionInput, "season" | "week">) => { record?: TrainingSessionRecord; error?: string } }) {
+function TrainingCenter({ squad, club, clubColors, kit, starters, week, season, sessions, onTrain }: { squad: Player[]; club: string; clubColors?: ClubColorIdentity; kit: 1 | 2 | 3; starters: number[]; week: number; season: number; sessions: TrainingSessionRecord[]; onTrain: (input: Omit<TrainingSessionInput, "season" | "week">) => { record?: TrainingSessionRecord; error?: string } | Promise<{ record?: TrainingSessionRecord; error?: string }> }) {
   const embedded = useContext(WindowHeaderContext);
   const weekly = trainingWeekSessions(sessions, season, week);
   const completedDays = new Set(weekly.map((session) => session.day));
@@ -186,8 +186,9 @@ function TrainingCenter({ squad, club, clubColors, kit, starters, week, season, 
 
   function updateSelection(ids: number[]) { setSelectedIds([...new Set(ids)]); setMessage(""); }
   function togglePlayer(id: number) { updateSelection(selectedSet.has(id) ? selectedIds.filter((item) => item !== id) : [...selectedIds, id]); }
-  function applySession() {
-    const result = onTrain({ day, drill, intensity, playerIds: eligibleSelected.map((player) => player.id) });
+  async function applySession() {
+    const pending = onTrain({ day, drill, intensity, playerIds: eligibleSelected.map((player) => player.id) });
+    const result = pending instanceof Promise ? await pending : pending;
     setMessage(result.record ? `${trainingDrillLabel(result.record.drill)} aplicado a ${result.record.playerIds.length} atleta${result.record.playerIds.length === 1 ? "" : "s"}.` : result.error ?? "Não foi possível aplicar o treino.");
     if (result.record) setSelectedIds(result.record.playerIds);
   }

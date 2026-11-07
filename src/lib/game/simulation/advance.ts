@@ -1,3 +1,5 @@
+import { advancePopulation, dayAfter, migratePlayerSave, playerEligible, projectSquadCondition } from "./players";
+import { advanceYouth } from "./player-commands";
 import { isUnemployed, processCoaches } from "./coaches";
 import { advanceSeasonBeforeDate } from "../season";
 import { updateCareerMarket } from "../manager-jobs";
@@ -25,7 +27,8 @@ export function advanceCareer(save: CareerSave, database: EditorDatabase, comman
     return save;
   }
   if (engine.revision !== command.expectedRevision || command.fromDate !== save.inGameDate) throw new EngineConflict();
-  const p = structuredClone(migrateFinanceSave(save,database).progress!);
+  const financed=migrateFinanceSave(save,database);
+  const p = structuredClone(migratePlayerSave(financed,worldDatabase(database,financed.progress?.transferNegotiations ?? [],financed.progress?.loanContracts ?? {},financed.progress?.worldMarket,financed.progress?.managerMarket?.finance)).progress!);
   const unemployed = isUnemployed(p.managerMarket);
   const nextFixture = unemployed ? undefined : nextCareerFixture(p.competitionSeason);
   const date = civilDate(command.targetDate ?? (unemployed ? new Date(Date.parse(`${save.inGameDate}T12:00:00Z`)+7*86400000).toISOString().slice(0,10) : careerCalendarDate(save.inGameDate,p.competitionSeason,nextFixture)));
@@ -36,12 +39,29 @@ export function advanceCareer(save: CareerSave, database: EditorDatabase, comman
   let managers = p.managerMarket;
   if (managers) {
     managers = adoptFinance(managers,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance),save.inGameDate,loans,unemployed ? undefined : {clubId:save.clubId,budget:save.budget});
-    managers = projectFinance({...managers,finance:accrueFinance(managers.finance!,date)});
+
   }
   if (unemployed && p.competitionSeason && managers) {
-    p.competitionSeason=advanceSeasonBeforeDate(p.competitionSeason,date,database);
+    p.competitionSeason=advanceSeasonBeforeDate(p.competitionSeason,date,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance));
     managers=updateCareerMarket(managers,p.competitionSeason,{clubId:"__unemployed__",budget:0,payroll:0},date);
-    managers=adoptFinance(managers,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance),date,loans);
+    managers=adoptFinance(managers,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance),save.inGameDate,loans);
+  }
+  if(p.worldMarket?.population) {
+    const population=advancePopulation(p.worldMarket.population,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers?.finance),p.competitionSeason,date,save.id,unemployed?undefined:{clubId:save.clubId,squad:p.careerSquad ?? [],fixtureId:command.fixtureId,minutes:Object.fromEntries(Object.entries(p.participation ?? {}).map(([id,v])=>[id,Math.max(0,(v.left ?? 90)-v.entered)]))});
+    p.worldMarket={...p.worldMarket,population};
+    if(managers?.finance) for(const person of Object.values(population.people)) if(person.retiredOn) {const c=managers.finance.contracts[person.id];if(c && c.status==="active") c.endsOn=person.retiredOn<=c.startsOn ? c.startsOn : dayAfter(person.retiredOn,-1);}
+    engine.events.push({id:`${command.operationId}:players`,operationId:command.operationId,date,type:"player-processed",entityIds:[],revision});
+  }
+  if(managers?.finance) managers=projectFinance({...managers,finance:accrueFinance(managers.finance,date)});
+  if(managers?.finance && p.worldMarket?.population) {
+    for(const person of Object.values(p.worldMarket.population.people)) if(person.retiredOn && person.retiredOn<=date) {
+      const contract=managers.finance.contracts[person.id];if(contract && contract.status==="active") {contract.status="expired";managers.finance.registrations[person.id]={clubId:"",status:"pending",reason:"Aposentadoria registrada na carreira."};}
+    }
+    managers=projectFinance(managers);
+  }
+  if(p.worldMarket?.population) {
+    const annual=advanceYouth({...save,progress:{...p,managerMarket:managers}},database,date);
+    p.youthTeams=annual.progress!.youthTeams;p.worldMarket=annual.progress!.worldMarket;managers=annual.progress!.managerMarket;
   }
   if(managers?.staff) {
     const count=managers.staff.events.length;
@@ -90,9 +110,10 @@ export function advanceCareer(save: CareerSave, database: EditorDatabase, comman
     engine.decisions.push({ id:eventId,sector:"market",mode:"internal",actionId:deal.id,rulesVersion:engine.rulesVersion,stateRevision:engine.revision,options:[deal.id],reason:deal.message,eventIds:[eventId] });
   }
   const effective = worldDatabase(database,deals,loans,world,managers?.finance);
-  const squad = recoverSquadBetweenMatches(reconcileLoanSquad(p.careerSquad ?? [], buildSquadFromDatabase(effective,save.clubName,true) ?? [],loans,save.clubId,Object.keys(p.playerCareers).map(Number)),save.inGameDate,date);
-  const ownedSquad = reconcileContractSquad(squad,buildSquadFromDatabase(effective,save.clubName,true) ?? [],new Set(effective.players.map(p=>p.id)),Object.keys(p.playerCareers).map(Number)).filter(player=>player.sourceId || managers?.finance?.contracts[localEmploymentKey(save.id,save.clubId,player.id)]?.status !== "expired");
-  const remaining = new Set(ownedSquad.filter(player=>player.registrationStatus !== "pending").map(player => player.id));
+  const recovered = recoverSquadBetweenMatches(reconcileLoanSquad(p.careerSquad ?? [], buildSquadFromDatabase(effective,save.clubName,true) ?? [],loans,save.clubId,Object.keys(p.playerCareers).map(Number)),save.inGameDate,date);
+  const squad = world?.population ? projectSquadCondition(reconcileLoanSquad(p.careerSquad ?? [], buildSquadFromDatabase(effective,save.clubName,true) ?? [],loans,save.clubId,Object.keys(p.playerCareers).map(Number)),world.population) : recovered;
+  const ownedSquad = projectSquadCondition(reconcileContractSquad(squad,buildSquadFromDatabase(effective,save.clubName,true) ?? [],new Set(effective.players.map(p=>p.id)),Object.keys(p.playerCareers).map(Number)).filter(player=>player.sourceId || managers?.finance?.contracts[localEmploymentKey(save.id,save.clubId,player.id)]?.status !== "expired"),world?.population);
+  const remaining = new Set(ownedSquad.filter(player=>playerEligible(player)).map(player => player.id));
   const nextBudget = managers?.clubs[save.clubId]?.budget ?? save.budget;
   const positions = Object.fromEntries(Object.entries(p.manualPositions).filter(([id]) => remaining.has(Number(id))));
   const records = generateIncomingOffers({ squad:ownedSquad,records:p.playerCareers,database:effective,managerMarket:managers,clubId:save.clubId,club:save.clubName,eventId:command.fixtureId ?? p.activeFixtureId ?? `round-${p.round}`,date });
