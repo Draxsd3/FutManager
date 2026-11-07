@@ -17,7 +17,7 @@ it("filtra jogadores listados para venda ou emprÃ©stimo e envia uma proposta, nÃ
   const seller = database.clubs.find((item) => item.id === player.clubId)!;
   fireEvent.click(screen.getByRole("button", { name: `Fazer proposta por ${player.name} do ${seller.name}` }));
   fireEvent.click(screen.getByRole("button", { name: "Enviar proposta" }));
-  expect(offer).toHaveBeenCalledWith(player.id, expect.any(Number), 0);
+  expect(offer).toHaveBeenCalledWith(player.id, expect.any(Number), 0, expect.any(Number));
   expect(action).not.toHaveBeenCalled();
   expect((await screen.findByRole("status")).textContent).toContain("contraproposta");
   confirm.mockRestore();
@@ -98,7 +98,7 @@ it("encontra livres sem nome e envia proposta sem taxa, sem contratar automatica
   fireEvent.click(screen.getByRole("button",{name: "Fazer proposta por Atleta Livre do Sem clube"}));
   expect(screen.getByLabelText("Valor da proposta").hasAttribute("disabled")).toBe(true);
   fireEvent.click(screen.getByRole("button",{name: "Enviar proposta"}));
-  expect(offer).toHaveBeenCalledWith("free",0,0);
+  expect(offer).toHaveBeenCalledWith("free",0,0,expect.any(Number));
   expect(action).not.toHaveBeenCalled();
   confirm.mockRestore();
 });

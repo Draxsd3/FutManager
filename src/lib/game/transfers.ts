@@ -1,3 +1,4 @@
+import { assessMove, contextualPriceBrl } from "./simulation/market-rules";
 import { isFreeAgent } from "./player-contract";
 import type { EditorPlayer, EditorDatabase } from "./editor-data";
 
@@ -14,6 +15,13 @@ export type TransferNegotiation = {
   kind: TransferKind;
   freeAgent?: boolean;
   completedOn?: string;
+  revision?: number;
+  createdOn?: string;
+  expiresOn?: string;
+  respondAfter?: string;
+  origin?: "cpu" | "human";
+  agreedMonthlyWageBrl?: number;
+  assessment?: import("./simulation/market-rules").MoveAssessment;
   /** Modeled now; non-cash settlements and commissions remain disabled until their ledger exists. */
   paymentTerms?: { kind: "cash" } | { kind: "instalments"; schedule: { dueOn: string; amountBrl: number }[] };
   commission?: { agentId: string; amountBrl: number; payerClubId: string };
@@ -35,6 +43,8 @@ export type TransferOfferInput = {
   buyerClubId: string;
   feeBrl: number;
   wageSharePercent?: number;
+  date?: string;
+  monthlyWageBrl?: number;
 };
 
 export type TransferNegotiationAction =
@@ -59,9 +69,9 @@ export function proposeTransfer(database: EditorDatabase, existing: TransferNego
   const free = player ? isFreeAgent(player) : false;
   if (!player || !buyer || (!seller && !free) || seller?.id === buyer.id || !input.id) return { message: "Jogador ou clube inválido." };
   if (player.loan?.status === "active") return { message: "Atleta em empréstimo vigente: o vínculo precisa ser resolvido antes de uma nova transferência." };
-  if (existing.some((item) => item.playerId === player.id && item.status !== "rejected" && item.status !== "completed")) return { message: "Já existe uma negociação ativa por este atleta." };
+  if (existing.some((item) => item.playerId === player.id && item.buyerClubId === buyer.id && item.status !== "rejected" && item.status !== "completed")) return { message: "Já existe uma negociação ativa por este atleta." };
   const kind: TransferKind = !free && player.marketStatus === "loan" ? "loan" : "sale";
-  const askingFee = playerAskingFeeBrl(player);
+  const askingFee = input.date ? contextualPriceBrl(player,database.players.filter(p=>p.clubId===player.clubId),input.date) : playerAskingFeeBrl(player);
   const wageSharePercent = kind === "loan" ? input.wageSharePercent ?? 50 : 0;
   const validation = free ? input.feeBrl !== 0 ? "Jogador livre não tem taxa de transferência." : null : validateOffer(input.feeBrl, wageSharePercent, askingFee, kind);
   if (validation) return { message: validation };
@@ -77,11 +87,16 @@ export function proposeTransfer(database: EditorDatabase, existing: TransferNego
     askingFeeBrl: askingFee,
     offerFeeBrl: Math.round(input.feeBrl),
     wageSharePercent,
+    ...(input.monthlyWageBrl !== undefined && kind === "sale" ? {agreedMonthlyWageBrl: input.monthlyWageBrl} : {}),
     status: "rejected",
     attempts: 0,
     message: "",
   };
-  const negotiation = free ? { ...base, status: "agreed" as const, agreedFeeBrl: 0, agreedWageSharePercent: 100, message: "Atleta livre aceitou as condições salariais cadastradas. Confirme o compromisso de 12 meses de salário antes de contratar." } : evaluateOffer(base);
+  let negotiation = free ? { ...base, status: "agreed" as const, agreedFeeBrl: 0, agreedWageSharePercent: 100, message: "Atleta livre aceitou as condições salariais cadastradas. Confirme o compromisso de 12 meses de salário antes de contratar." } : evaluateOffer(base);
+  if(input.date) {
+    const assessment=assessMove(player,database.players.filter(p=>p.clubId===buyer.id),kind,input.monthlyWageBrl ?? player.salaryMonthlyBrl);
+    negotiation={...negotiation,createdOn:input.date,expiresOn:new Date(Date.parse(`${input.date}T12:00:00Z`)+14*86400000).toISOString().slice(0,10),revision:1,origin:"human",assessment,...(!assessment.accepted ? {status:"rejected",message:assessment.reason} : {})};
+  }
   return { negotiation, message: negotiation.message };
 }
 

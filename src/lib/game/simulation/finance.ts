@@ -1,3 +1,4 @@
+import { assessMove } from "./market-rules";
 import { MAX_CLUB_SQUAD_SIZE, type EditorDatabase } from "../editor-data";
 import type { ManagerMarket } from "../manager-market";
 import type { CareerLoans, LoanContract } from "../loans";
@@ -178,7 +179,9 @@ export function reserveDeal(state: FinanceState, deal: TransferNegotiation, db: 
   if (!deal.id || !s.clubs[deal.buyerClubId]) throw new Error("Reserva de negociação inválida.");
   const p=db.players.find(p=>p.id===deal.playerId);
   if (!p || !Number.isFinite(p.salaryMonthlyBrl) || p.salaryMonthlyBrl < 0) throw new Error("Salário desconhecido ou inválido.");
-  const cost=dealCost(deal,brlToCents(p.salaryMonthlyBrl));
+  const wage=deal.kind === "sale" ? deal.agreedMonthlyWageBrl ?? p.salaryMonthlyBrl : p.salaryMonthlyBrl;
+  if(!Number.isFinite(wage) || wage < 0) throw new Error("Salário proposto inválido.");
+  const cost=dealCost(deal,brlToCents(wage));
   if (cost > availableCents(s,deal.buyerClubId)) throw new Error("Saldo disponível insuficiente para taxa e compromissos salariais.");
   s.reservations[deal.id]={clubId:deal.buyerClubId,cents:cost};
   return s;
@@ -186,7 +189,9 @@ export function reserveDeal(state: FinanceState, deal: TransferNegotiation, db: 
 /** One executor for human acquisition, human sale and CPU. Private copy until checkpoint commit. */
 export function settleTransfer(state: FinanceState, db: EditorDatabase, deal: TransferNegotiation, date: string): {finance: FinanceState; deal: TransferNegotiation; loans: CareerLoans} {
   civilDate(date);
-  const fingerprint=JSON.stringify([deal.playerId,deal.sourceClubId,deal.buyerClubId,deal.kind,deal.agreedFeeBrl,deal.agreedWageSharePercent,date,deal.paymentTerms ?? {kind:"cash"},deal.commission]);
+  const fingerprintParts: unknown[]=[deal.playerId,deal.sourceClubId,deal.buyerClubId,deal.kind,deal.agreedFeeBrl,deal.agreedWageSharePercent,date,deal.paymentTerms ?? {kind:"cash"},deal.commission];
+  if(deal.agreedMonthlyWageBrl !== undefined) fingerprintParts.push(deal.agreedMonthlyWageBrl);
+  const fingerprint=JSON.stringify(fingerprintParts);
   const old=state.settlements[deal.id];
   if(old) {if(old.fingerprint!==fingerprint) throw new Error("Identidade de liquidação reutilizada."); return {finance:state,deal:old.deal,loans:state.loans};}
   if (!deal.id || deal.status !== "agreed" || !["sale","loan"].includes(deal.kind) || !state.clubs[deal.buyerClubId] || deal.buyerClubId===deal.sourceClubId) throw new Error("Acordo de transferência inválido.");
@@ -199,7 +204,19 @@ export function settleTransfer(state: FinanceState, db: EditorDatabase, deal: Tr
   if (!owner && (!deal.freeAgent || deal.kind !== "sale" || deal.agreedFeeBrl !== 0)) throw new Error("Passe livre exige ausência explícita de vínculo e taxa zero.");
   if (owner && (!s.clubs[owner] || deal.freeAgent || !Number.isFinite(deal.agreedFeeBrl) || deal.agreedFeeBrl! <= 0)) throw new Error("Proprietário ou taxa inválidos.");
   if (!Number.isFinite(p.salaryMonthlyBrl) || p.salaryMonthlyBrl < 0) throw new Error("Salário desconhecido ou inválido.");
-  const monthly=brlToCents(p.salaryMonthlyBrl), cost=dealCost(deal,monthly);
+  if(deal.expiresOn && civilDate(deal.expiresOn)<date) throw new Error("A proposta expirou; faça uma nova negociação.");
+  if(deal.origin==="cpu" && owner) {
+    const sellerRoster=financeDatabase(db,s).players.filter(p=>p.clubId===owner);
+    if(sellerRoster.length<=20 || sellerRoster.filter(o=>o.primaryPosition===p.primaryPosition).length<=(p.primaryPosition==="G" ? 2 : 3)) throw new Error("A saída comprometeria a profundidade do vendedor.");
+  }
+  const offered=deal.kind === "sale" ? deal.agreedMonthlyWageBrl ?? p.salaryMonthlyBrl : p.salaryMonthlyBrl;
+  if(!Number.isFinite(offered) || offered<0) throw new Error("Salário proposto inválido.");
+  if(deal.createdOn) {
+    const roster=financeDatabase(db,s).players.filter(p=>p.clubId===deal.buyerClubId);
+    const assessment=assessMove(p,roster,deal.kind,offered);
+    if(!assessment.accepted) throw new Error(assessment.reason);
+  }
+  const monthly=brlToCents(offered), cost=dealCost(deal,monthly);
   if(cost > availableCents(s,deal.buyerClubId,deal.id)) throw new Error("Saldo disponível insuficiente para taxa e compromissos salariais.");
   if (financeDatabase(db,s).players.filter(p=>p.clubId===deal.buyerClubId).length >= MAX_CLUB_SQUAD_SIZE) throw new Error("Elenco no limite técnico de contratos.");
   const fee=brlToCents(deal.agreedFeeBrl!);

@@ -1,6 +1,6 @@
 # Política híbrida de decisão — especificação para etapas futuras
 
-**Não há Gemini integrado ou habilitado nesta etapa.** Nenhum modelo/chave foi validado. Esta é a complementação solicitada pelo usuário para o capítulo 24: IA generativa pode propor decisões estratégicas temporariamente, não apenas redigir. Continua proibida a alteração direta do estado oficial sem validação. Não usar LLM para inventar placares, resultados financeiros, pessoas, regulamentos ou atributos reais.
+**Registro original de E1; atualizado por [ETAPA-4.md](ETAPA-4.md): adaptador e piloto integrado em E4, mas sem chamadas reais habilitadas.** No diagnóstico E1 não havia Gemini integrado ou habilitado. Nenhum modelo/chave foi validado. Esta é a complementação solicitada pelo usuário para o capítulo 24: IA generativa pode propor decisões estratégicas temporariamente, não apenas redigir. Continua proibida a alteração direta do estado oficial sem validação. Não usar LLM para inventar placares, resultados financeiros, pessoas, regulamentos ou atributos reais.
 
 ## Modos por setor
 

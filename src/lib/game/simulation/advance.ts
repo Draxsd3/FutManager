@@ -7,11 +7,11 @@ import { careerCalendarDate } from "../brazilian-calendar";
 import { expireLoans, reconcileLoanSquad } from "../loans";
 import { refreshJobOffers } from "../manager-jobs";
 import { recoverSquadBetweenMatches } from "../live-match";
-import { generateIncomingOffers } from "../incoming-offers";
+import { generateIncomingOffers, registerIncomingNegotiations } from "../incoming-offers";
 import { simulateWorldMarket, worldDatabase } from "../world-market";
 import { ENGINE_CONFIG, EngineConflict, civilDate, engineState, orderedAgenda, type ScheduledEvent } from "./foundation";
 
-export type AdvanceCommand = { operationId: string; expectedRevision: number; fromDate: string; targetDate?: string; fixtureId?: string };
+export type AdvanceCommand = { marketSelection?: import("./market-planning").MarketSelection; operationId: string; expectedRevision: number; fromDate: string; targetDate?: string; fixtureId?: string };
 /** Pure command boundary. All effects are computed on a private snapshot; caller publishes only after commit. */
 export function advanceCareer(save: CareerSave, database: EditorDatabase, command: AdvanceCommand): CareerSave {
   if (!save.progress || !command.operationId) throw new Error("Carreira ou comando inválido.");
@@ -51,13 +51,20 @@ export function advanceCareer(save: CareerSave, database: EditorDatabase, comman
   loans = expireLoans(loans,date);
   if (managers) managers = refreshJobOffers(managers,date);
   let world = p.worldMarket;
-  let deals = p.transferNegotiations ?? [];
+  let deals = (p.transferNegotiations ?? []).map(deal=> {
+    if(deal.expiresOn && deal.expiresOn<date && (deal.status==="agreed" || deal.status==="countered")) {
+      if(managers?.finance) delete managers.finance.reservations[deal.id];
+      return {...deal,status:"rejected" as const,revision:(deal.revision ?? 0)+1,message:"Prazo da proposta expirou sem liquidação."};
+    }
+    return deal;
+  });
   if (managers) {
-    const simulation = simulateWorldMarket({ database,humanClubId: save.clubId,date,previousDate: save.inGameDate,world,negotiations: deals,loans,managers });
+    const simulation = simulateWorldMarket({ database,humanClubId: save.clubId,date,previousDate: save.inGameDate,world,negotiations: deals,loans,managers,season:p.competitionSeason,revision:engine.revision,careerId:save.id,selection:command.marketSelection });
     world = simulation.world; deals = simulation.negotiations; loans = simulation.loans; managers = simulation.managers;
     if (world.lastWeek !== p.worldMarket?.lastWeek) {
       engine.events.push({ id: `${command.operationId}:market`, operationId: command.operationId,date,type: "market-processed",entityIds: [],revision });
-      engine.decisions.push({ id: `${command.operationId}:market`,sector: "market",mode: "internal", actionId: "legacy-weekly-market", rulesVersion: engine.rulesVersion, stateRevision: engine.revision, options: ["legacy-weekly-market"], reason: "Rodada semanal interna preservada, limitada pela configuração de elenco e orçamento.", eventIds: [`${command.operationId}:market`] });
+      const audits=world.marketState?.audit.filter(a=>a.date===date) ?? [];
+      for(const audit of audits) engine.decisions.push({id:audit.decisionId,sector:"market",mode:audit.mode,actionId:audit.actionId,fallback:audit.fallback,comparedActionId:audit.comparedActionId,rulesVersion:"market-v1",stateRevision:engine.revision,options:JSON.parse(audit.contextKey).options.map((o: {actionId: string})=>o.actionId),reason:audit.reason,eventIds:[`${command.operationId}:market`]});
     }
   }
   const existingDeals = new Set((p.transferNegotiations ?? []).filter(deal => deal.status === "completed").map(deal => deal.id));
@@ -73,6 +80,7 @@ export function advanceCareer(save: CareerSave, database: EditorDatabase, comman
   const nextBudget = managers?.clubs[save.clubId]?.budget ?? save.budget;
   const positions = Object.fromEntries(Object.entries(p.manualPositions).filter(([id]) => remaining.has(Number(id))));
   const records = generateIncomingOffers({ squad:ownedSquad,records:p.playerCareers,database:effective,managerMarket:managers,clubId:save.clubId,club:save.clubName,eventId:command.fixtureId ?? p.activeFixtureId ?? `round-${p.round}`,date });
+  deals=registerIncomingNegotiations(records,ownedSquad,effective,save.clubId,save.clubName,deals);
   engine.operations.push({ id:command.operationId,from:save.inGameDate,to:date,revision });
   engine.events.push({ id:`${command.operationId}:checkpoint`,operationId:command.operationId,date,type:"checkpoint",entityIds:[save.id],revision });
   engine.revision=revision; engine.date=date;

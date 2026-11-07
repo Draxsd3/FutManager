@@ -402,6 +402,7 @@ it("shows the club shirt in a player profile after career reload", async () => {
   expect(within(restored).getByRole("img", { name: `Camisa de ${first.name}` })).toBeTruthy();
 });
 
+// Includes two full-universe hydrations and E4 financial/planning checkpoints.
 it("advances the career date after a result and returns an expired incoming loan without keeping its lineup slot", async () => {
   const view = render(game());
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
@@ -446,7 +447,7 @@ it("advances the career date after a result and returns an expired incoming loan
     expect(restored.progress?.starters).not.toContain(player.id);
     expect(restored.progress?.manualPositions[player.id]).toBeUndefined();
   });
-});
+}, 45000);
 
 it("archives concluded competitions from an old save and persists champions separately from the imported catalog", async () => {
   const view = render(game());
@@ -753,6 +754,7 @@ it("opens local career options when cloud reads never respond", async () => {
   pending.mockResolvedValue(null);
 }, 30000);
 
+// Three full-universe hydrations; retain every offer, persistence and rejection assertion.
 it("receives automatic club offers after the match, persists and rejects them after reload", async () => {
   const { createPlayerCareer } = await import("@/lib/game/career");
   const view = render(game());
@@ -789,4 +791,4 @@ it("receives automatic club offers after the match, persists and rejects them af
   expect(within(profile).getByText(offer.club)).toBeTruthy();
   fireEvent.click(within(profile).getByRole("button", { name: "Recusar" }));
   await waitFor(() => expect(readLocalSaves("alice")[0].progress?.playerCareers[player.id]?.transferOffers?.[0].status).toBe("rejected"));
-}, 45000);
+}, 60000);

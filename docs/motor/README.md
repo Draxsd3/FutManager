@@ -45,3 +45,7 @@ Os textos abaixo são extrações do anexo, com seus capítulos originais preser
 ## Etapa 3 integrada
 
 Finanças, contratos e registro básico: [entrega, regras e limites](ETAPA-3.md). Liquidação bilateral comum, folha por competência e migração aditiva; sem iniciar E4 ou ativar Gemini.
+
+## Etapa 4 integrada
+
+Planejamento e negociação CPU/humana com preço/prazo/concorrência e piloto de IA limitado: [entrega, configuração e limites](ETAPA-4.md). Modos interno/assistido/comparação são da carreira; Gemini real exige configuração server-only e permanece sem ativação automática. E5–E8 não iniciadas.

@@ -1,6 +1,6 @@
 # Plano executável por etapas
 
-Status: E1 documental concluída; E2 com fundação pós-partida implementada conforme [ETAPA-2.md](ETAPA-2.md); E3 com finanças/contratos/registro básico implementados conforme [ETAPA-3.md](ETAPA-3.md); E4–E8 **não iniciadas por este trabalho**. As capacidades pré-existentes são as do diagnóstico, não entregas deste plano. Dependências são portas de qualidade, não só ordem de arquivos. Não migrar todos os setores de uma vez.
+Status: E1 documental concluída; E2 com fundação pós-partida implementada conforme [ETAPA-2.md](ETAPA-2.md); E3 com finanças/contratos/registro básico implementados conforme [ETAPA-3.md](ETAPA-3.md); E4 com planejamento/negociação e piloto seguro integrado conforme [ETAPA-4.md](ETAPA-4.md), sem chamadas reais habilitadas; E5–E8 **não iniciadas por este trabalho**. As capacidades pré-existentes são as do diagnóstico, não entregas deste plano. Dependências são portas de qualidade, não só ordem de arquivos. Não migrar todos os setores de uma vez.
 
 ## E1 — diagnóstico e especificação
 

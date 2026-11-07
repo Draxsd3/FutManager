@@ -153,7 +153,7 @@ it("releases an agreed reservation on cancellation without altering cash, contra
  const {save,db,deal,buyer}=fixture();
  const buying={...save,clubId:buyer.id,clubName:buyer.name,progress:{...save.progress!,club:buyer.name,careerSquad:buildSquadFromDatabase(db,buyer.name,true)}};
  const agreed=updateCareerNegotiation(buying,db,deal), before=agreed.progress!.managerMarket!.finance!;
- const cancelled=updateCareerNegotiation(agreed,db,deal,{type:"reject"}), after=cancelled.progress!.managerMarket!.finance!;
+ const cancelled=updateCareerNegotiation(agreed,db,agreed.progress!.transferNegotiations![0],{type:"reject"}), after=cancelled.progress!.managerMarket!.finance!;
  expect(after.reservations).toEqual({}); expect(after.clubs).toEqual(before.clubs); expect(after.contracts).toEqual(before.contracts);
  expect(cancelled.progress!.transferNegotiations![0].status).toBe("rejected");
 });
