@@ -182,3 +182,16 @@ it("round-trips a large financial checkpoint atomically without storing its raw 
   expect(readLocalSaves("finance-owner")[0]).toEqual(financial);
   expect(readLocalSaves("other-owner")).toEqual([]);
 });
+
+it("releases a deleted career's in-memory universe without evicting another account",async()=>{
+  const {createDefaultDatabase}=await import("./editor-data");
+  const db=createDefaultDatabase();
+  const original={...save(),progress:{universeSnapshot:db}} as CareerSave;
+  expect(writeLocalSaves([original],"prune-owner")).toBe(true);
+  expect(writeLocalSaves([original],"other-prune-owner")).toBe(true);
+  expect(writeLocalSaves([],"prune-owner")).toBe(true);
+  const thin={...original,progress:{}} as CareerSave;
+  expect(writeLocalSaves([thin],"prune-owner")).toBe(true);
+  expect(readLocalSaves("prune-owner")[0].progress?.universeSnapshot).toBeUndefined();
+  expect(readLocalSaves("other-prune-owner")[0].progress?.universeSnapshot).toEqual(db);
+});

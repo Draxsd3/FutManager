@@ -49,3 +49,7 @@ Finanças e contratos de jogador têm agora livro/compromissos, liquidação bil
 ## Atualização E4
 
 Planejamento por clube/posição/calendário, preço contextual, proposta versionada, concorrência e piloto assistido/comparação estão integrados ao avanço comum; ver [ETAPA-4.md](ETAPA-4.md). API server-only, quota por conta/revisão e replay/fallback testados. Representação desconhecida continua explícita, sem agentes completos nem comissão; E5–E8 e calibração plurianual não são declarados concluídos. Gemini real não foi habilitado ou consultado.
+
+## Atualização E5
+
+Identidades/contratos de técnicos, avaliação relativa de diretoria, vagas e contratação CPU e desemprego humano integram o avanço comum: `simulation/coaches.ts`, `advance.ts`, `manager-jobs.ts` e telas existentes. [ETAPA-5.md](ETAPA-5.md) registra regras, migração e limites. A antiga proteção de emprego humano só permanece no caminho legado sem staff; carreiras abertas/criadas adotam o modelo comum E5. Não declarar concluídos contratos avançados, personalidades reais, E6–E8 ou equilíbrio plurianual.

@@ -21,7 +21,7 @@ const packedFinance = new WeakMap<object, string>();
 const unpackedFinance = new Map<string, unknown>();
 function decodeSaveIndex(raw: string | null): CareerSave[] {
   return JSON.parse(raw ?? "[]",(key,value)=>{
-    if (!((key === "finance" && value?.codec === "finance-deflate-v1") || (key === "marketState" && value?.codec === "market-deflate-v1"))) return value;
+    if (!((key === "finance" && value?.codec === "finance-deflate-v1") || (key === "marketState" && value?.codec === "market-deflate-v1") || (key === "staff" && value?.codec === "staff-deflate-v1"))) return value;
     let finance=unpackedFinance.get(value.data);
     if (!finance) {
       if (!Number.isSafeInteger(value.size) || value.size < 2 || value.size > 64_000_000) throw new Error("Checkpoint financeiro inválido.");
@@ -37,11 +37,11 @@ function decodeSaveIndex(raw: string | null): CareerSave[] {
 }
 function encodeSaveIndex(index: CareerSave[]) {
   return JSON.stringify(index,(key,value)=>{
-    if (!((key === "finance" && value?.rulesVersion === "finance-v1") || (key === "marketState" && value?.version === 1))) return value;
+    if (!((key === "finance" && value?.rulesVersion === "finance-v1") || (key === "marketState" && value?.version === 1) || (key === "staff" && value?.rulesVersion === "coaches-v1"))) return value;
     let packed=packedFinance.get(value);
     if (!packed) {
-      const bytes=strToU8(JSON.stringify(value)), zipped=zlibSync(bytes,{level:1});
-      packed=JSON.stringify({codec:key === "marketState" ? "market-deflate-v1" : "finance-deflate-v1",size:bytes.length,data:btoa(Array.from(zipped,b=>String.fromCharCode(b)).join(""))});
+      const bytes=strToU8(JSON.stringify(value)), zipped=zlibSync(bytes,{level:6});
+      packed=JSON.stringify({codec:key === "staff" ? "staff-deflate-v1" : key === "marketState" ? "market-deflate-v1" : "finance-deflate-v1",size:bytes.length,data:btoa(Array.from(zipped,b=>String.fromCharCode(b)).join(""))});
       packedFinance.set(value,packed);
     }
     return JSON.parse(packed);
@@ -87,6 +87,10 @@ export function writeLocalSaves(saves: CareerSave[], userId: string) {
     const previous = decodeSaveIndex(localStorage.getItem(accountStorageKey(SAVES_KEY,userId)));
     if (index.some(save => (previous.find(old => old.id === save.id)?.progress?.engine?.revision ?? 0) > (save.progress?.engine?.revision ?? 0))) return false;
     localStorage.setItem(accountStorageKey(SAVES_KEY, userId), encodeSaveIndex(index));
+    // Retain only careers still present in this account's durable index. In particular,
+    // deleted/replaced careers must not pin whole frozen universes for the life of the tab.
+    const retained=new Set(saves.map(save=>`${userId}:${save.id}`));
+    for(const key of universeMemory.keys()) if(key.startsWith(`${userId}:`) && !retained.has(key)) universeMemory.delete(key);
     for (const save of saves) if (save.progress?.universeSnapshot) universeMemory.set(`${userId}:${save.id}`, save.progress.universeSnapshot);
     void cacheCareerSaves(saves, userId).catch(() => undefined);
     return true;

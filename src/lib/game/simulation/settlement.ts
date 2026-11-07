@@ -1,3 +1,4 @@
+import { isUnemployed } from "./coaches";
 import { reconcileContractSquad } from "./contract-squad";
 import { buildSquadFromDatabase, type CareerSave, type EditorDatabase } from "../editor-data";
 import { applyNegotiation, createPlayerCareer, type MarketAction } from "../career";
@@ -16,7 +17,7 @@ export function migrateFinanceSave(save: CareerSave, database: EditorDatabase): 
   const market=p.managerMarket ?? initializeCareerMarket(database,p.competitionSeason,save.managerName,save.budget);
   const loans=recoverCareerLoans(p.careerSquad ?? [],p.transferNegotiations ?? [],database,p.loanContracts);
   const db=worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,market.finance);
-  let managers=adoptFinance(market,db,save.inGameDate,loans,{clubId:save.clubId,budget:save.budget});
+  let managers=adoptFinance(market,db,save.inGameDate,loans,isUnemployed(market) ? undefined : {clubId:save.clubId,budget:save.budget});
   const localPlayers=(p.careerSquad ?? []).filter(player=>!player.sourceId && !managers.finance!.contracts[localEmploymentKey(save.id,save.clubId,player.id)]);
   if(localPlayers.length) {
     const finance=structuredClone(managers.finance!);
@@ -42,6 +43,7 @@ export function migrateFinanceSave(save: CareerSave, database: EditorDatabase): 
 }
 function context(save: CareerSave, database: EditorDatabase) {
   const migrated=migrateFinanceSave(save,database), p=migrated.progress;
+  if(isUnemployed(p?.managerMarket)) throw new Error("Você está sem clube e não pode negociar atletas.");
   if (p?.page === "matchOverview") throw new Error("Conclua a partida antes de alterar contratos e transferências.");
   if(!p?.managerMarket?.finance) throw new Error("Finanças da carreira indisponíveis.");
   return {save:migrated,p,market:p.managerMarket,finance:p.managerMarket.finance,db:worldDatabase(database,p.transferNegotiations ?? [],p.loanContracts ?? {},p.worldMarket,p.managerMarket.finance)};
