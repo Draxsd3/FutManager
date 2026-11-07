@@ -62,11 +62,11 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Baiano
 
-**Referência 2026 (resumo; conferir REC integral):** 10 clubes, turno único; quatro às semifinais e dois últimos rebaixados. Semifinais 1º×4º e 2º×3º e final em jogo único, mando pela campanha e pênaltis em caso de empate. [Fonte](https://www.itatiaia.com.br/esportes/futebol/futebol-nacional/campeonato-baiano/com-mudanca-no-formato-campeonato-baiano-2026-e-lancado-oficialmente).
+**REC FBF 2026, arts. 6–19:** 10 clubes em turno único; quatro às semifinais únicas (1º×4º e 2º×3º, mando dos melhores da fase inicial); final única, mando da melhor campanha acumulada; empate em cada jogo decisivo vai a pênaltis. Desempate da classificação: vitórias, saldo, gols, pontos e saldo no confronto direto, menos vermelhos, menos amarelos e sorteio. Os dois últimos caem, com exceção prevista se a Série B não for realizada. Campeão e vice têm vagas na Copa do Nordeste e na Copa do Brasil; terceiro tem vaga na Copa do Brasil, cuja quarta vaga depende da Copa Governador; três vagas da Série D seguem classificação e elegibilidade. Inscrições até o último dia útil anterior à 7ª rodada. [REC oficial](https://fbf.org.br/documentos/noticia/202511032238reg_seriea_2026_atualizado%20em%20031125.pdf). **Ressalva:** a [tabela básica](https://fbf.org.br/documentos/noticia/202511032238tab_basica_seriea_2026_031125.pdf) encontrada menciona final em dois jogos; a [publicação posterior da FBF](https://www.fbf.org.br/noticias/detalhe/12657) e o REC consultado indicam final única. Confirmar versão definitiva e revisões.
 
 ### Campeonato Brasiliense
 
-**Referência 2026 (resumo; conferir REC integral):** 10 clubes em turno único; quatro às semifinais, dois últimos caem. Semifinais ida e volta com vantagem aos melhores da primeira fase; final única, pênaltis em caso de empate. [Fonte](https://ge.globo.com/df/futebol/campeonato-brasiliense/noticia/2025/10/27/candangao-2026-comecara-em-10-de-janeiro-e-tera-decisao-no-mane-garrincha.ghtml).
+**REC FFDF 2026:** 10 clubes em turno único; quatro vão às semifinais em ida e volta, com vantagem da melhor campanha inicial em caso de igualdade no agregado; final única, com pênaltis no empate; dois últimos caem. Desempate da fase inicial: vitórias, saldo, gols, menos vermelhos, menos amarelos, confronto direto e partida única determinada pela FFDF. Inscrição mínima de 16 atletas até a estreia e novas inscrições até o último dia útil antes da 9ª rodada. Vagas dos finalistas em 2027 são condicionadas à disponibilidade e às regras da CBF. [REC oficial](https://www.ffdf.com.br/assets/uploads/176245464195.pdf?v=176792269328); conferir revisões e regras de repasse.
 
 ### Campeonato Capixaba
 
@@ -74,7 +74,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Catarinense
 
-**Referência 2026 (resumo; conferir REC integral):** 12 clubes em dois grupos de seis, jogos contra o outro grupo; quatro de cada avançam às quartas, seguidas de semifinal cruzada e final, todas em ida e volta. Os não classificados disputam quadrangular de permanência; três caem e o melhor quinto recebe ponto de bônus. [Fonte](https://fcf.com.br/catarinense-fort-atacadista-2026-comeca-em-07-de-janeiro/).
+**Referência 2026 (REC indexado; acesso integral pendente):** 12 clubes em dois grupos de seis, jogos contra o outro grupo; quatro de cada avançam às quartas internas, seguidas de semifinais e final em ida e volta. Os demais disputam quadrangular em turno e returno, com três rebaixados; o melhor quinto começa com um ponto extra, conforme trecho indexado do REC. A Taça ACESC reúne eliminados das quartas e semifinais; o [REC de 08/12 indexado](https://fcf-sc.s3.sa-east-1.amazonaws.com/wp-content/uploads/2025/12/08150622/REC.-Camp.-Cat.-Fut.Prof_.Serie_.A.2026-08-12.pdf) indica eliminatórias em ida e volta, semifinais únicas e final em um ou dois jogos conforme participação dos finalistas na Copa do Brasil. O acesso ao PDF retornou AccessDenied: confrontar a versão integral, desempates, vagas e revisões antes de implementar. [Resumo do Avaí](https://avai.com.br/fcf-divulga-tabela-e-regulamento-especifico-do-catarinense-fort-atacadista-2026/).
 
 ### Campeonato Cearense
 
@@ -86,7 +86,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Gaúcho
 
-**Referência 2026 (resumo; conferir REC integral):** 12 clubes em dois grupos de seis, jogos contra outro grupo; quatro por grupo às quartas internas, em jogo único. Semifinal reordenada e final em ida e volta; quadrangular de permanência ida e volta, dois últimos caem. [Fonte](https://fgf.com.br/Layout/documentos/693c9f182f677gaucha%CC%83o-superbet-2026---rec.pdf).
+**REC FGF 2026 consultado (identificado como provisório):** 12 clubes em dois grupos de seis, jogos contra o outro grupo; quatro por grupo às quartas internas em jogo único; semifinais e final em ida e volta. Os eliminados nas quartas disputam o Troféu Farroupilha, com semifinais e final em ida e volta. Os dois últimos de cada grupo disputam quadrangular de permanência em turno e returno, com pontos zerados; dois últimos caem. Desempate classificatório: vitórias, saldo, gols, menos vermelhos, menos amarelos e sorteio; nas eliminatórias, pontos, saldo e pênaltis. O Farroupilha também participa da distribuição de vagas para a Copa do Brasil, sujeita às regras aplicáveis. [REC FGF](https://fgf.com.br/Layout/documentos/693c9f182f677gaucha%CC%83o-superbet-2026---rec.pdf); confirmar versão definitiva, chaveamento, inscrições e repasses.
 
 ### Campeonato Goiano
 
@@ -94,7 +94,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Maranhense
 
-**Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; quatro às semifinais e final, ambas em ida e volta. O 8º cai diretamente; 6º×7º decidem o segundo rebaixado em ida e volta. [Fonte](https://futebolmaranhense.com.br/noticias/v/84).
+**REC FMF 2026, arts. 3–5 e 12:** prevê oito clubes, turno único e quatro semifinalistas; semifinal e final em ida e volta. O 8º cai diretamente e 6º×7º jogam pela permanência em ida e volta, com o 6º mandando a volta. Inscrição ilimitada até o último dia útil antes da primeira semifinal; atleta relacionado em até três jogos pode passar a outro participante, mas não a um terceiro. Vagas 2027 dependem de disponibilidade e elegibilidade, com critérios específicos de repasse. [REC oficial](https://futebolmaranhense.com.br/assets/uploads/176369014672.pdf). **Ressalva:** o art. 3 prevê oito participantes, mas o diagrama extraído lista seis; conferir documento atualizado, composição real, desempates e permanência.
 
 ### Campeonato Mato-Grossense
 
@@ -110,11 +110,11 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Paraibano
 
-**Referência 2026 (resumo; conferir REC integral):** 10 clubes em turno único; quatro às semifinais e dois últimos caem. Semifinais 1º×4º e 2º×3º, e final, em ida e volta. [Fonte](https://ne45.com.br/2025/11/24/fpf-pb-anuncia-datas-campeonato-paraibano/).
+**Referência 2026 (resumos; REC integral pendente):** 10 clubes em turno único; quatro às semifinais e dois últimos caem. Semifinais 1º×4º e 2º×3º e final em ida e volta, conforme [conselho técnico](https://auniao.pb.gov.br/noticias/caderno_esporte/campeonato-comeca-em-17-de-janeiro) e [cobertura da publicação](https://arenacorreio.com.br/campeonato-paraibano-2026-fpf-mantem-regulamento-do-ano-passado-com-pequenas-mudancas/). Obter REC profissional 2026 para confirmar desempates, inscrições, vagas e repasses, incluindo a interação com a Copa Paraíba.
 
 ### Campeonato Paranaense
 
-**Referência 2026 (resumo; conferir REC integral):** 12 clubes em dois grupos de seis, contra o outro grupo; quatro por grupo às quartas internas. Quartas, semi e final em ida e volta; quatro não classificados disputam dois confrontos de permanência, perdedores caem. [Fonte](https://federacaopr.sfo3.digitaloceanspaces.com/wp-content/uploads/2023/09/19162139/REC-1a-Divisao-2026.pdf).
+**REC FPF 2026:** 12 clubes em dois grupos de seis, contra o outro grupo; quatro por grupo às quartas internas. Quartas, semifinais e final em ida e volta, com pontos, saldo e pênaltis. Os quatro não classificados são ranqueados para duelos de permanência 1º×4º e 2º×3º em ida e volta; os perdedores caem. Vagas nacionais e eventual torneio seletivo dependem dos critérios aplicáveis. [REC oficial](https://federacaopr.sfo3.digitaloceanspaces.com/wp-content/uploads/2023/09/19162139/REC-1a-Divisao-2026.pdf); conferir desempates da classificação, inscrições e revisões.
 
 ### Campeonato Paulista
 
@@ -122,11 +122,11 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Pernambucano
 
-**Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; 1º e 2º direto às semifinais; 3º×6º e 4º×5º em playoff; último rebaixado. Playoff, semifinais e final em ida e volta. A federação informa mudança de estrutura para 2027. [Fonte](https://www.fpf-pe.com.br/pt/noticias/view.php?q=11945).
+**Referência 2026 (REC revisão 1 indexado; acesso integral pendente):** 8 clubes em turno único; 1º e 2º direto às semifinais; 3º×6º e 4º×5º em playoff; último rebaixado. Playoff, semifinais e final em ida e volta. A [página oficial](https://www.fpf-pe.com.br/pt/competicoes/jogos.php?q=1651) vincula o [REC](https://www.fpf-pe.com.br/assets/uploads/176499150263.pdf?v=17696371365), cujo texto indexado confirma oito clubes e os cruzamentos do playoff, mas a extração integral falhou. Conferir desempates, inscrições, vagas e revisões; a federação informa mudança de estrutura para 2027.
 
 ### Campeonato Piauiense
 
-**Referência 2026 (resumo; conferir REC integral):** 8 clubes em turno único; quatro às semifinais em ida e volta e final também em ida e volta. Conferir rebaixamento, desempates e vagas no REC. [Fonte](https://www.al.pi.leg.br/comunicacao/tv-assembleia/noticias-tv/campeonato-piauiense-tera-novo-formato-e-estreia-prevista-para-10-de-janeiro).
+**Referência 2026 (fontes secundárias; REC integral pendente):** 8 clubes em turno único; quatro às semifinais e dois últimos caem; semifinais e final em ida e volta, segundo [resumo da competição](https://www.futebolinterior.com.br/campeonato/piauiense-2026/). [Cobertura da classificação](https://ge.globo.com/pi/futebol/campeonato-piauiense/noticia/2026/02/08/piauiense-2026-oeirense-e-piaui-empatam-na-lideranca-e-parnahyba-afunda-na-lanterna.ghtml) atribui ao regulamento a ordem vitórias, gols pró e saldo, incomum e a confirmar diretamente. Obter REC profissional de 2026 para validar desempates completos, vagas, inscrições e revisões; o documento encontrado no portal da FFP é de 2020.
 
 ### Campeonato Potiguar
 
@@ -146,7 +146,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ### Campeonato Sul-Mato-Grossense
 
-**Referência 2026 (resumo; conferir REC integral):** 10 clubes em turno único; 1º e 2º direto às semifinais, 3º×6º e 4º×5º na fase seguinte. Essa fase, semifinais e final em ida e volta; dois últimos caem. [Fonte](https://ge.globo.com/ms/futebol/campeonato-sul-mato-grossense/noticia/2026/01/15/guia-do-sul-mato-grossense-2026-tudo-sobre-o-campeonato-que-comeca-no-domingo.ghtml).
+**Referência 2026 (resumo; REC integral pendente):** 10 clubes em turno único; 1º e 2º direto às semifinais, 3º×6º e 4º×5º na fase seguinte. Essa fase, semifinais e final em ida e volta; dois últimos caem. Segundo [cobertura da publicação](https://ge.globo.com/ms/futebol/campeonato-sul-mato-grossense/noticia/2025/12/18/federacao-de-ms-publica-regulamento-do-sul-mato-grossense-2026-veja-as-novidades.ghtml), inscrições são ilimitadas na fase inicial e há mais três após o início do mata-mata. Obter REC 2026 e conferir prazos, desempates, vagas e revisões.
 
 ### Campeonato Tocantinense
 
@@ -154,7 +154,7 @@ As regras de 2026 são referência para a simulação de temporadas futuras, nã
 
 ## Situação da conferência
 
-Os resumos da Copa do Brasil, Copa do Nordeste, Copa Verde, Séries A, B, C e D, Paulista, Mineiro, Amapaense, Alagoano, Amazonense, Cearense (cópia externa), Goiano, Mato-Grossense, Potiguar e Sergipano acima foram confrontados com os artigos dos RECs vinculados, mas isso **não é certificação integral**: inscrições, sorteios, eventuais revisões posteriores e todas as regras de elegibilidade ainda precisam de auditoria. Os demais resumos continuam em pesquisa; uma fonte listada não significa que todos os seus artigos foram verificados. Nenhuma dessas alterações implementa automaticamente os formatos no motor.
+Os resumos da Copa do Brasil, Copa do Nordeste, Copa Verde, Séries A, B, C e D, Paulista, Mineiro, Amapaense, Alagoano, Amazonense, Cearense (cópia externa), Goiano, Mato-Grossense, Potiguar e Sergipano acima foram confrontados com os artigos dos RECs vinculados, mas isso **não é certificação integral**: inscrições, sorteios, eventuais revisões posteriores e todas as regras de elegibilidade ainda precisam de auditoria. As conferências adicionais dos lotes 4–5 estão detalhadas abaixo; os demais resumos continuam em pesquisa. Uma fonte listada não significa que todos os seus artigos foram verificados. Nenhuma dessas alterações implementa automaticamente os formatos no motor.
 
 ## Auditoria dos lotes 1–3 (em andamento)
 
@@ -173,6 +173,25 @@ Os resumos da Copa do Brasil, Copa do Nordeste, Copa Verde, Séries A, B, C e D,
 | Capixaba | Resumo oficial da FES | Obter REC integral, desempates, vagas e revisões |
 
 Esta tabela documenta a conferência, não comprova implementação nem garante ausência de alterações posteriores.
+
+## Auditoria complementar dos lotes 4–5 (em andamento)
+
+| Competição | Evidência examinada | Pendência antes de certificar |
+| --- | --- | --- |
+| Gaúcho | REC FGF identificado como provisório; fases e torneio paralelo | Versão definitiva, chaves, inscrições e vagas |
+| Paranaense | REC FPF: fases e permanência | Desempates completos, inscrições, vagas e revisões |
+| Catarinense | Comunicação do Avaí e trechos indexados de REC FCF | PDF integral bloqueado; versão, Taça ACESC, desempates e vagas |
+| Baiano | REC FBF: fases, desempates, inscrições e vagas | Tabela básica conflitante sobre final; versão definitiva e revisões |
+| Brasiliense | REC FFDF: fases, desempates, inscrições e vagas | Revisões, elegibilidade e repasses |
+| Alagoano | REC FAF: fases, desempates e vagas | Inscrições, elegibilidade e revisões |
+| Sergipano | REC FSF revisão I: fases, disputa de terceiro e desempates | Inscrições, vagas e revisões |
+| Maranhense | REC FMF: fases, descenso, inscrições e vagas | Divergência na lista de participantes, desempates e versão atualizada |
+| Paraibano | Conselho técnico e cobertura da publicação | REC integral, desempates, inscrições, vagas e revisões |
+| Piauiense | Resumos jornalísticos e classificação publicada | REC integral; ordem dos desempates, vagas e inscrições |
+| Pernambucano | Página oficial e trechos indexados do REC | Acesso ao REC integral, desempates, inscrições e vagas |
+| Sul-Mato-Grossense | Cobertura da publicação do regulamento | REC integral, prazos, desempates, vagas e revisões |
+
+A conferência é documental e parcial; não verifica nem altera o motor. Em especial, formatos adaptados e histórico de carreiras devem ser preservados na implementação futura.
 
 ## Pendências gerais
 
