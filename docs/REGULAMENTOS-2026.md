@@ -72,3 +72,7 @@ Fontes complementares (não substituir REC por resumos genéricos):
 
 - FGF-GO, calendário oficial (Goianão 10/01–15/03): https://www.fgf.esp.br/pt/conteudo/?q=1&sc=14
 - Goiano, tabela e descenso 12º direto / playoff 10º×11º: https://ge.globo.com/go/futebol/campeonato-goiano/noticia/2025/11/26/veja-a-tabela-do-goianao-2026.ghtml
+
+## Correções identificadas na auditoria posterior
+
+O [REC goiano](https://www.fgf.esp.br/assets/uploads/176833012335.pdf), arts. 19–20, condiciona o playoff de permanência à diferença de até seis pontos e considera os pontos da primeira fase na decisão; a volta pode ser dispensada. A descrição anterior de descenso deve ser lida com essa ressalva. O [REC cearense](https://www.srgoool.com.br/downloads.php?id_anexo=1573), art. 13, não inclui confronto direto nos desempates de grupo ou permanência; a cópia deve ser confrontada com o original e eventuais revisões. Esses pontos requerem verificação no motor antes de considerar a implementação fiel. Veja também [competições.md](competições.md).
