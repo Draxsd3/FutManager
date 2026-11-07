@@ -41,3 +41,13 @@ describe("negociação de transferências", () => {
     expect(second.negotiation).toMatchObject({ status: "agreed", agreedFeeBrl: Math.round(asking * 0.95), agreedWageSharePercent: 50 });
   });
 });
+
+it("permite sondar não listado com preço maior, mas bloqueia novo negócio de atleta emprestado", () => {
+  const db = createDefaultDatabase(), buyer = db.clubs[0];
+  const player = db.players.find(p => p.clubId !== buyer.id && p.marketStatus === "normal" && !p.loan)!;
+  const asking = askingFeeBrl("sale", player.marketValueBrl)*1.5;
+  const result = proposeTransfer(db, [], { id: "approach", playerId: player.id, buyerClubId: buyer.id, feeBrl: asking*0.8 });
+  expect(result.negotiation).toMatchObject({ status: "countered", kind: "sale", askingFeeBrl: asking });
+  player.loan = { owner: { clubId: player.clubId, name: "Dono" }, borrower: { clubId: db.clubs[2].id, name: "Destino" }, startsOn: "2026-01-01", endsOn: "2026-07-01", source: "game", status: "active", wageSharePercent: 50 };
+  expect(proposeTransfer(db, [], { id: "invalid-loan", playerId: player.id, buyerClubId: buyer.id, feeBrl: asking }).negotiation).toBeUndefined();
+});

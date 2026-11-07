@@ -1,5 +1,5 @@
 import { isFreeAgent } from "./player-contract";
-import type { EditorDatabase } from "./editor-data";
+import { MAX_CLUB_SQUAD_SIZE, type EditorDatabase } from "./editor-data";
 import type { Player } from "./mock-data";
 import type { TransferKind } from "./transfers";
 
@@ -28,11 +28,11 @@ export function recruitPlayer(
   if (!source || (!sourceClub && !free) || !borrower || source.loan?.status === "active" || sourceClub?.name === club || squad.some((player) => player.sourceId === sourceId)) {
     return { squad, budget, message: "Jogador indisponível para contratação." };
   }
-  if (!free && source.marketStatus !== "sale" && source.marketStatus !== "loan") return { squad, budget, message: "Jogador não está à venda nem disponível para empréstimo." };
-  // Keep the existing in-career recruitment rule separate from the imported catalog.
-  if (squad.length >= 35) return { squad, budget, message: "Elenco cheio: limite de 35 jogadores." };
-  const kind = terms?.kind ?? (free ? "sale" : source.marketStatus);
-  if (free ? kind !== "sale" : kind !== source.marketStatus) return { squad, budget, message: "O tipo de contratação não corresponde à disponibilidade do jogador." };
+  // Registration limits are not a cap on contracted players. Match the universe technical guard.
+  if (squad.length >= MAX_CLUB_SQUAD_SIZE) return { squad, budget, message: `Elenco cheio: limite técnico de ${MAX_CLUB_SQUAD_SIZE} jogadores.` };
+  const availableKind = !free && source.marketStatus === "loan" ? "loan" : "sale";
+  const kind = terms?.kind ?? availableKind;
+  if (kind !== availableKind) return { squad, budget, message: "O tipo de contratação não corresponde à disponibilidade do jogador." };
   const feeBrl = terms?.feeBrl ?? (free ? 0 : source.marketValueBrl * 2);
   const wageSharePercent = kind === "loan" ? terms?.wageSharePercent ?? 50 : 100;
   const loanMonths = kind === "loan" ? terms?.loanMonths ?? 6 : 0;
