@@ -49,6 +49,15 @@ function context(save: CareerSave, database: EditorDatabase) {
 function checkpoint(save: CareerSave, database: EditorDatabase, finance: FinanceState, deals: TransferNegotiation[], operationId: string): CareerSave {
   const p=save.progress!, engine=engineState(p.engine,save.id,save.inGameDate);
   if(engine.operations.some(op=>op.id===operationId)) return save;
+  const closed=new Set(deals.filter(d=>d.status==="completed").map(d=>d.playerId));
+  finance=structuredClone(finance);
+  deals=deals.map(d=>{
+    if(closed.has(d.playerId) && (d.status==="countered" || d.status==="agreed")) {
+      delete finance.reservations[d.id];
+      return {...d,status:"rejected" as const,revision:(d.revision ?? 0)+1,message:"Outro acordo foi liquidado; vínculo indisponível."};
+    }
+    return d;
+  });
   const managerMarket=projectFinance({...p.managerMarket!,finance});
   const world=p.worldMarket ? {...p.worldMarket,listings:{...p.worldMarket.listings}} : undefined;
   for(const deal of deals) if(deal.status === "completed" && world) delete world.listings[deal.playerId];
@@ -75,10 +84,15 @@ export function settleCareerTransfer(save: CareerSave, database: EditorDatabase,
 export function updateCareerNegotiation(save: CareerSave, database: EditorDatabase, deal: TransferNegotiation, action?: TransferNegotiationAction): CareerSave {
   const {save:current,p,finance,db}=context(save,database);
   if (deal.buyerClubId!==save.clubId) throw new Error("Negociação de outro clube.");
-  const next=action ? respondToTransferNegotiation(deal,action).negotiation : deal;
+  const existing=p.transferNegotiations?.find(d=>d.id===deal.id);
+  if(existing && JSON.stringify(existing)!==JSON.stringify(deal)) throw new Error("A versão da proposta mudou. Reabra a negociação.");
+  if(deal.expiresOn && deal.expiresOn<save.inGameDate && action?.type!=="reject") throw new Error("A proposta expirou.");
+  const response=action ? respondToTransferNegotiation(deal,action).negotiation : deal;
+  if(response===deal && action) return current;
+  const next={...response,revision:(existing?.revision ?? 0)+1,createdOn:deal.createdOn ?? save.inGameDate,origin:deal.origin ?? "human" as const,expiresOn:deal.expiresOn ?? new Date(Date.parse(`${save.inGameDate}T12:00:00Z`)+14*86400000).toISOString().slice(0,10)};
   const reserved=reserveDeal(finance,next,db);
   const deals=[next,...(p.transferNegotiations ?? []).filter(d=>d.id!==deal.id)];
-  return checkpoint(current,database,reserved,deals,`negotiate:${deal.id}:${next.status}:${next.attempts}`);
+  return checkpoint(current,database,reserved,deals,`negotiate:${deal.id}:${next.revision}:${next.status}:${next.attempts}`);
 }
 export function applyCareerPlayerAction(save: CareerSave, database: EditorDatabase, id: number, action: MarketAction): {save: CareerSave; message: string} {
   const {save:current,p,finance,db}=context(save,database), player=p.careerSquad?.find(p=>p.id===id);
@@ -90,8 +104,8 @@ export function applyCareerPlayerAction(save: CareerSave, database: EditorDataba
   if(result.transfer) {
     const buyer=db.clubs.find(c=>c.name===result.transfer!.club);
     if(!buyer || !player.sourceId) throw new Error("Clube comprador ou identidade de origem indisponível.");
-    const deal: TransferNegotiation={id:`outgoing:${save.id}:${player.sourceId}:${result.transfer.id}`,playerId:player.sourceId,playerName:player.name,sourceClubId:save.clubId,sourceClub:save.clubName,buyerClubId:buyer.id,kind:"sale",askingFeeBrl:result.transfer.fee*1e6,offerFeeBrl:result.transfer.fee*1e6,agreedFeeBrl:result.transfer.fee*1e6,agreedWageSharePercent:100,wageSharePercent:100,status:"agreed",attempts:0,message:"Oferta recebida aceita pelo clube vendedor."};
-    const settled=settleTransfer(state,db,deal,save.inGameDate); state=settled.finance; deals=[settled.deal,...deals];
+    const deal: TransferNegotiation={id:(p.transferNegotiations?.find(d=>d.id===result.transfer!.id && d.sourceClubId===save.clubId)?.id ?? `outgoing:${save.id}:${player.sourceId}:${result.transfer.id}`),playerId:player.sourceId,playerName:player.name,sourceClubId:save.clubId,sourceClub:save.clubName,buyerClubId:buyer.id,kind:"sale",askingFeeBrl:result.transfer.fee*1e6,offerFeeBrl:result.transfer.fee*1e6,agreedFeeBrl:result.transfer.fee*1e6,agreedMonthlyWageBrl:result.transfer.monthlyWageBrl,agreedWageSharePercent:100,wageSharePercent:100,status:"agreed",attempts:0,createdOn:save.inGameDate,origin:"human",revision:1,message:"Oferta recebida aceita pelo clube vendedor."};
+    const settled=settleTransfer(state,db,deal,save.inGameDate); state=settled.finance; deals=[settled.deal,...deals.filter(d=>d.id!==deal.id)];
   } else if(action.type === "contract") {
     state=renewEmployment(state,player.sourceId ?? localEmploymentKey(save.id,save.clubId,player.id),save.clubId,save.inGameDate,result.record.contractUntil,result.record.salary*1000);
   }

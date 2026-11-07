@@ -147,7 +147,7 @@ export function recordPlayerMatch(
 
 /** Values: salary in R$ thousands per month, transfer fees in R$ millions. */
 export type ContractOffer = { salary: number; years: number; releaseClause: number };
-export type TransferOffer = { id: string; club: string; clubId?: string; sentOn?: string; fee: number; status: "pending" | "rejected" | "accepted" };
+export type TransferOffer = { id: string; club: string; clubId?: string; sentOn?: string; expiresOn?: string; revision?: number; monthlyWageBrl?: number; fee: number; status: "pending" | "rejected" | "accepted" | "expired" };
 export type MarketAction =
   | { type: "list" }
   | { type: "loan" }
@@ -186,11 +186,12 @@ export function applyNegotiation(record: PlayerCareerRecord, action: MarketActio
     const club = action.club.trim();
     if (!club || club.toLocaleLowerCase() === ownClub.trim().toLocaleLowerCase() || !action.id || (record.transferOffers ?? []).some((offer) => offer.id === action.id)) return { record, message: "Selecione outro clube válido." };
     if (!offerEligibility(record, action.fee)) return { record, message: "Proposta inválida: jogador não listado exige o valor integral da multa cadastrada." };
-    return { record: { ...record, transferOffers: [...(record.transferOffers ?? []), { id: action.id, club, fee: action.fee, status: "pending" }] }, message: "Proposta simulada registrada; a transferência ainda não foi concluída." };
+    return { record: { ...record, transferOffers: [...(record.transferOffers ?? []), { id: action.id, club, fee: action.fee, status: "pending",sentOn:gameDate,expiresOn:new Date(Date.parse(`${gameDate}T12:00:00Z`)+14*86400000).toISOString().slice(0,10),revision:1 }] }, message: "Proposta simulada registrada; a transferência ainda não foi concluída." };
   }
   const offer = (record.transferOffers ?? []).find((item) => item.id === action.id && item.status === "pending");
   if (!offer) return { record, message: "Proposta não encontrada ou já respondida." };
+  if(offer.expiresOn && offer.expiresOn<gameDate) return {record:{...record,transferOffers:record.transferOffers!.map(o=>o.id===offer.id ? {...o,status:"expired",revision:(o.revision ?? 0)+1} : o)},message:"Prazo da proposta expirou."};
   if (action.type === "accept" && !offerEligibility(record, offer.fee)) return { record, message: "A proposta não atende às condições atuais do jogador." };
-  const transferOffers = (record.transferOffers ?? []).map((item): TransferOffer => item.id === offer.id ? { ...item, status: action.type === "accept" ? "accepted" : "rejected" } : action.type === "accept" && item.status === "pending" ? { ...item, status: "rejected" } : item);
+  const transferOffers = (record.transferOffers ?? []).map((item): TransferOffer => item.id === offer.id ? { ...item, revision:(item.revision ?? 0)+1,status: action.type === "accept" ? "accepted" : "rejected" } : action.type === "accept" && item.status === "pending" ? { ...item, status: "rejected" } : item);
   return { record: { ...record, transferOffers }, message: action.type === "accept" ? "Transferência concluída na simulação." : "Proposta recusada.", ...(action.type === "accept" ? { transfer: offer } : {}) };
 }

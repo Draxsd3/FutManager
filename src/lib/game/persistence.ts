@@ -21,7 +21,7 @@ const packedFinance = new WeakMap<object, string>();
 const unpackedFinance = new Map<string, unknown>();
 function decodeSaveIndex(raw: string | null): CareerSave[] {
   return JSON.parse(raw ?? "[]",(key,value)=>{
-    if (key !== "finance" || value?.codec !== "finance-deflate-v1") return value;
+    if (!((key === "finance" && value?.codec === "finance-deflate-v1") || (key === "marketState" && value?.codec === "market-deflate-v1"))) return value;
     let finance=unpackedFinance.get(value.data);
     if (!finance) {
       if (!Number.isSafeInteger(value.size) || value.size < 2 || value.size > 64_000_000) throw new Error("Checkpoint financeiro inválido.");
@@ -37,11 +37,11 @@ function decodeSaveIndex(raw: string | null): CareerSave[] {
 }
 function encodeSaveIndex(index: CareerSave[]) {
   return JSON.stringify(index,(key,value)=>{
-    if (key !== "finance" || value?.rulesVersion !== "finance-v1") return value;
+    if (!((key === "finance" && value?.rulesVersion === "finance-v1") || (key === "marketState" && value?.version === 1))) return value;
     let packed=packedFinance.get(value);
     if (!packed) {
       const bytes=strToU8(JSON.stringify(value)), zipped=zlibSync(bytes,{level:1});
-      packed=JSON.stringify({codec:"finance-deflate-v1",size:bytes.length,data:btoa(Array.from(zipped,b=>String.fromCharCode(b)).join(""))});
+      packed=JSON.stringify({codec:key === "marketState" ? "market-deflate-v1" : "finance-deflate-v1",size:bytes.length,data:btoa(Array.from(zipped,b=>String.fromCharCode(b)).join(""))});
       packedFinance.set(value,packed);
     }
     return JSON.parse(packed);

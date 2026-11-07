@@ -45,3 +45,7 @@ Cobertura integral por capítulo do anexo (27/27). Inventário granular dos 22 m
 ## Atualização E3 (sem reclassificar o diagnóstico original como motor completo)
 
 Finanças e contratos de jogador têm agora livro/compromissos, liquidação bilateral, folha civil e inscrição básica em `simulation/finance.ts` e `settlement.ts`; integração e limites em [ETAPA-3.md](ETAPA-3.md). Capítulos 6–9 e 21 continuam parciais em relação à especificação inteira: agentes, planejamento de mercado, contratos de técnicos, toda a economia e transações distribuídas não foram declarados concluídos.
+
+## Atualização E4
+
+Planejamento por clube/posição/calendário, preço contextual, proposta versionada, concorrência e piloto assistido/comparação estão integrados ao avanço comum; ver [ETAPA-4.md](ETAPA-4.md). API server-only, quota por conta/revisão e replay/fallback testados. Representação desconhecida continua explícita, sem agentes completos nem comissão; E5–E8 e calibração plurianual não são declarados concluídos. Gemini real não foi habilitado ou consultado.

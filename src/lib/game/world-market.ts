@@ -1,11 +1,15 @@
-import { adoptFinance, accrueFinance, financeDatabase, projectFinance, settleTransfer, type FinanceState } from "./simulation/finance";
+import { buildClubPlan, marketOptions, rosterIndex, marketContextKey, type MarketStrategy, type MarketSelection, type MarketContext } from "./simulation/market-planning";
+import { MARKET_RULES } from "./simulation/market-rules";
+import type { CareerSeason } from "./season";
+import { adoptFinance, accrueFinance, financeDatabase, projectFinance, reserveDeal, settleTransfer, type FinanceState } from "./simulation/finance";
 import { ENGINE_CONFIG } from "./simulation/foundation";
-import type { EditorDatabase, EditorPlayer } from "./editor-data";
+import type { EditorDatabase } from "./editor-data";
 import { databaseWithLoans, type CareerLoans } from "./loans";
 import { appointManager, type ManagerMarket } from "./manager-market";
-import { databaseWithCompletedTransfers, playerAskingFeeBrl, proposeTransfer, respondToTransferNegotiation, type TransferNegotiation } from "./transfers";
+import { databaseWithCompletedTransfers, proposeTransfer, respondToTransferNegotiation, type TransferNegotiation } from "./transfers";
 
 export type WorldMarket = {
+  marketState?: MarketStrategy;
   lastWeek?: number;
   listings: Record<string, "sale" | "loan" | "normal">;
   events: { date: string; text: string }[];
@@ -20,7 +24,7 @@ const hash = (value: string) => { let n = 2166136261; for (const c of value) n =
  * Data is an overlay inside a single career, not a rewrite of the editor's universe.
  * No forced transactions involving the human club or an active human negotiation.
  */
-export function simulateWorldMarket(input: { database: EditorDatabase; humanClubId: string; date: string; previousDate: string; world?: WorldMarket; negotiations: TransferNegotiation[]; loans: CareerLoans; managers: ManagerMarket }) {
+export function simulateWorldMarket(input: { database: EditorDatabase; humanClubId: string; date: string; previousDate: string; world?: WorldMarket; negotiations: TransferNegotiation[]; loans: CareerLoans; managers: ManagerMarket; season?: CareerSeason; revision?: number; careerId?: string; selection?: MarketSelection }) {
   const week = Math.floor(Date.parse(`${input.date}T12:00:00Z`) / 604800000);
   const previousWeek = Math.floor(Date.parse(`${input.previousDate}T12:00:00Z`) / 604800000);
   let world: WorldMarket = input.world ?? { listings: {}, events: [] };
@@ -33,56 +37,71 @@ export function simulateWorldMarket(input: { database: EditorDatabase; humanClub
   managers = projectFinance({...managers,finance:accrueFinance(managers.finance!,input.date)});
   negotiations = [...negotiations]; loans = { ...loans };
   const record = (text: string) => world.events.unshift({ date: input.date, text });
-  const protectedPlayers = new Set(negotiations.filter(d => d.status === "agreed" || d.status === "countered" || (d.status === "completed" && d.completedOn && Date.parse(`${input.date}T12:00:00Z`)-Date.parse(`${d.completedOn}T12:00:00Z`) < ENGINE_CONFIG.worldMarket.cooldownDays*86400000)).map(d => d.playerId));
-  const db = worldDatabase(input.database, negotiations, loans, world, managers.finance);
-  const rosters = new Map<string, EditorPlayer[]>();
-  for (const player of db.players) { const roster = rosters.get(player.clubId) ?? []; roster.push(player); rosters.set(player.clubId, roster); }
-  const moved = new Set<string>();
-  // A youngster behind several teammates can develop on loan; surplus seniors may be sold.
-  for (const club of db.clubs) {
-    const roster = rosters.get(club.id) ?? [];
-    if (club.id === input.humanClubId || roster.length <= ENGINE_CONFIG.worldMarket.minimumSellerRoster || hash(`${week}:${club.id}:list`) % 3 !== 0) continue;
-    const surplus = roster.filter(p => p.marketStatus === "normal" && p.loan?.status !== "active" && !protectedPlayers.has(p.id) && roster.filter(other => other.primaryPosition === p.primaryPosition).length > (p.primaryPosition === "G" ? 2 : 3)).sort((a,b) => a.overall-b.overall || a.id.localeCompare(b.id));
-    const candidate = surplus[0];
-    if (!candidate || world.listings[candidate.id]) continue;
-    world.listings[candidate.id] = candidate.age <= 23 ? "loan" : "sale";
-    candidate.marketStatus = world.listings[candidate.id];
-    record(`${club.name} disponibilizou ${candidate.name} para ${candidate.marketStatus === "loan" ? "empréstimo" : "venda"}.`);
-  }
-  const candidates = db.players.filter(p => (p.marketStatus === "sale" || p.marketStatus === "loan" || !p.clubId.trim()) && p.clubId !== input.humanClubId && p.loan?.status !== "active" && !protectedPlayers.has(p.id));
-  let completed = 0;
-  for (const buyer of [...db.clubs].sort((a,b) => hash(`${week}:${a.id}`)-hash(`${week}:${b.id}`))) {
-    const finances = managers.clubs[buyer.id];
-    const roster = rosters.get(buyer.id) ?? [];
-    if (completed >= ENGINE_CONFIG.worldMarket.maxDeals || buyer.id === input.humanClubId || !finances || finances.budget <= 0 || roster.length < 11 || roster.length >= ENGINE_CONFIG.worldMarket.maximumBuyerRoster) continue;
-    const average = roster.reduce((sum,p) => sum+p.overall,0)/roster.length;
-    const player = candidates.filter(p => {
-      const sellerRoster = rosters.get(p.clubId) ?? [];
-      if (moved.has(p.id) || p.clubId === buyer.id || !Number.isFinite(p.salaryMonthlyBrl) || p.salaryMonthlyBrl < 0) return false;
-      if (p.clubId && (sellerRoster.length <= ENGINE_CONFIG.worldMarket.minimumSellerRoster || sellerRoster.filter(o => o.primaryPosition === p.primaryPosition).length <= (p.primaryPosition === "G" ? 2 : 3))) return false;
-      const atPosition = roster.filter(o => o.primaryPosition === p.primaryPosition);
-      if (atPosition.length >= (p.primaryPosition === "G" ? 3 : 8) || (atPosition.length >= 2 && p.overall <= Math.min(...atPosition.map(o => o.overall)))) return false;
-      const cost = Math.ceil((playerAskingFeeBrl(p)+p.salaryMonthlyBrl*(p.marketStatus === "loan" ? 3 : 12))/1000);
-      return p.overall >= average-5 && p.overall <= average+12 && cost <= finances.budget*ENGINE_CONFIG.worldMarket.budgetFraction;
-    }).sort((a,b) => b.overall-a.overall || playerAskingFeeBrl(a)-playerAskingFeeBrl(b) || a.id.localeCompare(b.id))[0];
-    if (!player) continue;
-    const result = proposeTransfer(db, negotiations, { id: `cpu:${week}:${buyer.id}:${player.id}`, playerId: player.id, buyerClubId: buyer.id, feeBrl: playerAskingFeeBrl(player)*0.8, wageSharePercent: 50 });
-    if (!result.negotiation) continue;
-    let deal = result.negotiation;
-    if (deal.status === "countered") deal = respondToTransferNegotiation(deal, { type: "accept-counter" }).negotiation;
-    if (deal.status !== "agreed") continue;
+  const state: MarketStrategy = world.marketState ? structuredClone(world.marketState) : {version:1,mode:"internal",plans:{},audit:[],rounds:[]};
+  if(state.version!==1 || !["internal","assisted","comparison"].includes(state.mode)) throw new Error("Versão do planejamento de mercado incompatível; save preservado.");
+  delete state.pilotContext;
+  world.marketState=state;
+  let completed=0, rejected=0, proposals=0;
+  const close = (id: string, message: string) => {
+    negotiations=negotiations.map(d=>d.id===id ? {...d,status:"rejected" as const,revision:(d.revision ?? 0)+1,message} : d);
+    delete managers.finance!.reservations[id]; rejected++;
+  };
+  // Deadlines are simulated dates, not request time. All interested clubs compete on one owner.
+  for(const deal of negotiations.filter(d=>d.origin==="cpu" && d.sourceClubId!==input.humanClubId && (d.status==="countered" || d.status==="agreed")).sort((a,b)=>(b.agreedFeeBrl ?? b.counterFeeBrl ?? 0)-(a.agreedFeeBrl ?? a.counterFeeBrl ?? 0) || (b.agreedMonthlyWageBrl ?? 0)-(a.agreedMonthlyWageBrl ?? 0) || a.id.localeCompare(b.id))) {
+    if(deal.expiresOn && deal.expiresOn<input.date) { close(deal.id,"Prazo da proposta expirou sem liquidação."); continue; }
+    if(completed>=MARKET_RULES.maxSettlements || (deal.respondAfter && deal.respondAfter>input.date)) continue;
+    if(!negotiations.some(d=>d.id===deal.id && d.status!=="rejected")) continue;
+    let accepted=deal.status==="countered" ? respondToTransferNegotiation(deal,{type:"accept-counter"}).negotiation : deal;
+    const current=worldDatabase(input.database,negotiations,loans,world,managers.finance);
     try {
-      const settled = settleTransfer(managers.finance!,db,deal,input.date);
-      deal = settled.deal; loans = settled.loans;
-      managers = projectFinance({...managers,finance:settled.finance});
-    } catch { continue; } // Revalidate budget, property, employment and loan coverage at execution.
-    negotiations.unshift(deal);
-    delete world.listings[player.id];
-    rosters.set(player.clubId, (rosters.get(player.clubId) ?? []).filter(p => p.id !== player.id));
-    rosters.set(buyer.id, [...roster, player]);
-    moved.add(player.id); completed++;
-    record(`${buyer.name} ${deal.kind === "loan" ? "recebeu por empréstimo" : "contratou"} ${player.name}${deal.sourceClubId ? `, do ${deal.sourceClub}` : ", livre de contrato"}.`);
+      const settled=settleTransfer(managers.finance!,current,accepted,input.date);
+      accepted={...settled.deal,revision:(deal.revision ?? 0)+1}; loans=settled.loans;
+      managers=projectFinance({...managers,finance:settled.finance});
+      negotiations=negotiations.map(d=>d.id===deal.id ? accepted : d);
+      for(const rival of negotiations.filter(d=>d.playerId===deal.playerId && d.id!==deal.id && d.status!=="completed" && d.status!=="rejected")) close(rival.id,"Outro acordo foi liquidado; vínculo indisponível.");
+      delete world.listings[deal.playerId]; completed++;
+      record(`${current.clubs.find(c=>c.id===deal.buyerClubId)?.name} ${deal.kind==="loan" ? "recebeu por empréstimo" : "contratou"} ${deal.playerName}; taxa e compromissos revalidados.`);
+    } catch { close(deal.id,"Condições, propriedade ou saldo mudaram; negociação encerrada sem efeitos parciais."); }
   }
+  const db = worldDatabase(input.database, negotiations, loans, world, managers.finance);
+  const rosters=rosterIndex(db);
+  const protectedPlayers=new Set(negotiations.filter(d => ((d.status==="agreed" || d.status==="countered") && d.buyerClubId===input.humanClubId) || (d.status==="completed" && d.completedOn && Date.parse(`${input.date}T12:00:00Z`)-Date.parse(`${d.completedOn}T12:00:00Z`)<ENGINE_CONFIG.worldMarket.cooldownDays*86400000)).map(d=>d.playerId));
+  for(const club of db.clubs) {
+    const roster=rosters.get(club.id) ?? [];
+    state.plans[club.id]=buildClubPlan(club.id,roster,managers.finance!,input.date,input.season,state.plans[club.id]);
+    if(club.id===input.humanClubId || roster.length<=20) continue;
+    const surplus=roster.filter(p=>p.marketStatus==="normal" && p.loan?.status!=="active" && !protectedPlayers.has(p.id) && roster.filter(other=>other.primaryPosition===p.primaryPosition).length>(p.primaryPosition==="G" ? 2 : 4)).sort((a,b)=>a.overall-b.overall || a.id.localeCompare(b.id))[0];
+    if(surplus && !world.listings[surplus.id]) {
+      world.listings[surplus.id]=surplus.age<=23 ? "loan" : "sale"; surplus.marketStatus=world.listings[surplus.id];
+      record(`${club.name} disponibilizou ${surplus.name} para ${surplus.marketStatus==="loan" ? "empréstimo" : "venda"}, conforme profundidade do elenco.`);
+    }
+  }
+  const candidates=db.players.filter(p=>(p.marketStatus==="sale" || p.marketStatus==="loan" || !p.clubId.trim()) && p.clubId!==input.humanClubId && !protectedPlayers.has(p.id));
+  for(const buyer of [...db.clubs].sort((a,b)=>hash(`${week}:${a.id}`)-hash(`${week}:${b.id}`))) {
+    if(proposals>=MARKET_RULES.maxProposals || buyer.id===input.humanClubId || !managers.clubs[buyer.id] || negotiations.some(d=>d.buyerClubId===buyer.id && (d.status==="agreed" || d.status==="countered"))) continue;
+    const plan=state.plans[buyer.id], roster=rosters.get(buyer.id) ?? [];
+    const options=marketOptions(plan,roster,candidates,rosters,managers.finance!);
+    if(options.length===1) continue;
+    const context: MarketContext={decisionId:`${input.careerId ?? "world"}:market:${week}:${buyer.id}`,stateRevision:input.revision ?? 0,rulesVersion:"market-v1",simulatedOn:input.date,actorId:buyer.id,spendingLimitCents:plan.spendingLimitCents,needs:plan.needs,missingFacts:["personalidade","representação/empresário"],options};
+    if(!state.pilotContext) state.pilotContext=context;
+    const selection=input.selection?.decisionId===context.decisionId ? input.selection : undefined;
+    const valid=selection && selection.mode===state.mode && selection.contextKey===marketContextKey(context) && selection.stateRevision===context.stateRevision && options.some(o=>o.actionId===selection.actionId) && (!selection.comparedActionId || options.some(o=>o.actionId===selection.comparedActionId));
+    const action=valid && state.mode==="assisted" ? options.find(o=>o.actionId===selection.actionId)! : options[0];
+    state.audit.push({...valid && selection ? selection : {decisionId:context.decisionId,stateRevision:context.stateRevision,contextKey:marketContextKey(context),actionId:action.actionId,reason:action.reason,mode:state.mode,fallback:selection ? "stale-or-invalid-response" : state.mode==="internal" ? undefined : "internal-outside-pilot"},date:input.date,actorId:buyer.id,executed:true});
+    if(action.kind==="wait") continue;
+    const result=proposeTransfer(db,negotiations,{id:`cpu:${week}:${buyer.id}:${action.playerId}`,playerId:action.playerId!,buyerClubId:buyer.id,feeBrl:action.feeBrl!,monthlyWageBrl:action.salaryBrl,wageSharePercent:50});
+    if(!result.negotiation || result.negotiation.status==="rejected") continue;
+    const addDays=(days: number)=>new Date(Date.parse(`${input.date}T12:00:00Z`)+days*86400000).toISOString().slice(0,10);
+    // The contextual seller price is authoritative, not the fixed catalog asking price.
+    const deal: TransferNegotiation={...result.negotiation,askingFeeBrl:action.feeBrl!,offerFeeBrl:action.feeBrl!,counterFeeBrl:undefined,status:"agreed",agreedFeeBrl:action.feeBrl!,agreedWageSharePercent:result.negotiation.kind==="loan" ? 50 : 100,revision:1,createdOn:input.date,respondAfter:addDays(MARKET_RULES.responseDays),expiresOn:addDays(MARKET_RULES.proposalDays),origin:"cpu",message:`Proposta em análise até ${addDays(MARKET_RULES.proposalDays)}. ${action.reason}`};
+    try { managers={...managers,finance:reserveDeal(managers.finance!,deal,db)}; }
+    catch { continue; }
+    negotiations.unshift(deal); proposals++;
+    record(`${buyer.name} abriu negociação por ${deal.playerName}: ${action.reason}`);
+  }
+  state.audit=state.audit.slice(-200);
+  state.rounds.push({date:input.date,proposals,completed,rejected,clubCount:db.clubs.length,needs:Object.values(state.plans).reduce((n,p)=>n+p.needs.filter(x=>x.priority>0).length,0),availableCents:Object.values(state.plans).reduce((n,p)=>n+p.availableCents,0)});
+  state.rounds=state.rounds.slice(-52);
   // Recompute payroll from actual ownership/loan shares; keep the existing match economy.
   const effective = worldDatabase(input.database, negotiations, loans, world, managers.finance);
   const payroll: Record<string, number> = {};

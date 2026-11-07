@@ -17,32 +17,41 @@ function fixture(kind: "sale" | "loan" = "sale") {
   const managers: ManagerMarket = { clubs: Object.fromEntries(database.clubs.map(c => [c.id, { clubId: c.id, coach: c.coachName || c.name, budget: 12000, startingBudget: 12000, payroll: 0, history: [], processedFixtures: [] }])), dismissals: [] };
   return { database, human, buyer, seller, managers, input: { database, humanClubId: human.id, date: "2026-01-18", previousDate: "2026-01-11", negotiations: [], loans: {}, managers } };
 }
+function conclude(input: ReturnType<typeof fixture>["input"]) {
+  const proposed=simulateWorldMarket(input);
+  return simulateWorldMarket({...input,...proposed,previousDate:input.date,date:"2026-01-25"});
+}
 it("CPU negocia, paga e transfere uma única vez por semana sem alterar o universo original", () => {
   const { input, database, buyer, seller, managers } = fixture();
   const before = structuredClone(input);
-  const result = simulateWorldMarket(input);
+  const proposed=simulateWorldMarket(input);
+  expect(proposed.negotiations.find(d=>d.playerId==="target")?.status).toBe("agreed");
+  expect(proposed.managers.clubs[buyer.id].budget).toBe(12000);
+  expect(Object.keys(proposed.managers.finance!.reservations)).toHaveLength(1);
+  const result = conclude(input);
   const deal = result.negotiations.find(d => d.playerId === "target")!;
-  expect(deal).toMatchObject({ status: "completed", buyerClubId: buyer.id, sourceClubId: seller.id, agreedFeeBrl: 100000 });
-  expect(result.managers.clubs[buyer.id].budget).toBe(11900);
-  expect(result.managers.clubs[seller.id].budget).toBe(12100);
+  expect(deal).toMatchObject({ status: "completed", buyerClubId: buyer.id, sourceClubId: seller.id, agreedFeeBrl: 90000 });
+  expect(result.managers.clubs[buyer.id].budget).toBe(11910);
+  expect(result.managers.clubs[seller.id].budget).toBe(12090);
   expect(managers.clubs[buyer.id].budget).toBe(12000);
   expect(input).toEqual(before);
   const effective = worldDatabase(database, result.negotiations, result.loans, result.world);
   expect(effective.players.find(p => p.id === "target")?.clubId).toBe(buyer.id);
   expect(effective.players.filter(p => p.clubId === seller.id).length).toBe(23);
   expect(result.world.events.some(e => e.text.includes("contratou"))).toBe(true);
-  const again = simulateWorldMarket({ ...input, ...result });
+  const again = simulateWorldMarket({ ...input, ...result, date:"2026-01-25" });
   expect(again).toEqual(result);
-  const next = simulateWorldMarket({ ...input, ...result, previousDate: input.date, date: "2026-01-25" });
+  const next = simulateWorldMarket({ ...input, ...result, previousDate: "2026-01-25", date: "2026-02-01" });
   expect(next.negotiations.filter(d => d.playerId === "target")).toHaveLength(1);
 });
 it("CPU empresta com proprietário preservado, prazo e retorno ao clube de origem", () => {
   const { input, database, buyer, seller } = fixture("loan");
-  const result = simulateWorldMarket(input);
-  expect(result.loans.target).toMatchObject({ owner: { clubId: seller.id }, borrower: { clubId: buyer.id }, endsOn: "2026-07-18", wageSharePercent: 50 });
+  expect(simulateWorldMarket(input).loans.target).toBeUndefined();
+  const result = conclude(input);
+  expect(result.loans.target).toMatchObject({ owner: { clubId: seller.id }, borrower: { clubId: buyer.id }, endsOn: "2026-07-25", wageSharePercent: 50 });
   const restored = JSON.parse(JSON.stringify(result));
   expect(worldDatabase(database,restored.negotiations,restored.loans,restored.world).players.find(p => p.id === "target")?.clubId).toBe(buyer.id);
-  const returned = expireLoans(result.loans, "2026-07-18");
+  const returned = expireLoans(result.loans, "2026-07-25");
   expect(worldDatabase(database,result.negotiations,returned,result.world).players.find(p => p.id === "target")?.clubId).toBe(seller.id);
 });
 it("protege propostas humanas ativas, elenco humano, caixa e elenco mínimo", () => {
@@ -87,7 +96,7 @@ it("preenche vagas com técnico disponível sem duplicar vínculos ou roubar ofe
 it("CPU contrata livre sem taxa e reserva salários, sem inventar clube ou atleta", () => {
   const { input, database, buyer } = fixture();
   database.players.find(p => p.id === "target")!.clubId = "";
-  const result = simulateWorldMarket(input);
+  const result = conclude(input);
   expect(result.negotiations.find(d => d.playerId === "target")).toMatchObject({ freeAgent: true, agreedFeeBrl: 0, buyerClubId: buyer.id, status: "completed" });
   expect(result.managers.clubs[buyer.id].budget).toBe(12000);
   expect(database.players.find(p => p.id === "target")?.clubId).toBe("");

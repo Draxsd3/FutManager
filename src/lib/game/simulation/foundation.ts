@@ -3,7 +3,7 @@ import { seededRandom } from "../live-match";
 
 export const ENGINE_CONFIG = Object.freeze({
   schemaVersion: 1 as const,
-  rulesVersion: "foundation-finance-v2" as const,
+  rulesVersion: "foundation-market-v3" as const,
   maxAdvanceDays: 3660,
   worldMarket: Object.freeze({ maxDeals: 6, minimumSellerRoster: 20, maximumBuyerRoster: 30, cooldownDays: 90, budgetFraction: 0.25 }),
 });
@@ -11,7 +11,7 @@ export type EngineEvent = { id: string; operationId: string; date: string; type:
 export type DecisionRecord = { id: string; sector: string; mode: "internal" | "assisted" | "comparison"; actionId: string; fallback?: string; comparedActionId?: string; rulesVersion: string; stateRevision: number; options: string[]; reason: string; eventIds: string[] };
 export type EngineState = {
   schemaVersion: 1;
-  rulesVersion: "foundation-v1" | "foundation-finance-v2";
+  rulesVersion: "foundation-v1" | "foundation-finance-v2" | "foundation-market-v3";
   revision: number;
   seed: string;
   date: string;
@@ -29,7 +29,7 @@ export function engineState(saved: EngineState | undefined, careerId: string, da
   civilDate(date);
   if (!careerId) throw new Error("Carreira sem identidade.");
   if (!saved) return { schemaVersion: 1, rulesVersion: ENGINE_CONFIG.rulesVersion, revision: 0, seed: `career:${careerId}`, date, streams: {}, operations: [], events: [], decisions: [] };
-  if (saved.schemaVersion !== 1 || (saved.rulesVersion !== "foundation-v1" && saved.rulesVersion !== ENGINE_CONFIG.rulesVersion) || !Number.isSafeInteger(saved.revision) || saved.revision < 0 || !saved.seed || !Array.isArray(saved.operations) || !Array.isArray(saved.events) || !Array.isArray(saved.decisions) || !saved.streams || Object.values(saved.streams).some(n => !Number.isSafeInteger(n) || n < 0)) throw new Error("Versão ou estado do motor incompatível. O save foi preservado.");
+  if (saved.schemaVersion !== 1 || (saved.rulesVersion !== "foundation-v1" && saved.rulesVersion !== "foundation-finance-v2" && saved.rulesVersion !== ENGINE_CONFIG.rulesVersion) || !Number.isSafeInteger(saved.revision) || saved.revision < 0 || !saved.seed || !Array.isArray(saved.operations) || !Array.isArray(saved.events) || !Array.isArray(saved.decisions) || !saved.streams || Object.values(saved.streams).some(n => !Number.isSafeInteger(n) || n < 0)) throw new Error("Versão ou estado do motor incompatível. O save foi preservado.");
   civilDate(saved.date);
   if (saved.date !== date) throw new EngineConflict();
   return {...structuredClone(saved),rulesVersion:ENGINE_CONFIG.rulesVersion};

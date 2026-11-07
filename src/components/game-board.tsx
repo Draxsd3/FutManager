@@ -1,7 +1,9 @@
 "use client";
 import { reconcileContractSquad } from "@/lib/game/simulation/contract-squad";
 import { applyCareerPlayerAction, extendCareerLoan, migrateFinanceSave, settleCareerTransfer, updateCareerNegotiation } from "@/lib/game/simulation/settlement";
-import { advanceCareer } from "@/lib/game/simulation/advance";
+import { advanceCareerWithMarketPolicy } from "@/lib/game/simulation/market-policy";
+import { browserMarketProvider } from "@/lib/game/simulation/market-client";
+import { setMarketMode } from "@/lib/game/simulation/market-settings";
 import { EngineConflict, engineState as createEngineState, migrateEngineSave, type EngineState } from "@/lib/game/simulation/foundation";
 import { publishLocalCheckpoint } from "@/lib/game/simulation/local-checkpoint";
 import { worldDatabase, type WorldMarket } from "@/lib/game/world-market";
@@ -748,12 +750,12 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     } catch (error) { return error instanceof Error ? error.message : "Não foi possível concluir. O save anterior foi preservado."; }
     finally { advancing.current = false; }
   }
-  async function makeTransferOffer(playerId: string, feeBrl: number, wageSharePercent: number): Promise<string> {
+  async function makeTransferOffer(playerId: string, feeBrl: number, wageSharePercent: number, monthlyWageBrl?: number): Promise<string> {
     const id = crypto.randomUUID();
     return commitFinancialChange((save,db)=>{
       const p=save.progress!;
       const effective=worldDatabase(db,p.transferNegotiations ?? [],p.loanContracts ?? {},p.worldMarket,p.managerMarket?.finance);
-      const result=proposeTransfer(effective,p.transferNegotiations ?? [],{id,playerId,buyerClubId:save.clubId,feeBrl,wageSharePercent});
+      const result=proposeTransfer(effective,p.transferNegotiations ?? [],{id,playerId,buyerClubId:save.clubId,feeBrl,wageSharePercent,date:save.inGameDate,monthlyWageBrl});
       return {save:result.negotiation ? updateCareerNegotiation(save,db,result.negotiation) : save,message:result.message};
     });
   }
@@ -1600,7 +1602,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return (
       <>
         <CareerWorkspace {...workspace} title={windowTitles[page]} titleIcon={managementSection === "teams" ? "group" : undefined}>
-          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens managerMarket={managerMarket} gameDate={saves.find(save => save.id === activeSaveId)?.inGameDate} youthTeam={managedClubRecord ? youthTeams[managedClubRecord.id] : undefined} youthLoading={!!managedClubRecord && (!youthTeams[managedClubRecord.id] || retryYouthClub === managedClubRecord.id)}  onPromoteYouth={promoteJunior} embedded championHistory={championHistory} worldEvents={worldMarket?.events} section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={managementDatabase ?? database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations.filter(deal => deal.buyerClubId === managedClubRecord?.id)} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
+          {(["juniors", "teams", "search", "coaches", "history"] as string[]).includes(managementSection) ? <WorldScreens marketState={worldMarket?.marketState} onMarketMode={(mode)=>commitFinancialChange(save=>({save:setMarketMode(save,mode),message:"Política de mercado salva nesta carreira."}))} managerMarket={managerMarket} gameDate={saves.find(save => save.id === activeSaveId)?.inGameDate} youthTeam={managedClubRecord ? youthTeams[managedClubRecord.id] : undefined} youthLoading={!!managedClubRecord && (!youthTeams[managedClubRecord.id] || retryYouthClub === managedClubRecord.id)}  onPromoteYouth={promoteJunior} embedded championHistory={championHistory} worldEvents={worldMarket?.events} section={managementSection as "juniors" | "teams" | "search" | "coaches" | "history"} database={managementDatabase ?? database} club={club} coach={coach} budget={budget} squad={squad} records={playerCareers} negotiations={transferNegotiations.filter(deal => deal.buyerClubId === managedClubRecord?.id)} historyView={historyView} onHistoryView={setHistoryView} onOpenPlayer={openPlayerProfile} onTransferOffer={makeTransferOffer} onTransferAction={handleTransferAction} onBack={() => navigate("hub")} /> : <ClubSectionScreen
             jobs={managerMarket && careerDatabase && managedClubRecord ? { market: managerMarket, database: careerDatabase, currentClubId: managedClubRecord.id, date: saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11", appointments: managerAppointments, onApply: applyToManagerJob, onDecline: declineJob, onAccept: acceptJob } : undefined}
             championHistory={championHistory}
             stadium={managedClubRecord ? stadiums[managedClubRecord.id] : undefined}
@@ -1805,7 +1807,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           const current = savesRef.current.find(save => save.id === activeSaveId);
           if (!current) throw new Error("Carreira não encontrada.");
           const snapshot = { ...current, round, budget, playerCareers, manualPositions, progress: progressRef.current };
-          const next = advanceCareer(snapshot,database, { operationId: `after-match:${activeFixture?.id ?? `round-${round}`}`, expectedRevision: engine?.revision ?? 0, fromDate: current.inGameDate, fixtureId: activeFixture?.id });
+          const next = await advanceCareerWithMarketPolicy(snapshot,database, { operationId: `after-match:${activeFixture?.id ?? `round-${round}`}`, expectedRevision: engine?.revision ?? 0, fromDate: current.inGameDate, fixtureId: activeFixture?.id },browserMarketProvider);
           if (next === snapshot) return;
           await publishLocalCheckpoint(next,userId,engine?.revision ?? 0);
           const p = next.progress!;
