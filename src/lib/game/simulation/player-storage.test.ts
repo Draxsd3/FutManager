@@ -24,4 +24,4 @@ it("stores two full-universe E6 careers and a market advance inside the unchange
   const next=advanceCareer(save,db,{operationId:"full-e6",fromDate:save.inGameDate,expectedRevision:0,targetDate:"2026-01-22"});
   expect(writeLocalSaves([next,second],"large-e6")).toBe(true);
   expect(readLocalSaves("large-e6")[0].progress!.worldMarket!.population!.people).toEqual(next.progress!.worldMarket!.population!.people);
-},60000);
+},120000);

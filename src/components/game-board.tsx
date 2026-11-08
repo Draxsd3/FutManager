@@ -1,4 +1,5 @@
 "use client";
+import { bannedForFixture, canMakeSubstitution, liveReport, substitutionAllowance } from "@/lib/game/simulation/matches";
 import { migratePlayerSave, playerEligible, projectSquadCondition } from "@/lib/game/simulation/players";
 import { trainCareerPlayers, promoteCareerYouth, playerCareAction, youthCohort } from "@/lib/game/simulation/player-commands";
 import { coachCheckpoint, isUnemployed, migrateCoachSave } from "@/lib/game/simulation/coaches";
@@ -382,22 +383,23 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     () => (careerDatabase ? buildSquadFromDatabase(careerDatabase, opponent) : null) ?? initialSquad,
     [careerDatabase, opponent],
   );
+  const lineupDate=matchPreparation && !matchPreparation.contractVersion ? undefined : activeFixture?.scheduledDate;
   const opponentStarters = useMemo(
-    () => buildStartingXI(opponentFormation, opponentSquad).map((id) => opponentSquad.find((player) => player.id === id)!).filter(Boolean),
-    [opponentSquad, opponentFormation],
+    () => buildStartingXI(opponentFormation, opponentSquad.filter(p=>playerEligible(p,lineupDate) && !bannedForFixture(competitionSeason,activeFixture,p.sourceId))).map((id) => opponentSquad.find((player) => player.id === id)!).filter(Boolean),
+    [opponentSquad, opponentFormation, competitionSeason, activeFixture, lineupDate],
   );
   const startersData = useMemo(
     () => starters.map((id) => squad.find((p) => p.id === id)!).filter(p=>p && playerEligible(p)),
     [starters, squad],
   );
   const bench = useMemo(
-    () => squad.filter((p) => !starters.includes(p.id) && playerEligible(p)),
-    [starters, squad],
+    () => squad.filter((p) => !starters.includes(p.id) && playerEligible(p,lineupDate) && !bannedForFixture(competitionSeason,activeFixture,p.sourceId)),
+    [starters, squad, competitionSeason, activeFixture, lineupDate],
   );
   // Old saves have no nominated bench; recover the first eligible reserves deterministically.
   const eligibleMatchBench = (matchBenchIds ?? bench.filter((p) => !participation[p.id]).slice(0, 12).map((p) => p.id))
     .map((id) => squad.find((p) => p.id === id))
-    .filter((p): p is Player => !!p && playerEligible(p) && !starters.includes(p.id) && !participation[p.id]);
+    .filter((p): p is Player => !!p && playerEligible(p,lineupDate) && !starters.includes(p.id) && !participation[p.id]);
   const sentOffHomeMinuteById = Object.fromEntries(
     events
       .filter((item) => item.card === "red" && item.scene?.team === "home" && item.actorId !== undefined)
@@ -440,6 +442,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const awayMotivation = Math.round(58 + (seededRandom(`${matchKey}|away-motivation`)() - .5) * 16);
   const createPreparation = (rules: MatchRules, key = matchKey): MatchPreparation => ({
     matchKey: key,
+    contractVersion: 1,
     rules,
     weather: createMatchWeather(key, rules),
     motivationHome: homeMotivation,
@@ -483,10 +486,14 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         sentOffHomeIds: events.filter((item) => item.card === "red" && item.scene?.team === "home" && item.actorId !== undefined).map((item) => item.actorId!),
         sentOffAwayIds: events.filter((item) => item.card === "red" && item.scene?.team === "away" && item.actorId !== undefined).map((item) => item.actorId!),
         yellowCardIds: events.filter((item) => item.card === "yellow" && item.actorId !== undefined).map((item) => item.actorId!),
+        ...(matchPreparation.contractVersion===1 ? {yellowCardIdsBySide:{home:events.filter(e=>e.card==="yellow" && e.scene?.team==="home" && e.actorId!==undefined).map(e=>e.actorId!),away:events.filter(e=>e.card==="yellow" && e.scene?.team==="away" && e.actorId!==undefined).map(e=>e.actorId!)}} : {}),
         random: createMinuteRandom(matchPreparation.matchKey, nextMinute),
       });
       setMinute(nextMinute);
       setEvents((current) => [...current, event]);
+      if(event.card==="red" && event.scene?.team==="home" && event.actorId!==undefined) {
+        const id=event.actorId;setParticipation(current=>current[id] ? {...current,[id]:{...current[id],left:nextMinute}} : current);
+      }
       if (event.scene?.action === "goal") {
         if (event.scene.team === "home") setHomeScore((score) => score + 1);
         else setAwayScore((score) => score + 1);
@@ -499,6 +506,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       if (nextMinute >= matchPreparation.rules.durationMinutes) {
         setMatchRunning(false);
         let gateNet = 0;
+        const awardMatch=()=>{
         if (userIsHome && activeFixture && managedClubRecord) {
           const id = managedClubRecord.id;
           const currentStadium = stadiumsRef.current[id] ?? newStadium();
@@ -512,6 +520,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           }
         }
         setBudget((value) => value + 151 + gateNet);
+        };
         const finalEvents = [...events, event];
         const goals: Record<number, number> = {};
         const assists: Record<number, number> = {};
@@ -533,11 +542,12 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
               return [id, { entered: 0, role: starterPlayer ? resolveMatchPlayerRole(starterPlayer, slotIndex, formation, manualPositions).role : undefined }];
             }));
         const finalParticipation: MatchParticipation = { ...played };
-        for (const item of finalEvents.filter((entry) => entry.card === "red" && entry.actorId !== undefined)) {
+        for (const item of finalEvents.filter((entry) => entry.card === "red" && entry.scene?.team === "home" && entry.actorId !== undefined)) {
           const playerId = item.actorId!;
           const stint = finalParticipation[playerId] ?? { entered: 0 };
           finalParticipation[playerId] = { ...stint, left: Math.min(stint.left ?? nextMinute, item.minute) };
         }
+        setParticipation(finalParticipation);
         const playedMinutes = Object.fromEntries(Object.entries(finalParticipation).map(([id, stint]) => [id, Math.max(0, (stint.left ?? 90) - stint.entered)]));
         const finalRolesById = Object.fromEntries(Object.entries(finalParticipation).map(([id, stint]) => [Number(id), stint.role]));
         setCareerSquad(matchEnergyAfter(squad, playedMinutes, nextMinute, matchPreparation.weather, marking, matchPreparation.rules, {
@@ -570,7 +580,16 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           const winnerClubId = activeFixture.type === "cup" && actualHome === actualAway
             ? (seededRandom(`${activeFixture.id}|penalties`)() < 0.5 ? activeFixture.homeClubId : activeFixture.awayClubId)
             : undefined;
-          const completedSeason = completeCareerFixture(competitionSeason, activeFixture.id, { home: actualHome, away: actualAway, winnerClubId, playerContributions: contributions }, careerDatabase!);
+          let report:import("@/lib/game/simulation/matches").MatchReport|undefined;
+          if(matchPreparation.contractVersion===1) {
+            const opponentClubId=userIsHome ? activeFixture.awayClubId : activeFixture.homeClubId;
+            const opponentParticipation=Object.fromEntries(opponentStarters.map(p=>[p.id,{entered:0,left:Math.min(90,...finalEvents.filter(e=>e.card==="red" && e.scene?.team==="away" && e.actorId===p.id).map(e=>e.minute))}]));
+            const opponentRatings=Object.fromEntries(calculatePlayerRatings(opponentStarters,finalEvents,"away").map(r=>[r.playerId,r.rating]));
+            contributions.push(...playerContributionsFromMatch({database:careerDatabase!,clubId:opponentClubId,squad:opponentStarters,events:finalEvents,side:"away",participation:opponentParticipation,ratings:opponentRatings}));
+            report=liveReport({...activeFixture,status:"played",homeScore:actualHome,awayScore:actualAway,playerContributions:contributions},finalEvents,{home:squad,away:opponentStarters},userIsHome,matchPreparation.matchKey);
+          }
+          const completedSeason = completeCareerFixture(competitionSeason, activeFixture.id, { home: actualHome, away: actualAway, winnerClubId, playerContributions: contributions,report }, careerDatabase!);
+          awardMatch();
           setCompetitionSeason(completedSeason);
           setManagerMarket(current => updateCareerMarket(current ?? initializeCareerMarket(careerDatabase!, competitionSeason, coach, budget), completedSeason, { clubId: managedClubRecord!.id, budget: budget + 151 + gateNet, payroll: squad.reduce((total, player) => total + (playerCareers[player.id]?.salary ?? player.salary), 0) }, savesRef.current.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"));
           setChampionHistory(history => archiveChampionships(history, completedSeason, careerDatabase!, coach));
@@ -1295,6 +1314,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       setSyncLabel("Temporada encerrada — não há partidas pendentes nesta carreira.");
       return;
     }
+    if (starters.length!==11 || starters.some(id=>!squad.some(p=>p.id===id && playerEligible(p,scheduledFixture.scheduledDate) && !bannedForFixture(competitionSeason,scheduledFixture,p.sourceId)))) { setMatchRulesError("Escalação incompleta ou com atleta inelegível (inscrição, lesão, suspensão ou aposentadoria)."); return; }
     setActiveFixtureId(scheduledFixture.id);
     // Revisiting tactics must not discard the user's XI or manually placed players.
     if (starters.length !== 11) {
@@ -1341,7 +1361,6 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   async function startMatch() {
-    if (starters.length!==11 || starters.some(id=>!squad.some(p=>p.id===id && playerEligible(p)))) { setMatchRulesError("Escalação incompleta ou com atleta inelegível (inscrição, lesão, suspensão ou aposentadoria)."); return; }
     if (!scheduledFixture) {
       setMatchRulesError("A temporada não possui partidas pendentes.");
       return;
@@ -1456,6 +1475,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   function substitute(id: number, point?: ManualPosition) {
     if (substitutionOut === null || substitutionsLeft <= 0 || !eligibleMatchBench.some((player) => player.id === id) || !starters.includes(substitutionOut)) return;
+    if(matchPreparation?.contractVersion===1 && !canMakeSubstitution(events,"home",substitutionOut,id,minute,halftimeWaiting))return;
     const outgoingPlayer = squad.find((player) => player.id === substitutionOut);
     const incomingPlayer = squad.find((player) => player.id === id);
     const outgoing = outgoingPlayer?.name ?? "Jogador";
@@ -1476,7 +1496,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setSubstitutionsLeft((value) => value - 1);
     setEvents((current) => [
       ...current,
-      { minute, half: minute <= 45 ? 1 : 2, team: "home", text: `${incoming} entrou no lugar de ${outgoing}` },
+      { minute, half: minute <= 45 ? 1 : 2, team: "home", substitution:{outId:substitutionOut,inId:id,interval:halftimeWaiting}, text: `${incoming} entrou no lugar de ${outgoing}` },
     ]);
     setSelectedPlayer(null);
     setSubstitutionOut(null);
@@ -1592,7 +1612,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           const player = squad.find((item) => item.id === profilePlayer);
           if (!player) return null;
           const record = playerCareers[profilePlayer] ?? createPlayerCareer(player, club);
-          return <CareerPlayerProfile onCare={(action)=>carePlayer(player.id,action)} key={player.id} player={player} kit={kit} clubColors={database?.clubs.find((item) => item.name === club)} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onClose={() => setProfilePlayer(null)} />;
+          return <CareerPlayerProfile competitionSuspension={bannedForFixture(competitionSeason,scheduledFixture,player.sourceId) ? `Suspenso para ${scheduledFixture?.competitionName} — expulsão registrada` : undefined} onCare={(action)=>carePlayer(player.id,action)} key={player.id} player={player} kit={kit} clubColors={database?.clubs.find((item) => item.name === club)} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onClose={() => setProfilePlayer(null)} />;
         })()}
       </>
     );
@@ -1646,7 +1666,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           const player = squad.find((item) => item.id === profilePlayer);
           if (!player) return null;
           const record = playerCareers[profilePlayer] ?? createPlayerCareer(player, club);
-          return <CareerPlayerProfile onCare={(action)=>carePlayer(player.id,action)} key={player.id} player={player} kit={kit} clubColors={database?.clubs.find((item) => item.name === club)} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onClose={() => setProfilePlayer(null)} />;
+          return <CareerPlayerProfile competitionSuspension={bannedForFixture(competitionSeason,scheduledFixture,player.sourceId) ? `Suspenso para ${scheduledFixture?.competitionName} — expulsão registrada` : undefined} onCare={(action)=>carePlayer(player.id,action)} key={player.id} player={player} kit={kit} clubColors={database?.clubs.find((item) => item.name === club)} club={club} record={record} clubs={database?.clubs.map((item) => item.name) ?? []} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onMarketAction={(action) => applyPlayerMarketAction(profilePlayer, action)} onClose={() => setProfilePlayer(null)} />;
         })()}
       </>
     );
@@ -1745,7 +1765,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             onMovePlayers={moveMatchPlayers}
             startersData={matchStarters}
             bench={eligibleMatchBench}
-            substitutionsLeft={substitutionsLeft}
+            substitutionsLeft={matchPreparation?.contractVersion===1 ? Math.min(substitutionsLeft,substitutionAllowance(events,"home",minute,halftimeWaiting)) : substitutionsLeft}
             selectedPlayer={selectedPlayer}
             substitutionOut={substitutionOut}
             onSelectPlayer={selectMatchPlayer}

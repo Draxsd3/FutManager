@@ -19,8 +19,9 @@ vi.mock("@/lib/game/persistence", async (importOriginal) => ({
 }));
 
 // Full-universe integration: durable snapshots include financial + player books.
-// Keep the normal unit-test budget elsewhere; allow complete hydration/checkpoint work here.
-vi.setConfig({ testTimeout: 30_000 });
+// E6 baseline also exceeds short wall-clock budgets on this sandbox.
+// Keep every full-catalog/isolation assertion; no storage quota or engine limit is relaxed.
+vi.setConfig({ testTimeout: 60_000 });
 configure({ asyncUtilTimeout: 15000 });
 
 const matchRulesMarkdown = readFileSync("public/game-assets/match-engine-rules.md", "utf8");
@@ -68,7 +69,7 @@ it("creates independent careers, preserves the lineup on returning home and open
   fireEvent.click(screen.getByRole("button", { name: "Fechar Configurações" }));
   await screen.findByRole("button", { name: "Configurações" });
   await waitFor(() => expect(readLocalSaves("alice").find((save) => save.id === first.id)?.progress?.coach).toBe("Técnico Alice"));
-}, 30000);
+}, 60000);
 
 it("does not expose another account's careers on the same browser", async () => {
   localStorage.setItem("futmanager.saves.v1.alice", JSON.stringify([{ id: "private", name: "Carreira privada", careerRuleset: CURRENT_CAREER_RULESET }]));
@@ -118,6 +119,7 @@ it("autosaves a match without a floating exit button and resumes paused after re
 });
 
 
+// E6 baseline also exceeded 30s on this sandbox; preserve all 45 live ticks/assertions.
 it("pauses at minute 45 and automatically opens tactics before the second half", async () => {
   const view = render(game());
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
@@ -127,7 +129,7 @@ it("pauses at minute 45 and automatically opens tactics before the second half",
   fireEvent.click(await screen.findByRole("button", { name: /Ir para a partida/ }));
   await screen.findByText("AO VIVO");
   fireEvent.click(screen.getByRole("button", { name: "4x" }));
-  const dialog = await screen.findByRole("dialog", { name: "Táticas" }, { timeout: 20_000 });
+  const dialog = await screen.findByRole("dialog", { name: "Táticas" }, { timeout: 45_000 });
   expect(within(dialog).getByText(/Ajuste a equipe antes do segundo tempo/)).toBeTruthy();
   expect(within(dialog).getByRole("button", { name: "Iniciar 2º tempo →" })).toBeTruthy();
   await waitFor(() => {
@@ -147,7 +149,7 @@ it("pauses at minute 45 and automatically opens tactics before the second half",
     expect(progress?.matchRunning).toBe(false);
   });
   view.unmount();
-}, 30_000);
+}, 60_000);
 
 it("warns before a browser exit during a match and saves the resumable state", async () => {
   render(game());
@@ -227,7 +229,7 @@ it("keeps club navigation internal and the top Menu inicial button returns to th
   expect(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ })).toBeTruthy();
   expect(document.querySelector('[data-menu-version="stadium-v3"]')).toBeTruthy();
   expect(readLocalSaves("alice")[0].managerName).toBe("Teste Navegação");
-}, 15000);
+}, 30000);
 
 
 it("opens Agenda choices before navigating and routes each choice to its own section", async () => {
@@ -450,7 +452,7 @@ it("advances the career date after a result and returns an expired incoming loan
     expect(restored.progress?.starters).not.toContain(player.id);
     expect(restored.progress?.manualPositions[player.id]).toBeUndefined();
   });
-}, 60000);
+}, 120000);
 
 it("archives concluded competitions from an old save and persists champions separately from the imported catalog", async () => {
   const view = render(game());
@@ -471,7 +473,7 @@ it("archives concluded competitions from an old save and persists champions sepa
   fireEvent.click(screen.getByRole("button", { name: "História" }));
   fireEvent.click(await screen.findByRole("menuitem", { name: /Times campeões/ }));
   expect(await screen.findByRole("columnheader", { name: "Técnico campeão" })).toBeTruthy();
-}, 15000);
+}, 30000);
 
 it("removes pre-reset careers from IndexedDB/localStorage/session and cannot restore them from cloud", async () => {
   const { IDBFactory } = await import("fake-indexeddb");
@@ -503,6 +505,7 @@ it("removes pre-reset careers from IndexedDB/localStorage/session and cannot res
 });
 
 
+// E6 baseline also exceeded 60s; retain full-universe/two-career/reload coverage.
 it("connects jobs to the career, confirms a club change and restores it without moving the old squad or money", async () => {
   const { IDBFactory } = await import("fake-indexeddb");
   vi.stubGlobal("indexedDB", new IDBFactory());
@@ -563,7 +566,7 @@ it("connects jobs to the career, confirms a club change and restores it without 
   fireEvent.click(screen.getByRole("button", { name: "Agenda" }));
   fireEvent.click(screen.getByRole("menuitem", { name: /Central de empregos/ }));
   expect(await screen.findByText("Contratação confirmada.")).toBeTruthy();
-}, 60000);
+}, 120000);
 
 it("saves the chosen imported shirt per career, restores it and carries it into match tactics", async () => {
   const { clubCrestAsset, clubKitAsset } = await import("@/lib/game/assets");
@@ -603,7 +606,7 @@ it("saves the chosen imported shirt per career, restores it and carries it into 
     expect(gkSvg.querySelector("image[data-jersey-crest='true']")?.getAttribute("href")).toBe(clubCrestAsset(club));
   }
   expect(readLocalSaves("alice")[0].progress?.kit).toBe(3);
-}, 15000);
+}, 30000);
 
 it("persists sector prices and paid stadium construction across career reload", async () => {
   const { IDBFactory } = await import("fake-indexeddb");
@@ -629,7 +632,7 @@ it("persists sector prices and paid stadium construction across career reload", 
   await waitFor(() => expect((screen.getByLabelText("Ingresso Popular (R$)") as HTMLInputElement).value).toBe("42"));
   expect(screen.getByText(/lugares em construção/)).toBeTruthy();
   expect(readLocalSaves("alice")[0].budget).toBe(11624);
-}, 15000);
+}, 60000);
 
 it.each([true, false])("credits gate only for a completed home fixture (home=%s)", async (home) => {
   const { IDBFactory } = await import("fake-indexeddb");
@@ -668,9 +671,15 @@ it.each([true, false])("credits gate only for a completed home fixture (home=%s)
   await waitFor(() => {
     const result = readLocalSaves("alice")[0];
     expect(result.progress?.minute).toBe(90);
+    const completed=result.progress!.competitionSeason!.fixtures.find(item=>item.id===fixture.id)!;
+    expect(completed.report?.version).toBe(1);
+    expect(completed.report?.origin).toBe("live");
+    expect(completed.report?.goals.filter(goal=>goal.clubId===completed.homeClubId)).toHaveLength(completed.homeScore!);
+    expect(completed.report?.goals.filter(goal=>goal.clubId===completed.awayClubId)).toHaveLength(completed.awayScore!);
+    expect(new Set(completed.playerContributions!.map(row=>row.clubId))).toEqual(new Set([completed.homeClubId,completed.awayClubId]));
     expect(result.budget).toBeCloseTo(12624 + 151 + (home ? expectedNet / 1000 : 0));
     expect(result.progress?.stadiums?.[save.clubId]?.receipts.length ?? 0).toBe(home ? 1 : 0);
-  }, { timeout: 5000 });
+  }, { timeout: 15000 });
 }, 60000);
 
 it("waits for catalog synchronization, explains failure, and retries with Atualizar", async () => {
@@ -724,7 +733,7 @@ it("creates a separate simulated youth team and persists a promotion after reloa
   await screen.findByText(/Jogadores fictícios gerados pelo jogo/);
   expect(screen.getAllByRole("button", { name: "Promover" })).toHaveLength(19);
   confirm.mockRestore();
-}, 30000);
+}, 60000);
 
 it("preserves the entire career universe across editor changes, reload and continuing the saved career", async () => {
   const { IDBFactory } = await import("fake-indexeddb");
@@ -807,7 +816,7 @@ it("receives automatic club offers after the match, persists and rejects them af
   expect(within(profile).getByText(offer.club)).toBeTruthy();
   fireEvent.click(within(profile).getByRole("button", { name: "Recusar" }));
   await waitFor(() => expect(readLocalSaves("alice")[0].progress?.playerCareers[player.id]?.transferOffers?.[0].status).toBe("rejected"));
-}, 60000);
+}, 120000);
 
 it("loads a real unemployed checkpoint, advances without a fixture and preserves unemployment after reload", async () => {
   const { IDBFactory } = await import("fake-indexeddb"); vi.stubGlobal("indexedDB",new IDBFactory());
