@@ -159,7 +159,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       await Promise.resolve();
       if (cancelled) return;
       const pendingDatabaseSync = await withTimeout(hasPendingDatabaseSync(userId), 2500).catch(() => false);
-      const localDatabase = upgradeEditorDatabase(await withTimeout(readCachedDatabase(userId), 2500).catch(() => null) ?? readLocalDatabase(userId) ?? (await (await import("@/lib/importer/november-database")).applyNovemberDatabase(await importBrazilDatabase())).database);
+      const localDatabase = upgradeEditorDatabase(await withTimeout(readCachedDatabase(userId), 2500).catch(() => null) ?? readLocalDatabase(userId) ?? (await (await import("@/lib/importer/november-database")).applyNovemberDatabase(await importBrazilDatabase(), { recalibrateOveralls: true })).database);
       if (cancelled) return;
       const cachedSaves = await withTimeout(readCachedCareerSaves(userId), 2500).catch(() => null) ?? [];
       const localSaves = mergeCareerSaves(readLocalSaves(userId),cachedSaves)

@@ -704,3 +704,4 @@
 .primaryButton { border: 1px solid #246e43; border-radius: 7px; background: #246e43; color: #fff; padding: 10px 16px; cursor: pointer; font-weight: 700; font-size: 11px; }
 .primaryButton:disabled, .outlineButton:disabled { opacity: .55; cursor: not-allowed; }
 @media (max-width: 760px) { .dataCards { grid-template-columns: 1fr; } }
+.ratingReview{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:20px;padding:18px;border:1px solid #ffffff18;border-radius:10px;background:#ffffff06}.ratingReview strong{color:#eef3e9;font-size:13px}.ratingReview p{max-width:650px;margin:6px 0 0;color:#a9b5a8;font-size:11px;line-height:1.5}.ratingReview button{flex-shrink:0}@media(max-width:680px){.ratingReview{align-items:flex-start;flex-direction:column}}

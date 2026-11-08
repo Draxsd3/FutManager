@@ -40,3 +40,14 @@ it("replaces each of the 156 rosters exactly and repeated updates do not duplica
     expect(roster.map(player => player.transfermarkt?.id).sort()).toEqual(sourceClub.players.map(player => player.id).sort());
   }
 });
+it("calibra uma base nova com valores da fonte e preserva notas no refresh posterior", async () => {
+  const base = await importBrazilDatabase();
+  const first = (await applyNovemberDatabase(base, { recalibrateOveralls: true })).database;
+  const athlete = first.players.find(p => p.transfermarkt?.marketValueEur && p.transfermarkt.marketValueEur > 0)!;
+  const club = first.clubs.find(c => c.id === athlete.clubId)!;
+  const { estimatePlayerOverall } = await import("@/lib/game/player-overall");
+  expect(athlete.overall).toBe(estimatePlayerOverall(athlete, club));
+  const manual = { ...first, players: first.players.map(p => p.id === athlete.id ? { ...p, overall: 93 } : p) };
+  const second = (await applyNovemberDatabase(manual)).database;
+  expect(second.players.find(p => p.id === athlete.id)?.overall).toBe(93);
+});

@@ -1,4 +1,5 @@
 import { applyBundledTransfermarkt } from "./transfermarkt";
+import { estimatePlayerOverall } from "@/lib/game/player-overall";
 import type { EditorClub, EditorDatabase, EditorPlayer } from "@/lib/game/editor-data";
 import type { DivisionKey, PositionCode } from "@/lib/game/mock-data";
 
@@ -26,7 +27,7 @@ export async function importBrazilDatabase(existing?: EditorDatabase): Promise<E
     const senior = [...team.players].sort((a,b) => Number(b.position === "G") - Number(a.position === "G")).slice(0,35);
     for (const [index, player] of senior.entries()) {
       // Explicit simulation defaults, not factual Brasfoot/2026 financial or ability measurements.
-      const overall = Math.min(95, Math.max(35, 40 + team.level * 2 + (player.star ? 6 : 0)));
+      const overall = estimatePlayerOverall({ age: player.age, starRating: player.star ? 4 : 2 }, { division: team.division as DivisionKey, level: team.level });
       players.push({ id: crypto.randomUUID(), clubId, name: player.name, age: player.age,
         shirtNumber: index + 1, primaryPosition: player.position as PositionCode, secondaryPosition: null,
         preferredFoot: player.foot as "E" | "D", overall, starRating: player.star ? 4 : 2,

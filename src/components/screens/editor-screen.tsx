@@ -10,6 +10,7 @@ import { saveTransfermarktCheckpoint } from "@/lib/importer/database-cache";
 import { useMemo, useState, useEffect, useRef, type CSSProperties } from "react";
 import Image from "next/image";
 import { applyNovemberDatabase } from "@/lib/importer/november-database";
+import { recalibrateDatabaseOveralls } from "@/lib/game/player-overall";
 import { divisionKeys, type DivisionKey, type PositionCode } from "@/lib/game/mock-data";
 import { brazilianStates } from "@/lib/game/competitions";
 import { MAX_CLUB_SQUAD_SIZE, type EditorClub, type EditorDatabase, type EditorPlayer } from "@/lib/game/editor-data";
@@ -30,6 +31,17 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack, on
   const [apiBusy, setApiBusy] = useState(false);
   const [fileBusy, setFileBusy] = useState(false);
   const [fileMessage, setFileMessage] = useState("");
+  const [ratingMessage, setRatingMessage] = useState("");
+  async function recalibrateRatings() {
+    if (!window.confirm(`Recalcular a força de todos os ${database.players.length} jogadores do catálogo, inclusive notas editadas manualmente? As novas notas são estimativas de simulação, não avaliações oficiais. Jogadores sem clube cadastrado serão ignorados. Carreiras salvas, resultados e uniformes não serão alterados.`)) return;
+    setFileBusy(true); setRatingMessage("Recalculando e salvando…");
+    try {
+      const result = recalibrateDatabaseOveralls(database);
+      const synced = await onChange(result.database);
+      setRatingMessage(`${result.updated} jogadores revisados: ${result.withMarketValue} com valor de mercado, ${result.updated - result.withMarketValue} estimados pelo contexto; ${result.skipped} sem clube válido. ${synced === false ? "Salvo localmente; sincronização não confirmada." : "Catálogo salvo e sincronizado."} Carreiras existentes não foram alteradas.`);
+    } catch { setRatingMessage("Não foi possível concluir a atualização. Confira o estado do salvamento."); }
+    finally { setFileBusy(false); }
+  }
   const fileInput = useRef<HTMLInputElement>(null);
   async function importJson(file: File | undefined) {
     if (!file) return;
@@ -184,6 +196,8 @@ export function EditorScreen({ database, userId, syncLabel, onChange, onBack, on
       <div className={styles.hero}><div><p className={styles.eyebrow}>SEU UNIVERSO, SUAS REGRAS</p><h2>Seu futebol começa aqui.</h2><p>Gerencie os clubes e jogadores ou atualize os dados que serão usados nas novas carreiras.</p></div><span aria-hidden="true" className={styles.heroMark}>✦</span></div>
       <div className={styles.metrics}><div><span>Clubes cadastrados</span><strong>{database.clubs.length.toLocaleString("pt-BR")}</strong></div><div><span>Jogadores cadastrados</span><strong>{database.players.length.toLocaleString("pt-BR")}</strong></div><div><span>Estado do catálogo</span><strong className={styles.statusText}>{syncLabel}</strong></div></div>
       <div className={styles.actionGrid}><button onClick={() => setSection("clubs")}><span className={styles.actionIcon}>▦</span><strong>Clubes e jogadores</strong><small>Edite elencos, times e uniformes.</small><b>Explorar clubes →</b></button><button onClick={() => setSection("data")}><span className={styles.actionIcon}>↥</span><strong>Dados e importação</strong><small>Importe um JSON ou consulte a API.</small><b>Gerenciar dados →</b></button></div>
+      <div className={styles.ratingReview}><div><strong>Revisar força dos jogadores</strong><p>Recalcula todo o catálogo com estimativas baseadas em valor de mercado quando disponível; sem valor, usa divisão, nível do clube, idade e estrelas existentes. Não são notas oficiais.</p></div><button className={styles.outlineButton} type="button" disabled={fileBusy || apiBusy || !database.players.length} onClick={() => void recalibrateRatings()}>{fileBusy ? "Salvando…" : "Recalcular overalls"}</button></div>
+      {ratingMessage && <p className={styles.safetyNote} role="status">{ratingMessage}</p>}
       <p className={styles.safetyNote}>Alterações no universo são usadas em novas carreiras. Suas carreiras salvas e uniformes personalizados são preservados.</p>
     </section>}
     <section hidden={section !== "data"} className={styles.dataPage} aria-label="Dados e importação">
