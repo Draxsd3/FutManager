@@ -1,3 +1,4 @@
+import { assertMatchHistory } from "./simulation/matches";
 import { binaryText,textBinary,packCheckpoint,unpackCheckpoint } from "./simulation/checkpoint-dictionary";
 import { strToU8, strFromU8, zlibSync, unzlibSync } from "fflate";
 import { EngineConflict } from "./simulation/foundation";
@@ -28,18 +29,32 @@ function compressAggregate(key:string,value:unknown) {
     || (["youthTeams","jobClubSnapshots"].includes(key) && Object.keys(v).length>0);
 }
 const packedFinance = new WeakMap<object, string>();
-const unpackedFinance = new Map<string, unknown>();
+type DecodedAggregate={value:unknown;codec:string;size:number;encoding?:string;bytes?:number;characters:number};
+// Bounded LRU: two careers have more than four aggregates. Clearing the entire cache
+// at entry five made every hydration repeatedly inflate/parse both full universes.
+const unpackedFinance = new Map<string, DecodedAggregate>();
+const DECODED_CACHE_CHARACTERS=64_000_000;
+let decodedCharacters=0;
+function forgetAggregate(key:string){const entry=unpackedFinance.get(key);if(entry)decodedCharacters-=entry.characters;unpackedFinance.delete(key);}
 function decodeSaveIndex(raw: string | null): CareerSave[] {
   return JSON.parse(raw ?? "[]",(key,value)=>{
     const legacy=aggregateCodecs[key],dictionary=legacy?.replace("-deflate-v1","-dictionary-deflate-v1");
     if (!legacy || ![legacy,dictionary].includes(value?.codec)) return value;
-    let finance=unpackedFinance.get(value.data);
+    if (!Number.isSafeInteger(value.size) || value.size < 2 || value.size > 64_000_000) throw new Error("Checkpoint financeiro inválido.");
+    const cached=unpackedFinance.get(value.data);
+    let finance=cached && cached.codec===value.codec && cached.size===value.size && cached.encoding===value.encoding && cached.bytes===value.bytes ? cached.value : undefined;
+    if (finance) {unpackedFinance.delete(value.data);unpackedFinance.set(value.data,cached!);}
     if (!finance) {
-      if (!Number.isSafeInteger(value.size) || value.size < 2 || value.size > 64_000_000) throw new Error("Checkpoint financeiro inválido.");
+      forgetAggregate(value.data);
       const bytes=value.encoding==="utf15" ? textBinary(value.data,value.bytes) : Uint8Array.from(atob(value.data),c=>c.charCodeAt(0));
       // A corrupt local payload must fail closed, not allocate arbitrary decompression output.
       const text=strFromU8(unzlibSync(bytes,{out:new Uint8Array(value.size)}));
-      finance=value.codec===dictionary ? unpackCheckpoint(text) : JSON.parse(text); if(unpackedFinance.size>=4) unpackedFinance.clear(); unpackedFinance.set(value.data,finance);
+      finance=value.codec===dictionary ? unpackCheckpoint(text) : JSON.parse(text);
+      const characters=value.codec===dictionary ? JSON.parse(text).characters as number : text.length;
+      if(characters<=DECODED_CACHE_CHARACTERS) {
+        while(decodedCharacters+characters>DECODED_CACHE_CHARACTERS && unpackedFinance.size)forgetAggregate(unpackedFinance.keys().next().value!);
+        unpackedFinance.set(value.data,{value:finance,codec:value.codec,size:value.size,encoding:value.encoding,bytes:value.bytes,characters});decodedCharacters+=characters;
+      }
     }
     const restored=structuredClone(finance);
     if(restored && typeof restored === "object") packedFinance.set(restored,JSON.stringify(value));
@@ -98,6 +113,7 @@ export function writeLocalSaves(saves: CareerSave[], userId: string) {
     const previous = decodeSaveIndex(localStorage.getItem(accountStorageKey(SAVES_KEY,userId)));
     if (index.some(save => (previous.find(old => old.id === save.id)?.progress?.engine?.revision ?? 0) > (save.progress?.engine?.revision ?? 0))) return false;
     for(const save of index) {
+      assertMatchHistory(previous.find(v=>v.id===save.id),save);
       const old=previous.find(v=>v.id===save.id)?.progress?.worldMarket?.population,current=save.progress?.worldMarket?.population;
       if(old && (!current || current.rulesVersion!==old.rulesVersion || current.version!==old.version || Object.keys(old.people).some(id=>!current.people[id]) || Object.keys(old.generated).some(id=>!current.generated[id]))) return false;
     }

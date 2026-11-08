@@ -15,7 +15,7 @@ import { accrueFinance,projectFinance } from "./finance";
 import { engineState } from "./foundation";
 import { assessMove } from "./market-rules";
 function setup(){const f=marketFixture();return {...f,save:migratePlayerSave(f.save,f.database)};}
-function match(f:ReturnType<typeof setup>,id="e6-game",date=f.save.inGameDate){return {...f.save.progress!.competitionSeason!,fixtures:[{id,scheduledDate:date,status:"played",homeClubId:f.human.id,awayClubId:f.buyer.id,playerContributions:[...f.database.players.filter(v=>[f.human.id,f.buyer.id].includes(v.clubId)).slice(0,22).map(v=>({playerId:v.id,clubId:v.clubId,playerName:v.name,minutes:90,goals:0,assists:0,rating:6}))]}]} as CareerSeason;}
+function match(f:ReturnType<typeof setup>,id="e6-game",date=f.save.inGameDate){return {...f.save.progress!.competitionSeason!,fixtures:[{...f.save.progress!.competitionSeason!.fixtures[0],id,scheduledDate:date,status:"played",homeClubId:f.human.id,awayClubId:f.buyer.id,playerContributions:[...f.database.players.filter(v=>[f.human.id,f.buyer.id].includes(v.clubId)).slice(0,22).map(v=>({playerId:v.id,clubId:v.clubId,playerName:v.name,minutes:90,goals:0,assists:0,rating:6}))]}]} as CareerSeason;}
 const input={season:2026,week:1,day:"Segunda" as const,drill:"passe" as const,intensity:"Moderada" as const,playerIds:[1]};
 describe("E6 — common population and civil calendar",()=>{
   it("adopts without changing source IDs, statistics or frozen catalog; preserves financially-known legacy identity",()=>{

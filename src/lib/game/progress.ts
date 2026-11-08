@@ -13,6 +13,7 @@ import type { TransferNegotiation } from "./transfers";
 import type { TrainingSessionRecord } from "./training";
 
 export type MatchPreparation = {
+  contractVersion?: 1;
   matchKey: string;
   rules: MatchRules;
   weather: MatchWeather;

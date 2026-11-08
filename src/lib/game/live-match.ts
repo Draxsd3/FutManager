@@ -37,6 +37,8 @@ export type MatchEvent = {
   /** Side responsible for non-possession events such as substitutions or tactical changes. */
   team?: MatchSide;
   card?: "yellow" | "red";
+  secondYellow?: boolean;
+  substitution?: {outId:number;inId:number;interval:boolean};
   scene?: MatchScene;
   scorer?: string;
   scorerId?: number;
@@ -402,7 +404,7 @@ function tacticalFocusBonus(team: MatchTeamInput, index: number) {
 
 /** Simulates one coherent minute: actor, commentary, event type, possession, score and stats share one outcome. */
 export function simulateAction({ minute, starters, formation, positions, opponent, opponentStarters, opponentFormation,
-  previous, snapshot, rules, weather, tactics, opponentTactics, score = { home: 0, away: 0 }, managedIsHome = true, kickoffSide = "home", minutesPlayedHome, minutesPlayedAway, motivationHome, motivationAway, sentOffHomeIds = [], sentOffAwayIds = [], yellowCardIds = [], random }: {
+  previous, snapshot, rules, weather, tactics, opponentTactics, score = { home: 0, away: 0 }, managedIsHome = true, kickoffSide = "home", minutesPlayedHome, minutesPlayedAway, motivationHome, motivationAway, sentOffHomeIds = [], sentOffAwayIds = [], yellowCardIds = [], yellowCardIdsBySide, random }: {
   minute: number;
   score?: { home: number; away: number };
   managedIsHome?: boolean;
@@ -426,6 +428,7 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   sentOffHomeIds?: number[];
   sentOffAwayIds?: number[];
   yellowCardIds?: number[];
+  yellowCardIdsBySide?: Partial<Record<MatchSide,number[]>>;
   random: () => number;
 }): MatchEvent {
   const home: MatchTeamInput = { players: starters, formation, positions, tactics, motivation: motivationHome, sentOffIds: sentOffHomeIds, minutesPlayed: minutesPlayedHome, rules };
@@ -510,6 +513,7 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   let quality: number | undefined;
   let outcome: MatchEvent["outcome"];
   let card: MatchEvent["card"];
+  let secondYellow=false;
   let possessionAfter: MatchSide = possession;
   let eventFrom = from;
   let eventTo = to;
@@ -632,8 +636,8 @@ export function simulateAction({ minute, starters, formation, positions, opponen
       actedAgainstIndex = actorIndex;
       const cardChance = rules.yellowCardBaseChanceOnFoul + (defenseTeam.tactics.marking === "Pesada" ? rules.heavyMarkingCardBonus : 0);
       const cardRoll = random();
-      const alreadyBooked = !!defender?.id && yellowCardIds.includes(defender.id);
-      if (alreadyBooked && cardRoll < cardChance) card = "red";
+      const alreadyBooked = !!defender?.id && (yellowCardIdsBySide?.[defenseSide] ?? yellowCardIds).includes(defender.id);
+      if (alreadyBooked && cardRoll < cardChance) {card = "red";secondYellow=true;}
       else if (!alreadyBooked && cardRoll < cardChance) card = "yellow";
       else if (!alreadyBooked && cardRoll < cardChance + .008 && minute > 10) card = "red";
       text = `Falta de ${defenderName} em ${passerName}${card === "yellow" ? " — cartão amarelo." : card === "red" ? alreadyBooked ? " — segundo amarelo, expulso." : " — cartão vermelho, expulso." : "."}`;
@@ -694,7 +698,7 @@ export function simulateAction({ minute, starters, formation, positions, opponen
     half: minute <= 45 ? 1 : 2,
     text,
     ...(quality !== undefined ? { chanceQuality: quality } : {}),
-    ...(card ? { card } : {}),
+    ...(card ? { card,...(secondYellow?{secondYellow:true}:{}) } : {}),
     ...(scorer ? { scorer, scorerId } : {}),
     ...(actorId !== undefined ? { actorId } : {}),
     ...(assistId !== undefined ? { assistId } : {}),
