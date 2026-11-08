@@ -40,8 +40,9 @@ it("collects exactly 156 clubs from the four professional competitions with comp
   expect(request.mock.calls.filter(([body]) => body.action !== "seasons").every(([body]) => "season" in body && body.season === "2025")).toBe(true);
   const imported = applyTransfermarktSnapshot({ clubs: [], players: [] }, snapshot, [], {});
   expect(imported.clubs).toHaveLength(156); expect(imported.players).toHaveLength(1716);
-  expect(new Set(imported.players.map(p => p.overall)).size).toBeGreaterThan(10);
-  expect(imported.players[0].transfermarkt?.modelVersion).toBe("provisional-national-v1");
+  // The fixture has identical players; only their division context differs.
+  expect(new Set(imported.players.map(p => p.overall)).size).toBe(4);
+  expect(imported.players[0].transfermarkt?.modelVersion).toBe("market-context-v2");
   const again = applyTransfermarktSnapshot(imported, snapshot, [], {});
   expect(again.clubs).toEqual(imported.clubs); expect(again.players).toEqual(imported.players);
 });

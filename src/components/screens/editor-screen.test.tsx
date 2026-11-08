@@ -134,3 +134,22 @@ it("waits for cloud confirmation and shows failure instead of claiming success",
   expect(screen.getByRole("button", { name: "Atualizar" })).not.toHaveProperty("disabled", true);
   vi.restoreAllMocks();
 });
+
+it("revisa o catálogo apenas após confirmação, sem alterar a base original", async () => {
+  const database = createDefaultDatabase();
+  const before = database.players.map(player => player.overall);
+  const onChange = vi.fn().mockResolvedValue(true);
+  const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);
+  render(<EditorScreen userId="alice" database={database} syncLabel="Salvo" onChange={onChange} onBack={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", { name: "Recalcular overalls" }));
+  expect(onChange).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Recalcular overalls" }));
+  await waitFor(() => expect(onChange).toHaveBeenCalledOnce());
+  expect(confirm).toHaveBeenCalledTimes(2);
+  expect(database.players.map(player => player.overall)).toEqual(before);
+  const updated = onChange.mock.calls[0][0];
+  expect(updated.players).toHaveLength(database.players.length);
+  expect(updated.players.some((player: { overall: number }, i: number) => player.overall !== before[i])).toBe(true);
+  expect(await screen.findByText(/Carreiras existentes não foram alteradas/)).toBeTruthy();
+  vi.restoreAllMocks();
+});

@@ -10,6 +10,7 @@ import { z } from "zod";
 import { trustedPlayerPhoto } from "@/lib/game/source-player-photo";
 import type { EditorClub, EditorDatabase, EditorPlayer } from "@/lib/game/editor-data";
 import { normalizeName } from "./matching";
+import { estimatePlayerOverall } from "@/lib/game/player-overall";
 
 const numericId = z.string().regex(/^[1-9]\d*$/);
 const playerSchema = z.object({
@@ -49,7 +50,7 @@ type CatalogClub = { source: string; name: string; state: string };
 type Link = { transfermarktId: string | null; approved: boolean };
 
 /** Pure allowlisted overlay. Caller must never apply this to an active career snapshot.
- * Version 2 imports competition members, including missing clubs. No currency/rating guesses.
+ * Version 2 imports competition members; new ratings and finances are simulation estimates.
  */
 export function applyTransfermarktSnapshot(
   database: EditorDatabase, input: unknown, catalog: CatalogClub[], links: Record<string, Link>,
@@ -159,17 +160,13 @@ export function applyTransfermarktSnapshot(
         : previous.filter((old) => !old.transfermarkt && normalizeName(old.name) === normalizeName(player.name));
       const old = matches.length === 1 && !reused.has(matches[0].id) ? matches[0] : undefined;
       if (old) reused.add(old.id);
-      // Provisional, deterministic simulation. Missing market data is not zero value.
-      const base = ({ "Série A": 74, "Série B": 64, "Série C": 54, "Série D": 46 } as const)[incoming.division ?? "Série C"];
-      const identityOffset = Number(BigInt(player.id) % BigInt(13)) - 6;
-      const ageOffset = player.age < 21 ? -4 : player.age > 35 ? -2 : 0;
-      const valueOffset = player.marketValueEur && player.marketValueEur > 0 ? Math.max(-5, Math.min(9, Math.round(Math.log10(player.marketValueEur) * 4 - 20))) : 0;
-      const overall = old?.overall ?? Math.max(35, Math.min(90, base + identityOffset + ageOffset + valueOffset));
+      // Existing catalog ratings may be user edits; only estimate new players on import.
+      const overall = old?.overall ?? estimatePlayerOverall({ age: player.age, starRating: 2, transfermarkt: { id: player.id, collectedAt: incoming.fetchedAt, season: snapshot.seasonId ?? "2026", marketValueEur: player.marketValueEur } }, { ...club, division: incoming.division ?? club.division });
       return {
         id: old?.id ?? crypto.randomUUID(), clubId: club.id, name: player.name,
         ...(player.loan ? { loan: { ...player.loan, owner: { ...player.loan.owner, clubId: resolveClub(player.loan.owner.externalId) }, borrower: { ...player.loan.borrower, clubId: resolveClub(player.loan.borrower.externalId) } } } : {}),
         transfermarkt: { id: player.id, collectedAt: incoming.fetchedAt, season: snapshot.seasonId ?? "2026",
-          manualCorrection: player.manualCorrection, photoUrl: trustedPlayerPhoto(player.photoUrl) ?? (old?.transfermarkt?.id === player.id ? trustedPlayerPhoto(old.transfermarkt.photoUrl) : undefined), marketValueEur: player.marketValueEur, dateOfBirth: player.dateOfBirth ?? null, modelVersion: "provisional-national-v1",
+          manualCorrection: player.manualCorrection, photoUrl: trustedPlayerPhoto(player.photoUrl) ?? (old?.transfermarkt?.id === player.id ? trustedPlayerPhoto(old.transfermarkt.photoUrl) : undefined), marketValueEur: player.marketValueEur, dateOfBirth: player.dateOfBirth ?? null, modelVersion: old ? old.transfermarkt?.modelVersion : "market-context-v2",
           estimatedFields: ["overall", "salaryMonthlyBrl", "marketValueBrl", ...(player.positionEstimated ? ["primaryPosition"] : []), ...(!player.foot ? ["preferredFoot"] : []), ...(!player.contractEndsOn ? ["contractEndsOn"] : []), ...(!player.shirtNumber ? ["shirtNumber"] : [])] },
         shirtNumber: player.shirtNumber ?? old?.shirtNumber ?? index + 1,
         nationalities: player.nationalities ?? (player.nationality ? (Array.isArray(player.nationality) ? player.nationality : [player.nationality]) : old?.nationalities ?? []),
