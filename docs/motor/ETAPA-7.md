@@ -48,3 +48,7 @@ Planos derivados dos técnicos E5, substituições CPU contextuais e sua granula
 - SQL aplicado e testado com transações/rollback e tabelas temporárias: `match_report_guard_passed`, `indexed_match_guard_passed`, `legacy_and_archive_passed`; lote de 1.000 súmulas sintéticas, cópias idênticas aceitas e alterações/remoções/contradições rejeitadas. Nenhum save privado lido.
 - Comandos: `NODE_OPTIONS=--max-old-space-size=3072 npx vitest run --maxWorkers=1 --testTimeout=30000 --reporter=verbose`; reexecução: `npx vitest run src/components/game-board.test.tsx -t 'persists sector prices|receives automatic club offers' --testTimeout=30000`.
 - Build de produção Next.js, TypeScript, ESLint e `git diff --check` finais aprovados. Publicação e SHA exato de produção registrados no PR após merge/verificação.
+
+### Integração da main durante a entrega
+
+A PR #167 entrou na main enquanto a validação rodava. A recalibração de GER para novos catálogos/carreiras foi incorporada nesta branch, preservando a E7 e as carreiras congeladas. Após a integração: **597 testes/117 arquivos fora do GameBoard aprovados**, mais **5/5 cenários de partida** (retomada, intervalo, substituição e término nos dois lados) e **2/2 cenários de ciclo** (emprego e ofertas automáticas após reload). Os outros cenários de UI haviam passado na validação anterior; não alegar reexecução integral dos 30 após esta integração. Build/tipos/lint da árvore integrada e SHA da produção são conferidos e registrados no PR #168 antes de encerrar a entrega.
