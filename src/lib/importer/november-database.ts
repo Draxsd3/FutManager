@@ -1,9 +1,10 @@
 import type { EditorDatabase } from "@/lib/game/editor-data";
 import { applyTransfermarktSnapshot, transfermarktSnapshotSchema } from "./transfermarkt";
 import { normalizeLiveClub } from "./transfermarkt-live";
+import { recalibrateDatabaseOveralls } from "@/lib/game/player-overall";
 
 /** Full source identities; missing positions are provisional and never presented as source facts. */
-export async function applyNovemberDatabase(database: EditorDatabase) {
+export async function applyNovemberDatabase(database: EditorDatabase, options: { recalibrateOveralls?: boolean } = {}) {
   const [{ default: file }, { default: catalog }, { default: links }] = await Promise.all([
     import("@/data/transfermarkt/brasileirao-2026-novembro.json"),
     import("@/data/brazil-clubs.json"), import("../../../scripts/transfermarkt/clubs.json"),
@@ -29,6 +30,7 @@ export async function applyNovemberDatabase(database: EditorDatabase) {
   }));
   const snapshot = transfermarktSnapshotSchema.parse({ version: 2, generatedAt: file.sourceMetadata.generatedAt, seasonId: "2026",
     competitions: file.competitions.map(comp => ({ id: comp.id, name: comp.name, seasonId: comp.seasonId, division: divisions[comp.id as keyof typeof divisions] })), clubs });
-  return { database: applyTransfermarktSnapshot(database, snapshot, catalog, links, { allowIncompleteRosters: true }), clubs: clubs.length,
+  const imported = applyTransfermarktSnapshot(database, snapshot, catalog, links, { allowIncompleteRosters: true });
+  return { database: options.recalibrateOveralls ? recalibrateDatabaseOveralls(imported).database : imported, clubs: clubs.length,
     players: clubs.reduce((sum, club) => sum + club.players.length, 0), provisional, shortRosters: clubs.filter(club => club.players.length < 11 || !club.players.some(player => player.position === "G")).length };
 }
