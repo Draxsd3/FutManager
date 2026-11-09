@@ -180,3 +180,18 @@ it("preserves invalid local expiry and salary as unknown rather than granting a 
  expect(state.contracts[key]).toMatchObject({endsOn:null,monthlyCents:null,status:"active",clubId:save.clubId});
  expect(accrueFinance(state,"2026-03-01").contracts[key].status).toBe("active");
 });
+
+it("previews the exact cash commitment and does not double count the current reservation", async () => {
+ const { marketCostQuote } = await import("../market-quote");
+ const {finance,deal,db,buyer}=fixture();
+ const quote=marketCostQuote(finance,buyer.id,"sale",10000,1000,100)!;
+ expect(quote.total).toBe(22000);
+ expect(quote.available).toBe(availableCents(finance,buyer.id)/100);
+ const reserved=reserveDeal(finance,deal,db);
+ expect(marketCostQuote(reserved,buyer.id,"sale",10000,1000,100,"deal")?.available).toBe(quote.available);
+ expect(marketCostQuote(reserved,buyer.id,"sale",10000,1000,100)?.available).toBe(quote.available!-22000);
+ const loan=marketCostQuote(finance,buyer.id,"loan",2000,1000,25)!;
+ expect(loan.total).toBe(3500);
+ expect(marketCostQuote(finance,buyer.id,"loan",2000,1000,101)).toBeNull();
+ expect(marketCostQuote(undefined,buyer.id,"sale",10000,1000,100)?.available).toBeNull();
+});

@@ -166,7 +166,7 @@ export function financeDatabase(db: EditorDatabase, s?: FinanceState): EditorDat
     return {...p,clubId,loan:c.status !== "expired" && loan ? {...loan,status:active ? "active" as const : "returned" as const} : undefined,salaryMonthlyBrl:c.monthlyCents === null ? p.salaryMonthlyBrl : c.monthlyCents/100,contractEndsOn:c.endsOn ?? p.contractEndsOn,registrationStatus:s.registrations[p.id]?.status ?? "registered"};
   })};
 }
-function dealCost(deal: TransferNegotiation, monthly: number) {
+export function dealCost(deal: TransferNegotiation, monthly: number) {
   if (!Number.isFinite(deal.agreedFeeBrl) || deal.agreedFeeBrl! < 0) throw new Error("Taxa inválida.");
   const share=deal.kind === "loan" ? deal.agreedWageSharePercent ?? deal.wageSharePercent : 100;
   if (!Number.isFinite(share) || share < 0 || share > 100) throw new Error("Participação salarial inválida.");

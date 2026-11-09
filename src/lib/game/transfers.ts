@@ -1,4 +1,6 @@
 import { assessMove, contextualPriceBrl } from "./simulation/market-rules";
+import { dateAfterMonths } from "./loans";
+import { civilDate } from "./simulation/foundation";
 import { isFreeAgent } from "./player-contract";
 import type { EditorPlayer, EditorDatabase } from "./editor-data";
 
@@ -25,6 +27,8 @@ export type TransferNegotiation = {
   /** Modeled now; non-cash settlements and commissions remain disabled until their ledger exists. */
   paymentTerms?: { kind: "cash" } | { kind: "instalments"; schedule: { dueOn: string; amountBrl: number }[] };
   commission?: { agentId: string; amountBrl: number; payerClubId: string };
+  /** Simulation estimate at proposal date; absent in legacy negotiations. */
+  releaseClauseBrl?: number;
   askingFeeBrl: number;
   offerFeeBrl: number;
   wageSharePercent: number;
@@ -62,6 +66,23 @@ export function playerAskingFeeBrl(player: EditorPlayer) {
   return isFreeAgent(player) ? 0 : askingFeeBrl(player.marketStatus === "loan" ? "loan" : "sale", player.marketValueBrl) * (player.marketStatus === "normal" ? 1.5 : 1);
 }
 
+/** Estimated game clause, not a sourced contractual fact. Missing/stale dates do not free a player. */
+export function simulatedReleaseClauseBrl(player: EditorPlayer, date?: string): number | null {
+  if (isFreeAgent(player)) return 0;
+  if (!date || !Number.isFinite(player.marketValueBrl) || player.marketValueBrl <= 0) return null;
+  try {
+    civilDate(date); civilDate(player.contractEndsOn);
+    if (player.contractEndsOn < date) return null; // stale data, not proof of release
+    const base = Math.round(player.marketValueBrl * 2);
+    const factor = player.contractEndsOn <= dateAfterMonths(date, 2) ? 0.1 : player.contractEndsOn <= dateAfterMonths(date, 6) ? 0.5 : 1;
+    return Math.max(1, Math.round(base * factor));
+  } catch { return null; }
+}
+
+export function transferAskingPrice(player: EditorPlayer, players: EditorPlayer[], date?: string) {
+  return date ? contextualPriceBrl(player, players.filter(p => p.clubId === player.clubId), date) : playerAskingFeeBrl(player);
+}
+
 export function proposeTransfer(database: EditorDatabase, existing: TransferNegotiation[], input: TransferOfferInput): { negotiation?: TransferNegotiation; message: string } {
   const player = database.players.find((item) => item.id === input.playerId);
   if(player?.condition?.retiredOn) return {message:"Atleta aposentado não pode ser contratado."};
@@ -72,9 +93,10 @@ export function proposeTransfer(database: EditorDatabase, existing: TransferNego
   if (player.loan?.status === "active") return { message: "Atleta em empréstimo vigente: o vínculo precisa ser resolvido antes de uma nova transferência." };
   if (existing.some((item) => item.playerId === player.id && item.buyerClubId === buyer.id && item.status !== "rejected" && item.status !== "completed")) return { message: "Já existe uma negociação ativa por este atleta." };
   const kind: TransferKind = !free && player.marketStatus === "loan" ? "loan" : "sale";
-  const askingFee = input.date ? contextualPriceBrl(player,database.players.filter(p=>p.clubId===player.clubId),input.date) : playerAskingFeeBrl(player);
+  const askingFee = transferAskingPrice(player, database.players, input.date);
+  const clause = kind === "sale" && !free ? simulatedReleaseClauseBrl(player, input.date) : null;
   const wageSharePercent = kind === "loan" ? input.wageSharePercent ?? 50 : 0;
-  const validation = free ? input.feeBrl !== 0 ? "Jogador livre não tem taxa de transferência." : null : validateOffer(input.feeBrl, wageSharePercent, askingFee, kind);
+  const validation = free ? input.feeBrl !== 0 ? "Jogador livre não tem taxa de transferência." : null : validateOffer(input.feeBrl, wageSharePercent, Math.max(askingFee, clause ?? 0), kind);
   if (validation) return { message: validation };
   const base: TransferNegotiation = {
     id: input.id,
@@ -86,6 +108,7 @@ export function proposeTransfer(database: EditorDatabase, existing: TransferNego
     buyerClubId: buyer.id,
     kind,
     askingFeeBrl: askingFee,
+    ...(clause !== null && clause > 0 ? { releaseClauseBrl: clause } : {}),
     offerFeeBrl: Math.round(input.feeBrl),
     wageSharePercent,
     ...(input.monthlyWageBrl !== undefined && kind === "sale" ? {agreedMonthlyWageBrl: input.monthlyWageBrl} : {}),
@@ -119,7 +142,7 @@ export function respondToTransferNegotiation(negotiation: TransferNegotiation, a
   }
   if (negotiation.status !== "countered") return { negotiation, message: "Envie uma nova proposta somente após receber uma contraproposta." };
   const wageSharePercent = negotiation.kind === "loan" ? action.wageSharePercent ?? 50 : 0;
-  const validation = validateOffer(action.feeBrl, wageSharePercent, negotiation.askingFeeBrl, negotiation.kind);
+  const validation = validateOffer(action.feeBrl, wageSharePercent, Math.max(negotiation.askingFeeBrl, negotiation.releaseClauseBrl ?? 0), negotiation.kind);
   if (validation) return { negotiation, message: validation };
   const next = evaluateOffer({
     ...negotiation,
@@ -139,6 +162,7 @@ function validateOffer(feeBrl: number, wageSharePercent: number, askingFee: numb
 }
 
 function evaluateOffer(offer: TransferNegotiation): TransferNegotiation {
+  if (offer.kind === "sale" && offer.releaseClauseBrl && offer.offerFeeBrl >= offer.releaseClauseBrl) return { ...offer, status: "agreed", agreedFeeBrl: offer.offerFeeBrl, agreedWageSharePercent: 100, message: "Multa simulada atingida: o clube libera o atleta. Confirme a contratação após revisar o custo e o aceite salarial." };
   const feeRatio = offer.offerFeeBrl / offer.askingFeeBrl;
   const salaryMeetsTerms = offer.kind !== "loan" || offer.wageSharePercent >= 50;
   if (feeRatio >= 0.95 && salaryMeetsTerms) {
