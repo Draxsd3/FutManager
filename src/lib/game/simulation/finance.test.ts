@@ -195,3 +195,21 @@ it("previews the exact cash commitment and does not double count the current res
  expect(marketCostQuote(finance,buyer.id,"loan",2000,1000,101)).toBeNull();
  expect(marketCostQuote(undefined,buyer.id,"sale",10000,1000,100)?.available).toBeNull();
 });
+
+it("breaks down the exact availability calculation, including excluded reservation and shortfall", async () => {
+ const {finance,buyer,other}=fixture();
+ const {financeAvailability,unreservedCents}=await import("./finance");
+ const {marketCostQuote}=await import("../market-quote");
+ finance.payables.a={clubId:buyer.id,amountCents:60000,paidCents:10000,dueOn:"2026-02-01"};
+ finance.payables.b={clubId:other.id,amountCents:999999,paidCents:0,dueOn:"2026-02-01"};
+ finance.reservations.one={clubId:buyer.id,cents:30000}; finance.reservations.two={clubId:buyer.id,cents:20000};
+ const breakdown=financeAvailability(finance,buyer.id,"one");
+ expect(breakdown).toMatchObject({cash:100000000,wages:18000000,payables:50000,reservations:20000,unreserved:81930000,available:81930000});
+ expect(unreservedCents(finance,buyer.id,"one")).toBe(breakdown.unreserved);
+ const quote=marketCostQuote(finance,buyer.id,"sale",1000,1000,100,"one")!;
+ expect(quote.breakdown).toEqual({wages:180000,payables:500,reservations:200,unreserved:819300});
+ expect(quote.available).toBe(availableCents(finance,buyer.id,"one")/100);
+ finance.clubs[buyer.id].cashCents=100000;
+ expect(financeAvailability(finance,buyer.id,"one")).toMatchObject({unreserved:-17970000,available:0});
+ expect(marketCostQuote(undefined,buyer.id,"sale",1,1,100)?.breakdown).toBeNull();
+});

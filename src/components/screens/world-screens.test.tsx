@@ -130,7 +130,7 @@ it("mostra passe, pedido contextual, multa e custo real antes da proposta e da c
   expect(within(card).getByText(formatBrl(transferAskingPrice(player, database.players, date)))).toBeTruthy();
   fireEvent.click(button);
   const summary = screen.getByLabelText("Resumo financeiro da proposta");
-  expect(within(summary).getByText(formatBrl(availableCents(managerMarket.finance!, club.id)/100))).toBeTruthy();
+  expect(within(summary).getByText("Saldo disponível para propostas").nextElementSibling?.textContent).toBe(formatBrl(availableCents(managerMarket.finance!, club.id)/100));
   expect(summary.textContent).toContain("12 meses");
   fireEvent.change(screen.getByLabelText("Salário mensal proposto"), { target: { value: "100000" } });
   expect(summary.textContent).toContain("R$ 1.200.000");
