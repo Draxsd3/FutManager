@@ -20,6 +20,13 @@ export function migrateFinanceSave(save: CareerSave, database: EditorDatabase): 
   const loans=recoverCareerLoans(p.careerSquad ?? [],p.transferNegotiations ?? [],database,p.loanContracts);
   const db=worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,market.finance);
   let managers=adoptFinance(market,db,save.inGameDate,loans,isUnemployed(market) ? undefined : {clubId:save.clubId,budget:save.budget});
+  // Release only old transfer reservations; neither cash nor other obligations change.
+  const oldDealIds = (p.transferNegotiations ?? []).filter(deal => managers.finance!.reservations[deal.id]);
+  if (oldDealIds.length) {
+    const finance = structuredClone(managers.finance!);
+    for (const deal of oldDealIds) delete finance.reservations[deal.id];
+    managers = {...managers, finance};
+  }
   const localPlayers=(p.careerSquad ?? []).filter(player=>!player.sourceId && !managers.finance!.contracts[localEmploymentKey(save.id,save.clubId,player.id)]);
   if(localPlayers.length) {
     const finance=structuredClone(managers.finance!);

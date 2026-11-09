@@ -178,3 +178,17 @@ describe("E5 identity, boards and shared contracts",()=>{
     expect(projectFinance(f.market).finance!.clubs).toEqual(f.market.finance!.clubs);
   });
 });
+
+it("dívida vencida persistente aumenta pressão e pode gerar demissão com rescisão registrada como dívida",()=>{
+ const f=setup(), club=f.human.id, board=f.market.staff!.boards[club];
+ board.games=Array.from({length:5},(_,i)=>({id:`past-${i}`,points: i<3 ? 1 : 0,expected:1}));
+ const finance=f.market.finance!; finance.clubs[club].cashCents=0;
+ finance.payables.old={clubId:club,amountCents:50000,paidCents:0,dueOn:"2025-11-01"};
+ const result=processCoaches(f.market,f.database,undefined,"2026-01-12");
+ expect(isUnemployed(result)).toBe(true);
+ const event=result.staff!.events.find(e=>e.coachId===result.staff!.humanId && e.type==="dismissed")!;
+ expect(event.costCents).toBeGreaterThan(0);
+ expect(Object.entries(result.finance!.payables).find(([id])=>id.startsWith("coach-end:"))?.[1].amountCents).toBe(event.costCents);
+ expect(result.finance!.clubs[club].cashCents).toBe(0);
+ expect(processCoaches(result,f.database,undefined,"2026-01-12")).toEqual(result);
+});

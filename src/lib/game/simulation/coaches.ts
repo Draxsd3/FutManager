@@ -60,9 +60,14 @@ function charge(finance: FinanceState, clubId: string, id: string, date: string,
   finance.clubs[clubId].cashCents-=cents;
   finance.ledger.push({id,date,clubId,kind:"coach-fee",amountCents:cents,cashDeltaCents:-cents,reference:id});
 }
-function release(market: ManagerMarket, coach: Coach, date: string, reason: "dismissed" | "expired" | "resigned", cost: number) {
+function release(market: ManagerMarket, coach: Coach, date: string, reason: "dismissed" | "expired" | "resigned", cost: number, deferCost = false) {
   const staff=market.staff!, clubId=coach.clubId!, club=market.clubs[clubId], contract=market.finance!.contracts[key(coach.id)];
-  if(cost) charge(market.finance!,clubId,`coach-end:${coach.contract!.id}`,date,cost);
+  if (cost && deferCost) {
+    // Severance remains an obligation, not invented cash or an erased debt.
+    const id=`coach-end:${coach.contract!.id}`;
+    market.finance!.payables[id]={clubId,amountCents:cost,paidCents:0,dueOn:date};
+    market.finance!.ledger.push({id,date,clubId,kind:"coach-fee",amountCents:cost,cashDeltaCents:0,reference:id});
+  } else if(cost) charge(market.finance!,clubId,`coach-end:${coach.contract!.id}`,date,cost);
   if(contract) { contract.status="expired"; contract.endsOn=date; market.finance!.history.push({...contract}); }
   const tenure=coach.history.at(-1); if(tenure) { tenure.endedOn=date; tenure.reason=reason; }
   coach.clubId=null; coach.contract=undefined; coach.availableOn=plusDays(date,reason==="dismissed" ? 14 : 0);
@@ -122,11 +127,15 @@ export function processCoaches(market: ManagerMarket, database: EditorDatabase, 
     if(c.contract.endsOn<date) { release(next,c,date,"expired",0); continue; }
     const b=staff.boards[c.clubId], games=b.games;
     const ratio=games.reduce((s,g)=>s+g.points,0)/Math.max(.01,games.reduce((s,g)=>s+g.expected,0));
-    if(games.length>=COACH_RULES.minimumGames && ratio<COACH_RULES.dismissalRatio) {
+    const overdue = Object.values(next.finance!.payables).some(p => p.clubId === c.clubId && p.amountCents > p.paidCents && plusDays(p.dueOn,30) <= date);
+    const adjustedRatio = ratio - (overdue ? .15 : 0);
+    if (overdue) { b.score = Math.max(0, Math.round(clamp(50+40*(ratio-1))) - 15); b.reason = `${b.objective}: dívidas vencidas há pelo menos 30 dias aumentam a pressão da diretoria.`; }
+    if(games.length>=COACH_RULES.minimumGames && adjustedRatio<COACH_RULES.dismissalRatio) {
       const days=Math.max(0,(Date.parse(`${c.contract.endsOn}T12:00:00Z`)-Date.parse(`${date}T12:00:00Z`))/86400000);
       const cost=Math.round(c.contract.monthlyCents*Math.min(COACH_RULES.severanceMonths,days/30));
       if(availableCents(next.finance!,c.clubId)>=cost) release(next,c,date,"dismissed",cost);
-      else b.reason="Rendimento abaixo da meta, mas caixa livre insuficiente para rescisão.";
+      else if (overdue && ratio >= COACH_RULES.dismissalRatio) release(next,c,date,"dismissed",cost,true);
+      else b.reason=overdue ? "Dívidas vencidas e rendimento abaixo da meta; rescisão adiada por falta de caixa livre." : "Rendimento abaixo da meta, mas caixa livre insuficiente para rescisão.";
     }
   }
   // Vacancies remain open for at least seven simulated days; valid human offers protect their deadline.
