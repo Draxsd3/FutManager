@@ -636,77 +636,86 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }));
   const centerCompetitionId = activeFixture?.competitionId ?? activeLeagueId;
   const centerCompetitionType = activeFixture?.type ?? "league";
-  const centerTable: TableRow[] = centerCompetitionType === "cup" ? [] : getCompetitionStandings(competitionSeason?.fixtures ?? [], centerCompetitionId)
-    .map(({ club, played, wins, draws, losses, goalsFor, goalsAgainst, points }) => ({ club, played, wins, draws, losses, goalsFor, goalsAgainst, points }));
-  const centerPlayerStats = getCompetitionPlayerStats(competitionSeason?.fixtures ?? [], centerCompetitionId);
-  const centerTopScorers: TopScorer[] = centerPlayerStats.filter((player) => player.goals > 0 && player.played > 0).slice(0, 5)
-    .map((player) => ({ name: player.playerName, club: player.club, goals: player.goals, played: player.played }));
-  const centerTopRatings: TopRating[] = centerPlayerStats.filter((player) => player.rating !== null && player.played > 0)
-    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 5)
-    .map((player) => ({ name: player.playerName, club: player.club, rating: player.rating ?? 0, played: player.played, role: careerDatabase?.players.find((item) => item.id === player.playerId)?.primaryPosition ?? "M" }));
-  const careerCompetitionData: Record<string, CareerCompetitionView> = {};
-  for (const competitionId of new Set((competitionSeason?.fixtures ?? []).map((fixture) => fixture.competitionId))) {
-    const competitionFixtures = (competitionSeason?.fixtures ?? []).filter((fixture) => fixture.competitionId === competitionId && fixture.status !== "cancelled");
-    const metadata = competitionFixtures[0];
-    if (!metadata) continue;
-    const standings = metadata.type === "cup" ? [] : getCompetitionStandings(competitionSeason?.fixtures ?? [], competitionId)
+  // The complete national calendar is expensive. Build these views only for the open
+  // competition dialog, not on every match tick, autosave or result-screen interaction.
+  const standingsData = useMemo(() => {
+    if (!standingsOpen) return null;
+    const centerTable: TableRow[] = centerCompetitionType === "cup" ? [] : getCompetitionStandings(competitionSeason?.fixtures ?? [], centerCompetitionId)
       .map(({ club, played, wins, draws, losses, goalsFor, goalsAgainst, points }) => ({ club, played, wins, draws, losses, goalsFor, goalsAgainst, points }));
-    const playerStats = getCompetitionPlayerStats(competitionSeason?.fixtures ?? [], competitionId);
-    const scored = competitionFixtures.filter((fixture) => fixture.status === "played");
-    careerCompetitionData[competitionId] = {
-      type: metadata.type,
-      hasKnockout: competitionFixtures.some(f => f.stage === "knockout"),
-      qualifiesOverall: competitionSeason?.tournaments?.find(t => t.competitionId === competitionId)?.format.qualify === "top-eight",
-      groups: (() => {
-        const registration = competitionSeason?.tournaments?.find(t => t.competitionId === competitionId);
-        if (!registration) return undefined;
-        const groups = registration.format.pairing === "paulista" ? [] : registration.groups.map(g => ({ name: g.name, table: getCompetitionStandings(competitionFixtures, competitionId, g.clubIds) }));
-        if (registration.format.qualify === "cearense" && competitionFixtures.some(f => f.stage === "second-groups" && f.status !== "locked")) {
-          groups.push(...registration.groups.map((g,i) => ({ name: `2ª fase · Grupo ${i === 0 ? "C" : "D"}`, table: getCompetitionStandings(competitionFixtures, competitionId, getCompetitionStandings(competitionFixtures, competitionId, g.clubIds).slice(0,3).map(r => r.clubId), "second-groups") })));
-        }
-        if (competitionFixtures.some(f => f.stage === "relegation" && f.status !== "locked" && !f.leg)) {
-          const table = getCompetitionStandings(competitionFixtures, competitionId, undefined, "relegation");
-          if (metadata.state === "Santa Catarina") {
-            const fifths = registration.groups.flatMap(g => getCompetitionStandings(competitionFixtures, competitionId, g.clubIds).slice(4,5).map(r => r.clubId));
-            const bonus = getCompetitionStandings(competitionFixtures, competitionId, fifths)[0]?.clubId;
-            const row = table.find(r => r.clubId === bonus);
-            if (row) row.points += 1;
-            table.sort((a,b) => b.points-a.points || b.wins-a.wins || (b.goalsFor-b.goalsAgainst)-(a.goalsFor-a.goalsAgainst) || b.goalsFor-a.goalsFor);
+    const playersById = new Map(careerDatabase?.players.map(item => [item.id, item]) ?? []);
+    const centerPlayerStats = getCompetitionPlayerStats(competitionSeason?.fixtures ?? [], centerCompetitionId);
+    const centerTopScorers: TopScorer[] = centerPlayerStats.filter((player) => player.goals > 0 && player.played > 0).slice(0, 5)
+      .map((player) => ({ name: player.playerName, club: player.club, goals: player.goals, played: player.played }));
+    const centerTopRatings: TopRating[] = centerPlayerStats.filter((player) => player.rating !== null && player.played > 0)
+      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 5)
+      .map((player) => ({ name: player.playerName, club: player.club, rating: player.rating ?? 0, played: player.played, role: playersById.get(player.playerId)?.primaryPosition ?? "M" }));
+    const careerCompetitionData: Record<string, CareerCompetitionView> = {};
+    const clubsById = new Map(database?.clubs.map(item => [item.id, item]) ?? []);
+    for (const competitionId of new Set((competitionSeason?.fixtures ?? []).map((fixture) => fixture.competitionId))) {
+      const competitionFixtures = (competitionSeason?.fixtures ?? []).filter((fixture) => fixture.competitionId === competitionId && fixture.status !== "cancelled");
+      const metadata = competitionFixtures[0];
+      if (!metadata) continue;
+      const standings = metadata.type === "cup" ? [] : getCompetitionStandings(competitionSeason?.fixtures ?? [], competitionId)
+        .map(({ club, played, wins, draws, losses, goalsFor, goalsAgainst, points }) => ({ club, played, wins, draws, losses, goalsFor, goalsAgainst, points }));
+      const playerStats = getCompetitionPlayerStats(competitionSeason?.fixtures ?? [], competitionId);
+      const scored = competitionFixtures.filter((fixture) => fixture.status === "played");
+      careerCompetitionData[competitionId] = {
+        type: metadata.type,
+        hasKnockout: competitionFixtures.some(f => f.stage === "knockout"),
+        qualifiesOverall: competitionSeason?.tournaments?.find(t => t.competitionId === competitionId)?.format.qualify === "top-eight",
+        groups: (() => {
+          const registration = competitionSeason?.tournaments?.find(t => t.competitionId === competitionId);
+          if (!registration) return undefined;
+          const groups = registration.format.pairing === "paulista" ? [] : registration.groups.map(g => ({ name: g.name, table: getCompetitionStandings(competitionFixtures, competitionId, g.clubIds) }));
+          if (registration.format.qualify === "cearense" && competitionFixtures.some(f => f.stage === "second-groups" && f.status !== "locked")) {
+            groups.push(...registration.groups.map((g,i) => ({ name: `2ª fase · Grupo ${i === 0 ? "C" : "D"}`, table: getCompetitionStandings(competitionFixtures, competitionId, getCompetitionStandings(competitionFixtures, competitionId, g.clubIds).slice(0,3).map(r => r.clubId), "second-groups") })));
           }
-          groups.push({ name: "Permanência", table });
-        }
-        return groups.length ? groups : undefined;
-      })(),
-      formatNote: (() => {
-        const registration = competitionSeason?.tournaments?.find(t => t.competitionId === competitionId);
-        if (!registration) return metadata.type === "state" || metadata.division === "Série D" ? "Formato legado/simplificado. Resultados já disputados foram preservados." : undefined;
-        return registration.format.description + (metadata.season !== 2026 ? " · Projeção baseada em 2026" : "") + (registration.incomplete.length ? ` · Inscrição incompleta neste universo: ${registration.incomplete.join(", ")}.` : "");
-      })(),
-      seasonYear: metadata.season,
-      table: standings,
-      fixtures: [...competitionFixtures].sort((a, b) => (a.scheduledDate ?? "").localeCompare(b.scheduledDate ?? "") || a.competitionRound - b.competitionRound).map((fixture) => ({
-        stadium: database?.clubs.find((item) => item.id === fixture.homeClubId)?.stadiumName ?? "",
-        attendance: 0,
-        home: fixture.home,
-        away: fixture.away,
-        homeScore: fixture.homeScore ?? 0,
-        awayScore: fixture.awayScore ?? 0,
-        played: fixture.status === "played",
-        roundLabel: fixture.roundLabel,
-        competitionRound: fixture.competitionRound,
-        scheduledDate: fixture.scheduledDate,
-        participantsPending: fixture.status === "locked",
-        winner: fixture.winnerClubId === fixture.homeClubId ? fixture.home : fixture.winnerClubId === fixture.awayClubId ? fixture.away : undefined,
-      })),
-      topScorers: playerStats.filter((player) => player.goals > 0 && player.played > 0).slice(0, 5)
-        .map((player) => ({ name: player.playerName, club: player.club, goals: player.goals, played: player.played })),
-      topRatings: playerStats.filter((player) => player.rating !== null && player.played > 0)
-        .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 5)
-        .map((player) => ({ name: player.playerName, club: player.club, rating: player.rating ?? 0, played: player.played, role: careerDatabase?.players.find((item) => item.id === player.playerId)?.primaryPosition ?? "M" })),
-      matchesPlayed: scored.length,
-      goals: scored.reduce((sum, fixture) => sum + (fixture.homeScore ?? 0) + (fixture.awayScore ?? 0), 0),
-    };
-  }
+          if (competitionFixtures.some(f => f.stage === "relegation" && f.status !== "locked" && !f.leg)) {
+            const table = getCompetitionStandings(competitionFixtures, competitionId, undefined, "relegation");
+            if (metadata.state === "Santa Catarina") {
+              const fifths = registration.groups.flatMap(g => getCompetitionStandings(competitionFixtures, competitionId, g.clubIds).slice(4,5).map(r => r.clubId));
+              const bonus = getCompetitionStandings(competitionFixtures, competitionId, fifths)[0]?.clubId;
+              const row = table.find(r => r.clubId === bonus);
+              if (row) row.points += 1;
+              table.sort((a,b) => b.points-a.points || b.wins-a.wins || (b.goalsFor-b.goalsAgainst)-(a.goalsFor-a.goalsAgainst) || b.goalsFor-a.goalsFor);
+            }
+            groups.push({ name: "Permanência", table });
+          }
+          return groups.length ? groups : undefined;
+        })(),
+        formatNote: (() => {
+          const registration = competitionSeason?.tournaments?.find(t => t.competitionId === competitionId);
+          if (!registration) return metadata.type === "state" || metadata.division === "Série D" ? "Formato legado/simplificado. Resultados já disputados foram preservados." : undefined;
+          return registration.format.description + (metadata.season !== 2026 ? " · Projeção baseada em 2026" : "") + (registration.incomplete.length ? ` · Inscrição incompleta neste universo: ${registration.incomplete.join(", ")}.` : "");
+        })(),
+        seasonYear: metadata.season,
+        table: standings,
+        fixtures: [...competitionFixtures].sort((a, b) => (a.scheduledDate ?? "").localeCompare(b.scheduledDate ?? "") || a.competitionRound - b.competitionRound).map((fixture) => ({
+          stadium: clubsById.get(fixture.homeClubId)?.stadiumName ?? "",
+          attendance: 0,
+          home: fixture.home,
+          away: fixture.away,
+          homeScore: fixture.homeScore ?? 0,
+          awayScore: fixture.awayScore ?? 0,
+          played: fixture.status === "played",
+          roundLabel: fixture.roundLabel,
+          competitionRound: fixture.competitionRound,
+          scheduledDate: fixture.scheduledDate,
+          participantsPending: fixture.status === "locked",
+          winner: fixture.winnerClubId === fixture.homeClubId ? fixture.home : fixture.winnerClubId === fixture.awayClubId ? fixture.away : undefined,
+        })),
+        topScorers: playerStats.filter((player) => player.goals > 0 && player.played > 0).slice(0, 5)
+          .map((player) => ({ name: player.playerName, club: player.club, goals: player.goals, played: player.played })),
+        topRatings: playerStats.filter((player) => player.rating !== null && player.played > 0)
+          .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 5)
+          .map((player) => ({ name: player.playerName, club: player.club, rating: player.rating ?? 0, played: player.played, role: playersById.get(player.playerId)?.primaryPosition ?? "M" })),
+        matchesPlayed: scored.length,
+        goals: scored.reduce((sum, fixture) => sum + (fixture.homeScore ?? 0) + (fixture.awayScore ?? 0), 0),
+      };
+    }
+
+    return { centerTable, centerTopScorers, centerTopRatings, careerCompetitionData };
+  }, [standingsOpen, competitionSeason, centerCompetitionId, centerCompetitionType, database, careerDatabase]);
 
   const nav: NavItem[] = [
     { icon: "house", label: "Principal", image: "/icons/navigation/tela-inicial.webp", active: page === "hub", onClick: () => navigate("hub") },
@@ -810,7 +819,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   }
 
   function renderStandings() {
-    if (!standingsOpen || !database) return null;
+    if (!standingsOpen || !database || !standingsData) return null;
+    const { centerTable, centerTopScorers, centerTopRatings, careerCompetitionData } = standingsData;
     return <CompetitionCenter database={database} fixtures={fixtures} club={club} competition={division} activeCompetitionId={centerCompetitionId} roundLabel={competitionRoundLabel} careerCompetitionData={careerCompetitionData} table={centerTable} topScorers={centerTopScorers} topRatings={centerTopRatings} round={competitionRound} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onClose={() => setStandingsOpen(false)} />;
   }
 
