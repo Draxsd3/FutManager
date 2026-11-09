@@ -412,6 +412,7 @@ it("shows the club shirt in a player profile after career reload", async () => {
 
 // Includes two full-universe hydrations and E4 financial/planning checkpoints.
 it("advances the career date after a result and returns an expired incoming loan without keeping its lineup slot", async () => {
+  const stats = vi.spyOn(await import("@/lib/game/season"), "getCompetitionPlayerStats");
   const view = render(game());
   fireEvent.click(await screen.findByRole("button", { name: /INICIAR NOVA CARREIRA/ }));
   fireEvent.change(screen.getByPlaceholderText("Seu nome"), { target: { value: "Teste Empréstimos" } });
@@ -437,11 +438,19 @@ it("advances the career date after a result and returns an expired incoming loan
   render(game());
   fireEvent.click(await screen.findByRole("button", { name: /CONTINUAR JOGANDO/ }));
   fireEvent.click(await screen.findByRole("button", { name: "CONTINUAR" }));
-  fireEvent.click(await screen.findByRole("button", { name: /Ver tabelas dos campeonatos/i }));
+  await screen.findByRole("button", { name: /Voltar ao hub/ });
+  stats.mockClear();
+  fireEvent.click(screen.getByRole("tab", { name: "Estatísticas" }));
+  expect(stats).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: /Ver tabelas dos campeonatos/i }));
+  expect(stats).toHaveBeenCalled();
   const standingsDialog = await screen.findByRole("dialog");
   fireEvent.click(screen.getByRole("button", { name: /^Fechar / }));
   expect(screen.queryByRole("dialog")).toBeNull();
   expect(standingsDialog).toBeTruthy();
+  stats.mockClear();
+  fireEvent.click(screen.getByRole("tab", { name: "Eventos" }));
+  expect(stats).not.toHaveBeenCalled();
   fireEvent.click(await screen.findByRole("button", { name: /Voltar ao hub/ }));
   await screen.findByRole("button", { name: "Empréstimos" });
   await waitFor(() => {
@@ -456,6 +465,7 @@ it("advances the career date after a result and returns an expired incoming loan
     expect(restored.progress?.starters).not.toContain(player.id);
     expect(restored.progress?.manualPositions[player.id]).toBeUndefined();
   });
+  stats.mockRestore();
 }, 120000);
 
 it("archives concluded competitions from an old save and persists champions separately from the imported catalog", async () => {
@@ -684,7 +694,30 @@ it.each([true, false])("credits gate only for a completed home fixture (home=%s)
     expect(result.budget).toBeCloseTo(12624 + 151 + (home ? expectedNet / 1000 : 0));
     expect(result.progress?.stadiums?.[save.clubId]?.receipts.length ?? 0).toBe(home ? 1 : 0);
   }, { timeout: 15000 });
-}, 60000);
+  // Exercise the real transition after minute 90 rather than a fabricated result save.
+  expect(await screen.findByRole("button", { name: /Voltar ao hub/ }, { timeout: 15000 })).toBeTruthy();
+  fireEvent.click(screen.getByRole("tab", { name: "Estatísticas" }));
+  expect(screen.getByRole("tab", { name: "Estatísticas" }).getAttribute("aria-selected")).toBe("true");
+  fireEvent.click(screen.getByRole("tab", { name: "Formações" }));
+  expect(screen.getByRole("region", { name: "Formações das equipes" })).toBeTruthy();
+  fireEvent.click(screen.getByRole("tab", { name: "Eventos" }));
+  expect(screen.getByRole("region", { name: "Eventos da partida" })).toBeTruthy();
+  await waitFor(() => expect(readLocalSaves("alice")[0].progress?.page).toBe("result"));
+  const result = readLocalSaves("alice")[0];
+  const finished = result.progress!.competitionSeason!.fixtures.find(f => f.id === fixture.id)!;
+  expect(finished.status).toBe("played");
+  expect(result.progress?.stadiums?.[save.clubId]?.receipts.length ?? 0).toBe(home ? 1 : 0);
+  if (home) {
+    fireEvent.click(screen.getByRole("button", { name: /Voltar ao hub/ }));
+    await screen.findByRole("button", { name: "Empréstimos" }, { timeout: 15000 });
+    await waitFor(() => expect(readLocalSaves("alice")[0].progress?.page).toBe("hub"));
+    const advanced = readLocalSaves("alice")[0];
+    const savedFixture = advanced.progress!.competitionSeason!.fixtures.find(f => f.id === fixture.id)!;
+    expect(savedFixture.status).toBe("played");
+    expect([savedFixture.homeScore, savedFixture.awayScore]).toEqual([finished.homeScore, finished.awayScore]);
+    expect(advanced.progress?.stadiums?.[save.clubId]?.receipts).toHaveLength(1);
+  }
+}, 90000);
 
 it("waits for catalog synchronization, explains failure, and retries with Atualizar", async () => {
   const { IDBFactory } = await import("fake-indexeddb");
