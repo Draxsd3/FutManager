@@ -1,0 +1,71 @@
+-- E8 preparation: include immutable annual archives. No backfill, deletion or year transition.
+create or replace function public.guard_game_save_match_reports()
+returns trigger language plpgsql set search_path = public as $$
+declare current_reports jsonb; previous_reports jsonb; current_index jsonb; f jsonb; r jsonb; a record;
+begin
+ if new.state #> '{progress,seasonHistory}' is not null and jsonb_typeof(new.state #> '{progress,seasonHistory}') is distinct from 'object'
+ then raise exception 'Invalid season history' using errcode='40001'; end if;
+ for a in select key,value from jsonb_each(coalesce(new.state #> '{progress,seasonHistory}','{}'::jsonb)) loop
+   if a.key !~ '^[0-9]{4}$' or jsonb_typeof(a.value) is distinct from 'object'
+     or a.value->>'version' is distinct from '1' or a.value->>'rulesVersion' is distinct from 'season-archive-v1'
+     or a.value->>'id' is distinct from new.id::text || ':' || a.key
+     or a.value #>> '{season,season}' is distinct from a.key
+     or jsonb_typeof(a.value #> '{season,fixtures}') is distinct from 'array'
+     or coalesce(a.value->>'closedOn','') !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+   then raise exception 'Invalid season archive' using errcode='40001'; end if;
+   if exists(select 1 from jsonb_array_elements(a.value #> '{season,fixtures}') x where coalesce(x->>'status','') not in ('played','cancelled'))
+   then raise exception 'Unfinished season archive' using errcode='40001'; end if;
+ end loop;
+ if tg_op='UPDATE' and exists (
+   select 1 from jsonb_each(coalesce(old.state #> '{progress,seasonHistory}','{}'::jsonb)) x
+   where (new.state #> '{progress,seasonHistory}')->x.key is distinct from x.value
+ ) then raise exception 'Season archive is immutable; reload the save' using errcode='40001'; end if;
+ with seasons as (
+   select new.state #> '{progress,competitionSeason}' as s
+   union all select value->'competitionSeason' from jsonb_each(coalesce(new.state #> '{progress,jobClubSnapshots}','{}'::jsonb))
+   union all select value->'season' from jsonb_each(coalesce(new.state #> '{progress,seasonHistory}','{}'::jsonb))
+ ) select coalesce(jsonb_agg(value),'[]'::jsonb) into current_reports
+ from seasons cross join lateral jsonb_array_elements(coalesce(s->'fixtures','[]'::jsonb))
+ where value->'report' is not null and value->'report' <> 'null'::jsonb;
+ for f in select value from jsonb_array_elements(current_reports) loop
+   r:=f->'report';
+   if jsonb_typeof(r) is distinct from 'object' or r->>'version' is distinct from '1'
+     or r->>'rulesVersion' is distinct from 'matches-v1' or coalesce(r->>'origin','') not in ('live','background')
+     or coalesce(r->>'disciplinePolicy','') not in ('automatic-red-only-v1','brazil-cards-v2')
+     or (r ? 'granularity' and r->>'granularity' is distinct from '15-minute-v2')
+     or (r ? 'plans' and jsonb_typeof(r->'plans') is distinct from 'array')
+     or (r ? 'substitutions' and jsonb_typeof(r->'substitutions') is distinct from 'array')
+     or coalesce(r->>'seed','')='' or coalesce(f->>'id','')='' or coalesce(f->>'competitionId','')=''
+     or coalesce(f->>'homeClubId','')='' or coalesce(f->>'awayClubId','')='' or f->>'homeClubId'=f->>'awayClubId'
+     or jsonb_typeof(f->'homeScore') is distinct from 'number' or jsonb_typeof(f->'awayScore') is distinct from 'number'
+     or f->>'status' is distinct from 'played'
+     or coalesce(f->>'homeScore','') !~ '^[0-9]{1,3}$' or coalesce(f->>'awayScore','') !~ '^[0-9]{1,3}$'
+     or jsonb_typeof(r->'goals') is distinct from 'array' or jsonb_typeof(r->'cards') is distinct from 'array'
+     or jsonb_typeof(r->'servedBans') is distinct from 'array' or jsonb_typeof(f->'playerContributions') is distinct from 'array'
+   then raise exception 'Invalid match report' using errcode='40001'; end if;
+   if (f->>'homeScore')::integer>100 or (f->>'awayScore')::integer>100
+     or (select count(*) from jsonb_array_elements(r->'goals') g where g->>'clubId'=f->>'homeClubId')<>(f->>'homeScore')::integer
+     or (select count(*) from jsonb_array_elements(r->'goals') g where g->>'clubId'=f->>'awayClubId')<>(f->>'awayScore')::integer
+     or exists(select 1 from jsonb_array_elements(r->'goals') g where g->>'clubId' is null or g->>'clubId' not in (f->>'homeClubId',f->>'awayClubId'))
+   then raise exception 'Match goals do not reconcile' using errcode='40001'; end if;
+ end loop;
+ -- Identical archive copies are valid; contradictory IDs are not.
+ if exists(select 1 from jsonb_array_elements(current_reports) x group by x->>'id' having count(distinct x)>1)
+ then raise exception 'Contradictory match identities' using errcode='40001'; end if;
+ select coalesce(jsonb_object_agg(value->>'id',value),'{}'::jsonb) into current_index from jsonb_array_elements(current_reports);
+ if tg_op='UPDATE' then
+   with seasons as (
+     select old.state #> '{progress,competitionSeason}' as s
+     union all select value->'competitionSeason' from jsonb_each(coalesce(old.state #> '{progress,jobClubSnapshots}','{}'::jsonb))
+     union all select value->'season' from jsonb_each(coalesce(old.state #> '{progress,seasonHistory}','{}'::jsonb))
+   ) select coalesce(jsonb_agg(value),'[]'::jsonb) into previous_reports
+   from seasons cross join lateral jsonb_array_elements(coalesce(s->'fixtures','[]'::jsonb))
+   where value->'report' is not null and value->'report' <> 'null'::jsonb;
+   if exists (
+     select 1 from jsonb_array_elements(previous_reports) o
+     where current_index->(o->>'id') is distinct from o
+   ) then raise exception 'Completed match history is immutable; reload the save' using errcode='40001'; end if;
+ end if;
+ return new;
+end;
+$$;

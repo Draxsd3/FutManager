@@ -19,14 +19,14 @@ export type CloudCareer = {
 
 const DATABASE_KEY = "futmanager.editor.v1";
 const SAVES_KEY = "futmanager.saves.v1";
-const aggregateCodecs:Record<string,string>={finance:"finance-deflate-v1",marketState:"market-deflate-v1",staff:"staff-deflate-v1",population:"players-deflate-v1",managerMarket:"managers-deflate-v1",competitionSeason:"season-deflate-v1",youthTeams:"youth-deflate-v1",jobClubSnapshots:"club-snapshots-deflate-v1"};
+const aggregateCodecs:Record<string,string>={seasonHistory:"season-history-deflate-v1",finance:"finance-deflate-v1",marketState:"market-deflate-v1",staff:"staff-deflate-v1",population:"players-deflate-v1",managerMarket:"managers-deflate-v1",competitionSeason:"season-deflate-v1",youthTeams:"youth-deflate-v1",jobClubSnapshots:"club-snapshots-deflate-v1"};
 function compressAggregate(key:string,value:unknown) {
   if(!value || typeof value!=="object") return false;
   const v=value as Record<string,unknown>;
   return (key==="finance" && v.rulesVersion==="finance-v1") || (key==="marketState" && v.version===1) || (key==="staff" && v.rulesVersion==="coaches-v1") || (key==="population" && v.rulesVersion==="players-v1")
     || (key==="managerMarket" && (v.finance as {rulesVersion?:string})?.rulesVersion==="finance-v1")
     || (key==="competitionSeason" && Array.isArray(v.fixtures))
-    || (["youthTeams","jobClubSnapshots"].includes(key) && Object.keys(v).length>0);
+    || (["youthTeams","jobClubSnapshots","seasonHistory"].includes(key) && Object.keys(v).length>0);
 }
 const packedFinance = new WeakMap<object, string>();
 type DecodedAggregate={value:unknown;codec:string;size:number;encoding?:string;bytes?:number;characters:number};
