@@ -1,3 +1,4 @@
+import { convertPlayerMarketValue } from "@/lib/game/market-currency";
 import {
   CANONICAL_TM_CLUB_TARGETS,
   NEW_2026_SERIE_D_SPECS,
@@ -162,7 +163,7 @@ export function applyTransfermarktSnapshot(
       if (old) reused.add(old.id);
       // Existing catalog ratings may be user edits; only estimate new players on import.
       const overall = old?.overall ?? estimatePlayerOverall({ age: player.age, starRating: 2, transfermarkt: { id: player.id, collectedAt: incoming.fetchedAt, season: snapshot.seasonId ?? "2026", marketValueEur: player.marketValueEur } }, { ...club, division: incoming.division ?? club.division });
-      return {
+      return convertPlayerMarketValue({
         id: old?.id ?? crypto.randomUUID(), clubId: club.id, name: player.name,
         ...(player.loan ? { loan: { ...player.loan, owner: { ...player.loan.owner, clubId: resolveClub(player.loan.owner.externalId) }, borrower: { ...player.loan.borrower, clubId: resolveClub(player.loan.borrower.externalId) } } } : {}),
         transfermarkt: { id: player.id, collectedAt: incoming.fetchedAt, season: snapshot.seasonId ?? "2026",
@@ -175,11 +176,11 @@ export function applyTransfermarktSnapshot(
         starRating: old?.starRating ?? Math.max(1, Math.min(5, Math.round((overall - 30) / 12))),
         qualityPrimary: old?.qualityPrimary ?? ({ G: "Colocação", L: "Cruzamento", Z: "Desarme", M: "Armação", A: "Finalização" } as const)[player.position], qualitySecondary: old?.qualitySecondary ?? "Simulação",
         energy: 100, salaryMonthlyBrl: old?.salaryMonthlyBrl ?? Math.round(overall * overall * 8),
-        // Source values are EUR. Do not label or convert them to BRL without a dated FX rate.
+        // Values without a known EUR source retain their existing simulated BRL amount.
         marketValueBrl: old?.marketValueBrl ?? Math.round(overall ** 3 * 5),
         goals: 0, assists: 0, ownGoals: 0, averageRating: null,
         contractEndsOn: player.contractEndsOn ?? old?.contractEndsOn ?? "2027-12-31", marketStatus: "normal",
-      };
+      });
     });
     playersByClub.set(club.id, roster);
     return { ...club, honours: incoming.honours ?? club.honours, state: club.state ?? incoming.state, transfermarkt: { id: incoming.id, collectedAt: incoming.fetchedAt, season: snapshot.seasonId ?? "2026", honours: incoming.honours ?? club.honours }, division: snapshot.version === 2 ? incoming.division! : club.division, stadiumName: incoming.stadiumName ?? club.stadiumName,

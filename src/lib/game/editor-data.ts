@@ -9,6 +9,7 @@ export type TransfermarktOrigin = {
   loan?: LoanContract;
   manualCorrection?: { fields: string[]; correctedAt: string };
   id: string; collectedAt: string; season: string;
+  marketValueFxVersion?: string;
   marketValueEur?: number | null; dateOfBirth?: string | null;
   photoUrl?: string;
   modelVersion?: string; estimatedFields?: string[];
@@ -254,7 +255,7 @@ export function buildSquadFromDatabase(database: EditorDatabase, clubName: strin
     overall: player.overall,
     energy: player.energy,
     salary: Math.round(player.salaryMonthlyBrl / 1000),
-    passValue: Number((player.marketValueBrl / 1_000_000).toFixed(1)),
+    passValue: Number((player.marketValueBrl / 1_000_000).toFixed(6)),
     goals: player.goals,
     assists: player.assists,
     ownGoals: player.ownGoals,
@@ -265,7 +266,7 @@ export function buildSquadFromDatabase(database: EditorDatabase, clubName: strin
     loan: player.loan,
     acquisitionType: player.loan ? player.loan.status === "active" ? "loan" : "permanent" : undefined,
     loanExpiresOn: player.loan?.status === "active" ? player.loan.endsOn ?? undefined : undefined,
-    marketValue: Number((player.marketValueBrl / 1_000_000).toFixed(1)),
+    marketValue: Number((player.marketValueBrl / 1_000_000).toFixed(6)),
     marketAvailability: player.marketStatus ?? "normal",
   }));
 }

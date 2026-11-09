@@ -31,7 +31,7 @@ it("updates only a registered club, preserving local ID, identity, division, ass
   const roster = result.players.filter(p => p.clubId === club.id);
   expect(roster).toHaveLength(40);
   expect(roster[0].primaryPosition).toBe("G");
-  expect(roster.every(p => p.marketValueBrl !== 10_000_000)).toBe(true);
+  expect(roster.every(p => p.marketValueBrl === 59_612_930)).toBe(true);
   expect(result.players.filter(p => p.clubId !== club.id)).toEqual(database.players.filter(p => p.clubId !== club.id));
 });
 
