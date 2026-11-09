@@ -126,7 +126,7 @@ export function proposeTransfer(database: EditorDatabase, existing: TransferNego
     negotiation = {...negotiation, negotiationPhase: negotiation.status === "agreed" ? "player" : "club", agreedMonthlyWageBrl: undefined, ...(negotiation.status === "agreed" ? {message: "Condições do clube acertadas. Negocie o salário com o jogador."} : {})};
   }
   if(input.date && !staged) {
-    const assessment=assessMove(player,database.players.filter(p=>p.clubId===buyer.id),kind,input.monthlyWageBrl ?? player.salaryMonthlyBrl);
+    const assessment=assessMove(player,database.players.filter(p=>p.clubId===buyer.id),kind,input.monthlyWageBrl ?? player.salaryMonthlyBrl,{database,buyerClubId:buyer.id,date:input.date});
     negotiation={...negotiation,createdOn:input.date,expiresOn:new Date(Date.parse(`${input.date}T12:00:00Z`)+14*86400000).toISOString().slice(0,10),revision:1,origin:"human",assessment,...(!assessment.accepted ? {status:"rejected",message:assessment.reason} : {})};
   }
   if (input.date && staged) negotiation = {...negotiation, createdOn: input.date, expiresOn: new Date(Date.parse(`${input.date}T12:00:00Z`)+14*86400000).toISOString().slice(0,10), revision: 1, origin: "human"};

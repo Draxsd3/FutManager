@@ -104,7 +104,7 @@ export function updateCareerNegotiation(save: CareerSave, database: EditorDataba
     const player = db.players.find(p => p.id === deal.playerId);
     if (!player || player.clubId !== deal.sourceClubId || player.loan?.status === "active") throw new Error("O vínculo do atleta mudou; reavalie a negociação.");
     if (!Number.isFinite(action.monthlyWageBrl) || action.monthlyWageBrl <= 0) throw new Error("Informe um salário válido.");
-    const assessment = assessMove(player, db.players.filter(p => p.clubId === deal.buyerClubId), deal.kind, action.monthlyWageBrl);
+    const assessment = assessMove(player, db.players.filter(p => p.clubId === deal.buyerClubId), deal.kind, action.monthlyWageBrl, {database:db,buyerClubId:deal.buyerClubId,date:save.inGameDate});
     response = {...deal, assessment, agreedMonthlyWageBrl: assessment.accepted ? action.monthlyWageBrl : undefined, negotiationPhase: assessment.accepted ? "ready" : "player", message: assessment.accepted ? `Jogador aceitou: ${assessment.reason} Revise e confirme a contratação.` : `Jogador recusou: ${assessment.reason} Ajuste o salário e tente novamente.`};
   } else response=action ? respondToTransferNegotiation(deal,action).negotiation : deal;
   if(response===deal && action) return current;
