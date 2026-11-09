@@ -13,7 +13,8 @@ import type { TransferNegotiation } from "./transfers";
 import type { TrainingSessionRecord } from "./training";
 
 export type MatchPreparation = {
-  contractVersion?: 1;
+  contractVersion?: 1 | 2;
+  cpu?:import("./simulation/match-plans").CpuState;
   matchKey: string;
   rules: MatchRules;
   weather: MatchWeather;

@@ -12,16 +12,19 @@ export type MatchReport = {
   origin: "live" | "background";
   seed: string;
   /** Background events are aggregate observations, not invented minute-by-minute commentary. */
-  goals: { clubId: string; playerId?: string }[];
+  goals: { clubId: string; playerId?: string; minute?:number }[];
+  granularity?: "15-minute-v2";
+  plans?:import("./match-plans").MatchPlan[];
+  substitutions?:{clubId:string;minute:number;out:string;in:string;interval:boolean;reason:string}[];
   cards: { clubId: string; playerId: string; card: "yellow" | "red"; secondYellow?: boolean; minute?: number }[];
   /** Explicit service at the club owning the player then; never a date-based/global suspension. */
   servedBans: string[];
-  disciplinePolicy: "automatic-red-only-v1";
+  disciplinePolicy: "automatic-red-only-v1" | "brazil-cards-v2";
 };
 const integer=(n:number,min=0,max=90)=>Number.isSafeInteger(n) && n>=min && n<=max;
 export function assertMatchReport(f: SeasonFixture): void {
   const r=f.report;if(!r) return;
-  if(r.version!==1 || r.rulesVersion!=="matches-v1" || !["live","background"].includes(r.origin) || !r.seed || r.disciplinePolicy!=="automatic-red-only-v1" || f.status!=="played" || !integer(f.homeScore!,0,100) || !integer(f.awayScore!,0,100)) throw new Error("Resultado de partida incompatível.");
+  if(r.version!==1 || r.rulesVersion!=="matches-v1" || !["live","background"].includes(r.origin) || !r.seed || !["automatic-red-only-v1","brazil-cards-v2"].includes(r.disciplinePolicy) || f.status!=="played" || !integer(f.homeScore!,0,100) || !integer(f.awayScore!,0,100)) throw new Error("Resultado de partida incompatível.");
   const clubs=[f.homeClubId,f.awayClubId], rows=f.playerContributions ?? [], seen=new Set<string>();
   if(!f.id || !f.competitionId || !f.homeClubId || !f.awayClubId || f.homeClubId===f.awayClubId)throw new Error("Identidade de partida inválida.");
   if(!Array.isArray(r.goals) || r.goals.length>200 || !Array.isArray(r.cards) || r.cards.length>1000 || !Array.isArray(r.servedBans) || r.servedBans.some(id=>typeof id!=="string" || !id || id.length>500) || new Set(r.servedBans).size!==r.servedBans.length || (f.winnerClubId && !clubs.includes(f.winnerClubId))) throw new Error("Súmula inválida.");
@@ -37,13 +40,56 @@ export function assertMatchReport(f: SeasonFixture): void {
   }
   if(r.goals.some(g=>!clubs.includes(g.clubId) || (g.playerId && !rows.some(p=>p.playerId===g.playerId && p.clubId===g.clubId))) || r.cards.some(c=>!clubs.includes(c.clubId) || !["yellow","red"].includes(c.card) || !rows.some(p=>p.playerId===c.playerId && p.clubId===c.clubId) || (c.minute!==undefined && !integer(c.minute)) || (c.secondYellow && c.card!=="red"))) throw new Error("Evento sem participação válida.");
   for(const id of seen) if(r.cards.filter(c=>c.playerId===id && c.card==="red").length>1) throw new Error("Expulsão duplicada.");
+  for(const g of r.goals)if(g.minute!==undefined && !integer(g.minute))throw new Error("Minuto de gol inválido.");
+  if(r.substitutions) {
+    const used=new Map<string,Set<string>>(),left=new Map<string,Set<string>>();
+    for(const club of clubs) {
+      const changes=r.substitutions.filter(c=>c.clubId===club);
+      if(changes.length>5 || new Set(changes.filter(c=>!c.interval).map(c=>c.minute)).size>3)throw new Error("Limite de substituições excedido.");
+    }
+    for(const change of r.substitutions) {
+      const entrants=used.get(change.clubId) ?? new Set<string>(),departed=left.get(change.clubId) ?? new Set<string>();used.set(change.clubId,entrants);left.set(change.clubId,departed);
+      const out=rows.find(p=>p.clubId===change.clubId && p.playerId===change.out),incoming=rows.find(p=>p.clubId===change.clubId && p.playerId===change.in);
+      if(!clubs.includes(change.clubId) || !out || !incoming || change.out===change.in || !integer(change.minute,0,89) || change.interval && change.minute!==45 || entrants.has(change.in) || departed.has(change.in) || departed.has(change.out) || r.cards.some(c=>c.card==="red" && c.playerId===change.out && (c.minute ?? 90)<=change.minute))throw new Error("Substituição inválida.");
+      entrants.add(change.in);departed.add(change.out);
+    }
+    for(const event of [...r.goals,...r.cards])if(event.playerId && event.minute!==undefined){
+      const entered=r.substitutions.find(c=>c.clubId===event.clubId && c.in===event.playerId)?.minute ?? 0;
+      const exited=r.substitutions.find(c=>c.clubId===event.clubId && c.out===event.playerId)?.minute ?? 90;
+      const red=r.cards.find(c=>c.clubId===event.clubId && c.playerId===event.playerId && c.card==="red")?.minute ?? 90;
+      if(event.minute<entered || event.minute>Math.min(exited,red))throw new Error("Evento fora da participação registrada.");
+    }
+  }
+
 }
-export type Discipline = Map<string,Map<string,number>>;
+export type Discipline = Map<string,Map<string,number>> & { yellows?:Map<string,Map<string,number>>; phases?:Map<string,string> };
+/** Explicit 2026 Brazilian policy. Unknown estadual resets are not guessed. */
+export function disciplinePhase(f:SeasonFixture) {
+ if(f.division==="Série D" && f.type==="league")return f.stage==="groups" ? "groups" : (f.knockoutStage ?? 0)>=3 || f.stage==="access-playoff" ? "after-fourth":"knockout";
+ if(f.division==="Série B" && f.stage==="knockout")return "playoffs";
+ return "continuous";
+}
+function prepareDiscipline(state:Discipline,f:SeasonFixture) {
+ state.yellows ??= new Map();state.phases ??= new Map();
+ const phase=disciplinePhase(f),old=state.phases.get(f.competitionId);
+ if(old && phase!==old && phase!=="continuous")state.yellows.set(f.competitionId,new Map());
+ state.phases.set(f.competitionId,phase);
+}
+
 const disciplineCache=new WeakMap<CareerSeason,Discipline>();
 export function applyDiscipline(state:Discipline,f:SeasonFixture) {
   if(!f.report) return;
+  if(f.report.disciplinePolicy==="brazil-cards-v2")prepareDiscipline(state,f);
   const bans=state.get(f.competitionId) ?? new Map<string,number>();state.set(f.competitionId,bans);
   for(const id of f.report.servedBans) {const count=bans.get(id) ?? 0;if(count>1)bans.set(id,count-1);else bans.delete(id);}
+  if(f.report.disciplinePolicy==="brazil-cards-v2") {
+    const yellows=state.yellows!.get(f.competitionId) ?? new Map<string,number>();state.yellows!.set(f.competitionId,yellows);
+    const secondYellow=new Set(f.report.cards.filter(c=>c.secondYellow).map(c=>c.playerId));
+    for(const c of f.report.cards)if(c.card==="yellow" && !secondYellow.has(c.playerId)) {
+      const count=(yellows.get(c.playerId) ?? 0)+1;
+      yellows.set(c.playerId,count%3);if(count>=3)bans.set(c.playerId,(bans.get(c.playerId) ?? 0)+1);
+    }
+  }
   for(const c of f.report.cards) if(c.card==="red") bans.set(c.playerId,(bans.get(c.playerId) ?? 0)+1);
 }
 export function matchDiscipline(season?:CareerSeason):Discipline {
@@ -53,7 +99,10 @@ export function matchDiscipline(season?:CareerSeason):Discipline {
   for(const f of [...season.fixtures].filter(f=>f.status==="played" && f.report).sort((a,b)=>(a.scheduledDate ?? "").localeCompare(b.scheduledDate ?? "") || a.calendarRound-b.calendarRound || a.id.localeCompare(b.id))) applyDiscipline(state,f);
   disciplineCache.set(season,state);return state;
 }
-export function copyDiscipline(season:CareerSeason):Discipline {return new Map([...matchDiscipline(season)].map(([id,bans])=>[id,new Map(bans)]));}
+export function copyDiscipline(season:CareerSeason):Discipline {
+ const old=matchDiscipline(season),next:Discipline=new Map([...old].map(([id,bans])=>[id,new Map(bans)]));
+ next.yellows=new Map([...(old.yellows ?? [])].map(([id,cards])=>[id,new Map(cards)]));next.phases=new Map(old.phases);return next;
+}
 export function bannedForFixture(season:CareerSeason|undefined,fixture:SeasonFixture|null|undefined,personId?:string) {
   return !!(personId && fixture && fixture.status!=="played" && (matchDiscipline(season).get(fixture.competitionId)?.get(personId) ?? 0)>0);
 }
@@ -91,13 +140,15 @@ export function assertParticipantsEligible(f:SeasonFixture,db:EditorDatabase,sta
     if(source && (source.clubId!==p.clubId || !playerEligible(source,f.scheduledDate) || state.get(f.competitionId)?.has(p.playerId))) throw new Error("Atleta inelegível na súmula.");
   }
 }
-export function liveReport(f:SeasonFixture,events:MatchEvent[],squads:{home:Player[];away:Player[]},managedIsHome:boolean,seed?:string):MatchReport {
+export function liveReport(f:SeasonFixture,events:MatchEvent[],squads:{home:Player[];away:Player[]},managedIsHome:boolean,seed?:string,modern=false):MatchReport {
   const clubFor=(side:MatchSide)=>(side==="home")===managedIsHome ? f.homeClubId : f.awayClubId;
   const identity=(side:MatchSide,id:number|undefined)=>{const p=squads[side].find(p=>p.id===id);return p ? p.sourceId ?? `${clubFor(side)}:${p.id}` : undefined;};
   const report=aggregateReport(f,f.playerContributions ?? [],"live");
   if(seed)report.seed=seed;
-  report.goals=events.filter(e=>e.scene?.action==="goal").map(e=>({clubId:clubFor(e.scene!.team),playerId:identity(e.scene!.team,e.scorerId)}));
+  if(modern)report.disciplinePolicy="brazil-cards-v2";
+  report.goals=events.filter(e=>e.scene?.action==="goal").map(e=>({clubId:clubFor(e.scene!.team),playerId:identity(e.scene!.team,e.scorerId),...(modern?{minute:e.minute}:{})}));
   report.cards=events.filter(e=>e.card && e.scene && e.actorId!==undefined).map(e=>({clubId:clubFor(e.scene!.team),playerId:identity(e.scene!.team,e.actorId) ?? "",card:e.card!,minute:e.minute,...(e.secondYellow?{secondYellow:true}:{})}));
+  if(modern)report.substitutions=events.filter(e=>e.substitution && e.team).map(e=>({clubId:clubFor(e.team!),minute:e.minute,out:identity(e.team!,e.substitution!.outId) ?? "",in:identity(e.team!,e.substitution!.inId) ?? "",interval:e.substitution!.interval,reason:"troca confirmada"}));
   assertMatchReport({...f,report});return report;
 }
 export function substitutionAllowance(events:MatchEvent[],side:MatchSide,minute:number,interval=false) {

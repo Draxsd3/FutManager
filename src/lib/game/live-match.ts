@@ -31,6 +31,8 @@ export type MatchScene = {
   ballAfter?: { x: number; y: number };
 };
 export type MatchEvent = {
+  restart?:import("./simulation/restarts").Restart;
+  restartNext?:import("./simulation/restarts").Restart;
   minute: number;
   half: 1 | 2;
   text: string;
@@ -404,7 +406,7 @@ function tacticalFocusBonus(team: MatchTeamInput, index: number) {
 
 /** Simulates one coherent minute: actor, commentary, event type, possession, score and stats share one outcome. */
 export function simulateAction({ minute, starters, formation, positions, opponent, opponentStarters, opponentFormation,
-  previous, snapshot, rules, weather, tactics, opponentTactics, score = { home: 0, away: 0 }, managedIsHome = true, kickoffSide = "home", minutesPlayedHome, minutesPlayedAway, motivationHome, motivationAway, sentOffHomeIds = [], sentOffAwayIds = [], yellowCardIds = [], yellowCardIdsBySide, random }: {
+  previous, snapshot, rules, weather, tactics, opponentTactics, score = { home: 0, away: 0 }, managedIsHome = true, kickoffSide = "home", minutesPlayedHome, minutesPlayedAway, motivationHome, motivationAway, sentOffHomeIds = [], sentOffAwayIds = [], yellowCardIds = [], yellowCardIdsBySide, restart, lawVersion, random }: {
   minute: number;
   score?: { home: number; away: number };
   managedIsHome?: boolean;
@@ -429,6 +431,8 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   sentOffAwayIds?: number[];
   yellowCardIds?: number[];
   yellowCardIdsBySide?: Partial<Record<MatchSide,number[]>>;
+  restart?:import("./simulation/restarts").Restart;
+  lawVersion?:2;
   random: () => number;
 }): MatchEvent {
   const home: MatchTeamInput = { players: starters, formation, positions, tactics, motivation: motivationHome, sentOffIds: sentOffHomeIds, minutesPlayed: minutesPlayedHome, rules };
@@ -446,7 +450,7 @@ export function simulateAction({ minute, starters, formation, positions, opponen
     ?? (previous?.action === "goal" || previous?.action === "offside" ? opposite(previous.team)
       : previous?.action === "pass" || previous?.action === "foul" || previous?.action === "turnover" ? previous.team : undefined);
   // Possession only changes through recorded events, never a silent minute-level reroll.
-  const possession = minute === 1 ? kickoffSide : minute === 46 ? opposite(kickoffSide) : previousPossession ?? sideAtRandom;
+  const possession = restart?.side ?? (minute === 1 ? kickoffSide : minute === 46 ? opposite(kickoffSide) : previousPossession ?? sideAtRandom);
   const defenseSide = opposite(possession);
   const attackTeam = teams[possession];
   const defenseTeam = teams[defenseSide];
@@ -462,13 +466,13 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   const windPassEffect = longWind * rules.windPassPenaltyPerKmh;
   const weatherShotEffect = weather.rainIntensity * rules.rainShotPenalty + longWind * rules.windShotPenaltyPerKmh;
 
-  const continuing = minute !== 46 && previousPossession === possession;
+  const continuing = !restart && minute !== 46 && previousPossession === possession;
   const previousCarrier = continuing ? activePlayers(attackTeam).find(({ player }) => player.id === previous?.carrierId) : undefined;
   const actorIndex = previousCarrier?.index ?? choosePlayer(attackTeam, minute, weather, random, "passing", ["M", "A"]);
   const actor = attackTeam.players[actorIndex];
   const passerName = playerName(attackTeam, actorIndex, possession === "away" ? opponent : "");
   const baseFrom = continuing ? previous?.action === "goal" ? { x: 50, y: 50 } : previous?.ballAfter ?? previous?.to : undefined;
-  const from = baseFrom ?? (previous?.action === "goal" || minute === 46 ? { x: 50, y: 50 } : simulatedPoint(actorIndex, attackTeam, possession, snapshot));
+  const from = restart?.point ?? baseFrom ?? (previous?.action === "goal" || minute === 46 ? { x: 50, y: 50 } : simulatedPoint(actorIndex, attackTeam, possession, snapshot));
   const defenders = activePlayers(defenseTeam).map(({ player, index }) => {
     const point = simulatedPoint(index, defenseTeam, defenseSide, snapshot);
     const line = player.position === "G" ? 0 : (defenseTeam.tactics.marking === "Pesada" ? 7 : 0)
@@ -518,7 +522,7 @@ export function simulateAction({ minute, starters, formation, positions, opponen
   let eventFrom = from;
   let eventTo = to;
 
-  if (actionRoll < shotRate) {
+  if ((restart?.kind==="penalty" || actionRoll < shotRate) && !restart?.indirect) {
     action = "shot";
     const shooterIndex = actorIndex;
     const shooter = attackTeam.players[shooterIndex];
@@ -528,9 +532,9 @@ export function simulateAction({ minute, starters, formation, positions, opponen
     const finish = athleteSkill(shooter, shooterIndex, attackTeam, "finishing", minute, weather);
     const keeperSkill = keeper ? athleteSkill(keeper, keeperIndex, defenseTeam, "goalkeeping", minute, weather) : defenseProfile.keeper;
     const homeEdge = (possession === "home") === managedIsHome ? rules.homeAdvantage * .001 : 0;
-    quality = chanceQuality(from, possession, pressure);
+    quality = restart?.kind==="penalty" ? .76:chanceQuality(from, possession, pressure);
     const defensiveWear = Math.max(0, 88 - defenseProfile.outfieldEnergy) * 0.0011;
-    const goalChance = clamp(
+    const goalChance = restart?.kind==="penalty" ? clamp(.76+(finish-keeperSkill)*.002,.55,.9):clamp(
       quality * (rules.goalBaseChance / .115)
         + (finish - 70) * rules.finishingWeight
         + (attackProfile.attack - defenseProfile.defense) * .0012
@@ -551,7 +555,7 @@ export function simulateAction({ minute, starters, formation, positions, opponen
       outcome = "goal";
       scorer = shooterName;
       scorerId = shooter?.id;
-      if (previous?.action === "pass" && previous.team === possession && previous.targetId === shooter?.id && previous.actorId !== shooter?.id) assistId = previous.actorId;
+      if (!restart && previous?.action === "pass" && previous.team === possession && previous.targetId === shooter?.id && previous.actorId !== shooter?.id) assistId = previous.actorId;
       text = `GOL! ${shooterName} coloca a bola no fundo da rede para ${possession === "home" ? "o time da casa" : opponent}.`;
       possessionAfter = defenseSide;
     } else if (random() < .43) {
@@ -645,7 +649,7 @@ export function simulateAction({ minute, starters, formation, positions, opponen
       eventFrom = from;
     } else {
       action = "pass";
-      if (isOffsideAtPass(possession, to, from, defenders)) {
+      if (!(restart && ["corner","throw-in","goal-kick"].includes(restart.kind)) && isOffsideAtPass(possession, to, from, defenders)) {
         action = "offside";
         text = `Impedimento de ${targetName}. Tiro livre indireto para ${defenseSide === "home" ? "o time da casa" : opponent}.`;
         possessionAfter = defenseSide;
@@ -673,7 +677,7 @@ export function simulateAction({ minute, starters, formation, positions, opponen
     }
   }
 
-  if (action === "pass" && isOffsideAtPass(possession, to, from, defenders)) {
+  if (action === "pass" && !(restart && ["corner","throw-in","goal-kick"].includes(restart.kind)) && isOffsideAtPass(possession, to, from, defenders)) {
     action = "offside";
     outcome = undefined;
     text = `Impedimento de ${targetName}. Tiro livre indireto para ${defenseSide === "home" ? "o time da casa" : opponent}.`;
@@ -693,10 +697,13 @@ export function simulateAction({ minute, starters, formation, positions, opponen
     : nextCarrierIndex >= 0 ? simulatedPoint(nextCarrierIndex, nextCarrierTeam, possessionAfter, snapshot)
     : { x: possessionAfter === "home" ? 12 : 88, y: 50 };
 
+  const restartNext=lawVersion===2 && action==="shot" && outcome==="saved" && random()<.22 ? {kind:"corner" as const,side:possession,point:{x:possession==="home"?100:0,y:random()<.5?0:100}} : lawVersion===2 && action==="turnover" && (eventTo.y<10 || eventTo.y>90) ? {kind:"throw-in" as const,side:defenseSide,point:{x:eventTo.x,y:eventTo.y<50?0:100}} : undefined;
   return {
     minute,
     half: minute <= 45 ? 1 : 2,
-    text,
+    ...(restart ? {restart}:{}),
+    ...(restartNext ? {restartNext}:{}),
+    text:restart ? `${restart.kind==="penalty" ? "Pênalti":restart.kind==="corner" ? "Escanteio":restart.kind==="goal-kick" ? "Tiro de meta":restart.kind==="throw-in" ? "Lateral":restart.kind==="kickoff" ? "Saída de bola":"Tiro livre"}. ${text}`:text,
     ...(quality !== undefined ? { chanceQuality: quality } : {}),
     ...(card ? { card,...(secondYellow?{secondYellow:true}:{}) } : {}),
     ...(scorer ? { scorer, scorerId } : {}),
@@ -815,7 +822,7 @@ export function calculateMatchStatistics(events: MatchEvent[]): MatchStatistics 
     if (scene.action === "tackle") side.tackles++;
     if (scene.action === "foul") side.fouls++;
     if (scene.action === "offside") side.offsides++;
-    if (event.card === "yellow") side.yellowCards++;
+    if (event.card === "yellow" || event.card === "red" && event.secondYellow) side.yellowCards++;
     if (event.card === "red") side.redCards++;
   }
   stats.home.possession = Math.round(homePossessions / scenes.length * 100);

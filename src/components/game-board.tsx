@@ -1,4 +1,6 @@
 "use client";
+import { restartAfter } from "@/lib/game/simulation/restarts";
+import { assertCpuState, coachMatchPlan, reviewCpu, startCpu, type CpuAthlete } from "@/lib/game/simulation/match-plans";
 import { bannedForFixture, canMakeSubstitution, liveReport, substitutionAllowance } from "@/lib/game/simulation/matches";
 import { migratePlayerSave, playerEligible, projectSquadCondition } from "@/lib/game/simulation/players";
 import { trainCareerPlayers, promoteCareerYouth, playerCareAction, youthCohort } from "@/lib/game/simulation/player-commands";
@@ -277,7 +279,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [loanContracts, setLoanContracts] = useState<CareerLoans>({});
   const [youthTeams, setYouthTeams] = useState<Record<string, YouthTeam>>({});
   const [loansOpen, setLoansOpen] = useState(false);
-  const careerDatabase = useMemo(() => database ? worldDatabase(database, transferNegotiations, loanContracts, worldMarket, managerMarket?.finance) : null, [database, transferNegotiations, loanContracts, worldMarket, managerMarket?.finance]);
+  const careerDatabase = useMemo(() => database ? worldDatabase(database, transferNegotiations, loanContracts, worldMarket, managerMarket?.finance,managerMarket?.staff) : null, [database, transferNegotiations, loanContracts, worldMarket, managerMarket?.finance,managerMarket?.staff]);
 
   const [minute, setMinute] = useState(0);
   const [homeScore, setHomeScore] = useState(0);
@@ -378,15 +380,15 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const homeTeamName = activeFixture?.home ?? club;
   const awayTeamName = activeFixture?.away ?? (divisionClubNames.find((name) => name !== club) ?? "Adversário");
   const opponent = activeFixture ? (userIsHome ? activeFixture.away : activeFixture.home) : awayTeamName;
-  const opponentFormation = "4-3-3";
+  const opponentFormation = matchPreparation?.cpu?.plan.formation ?? "4-3-3";
   const opponentSquad = useMemo(
     () => (careerDatabase ? buildSquadFromDatabase(careerDatabase, opponent) : null) ?? initialSquad,
     [careerDatabase, opponent],
   );
   const lineupDate=matchPreparation && !matchPreparation.contractVersion ? undefined : activeFixture?.scheduledDate;
   const opponentStarters = useMemo(
-    () => buildStartingXI(opponentFormation, opponentSquad.filter(p=>playerEligible(p,lineupDate) && !bannedForFixture(competitionSeason,activeFixture,p.sourceId))).map((id) => opponentSquad.find((player) => player.id === id)!).filter(Boolean),
-    [opponentSquad, opponentFormation, competitionSeason, activeFixture, lineupDate],
+    () => (matchPreparation?.cpu ? matchPreparation.cpu.active.map(Number) : buildStartingXI(opponentFormation, opponentSquad.filter(p=>playerEligible(p,lineupDate) && !bannedForFixture(competitionSeason,activeFixture,p.sourceId)))).map((id) => opponentSquad.find((player) => player.id === id)!).filter(Boolean),
+    [opponentSquad, opponentFormation, competitionSeason, activeFixture, lineupDate,matchPreparation?.cpu],
   );
   const startersData = useMemo(
     () => starters.map((id) => squad.find((p) => p.id === id)!).filter(p=>p && playerEligible(p)),
@@ -429,25 +431,14 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const selectedPlayerData = squad.find((p) => p.id === selectedPlayer) ?? null;
 
   const matchKey = `${activeSaveId ?? "career"}|${activeFixture?.id ?? `${round}|${club}|${opponent}`}`;
-  const recentForm = [...new Map(Object.values(playerCareers)
-    .flatMap((record) => record.matches ?? [])
-    .filter((match) => match.minutes > 0)
-    .map((match) => [match.key, match] as const)).values()]
-    .sort((a, b) => b.round - a.round).slice(0, 5);
-  const pointsPerMatch = recentForm.length
-    ? recentForm.reduce((sum, match) => sum + (match.homeScore > match.awayScore ? 3 : match.homeScore === match.awayScore ? 1 : 0), 0) / recentForm.length
-    : 1.2;
-  const averageEnergy = startersData.length ? startersData.reduce((sum, player) => sum + player.energy, 0) / startersData.length : 70;
-  const homeMotivation = Math.max(40, Math.min(92, Math.round(64 + (pointsPerMatch - 1.2) * 6 + (averageEnergy - 70) * .08)));
-  const awayMotivation = Math.round(58 + (seededRandom(`${matchKey}|away-motivation`)() - .5) * 16);
-  const createPreparation = (rules: MatchRules, key = matchKey): MatchPreparation => ({
-    matchKey: key,
-    contractVersion: 1,
-    rules,
-    weather: createMatchWeather(key, rules),
-    motivationHome: homeMotivation,
-    motivationAway: awayMotivation,
-  });
+  const cpuRoster=useMemo<CpuAthlete[]>(()=>opponentSquad.map(p=>({id:String(p.id),role:p.position,overall:p.overall,energy:p.energy,age:p.age})),[opponentSquad]);
+  const createPreparation = (rules: MatchRules, key = matchKey): MatchPreparation => {
+    const eligibleOpponent=opponentSquad.filter(p=>playerEligible(p,lineupDate) && !bannedForFixture(competitionSeason,activeFixture,p.sourceId));
+    const strength=(players:Player[])=>[...players].sort((a,b)=>b.overall-a.overall).slice(0,11).reduce((n,p)=>n+p.overall,0)/Math.max(1,Math.min(11,players.length));
+    const motivation=(players:Player[])=>Math.max(40,Math.min(92,Math.round(players.reduce((n,p)=>n+64+(p.energy-70)*.08+((p.condition?.morale ?? 50)-50)*.1,0)/Math.max(1,players.length))));
+    const plan=coachMatchPlan(Object.values(managerMarket?.staff?.coaches ?? {}).find(c=>c.clubId===(userIsHome ? activeFixture?.awayClubId:activeFixture?.homeClubId)),strength(eligibleOpponent),strength(startersData));
+    return {matchKey:key,contractVersion:2,cpu:startCpu(plan,cpuRoster.filter(p=>eligibleOpponent.some(v=>String(v.id)===p.id)),buildStartingXI(plan.formation,eligibleOpponent).map(String)),rules,weather:createMatchWeather(key,rules),motivationHome:motivation(startersData),motivationAway:motivation(eligibleOpponent)};
+  };
   const matchStats = calculateMatchStatistics(events);
   const backgroundStrengths = useMemo(() => careerDatabase ? backgroundClubStrengths(careerDatabase) : new Map<string, number>(), [careerDatabase]);
   const fixtures = useMemo(() => roundFixtures({ season: competitionSeason, active: activeFixture, database: careerDatabase,
@@ -480,17 +471,22 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         rules: matchPreparation.rules,
         weather: matchPreparation.weather,
         tactics: { style, marking, focus },
-        opponentTactics: { style: "Equilibrado", marking: "Normal", focus: "Pelo meio" },
+        opponentTactics: matchPreparation.cpu?.plan.tactics ?? { style: "Equilibrado", marking: "Normal", focus: "Pelo meio" },
+        ...(matchPreparation.contractVersion===2 ? {lawVersion:2,restart:restartAfter(events,nextMinute,seededRandom(`${matchPreparation.matchKey}|kickoff`)()<.5?"home":"away")}:{}),
+        minutesPlayedAway:matchPreparation.cpu ? Object.fromEntries(Object.entries(matchPreparation.cpu.stints).map(([id,p])=>[id,nextMinute-p.entered])):undefined,
         motivationHome: matchPreparation.motivationHome,
         motivationAway: matchPreparation.motivationAway,
         sentOffHomeIds: events.filter((item) => item.card === "red" && item.scene?.team === "home" && item.actorId !== undefined).map((item) => item.actorId!),
         sentOffAwayIds: events.filter((item) => item.card === "red" && item.scene?.team === "away" && item.actorId !== undefined).map((item) => item.actorId!),
         yellowCardIds: events.filter((item) => item.card === "yellow" && item.actorId !== undefined).map((item) => item.actorId!),
-        ...(matchPreparation.contractVersion===1 ? {yellowCardIdsBySide:{home:events.filter(e=>e.card==="yellow" && e.scene?.team==="home" && e.actorId!==undefined).map(e=>e.actorId!),away:events.filter(e=>e.card==="yellow" && e.scene?.team==="away" && e.actorId!==undefined).map(e=>e.actorId!)}} : {}),
+        ...(!!matchPreparation.contractVersion ? {yellowCardIdsBySide:{home:events.filter(e=>e.card==="yellow" && e.scene?.team==="home" && e.actorId!==undefined).map(e=>e.actorId!),away:events.filter(e=>e.card==="yellow" && e.scene?.team==="away" && e.actorId!==undefined).map(e=>e.actorId!)}} : {}),
         random: createMinuteRandom(matchPreparation.matchKey, nextMinute),
       });
+      const cpuAfter=matchPreparation.cpu ? reviewCpu(matchPreparation.cpu,cpuRoster,nextMinute,awayScore-homeScore+(event.scene?.action==="goal" ? event.scene.team==="away" ? 1:-1:0),[...events,event].filter(e=>e.card==="yellow" && e.scene?.team==="away").map(e=>String(e.actorId)),[...events,event].filter(e=>e.card==="red" && e.scene?.team==="away").map(e=>String(e.actorId)),opponentSquad.filter(p=>!playerEligible(p,lineupDate) || bannedForFixture(competitionSeason,activeFixture,p.sourceId)).map(p=>String(p.id))) : undefined;
+      const cpuEvents:MatchEvent[]=cpuAfter ? cpuAfter.changes.filter(c=>c.minute===nextMinute && !matchPreparation.cpu!.changes.some(old=>old.in===c.in)).map(c=>({minute:nextMinute,half:nextMinute<=45?1:2,team:"away",substitution:{outId:Number(c.out),inId:Number(c.in),interval:c.interval},text:`${opponentSquad.find(p=>p.id===Number(c.in))?.name} entrou no lugar de ${opponentSquad.find(p=>p.id===Number(c.out))?.name} (${c.reason}).`})) : [];
+      if(cpuAfter)setMatchPreparation(current=>current ? {...current,cpu:cpuAfter}:current);
       setMinute(nextMinute);
-      setEvents((current) => [...current, event]);
+      setEvents((current) => [...current, event,...cpuEvents]);
       if(event.card==="red" && event.scene?.team==="home" && event.actorId!==undefined) {
         const id=event.actorId;setParticipation(current=>current[id] ? {...current,[id]:{...current[id],left:nextMinute}} : current);
       }
@@ -521,7 +517,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         }
         setBudget((value) => value + 151 + gateNet);
         };
-        const finalEvents = [...events, event];
+        const finalEvents = [...events, event,...cpuEvents];
         const goals: Record<number, number> = {};
         const assists: Record<number, number> = {};
         const yellowCards: Record<number, number> = {};
@@ -581,12 +577,13 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             ? (seededRandom(`${activeFixture.id}|penalties`)() < 0.5 ? activeFixture.homeClubId : activeFixture.awayClubId)
             : undefined;
           let report:import("@/lib/game/simulation/matches").MatchReport|undefined;
-          if(matchPreparation.contractVersion===1) {
+          if(!!matchPreparation.contractVersion) {
             const opponentClubId=userIsHome ? activeFixture.awayClubId : activeFixture.homeClubId;
-            const opponentParticipation=Object.fromEntries(opponentStarters.map(p=>[p.id,{entered:0,left:Math.min(90,...finalEvents.filter(e=>e.card==="red" && e.scene?.team==="away" && e.actorId===p.id).map(e=>e.minute))}]));
-            const opponentRatings=Object.fromEntries(calculatePlayerRatings(opponentStarters,finalEvents,"away").map(r=>[r.playerId,r.rating]));
-            contributions.push(...playerContributionsFromMatch({database:careerDatabase!,clubId:opponentClubId,squad:opponentStarters,events:finalEvents,side:"away",participation:opponentParticipation,ratings:opponentRatings}));
-            report=liveReport({...activeFixture,status:"played",homeScore:actualHome,awayScore:actualAway,playerContributions:contributions},finalEvents,{home:squad,away:opponentStarters},userIsHome,matchPreparation.matchKey);
+            const opponentParticipation=cpuAfter ? Object.fromEntries(Object.entries(cpuAfter.stints).map(([id,stint])=>[Number(id),stint])) : Object.fromEntries(opponentStarters.map(p=>[p.id,{entered:0,left:Math.min(90,...finalEvents.filter(e=>e.card==="red" && e.scene?.team==="away" && e.actorId===p.id).map(e=>e.minute))}]));
+            const opponentRatings=Object.fromEntries(calculatePlayerRatings(opponentSquad.filter(p=>opponentParticipation[p.id]),finalEvents,"away").map(r=>[r.playerId,r.rating]));
+            contributions.push(...playerContributionsFromMatch({database:careerDatabase!,clubId:opponentClubId,squad:opponentSquad,events:finalEvents,side:"away",participation:opponentParticipation,ratings:opponentRatings}));
+            report=liveReport({...activeFixture,status:"played",homeScore:actualHome,awayScore:actualAway,playerContributions:contributions},finalEvents,{home:squad,away:opponentSquad},userIsHome,matchPreparation.matchKey,matchPreparation.contractVersion===2);
+            if(matchPreparation.cpu)report.plans=[matchPreparation.cpu.plan];
           }
           const completedSeason = completeCareerFixture(competitionSeason, activeFixture.id, { home: actualHome, away: actualAway, winnerClubId, playerContributions: contributions,report }, careerDatabase!);
           awardMatch();
@@ -610,7 +607,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       }
     }, 700 / matchSpeed);
     return () => window.clearTimeout(timer);
-  }, [detailOpen, matchRunning, matchSpeed, minute, opponent, opponentFormation, opponentStarters, page, startersData, formation, manualPositions, style, marking, focus, matchPreparation, events, participation, starters, squad, club, round, homeScore, awayScore, userIsHome, activeFixture, competitionSeason, database, careerDatabase, managedClubRecord, matchKey, coach, budget, activeSaveId, playerCareers]);
+  }, [lineupDate,cpuRoster,opponentSquad,detailOpen, matchRunning, matchSpeed, minute, opponent, opponentFormation, opponentStarters, page, startersData, formation, manualPositions, style, marking, focus, matchPreparation, events, participation, starters, squad, club, round, homeScore, awayScore, userIsHome, activeFixture, competitionSeason, database, careerDatabase, managedClubRecord, matchKey, coach, budget, activeSaveId, playerCareers]);
 
   useEffect(() => {
     if (page !== "matchOverview" || minute !== 90 || detailOpen) return;
@@ -1325,6 +1322,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       return;
     }
     if (starters.length!==11 || starters.some(id=>!squad.some(p=>p.id===id && playerEligible(p,scheduledFixture.scheduledDate) && !bannedForFixture(competitionSeason,scheduledFixture,p.sourceId)))) { setMatchRulesError("Escalação incompleta ou com atleta inelegível (inscrição, lesão, suspensão ou aposentadoria)."); return; }
+    if(starters.length!==11 || starters.some(id=>!squad.some(p=>p.id===id && playerEligible(p,scheduledFixture.scheduledDate) && !bannedForFixture(competitionSeason,scheduledFixture,p.sourceId)))){setMatchRulesError("Escalação incompleta ou com atleta inelegível. Revise lesões, suspensões e inscrições.");return;}
     setActiveFixtureId(scheduledFixture.id);
     // Revisiting tactics must not discard the user's XI or manually placed players.
     if (starters.length !== 11) {
@@ -1405,6 +1403,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     const preparation = matchPreparation?.matchKey === matchKey
       ? (matchPreparation.rules.baseFatiguePerMinute < 0.05 ? { ...matchPreparation, rules: canonicalRules } : matchPreparation)
       : createPreparation(canonicalRules);
+    try {if(preparation.cpu)assertCpuState(preparation.cpu,cpuRoster);}catch(error){setMatchRulesError(error instanceof Error?error.message:"Partida incompatível; preservada.");return;}
     setMatchPreparation(preparation);
     setHalftimeWaiting(false);
     setMatchRunning(true);
@@ -1485,7 +1484,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   function substitute(id: number, point?: ManualPosition) {
     if (substitutionOut === null || substitutionsLeft <= 0 || !eligibleMatchBench.some((player) => player.id === id) || !starters.includes(substitutionOut)) return;
-    if(matchPreparation?.contractVersion===1 && !canMakeSubstitution(events,"home",substitutionOut,id,minute,halftimeWaiting))return;
+    if(!!matchPreparation?.contractVersion && !canMakeSubstitution(events,"home",substitutionOut,id,minute,halftimeWaiting))return;
     const outgoingPlayer = squad.find((player) => player.id === substitutionOut);
     const incomingPlayer = squad.find((player) => player.id === id);
     const outgoing = outgoingPlayer?.name ?? "Jogador";
@@ -1775,7 +1774,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             onMovePlayers={moveMatchPlayers}
             startersData={matchStarters}
             bench={eligibleMatchBench}
-            substitutionsLeft={matchPreparation?.contractVersion===1 ? Math.min(substitutionsLeft,substitutionAllowance(events,"home",minute,halftimeWaiting)) : substitutionsLeft}
+            substitutionsLeft={!!matchPreparation?.contractVersion ? Math.min(substitutionsLeft,substitutionAllowance(events,"home",minute,halftimeWaiting)) : substitutionsLeft}
             selectedPlayer={selectedPlayer}
             substitutionOut={substitutionOut}
             onSelectPlayer={selectMatchPlayer}

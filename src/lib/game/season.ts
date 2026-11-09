@@ -1,9 +1,10 @@
-import { aggregateReport, applyDiscipline, assertMatchReport, assertParticipantsEligible, backgroundCards, copyDiscipline, fixtureDatabase, servedBans, type Discipline, type MatchReport } from "./simulation/matches";
+import { tacticalFixture } from "./simulation/tactical-fixture";
+import { applyDiscipline, assertMatchReport, assertParticipantsEligible, copyDiscipline, servedBans, type Discipline, type MatchReport } from "./simulation/matches";
 import { playerEligible } from "./simulation/players";
 import { advanceTournaments } from "./tournament-progression";
 import { buildRegisteredTournament, type TournamentRegistration } from "./tournament-schedule";
 import { applyBrazilianCalendar } from "./brazilian-calendar";
-import type { EditorDatabase, EditorPlayer } from "./editor-data";
+import type { EditorDatabase } from "./editor-data";
 import type { DivisionKey } from "./mock-data";
 import { otherScore, seededRandom } from "./live-match";
 
@@ -200,45 +201,6 @@ export function clubStrength(database: EditorDatabase, clubId: string,date?:stri
   return players.length ? players.reduce((sum, player) => sum + player.overall + (player.condition ? (player.energy-80)*.04+(player.condition.morale-50)*.03 : 0), 0) / players.length : 65;
 }
 
-function selectScorers(database: EditorDatabase, fixture: SeasonFixture, homeGoals: number, awayGoals: number): SeasonPlayerContribution[] {
-  const random = seededRandom(`${fixture.id}|players`);
-  const contributions = new Map<string, SeasonPlayerContribution>();
-  const scoreSide = (clubId: string, goals: number) => {
-    const squad = database.players.filter((player) => player.clubId === clubId && playerEligible(player,fixture.scheduledDate));
-    if (!squad.length) return;
-    const lineup = [...squad].sort((a, b) => b.overall - a.overall).slice(0, 11);
-    const goalkeeper = squad.filter((player) => player.primaryPosition === "G").sort((a, b) => b.overall - a.overall)[0];
-    if (goalkeeper && !lineup.some((player) => player.primaryPosition === "G")) lineup[lineup.length - 1] = goalkeeper;
-    for (const player of lineup) contributionFor(contributions, player, clubId);
-    const attack = [...lineup].filter((player) => player.primaryPosition !== "G")
-      .sort((a, b) => (b.overall + (b.primaryPosition === "A" ? 8 : b.primaryPosition === "M" ? 4 : 0)) - (a.overall + (a.primaryPosition === "A" ? 8 : a.primaryPosition === "M" ? 4 : 0)));
-    if (!attack.length) return;
-    for (let index = 0; index < goals; index += 1) {
-      const scorer = attack[Math.floor(random() * Math.min(attack.length, Math.max(3, Math.ceil(attack.length / 2))))] ?? attack[0];
-      const scorerContribution = contributionFor(contributions, scorer, clubId);
-      scorerContribution.goals += 1;
-      if (squad.length > 1 && random() < 0.72) {
-        const eligible = lineup.filter((player) => player.id !== scorer.id);
-        const assister = eligible[Math.floor(random() * eligible.length)];
-        if (assister) contributionFor(contributions, assister, clubId).assists += 1;
-      }
-    }
-  };
-  scoreSide(fixture.homeClubId, homeGoals);
-  scoreSide(fixture.awayClubId, awayGoals);
-  return [...contributions.values()];
-}
-
-function contributionFor(map: Map<string, SeasonPlayerContribution>, player: EditorPlayer, clubId: string) {
-  const key = `${clubId}:${player.id}`;
-  let contribution = map.get(key);
-  if (!contribution) {
-    contribution = { playerId: player.id, playerName: player.name, clubId, goals: 0, assists: 0, rating: null, minutes: 90 };
-    map.set(key, contribution);
-  }
-  return contribution;
-}
-
 function fixtureSeed(fixture: SeasonFixture) {
   let seed = 2166136261;
   for (const character of `${fixture.season}|${fixture.id}`) seed = Math.imul(seed ^ character.charCodeAt(0), 16777619);
@@ -258,23 +220,9 @@ export function backgroundFixtureScore(fixture: SeasonFixture, minute: number, h
 }
 
 export function simulateFixture(database: EditorDatabase, fixture: SeasonFixture, discipline:Discipline=new Map()): SeasonFixture {
-  const eligible=fixtureDatabase(database,fixture,discipline);
-  const [homeScore, awayScore] = backgroundFixtureScore(fixture, 90, clubStrength(eligible, fixture.homeClubId,fixture.scheduledDate), clubStrength(eligible, fixture.awayClubId,fixture.scheduledDate));
-  const winnerClubId = fixture.type === "cup"
-    ? homeScore > awayScore ? fixture.homeClubId : awayScore > homeScore ? fixture.awayClubId : seededRandom(`${fixture.id}|penalties`)() < 0.5 ? fixture.homeClubId : fixture.awayClubId
-    : undefined;
-  const result:SeasonFixture={
-    ...fixture,
-    status: "played",
-    homeScore,
-    awayScore,
-    ...(winnerClubId ? { winnerClubId } : {}),
-    playerContributions: selectScorers(eligible, fixture, homeScore, awayScore),
-  };
-  result.report=aggregateReport(result,result.playerContributions!,"background",servedBans(database,fixture,discipline));
-  result.report.cards=backgroundCards(fixture,result.playerContributions!);
-  assertParticipantsEligible(result,database,discipline);assertMatchReport(result);applyDiscipline(discipline,result);
-  return result;
+  if(fixture.status==="played")return fixture;
+  const result=tacticalFixture(database,fixture,discipline);
+  applyDiscipline(discipline,result);return result;
 }
 
 function cupRoundLabel(participantCount: number, round: number) {
