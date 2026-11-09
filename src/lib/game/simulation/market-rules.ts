@@ -8,6 +8,14 @@ export function proposedRole(player: EditorPlayer, roster: EditorPlayer[]): Mark
   const peers = roster.filter(p => p.primaryPosition === player.primaryPosition).sort((a,b) => b.overall-a.overall);
   return !peers.length || player.overall >= peers[Math.min(peers.length-1,1)].overall ? "titular" : peers.length < 4 ? "rotação" : "desenvolvimento";
 }
+/** Salary reference from the same simulated thresholds used by assessMove, not a real demand. */
+export function estimatedWageExpectation(player: EditorPlayer, roster: EditorPlayer[]): number | null {
+  if (player.condition?.retiredOn || !Number.isFinite(player.salaryMonthlyBrl) || player.salaryMonthlyBrl < 0) return null;
+  const role = proposedRole(player, roster);
+  const average = roster.length ? roster.reduce((n,p) => n+p.overall,0)/roster.length : player.overall;
+  const needsPremium = (role === "desenvolvimento" && player.age > 23) || player.overall > average+12;
+  return Math.max(1, Math.ceil(player.salaryMonthlyBrl * (needsPremium ? 1.2 : 1)));
+}
 /** Explicit simulation policy, not a claim to know an athlete's personality or agent. */
 export function assessMove(player: EditorPlayer, roster: EditorPlayer[], kind: TransferKind, salaryBrl: number): MoveAssessment {
   const role = proposedRole(player,roster);

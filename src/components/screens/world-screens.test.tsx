@@ -131,8 +131,7 @@ it("mostra passe, pedido contextual, multa e custo real antes da proposta e da c
   fireEvent.click(button);
   const summary = screen.getByLabelText("Resumo financeiro da proposta");
   expect(within(summary).getByText("Caixa atual").nextElementSibling?.textContent).toBe(formatBrl(managerMarket.finance!.clubs[club.id].cashCents/100));
-  expect(summary.textContent).toContain("12 meses");
-  expect(screen.getByText(/Prévia salarial estimada/)).toBeTruthy();
+  expect(summary.textContent).not.toContain("12 meses");
   expect(screen.queryByLabelText("Salário mensal proposto")).toBeNull();
 });
 
@@ -153,7 +152,7 @@ it("explica o saldo insuficiente antes de aceitar uma contraproposta", async () 
   expect(quote.textContent).toContain("R$ 5.963.025");
   expect(quote.textContent).toContain("R$ 12.775.000");
   expect(quote.textContent).toContain("Caixa suficiente para pagar a taxa à vista");
-  expect(quote.textContent).toContain("12 meses");
+  expect(quote.textContent).not.toContain("12 meses");
   fireEvent.click(screen.getByRole("button", {name:"Fazer contraproposta"}));
   const quotes = screen.getAllByLabelText("Resumo financeiro da proposta");
   expect(quotes).toHaveLength(2);
@@ -211,6 +210,11 @@ it("apresenta etapa salarial apenas após aceite do clube e mantém confirmaçã
  render(<WorldScreens section="search" database={database} club={club.name} coach="Teste" squad={[]} budget={1000} records={{}} negotiations={[deal]} historyView="players" onHistoryView={vi.fn()} onOpenPlayer={vi.fn()} onTransferOffer={vi.fn()} onTransferAction={action} onBack={vi.fn()} />);
  fireEvent.click(screen.getByRole("button", {name:/Negociações/})); fireEvent.click(screen.getByRole("button", {name:"Ver proposta"}));
  expect(screen.getByText(/Etapa 2 · Negociar com o jogador/)).toBeTruthy();
+ expect(screen.getByText("Salário atual no jogo")).toBeTruthy();
+ expect(screen.getByText("Contrato atual")).toBeTruthy();
+ expect(screen.getByText("Salário desejado · referência simulada")).toBeTruthy();
+ expect(screen.getByText("1 ano (duração fixa)")).toBeTruthy();
+ expect(screen.getByLabelText("Resumo financeiro da proposta").textContent).not.toContain("12 meses");
  expect(screen.queryByRole("button", {name:"Confirmar contratação"})).toBeNull();
  fireEvent.change(screen.getByLabelText("Salário para o jogador"), {target:{value:"12345"}});
  fireEvent.click(screen.getByRole("button", {name:"Enviar proposta ao jogador"}));
