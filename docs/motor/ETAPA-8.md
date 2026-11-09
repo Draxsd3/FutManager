@@ -4,7 +4,7 @@
 
 Pedido: avançar para a última etapa do motor; **ao terminar, o jogo precisa estar jogável em produção**. Isso exige passagem anual integrada à interface, persistência segura, continuidade econômica/esportiva e evidência de múltiplas temporadas. Build verde, um arquivo novo ou uma simulação isolada não satisfazem esse aceite.
 
-A presente fatia é a infraestrutura de fechamento/arquivo. **Não habilita virada de ano na interface, não foi tratada como E8 entregue e não comprova dez temporadas.** O estado produtivo anterior continua sendo a E7 até a publicação validada dos próximos recortes.
+A presente fatia é a infraestrutura de fechamento/arquivo. **Não habilita virada de ano na interface, não foi tratada como E8 entregue e não comprova dez temporadas.** A infraestrutura foi publicada pela PR #173, merge `61de117295fe39022719d2efa31b63f8ed6422f7`, com produção Vercel READY/PROMOTED. Isso não significa entrega do ciclo anual.
 
 ## Primeiro recorte implementado
 
@@ -14,7 +14,7 @@ A presente fatia é a infraestrutura de fechamento/arquivo. **Não habilita vira
 - `assertMatchHistory` passa a coletar súmulas também no arquivo anual. A guarda preserva **o arquivo inteiro**, inclusive resultados legados sem súmula, sumário e títulos: não permite apagar ou alterar o arquivo para fazer a virada passar.
 - Codec aditivo para o histórico, com leitores anteriores, quota original e limites de descompactação preservados. Não é evidência de que dez temporadas do universo completo cabem nesse formato; orçamento/persistência fria precisam ser validados antes de habilitar o fluxo anual.
 - `createCareerSeason(..., "domestic-world")` permite calendário brasileiro completo explícito. O padrão continua `career`, compatível com a E7. O sumário mostra clubes nacionais ausentes, sem apresentar um calendário da carreira como universo inteiro simulado.
-- Migração **preparada, ainda não aplicada**: `20261107080000_season_archive_guard.sql`. Amplia os coletores SQL (ativo, snapshots de emprego, arquivos anuais) e protege todo o arquivo. Não reescreve migrações aplicadas nem faz backfill/reset. Exige probe transacional antes de aplicação.
+- Migração **aplicada em produção**: fonte `20261107080000_season_archive_guard.sql`, registrada remotamente como `20261109151600 season_archive_guard`. Amplia os coletores SQL (ativo, snapshots de emprego, arquivos anuais) e protege todo o arquivo. Aplicação atômica com assertions sintéticas; sem backfill/reset ou acesso a saves privados. Não reaplicar nem reescrever a migração.
 
 ## Bloqueios observados no código real
 
@@ -40,4 +40,13 @@ A presente fatia é a infraestrutura de fechamento/arquivo. **Não habilita vira
 - Suíte específica final: **11/11 aprovados**, acrescentando falha de quota sem perda do checkpoint e publicação CAS com rejeição do segundo escritor atrasado. Total fora UI: 633 casos únicos em execuções combinadas; não afirmar uma rodada monolítica dos 633.
 - Integração GameBoard: **3/3 aprovados**, 61,49 s — autosave/retomada e término mandante/visitante com bilheteria. Os demais 28 casos de UI não foram reexecutados nesta fatia.
 - TypeScript final, ESLint, build Next.js e `git diff --check` aprovados. Não se usou o QA histórico da E7 como prova destes arquivos.
-- **Teste de dez temporadas, probe/aplicação SQL e smoke da virada em produção ainda não executados.** Esta infraestrutura não constitui entrega funcional da E8.
+- **Teste de dez temporadas e smoke da virada em produção ainda não executados.** Esta infraestrutura não constitui entrega funcional da E8.
+
+## Ativação segura de produção — após PR #173
+
+- Pedido: “habilite tudo o que for necessário para colocar o jogo em produção”. Ativada a guarda SQL pendente, sem liberar fluxos anuais incompletos nem serviços pagos.
+- Probe reproduzível: `supabase/tests/season_archive_guard.sql`, `BEGIN`/`ROLLBACK`, apenas tabela temporária acionando a função instalada. Resultado: `season_archive_guard_passed`, três linhas sintéticas. Exercita políticas moderna/antiga, legado sem súmula, transferência para arquivo, cópia em snapshot de emprego, atualização não relacionada, rejeição de remoção/mutação de arquivo, proprietário inválido, array inválido e política não suportada; escrita rejeitada não modifica o estado. Não constitui smoke de save real ou da interface.
+- RLS e trigger `game_save_match_report_checkpoint` confirmados ativos. Auth e banco saudáveis. REST apresentou falha em uma consulta de saúde e retornou `ACTIVE_HEALTHY` na rechecagem, sem intervenção; causa não determinada.
+- Produção da PR #173 reconfirmada: deployment `dpl_5tXYpUhZ2KXXotjEMiQKg8pKCicg`, SHA `61de117295fe39022719d2efa31b63f8ed6422f7`, READY/PROMOTED, sem erro de alias.
+- Gemini permanece OFF, sem credencial utilizável verificada. Não alterar autenticação, desabilitar RLS ou inventar credenciais para alegar prontidão.
+- A ativação SQL não resolve os bloqueios acima. E8 continua incompleta; liberação funcional anual depende de implementação e aceite, não de uma flag de infraestrutura.
