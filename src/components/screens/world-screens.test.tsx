@@ -111,7 +111,7 @@ it("mostra passe, pedido contextual, multa e custo real antes da proposta e da c
   const { within } = await import("@testing-library/react");
   const { createCareerSeason } = await import("@/lib/game/season");
   const { initializeCareerMarket } = await import("@/lib/game/manager-jobs");
-  const { adoptFinance, availableCents } = await import("@/lib/game/simulation/finance");
+  const { adoptFinance } = await import("@/lib/game/simulation/finance");
   const { transferAskingPrice, simulatedReleaseClauseBrl, formatBrl } = await import("@/lib/game/transfers");
   const database = createDefaultDatabase(), club = database.clubs[0];
   const player = database.players.find(p => p.clubId !== club.id && p.marketStatus === "sale")!;
@@ -130,7 +130,7 @@ it("mostra passe, pedido contextual, multa e custo real antes da proposta e da c
   expect(within(card).getByText(formatBrl(transferAskingPrice(player, database.players, date)))).toBeTruthy();
   fireEvent.click(button);
   const summary = screen.getByLabelText("Resumo financeiro da proposta");
-  expect(within(summary).getByText("Saldo disponível para propostas").nextElementSibling?.textContent).toBe(formatBrl(availableCents(managerMarket.finance!, club.id)/100));
+  expect(within(summary).getByText("Caixa atual").nextElementSibling?.textContent).toBe(formatBrl(managerMarket.finance!.clubs[club.id].cashCents/100));
   expect(summary.textContent).toContain("12 meses");
   expect(screen.getByText(/Prévia salarial estimada/)).toBeTruthy();
   expect(screen.queryByLabelText("Salário mensal proposto")).toBeNull();
@@ -152,7 +152,7 @@ it("explica o saldo insuficiente antes de aceitar uma contraproposta", async () 
   const quote = screen.getByLabelText("Resumo financeiro da proposta");
   expect(quote.textContent).toContain("R$ 5.963.025");
   expect(quote.textContent).toContain("R$ 12.775.000");
-  expect(quote.textContent).toContain("Faltam");
+  expect(quote.textContent).toContain("Caixa suficiente para pagar a taxa à vista");
   expect(quote.textContent).toContain("12 meses");
   fireEvent.click(screen.getByRole("button", {name:"Fazer contraproposta"}));
   const quotes = screen.getAllByLabelText("Resumo financeiro da proposta");

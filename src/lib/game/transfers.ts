@@ -121,7 +121,7 @@ export function proposeTransfer(database: EditorDatabase, existing: TransferNego
     message: "",
   };
   const staged = input.twoStage === true && !free && kind === "sale";
-  let negotiation = free ? { ...base, status: "agreed" as const, agreedFeeBrl: 0, agreedWageSharePercent: 100, message: "Atleta livre aceitou as condições salariais cadastradas. Confirme o compromisso de 12 meses de salário antes de contratar." } : evaluateOffer(base);
+  let negotiation = free ? { ...base, status: "agreed" as const, agreedFeeBrl: 0, agreedWageSharePercent: 100, message: "Atleta livre aceitou as condições salariais cadastradas. Revise os salários futuros antes de contratar." } : evaluateOffer(base);
   if (staged) {
     negotiation = {...negotiation, negotiationPhase: negotiation.status === "agreed" ? "player" : "club", agreedMonthlyWageBrl: undefined, ...(negotiation.status === "agreed" ? {message: "Condições do clube acertadas. Negocie o salário com o jogador."} : {})};
   }

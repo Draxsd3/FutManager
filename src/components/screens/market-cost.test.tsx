@@ -10,12 +10,13 @@ it("explica caixa, obrigações existentes, saldo limitado a zero e custo da pro
  render(<MarketCost quote={marketCostQuote(finance,"club","sale",500,10,100)} kind="sale" />);
  const panel=within(screen.getByRole("region",{name:"Resumo financeiro da proposta"}));
  expect(panel.getByText("Salários já previstos (próximos 12 meses)")).toBeTruthy();
- expect(panel.getByText("Contas a pagar")).toBeTruthy(); expect(panel.getByText("Reservas de outras negociações")).toBeTruthy();
- expect(panel.getByText(/ultrapassam o caixa em/).textContent).toContain("350");
- expect(panel.getByText(/Faltam/).textContent).toContain("620");
- expect(panel.getByText(/não um pagamento imediato/)).toBeTruthy();
+ expect(panel.getByText("Contas a pagar")).toBeTruthy();
+ expect(panel.getByText(/superam o caixa em/).textContent).toContain("250");
+ expect(panel.getByText(/superam o caixa em/).textContent).toContain("870");
+ expect(panel.getByText(/Caixa suficiente/)).toBeTruthy();
+ expect(panel.getByText(/não reservados antecipadamente/)).toBeTruthy();
 });
 it("informa quando não há dados financeiros para calcular", () => {
  render(<MarketCost quote={marketCostQuote(undefined,"club","loan",100,10,50)} kind="loan" />);
- expect(screen.getByText(/Saldo disponível indisponível/)).toBeTruthy();
+ expect(screen.getByText(/Caixa indisponível/)).toBeTruthy();
 });

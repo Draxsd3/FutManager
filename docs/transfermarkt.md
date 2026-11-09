@@ -15,7 +15,7 @@ Em **Configurações → Transfermarkt → Rodar importação — Séries A/B/C/
 
 Identidade externa, nascimento, EUR original e data da coleta ficam em `transfermarkt` no catálogo. UUIDs continuam locais por conta. Vínculo externo tem prioridade sobre nome; fallback só aceita correspondência única por nome normalizado/nome curto. Homônimos ambíguos bloqueiam aplicação. IDs duplicados de atletas entre elencos também bloqueiam.
 
-Modelo **provisório** `provisional-national-v1`: bases A74/B64/C54/D46, variação determinística pelo ID (−6 a +6, apenas diversidade de simulação, não evidência de habilidade), ajuste de idade e sinal logarítmico opcional do mercado, guarda 35–90. Notas anteriores são preservadas. Qualidades variam por função. Salário e BRL são estimativas da engine, **não salários oficiais nem conversão de EUR**. Sem cotação datada não há conversão factual; EUR ausente permanece null. Fallbacks obrigatórios (contrato/pé/camisa) ficam identificados como estimados. Esse modelo não equivale a scouting calibrado; detalhes conceituais em [modelo inicial](transfermarkt-modelo-inicial.md).
+Modelo **provisório** `provisional-national-v1`: bases A74/B64/C54/D46, variação determinística pelo ID (−6 a +6, apenas diversidade de simulação, não evidência de habilidade), ajuste de idade e sinal logarítmico opcional do mercado, guarda 35–90. Notas anteriores são preservadas. Qualidades variam por função. Salário é estimado pela engine. Valores EUR conhecidos são convertidos com a cotação fixa documentada em [cotação de mercado](cotacao-mercado.md); EUR ausente permanece null e conserva a estimativa em BRL. Fallbacks obrigatórios (contrato/pé/camisa) ficam identificados como estimados. Esse modelo não equivale a scouting calibrado; detalhes conceituais em [modelo inicial](transfermarkt-modelo-inicial.md).
 
 ## Banco e limitações verificadas
 
@@ -113,7 +113,7 @@ Não há consulta externa no navegador, no início da partida ou a cada minuto. 
 
 Reais, quando retornados: nome, idade, posição, camisa, pé, contrato, clube, estádio, técnico e valor em **EUR**. Proveniência, IDs externos, valores EUR e datas ficam no snapshot auditável; os IDs locais continuam UUIDs por conta (compatíveis com Supabase).
 
-Transfermarkt não fornece overall/força, salário mensal em BRL, energia, estrelas ou estatísticas da carreira do FutManager. Preservamos valores anteriores quando há um único nome correspondente no mesmo clube; nos demais usamos defaults explicitamente de simulação. Ausência de camisa/pé/contrato usa o default do jogo, não uma afirmação factual. Não converter EUR para BRL sem taxa datada: `marketValueEur` fica na fonte e o valor BRL do jogo continua simulado. Estatísticas da nova carreira iniciam zeradas.
+Transfermarkt não fornece overall/força, salário mensal em BRL, energia, estrelas ou estatísticas da carreira do FutManager. Preservamos valores anteriores quando há um único nome correspondente no mesmo clube; nos demais usamos defaults explicitamente de simulação. Ausência de camisa/pé/contrato usa o default do jogo, não uma afirmação factual. O valor original `marketValueEur` fica na fonte; o valor em BRL é convertido com a taxa fixa datada descrita em [cotação de mercado](cotacao-mercado.md), ou mantido como simulado quando EUR estiver ausente. Estatísticas da nova carreira iniciam zeradas.
 
 ## Estado desta entrega
 

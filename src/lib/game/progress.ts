@@ -28,6 +28,7 @@ export type CareerProgress = {
   engine?: import("./simulation/foundation").EngineState;
   /** Frozen club/player catalog, independent of future editor imports. */
   universeSnapshot?: import("./editor-data").EditorDatabase;
+  marketValueFxVersion?: string;
   youthTeams?: Record<string, import("./youth").YouthTeam>;
   stadiums?: Record<string, StadiumState>;
   managerMarket?: ManagerMarket;

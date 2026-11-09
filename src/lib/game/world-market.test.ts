@@ -27,7 +27,7 @@ it("CPU negocia, paga e transfere uma única vez por semana sem alterar o univer
   const proposed=simulateWorldMarket(input);
   expect(proposed.negotiations.find(d=>d.playerId==="target")?.status).toBe("agreed");
   expect(proposed.managers.clubs[buyer.id].budget).toBe(12000);
-  expect(Object.keys(proposed.managers.finance!.reservations)).toHaveLength(1);
+  expect(Object.keys(proposed.managers.finance!.reservations)).toHaveLength(0);
   const result = conclude(input);
   const deal = result.negotiations.find(d => d.playerId === "target")!;
   expect(deal).toMatchObject({ status: "completed", buyerClubId: buyer.id, sourceClubId: seller.id, agreedFeeBrl: 90000 });
@@ -93,7 +93,7 @@ it("preenche vagas com técnico disponível sem duplicar vínculos ou roubar ofe
   expect(database.clubs.find(c => c.id === buyer.id)?.coachName).toBe(buyer.coachName);
 });
 
-it("CPU contrata livre sem taxa e reserva salários, sem inventar clube ou atleta", () => {
+it("CPU contrata livre sem taxa e registra salários, sem inventar clube ou atleta", () => {
   const { input, database, buyer } = fixture();
   database.players.find(p => p.id === "target")!.clubId = "";
   const result = conclude(input);

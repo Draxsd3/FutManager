@@ -1,5 +1,6 @@
 "use client";
 import { CareerHistoryBrowser } from "./ui/career-history-browser";
+import { convertCareerMarketValues, convertDatabaseMarketValues, EUR_BRL_VERSION } from "@/lib/game/market-currency";
 import { restartAfter } from "@/lib/game/simulation/restarts";
 import { assertCpuState, coachMatchPlan, reviewCpu, startCpu, type CpuAthlete } from "@/lib/game/simulation/match-plans";
 import { bannedForFixture, canMakeSubstitution, liveReport, substitutionAllowance } from "@/lib/game/simulation/matches";
@@ -163,13 +164,15 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       await Promise.resolve();
       if (cancelled) return;
       const pendingDatabaseSync = await withTimeout(hasPendingDatabaseSync(userId), 2500).catch(() => false);
-      const localDatabase = upgradeEditorDatabase(await withTimeout(readCachedDatabase(userId), 2500).catch(() => null) ?? readLocalDatabase(userId) ?? (await (await import("@/lib/importer/november-database")).applyNovemberDatabase(await importBrazilDatabase(), { recalibrateOveralls: true })).database);
+      const localDatabase = convertDatabaseMarketValues(upgradeEditorDatabase(await withTimeout(readCachedDatabase(userId), 2500).catch(() => null) ?? readLocalDatabase(userId) ?? (await (await import("@/lib/importer/november-database")).applyNovemberDatabase(await importBrazilDatabase(), { recalibrateOveralls: true })).database));
       if (cancelled) return;
       const cachedSaves = await withTimeout(readCachedCareerSaves(userId), 2500).catch(() => null) ?? [];
       const localSaves = mergeCareerSaves(readLocalSaves(userId),cachedSaves)
         .map((save) => {
-          const snapshot = save.progress?.universeSnapshot ?? cachedSaves.find(old=>old.id===save.id)?.progress?.universeSnapshot ?? createCareerUniverseSnapshot(localDatabase);
-          const reconciled = reconcileCareerSaveWithDatabase(save, snapshot).save;
+          const originalSnapshot = save.progress?.universeSnapshot ?? cachedSaves.find(old=>old.id===save.id)?.progress?.universeSnapshot ?? createCareerUniverseSnapshot(localDatabase);
+          const converted = convertCareerMarketValues(save, originalSnapshot);
+          const snapshot = converted.progress?.universeSnapshot ?? originalSnapshot;
+          const reconciled = reconcileCareerSaveWithDatabase(converted, snapshot).save;
           return reconciled.progress ? { ...reconciled, progress: { ...reconciled.progress, universeSnapshot: snapshot } } : reconciled;
         });
       // Replace both account-local stores even offline; the reset is not a recurring wipe.
@@ -192,12 +195,13 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         if (databaseRevision.current > 0) {
           // A deliberate editor import/edit supersedes the hydration snapshot. Its own write is queued.
         } else if (cloudDatabase && !pendingDatabaseSync) {
-          const upgradedCloudDatabase = upgradeEditorDatabase(cloudDatabase);
+          const upgraded = upgradeEditorDatabase(cloudDatabase);
+          const upgradedCloudDatabase = convertDatabaseMarketValues(upgraded);
           effectiveDatabase = upgradedCloudDatabase;
           setDatabase(upgradedCloudDatabase);
           writeLocalDatabase(upgradedCloudDatabase, userId);
           await withTimeout(cacheDatabase(upgradedCloudDatabase, userId, false), 2500).catch(() => undefined);
-          if (upgradedCloudDatabase.clubs.length !== cloudDatabase.clubs.length) {
+          if (upgradedCloudDatabase !== upgraded || upgradedCloudDatabase.clubs.length !== cloudDatabase.clubs.length) {
             catalogUpload = withTimeout(writeCloudDatabase(upgradedCloudDatabase, userId), 8000).then(() => true, () => false);
           }
         } else {
@@ -205,10 +209,12 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         }
         const reconciledSaveIds = new Set<string>();
         const merged = mergeCareerSaves(localSaves, cloudSaves).map((save) => {
-          const snapshot = save.progress?.universeSnapshot ?? createCareerUniverseSnapshot(effectiveDatabase);
-          const reconciled = reconcileCareerSaveWithDatabase(save, snapshot);
+          const originalSnapshot = save.progress?.universeSnapshot ?? createCareerUniverseSnapshot(effectiveDatabase);
+          const converted = convertCareerMarketValues(save, originalSnapshot);
+          const snapshot = converted.progress?.universeSnapshot ?? originalSnapshot;
+          const reconciled = reconcileCareerSaveWithDatabase(converted, snapshot);
           if (reconciled.save.progress) reconciled.save = { ...reconciled.save, progress: { ...reconciled.save.progress, universeSnapshot: snapshot } };
-          if (reconciled.changed || (save.progress && !save.progress.universeSnapshot)) {
+          if (converted !== save || reconciled.changed || (save.progress && !save.progress.universeSnapshot) || (save.progress?.marketValueFxVersion === EUR_BRL_VERSION && cloudSaves.some(cloud => cloud.id === save.id && cloud.progress?.marketValueFxVersion !== EUR_BRL_VERSION))) {
             reconciledSaveIds.add(save.id);
             return { ...reconciled.save, updatedAt: new Date().toISOString() };
           }
