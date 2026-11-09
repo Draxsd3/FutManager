@@ -746,3 +746,6 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 
 - QA final deste recorte: 645/645 em 123 arquivos fora `game-board.test.tsx` (inclui 2 integrações anuais novas), 154,97 s; build de produção, tipos, lint dos alterados e diff-check aprovados. Um caso de retomada do arquivo pesado passou isoladamente; demais 30 não reexecutados. A auditoria longa não passou e não entra na contagem como aceite.
 - PR #177 mesclou somente a proteção do encoder, SHA `9fa3c4df8d64fcda65b9da19670a0a72e525a69f`; publicação do fluxo anual deve continuar separada enquanto não houver aceite real. Não anunciar E8 completa.
+
+- Proteção PR #177 confirmada em produção: deployment `dpl_2rdMrhNjiN1H99DorKxvC6Qk2rDL`, SHA `9fa3c4df8d64fcda65b9da19670a0a72e525a69f`, READY/PROMOTED, sem erro de alias. Prova na PR. Somente proteção do encoder; a virada nova não está em produção.
+- Recorte anual salvo na PR **#178 em draft**: https://github.com/Draxsd3/FutManager/pull/178 . Main/PR #175 integrada preservando as explicações de saldo no mercado. Regressão pós-integração: 54/54 em 7 arquivos, tipos/lint/diff-check aprovados; não é nova execução dos 645 nem aceite de dez anos. Não mesclar como E8 final sem resolver os bloqueios reais acima.

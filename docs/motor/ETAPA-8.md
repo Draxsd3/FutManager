@@ -88,3 +88,7 @@ Foi encontrado também um risco de persistência: o encoder antigo podia escreve
 - Regressão integral padrão fora do arquivo pesado `game-board.test.tsx`: **645/645, 123 arquivos, 154,97 s**. Inclui as duas integrações anuais novas; não inclui a auditoria longa, cuja configuração é separada e não foi aprovada.
 - Build Next.js de produção, TypeScript, lint dos arquivos alterados e diff-check aprovados. Retomada de partida do arquivo pesado passou isoladamente; 30 casos restantes desse arquivo não foram reexecutados nesta rodada.
 - Proteção do encoder separada na PR #177, merge `9fa3c4df8d64fcda65b9da19670a0a72e525a69f`. O fluxo anual/CPU deste recorte permanece separado da produção enquanto não houver aceite de sustentabilidade/armazenamento.
+
+### Publicação desta execução
+- PR #177: **somente proteção do encoder**, produção `dpl_2rdMrhNjiN1H99DorKxvC6Qk2rDL`, SHA `9fa3c4df8d64fcda65b9da19670a0a72e525a69f`, READY/PROMOTED, sem erro de alias.
+- PR #178: fluxo anual/copa/diagnósticos em **draft**, não promovido. Preserva a atualização de mercado da PR #175 integrada da main. Após essa integração, 54/54 casos em sete arquivos relevantes, tipos/lint/diff-check aprovados. O build local registrado acima antecede essa integração; o build do preview deve ser tratado separadamente. Nenhum smoke de virada anual em produção alegado.
