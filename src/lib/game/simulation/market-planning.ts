@@ -59,7 +59,7 @@ export function buildClubPlan(clubId: string, roster: EditorPlayer[], finance: F
   const available=availableCents(finance,clubId);
   return {clubId,date,availableCents:available,spendingLimitCents:Math.floor(available*.25),fixturesNext21Days:fixtures,needs,leaders,starters,replacements:replacements.slice(-20)};
 }
-export function marketOptions(plan: ClubMarketPlan, roster: EditorPlayer[], candidates: EditorPlayer[], rosters: Map<string,EditorPlayer[]>, finance: FinanceState): MarketOption[] {
+export function marketOptions(plan: ClubMarketPlan, roster: EditorPlayer[], candidates: EditorPlayer[], rosters: Map<string,EditorPlayer[]>, finance: FinanceState, database?: EditorDatabase): MarketOption[] {
   const average=roster.length ? roster.reduce((n,p)=>n+p.overall,0)/roster.length : 0;
   const options: MarketOption[]=[];
   if(roster.length>=30 || roster.length<11) return [{actionId:"wait",kind:"wait",score:0,reason:"Sem capacidade segura de integração neste ciclo."}];
@@ -76,7 +76,7 @@ export function marketOptions(plan: ClubMarketPlan, roster: EditorPlayer[], cand
     const cost=Math.round((fee+salary*(kind==="loan" ? 3 : 12))*100);
     if(cost>plan.spendingLimitCents) continue;
     if(kind==="loan" && (!finance.contracts[p.id]?.endsOn || finance.contracts[p.id].endsOn!<dateAfterMonths(plan.date,6))) continue;
-    const assessment=assessMove(p,roster,kind,salary);
+    const assessment=assessMove(p,roster,kind,salary,database ? {database,buyerClubId:plan.clubId,date:plan.date,sellerRoster:seller} : undefined);
     if(!assessment.accepted) continue;
     options.push({actionId:`approach:${p.id}`,kind:"approach",playerId:p.id,feeBrl:fee,salaryBrl:salary,role:proposedRole(p,roster),score:need.priority*100+p.overall-average-cost/Math.max(1,plan.spendingLimitCents),reason:`${need.priority ? "Carência" : "Oportunidade"} em ${p.primaryPosition}; ${assessment.reason}`});
   }

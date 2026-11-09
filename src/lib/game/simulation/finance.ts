@@ -221,8 +221,10 @@ export function settleTransfer(state: FinanceState, db: EditorDatabase, deal: Tr
   const offered=deal.kind === "sale" ? deal.agreedMonthlyWageBrl ?? p.salaryMonthlyBrl : p.salaryMonthlyBrl;
   if(!Number.isFinite(offered) || offered<0) throw new Error("Salário proposto inválido.");
   if(deal.createdOn) {
-    const roster=financeDatabase(db,s).players.filter(p=>p.clubId===deal.buyerClubId);
-    const assessment=assessMove(p,roster,deal.kind,offered);
+    const effective=financeDatabase(db,s);
+    const roster=effective.players.filter(p=>p.clubId===deal.buyerClubId);
+    const effectivePlayer=effective.players.find(player=>player.id===p.id) ?? p;
+    const assessment=assessMove(effectivePlayer,roster,deal.kind,offered,{database:effective,buyerClubId:deal.buyerClubId,date});
     if(!assessment.accepted) throw new Error(assessment.reason);
   }
   const monthly=brlToCents(offered);

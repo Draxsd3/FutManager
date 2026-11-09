@@ -137,3 +137,50 @@ it("tracks the second/third starters too, not just the strongest player in a sec
  expect(next.replacements.find(r=>r.departedId===midfield[1].id)?.alternativeId).toBeUndefined();
  expect(next.needs.find(n=>n.position==="M")!.priority).toBeGreaterThanOrEqual(3);
 });
+
+it("avalia salário menor com contexto consistente e sem inventar liberdade", async () => {
+ const {wageReference}=await import("./market-rules");
+ const {database,buyer,seller,target}=marketFixture();
+ const player={...target,age:22,overall:60,salaryMonthlyBrl:10000,contractEndsOn:"2026-05-01"};
+ seller.division="Série B"; buyer.division="Série A";
+ const peers=Array.from({length:4},(_,i)=>({...player,id:`peer${i}`,overall:80}));
+ const roster=Array.from({length:11},(_,i)=>({...player,id:`buyer${i}`,clubId:buyer.id,overall:60,primaryPosition:i===0 ? player.primaryPosition : "G" as const}));
+ const db={...database,players:[player,...peers,...roster]};
+ const context={database:db,buyerClubId:buyer.id,date:"2026-01-01"};
+ const ref=wageReference(player,roster,context);
+ expect(ref.amount).toBe(7500);
+ expect(ref.reasons.join(" ")).toMatch(/espaço/); expect(ref.reasons.join(" ")).toMatch(/divisão/);
+ expect(assessMove(player,roster,"sale",7499,context).accepted).toBe(false);
+ expect(assessMove(player,roster,"sale",7500,context).accepted).toBe(true);
+ expect(assessMove(player,roster,"loan",1,context).accepted).toBe(true);
+ const expired={...player,contractEndsOn:"2025-01-01"};
+ expect(wageReference(expired,roster,context).reasons.join(" ")).not.toMatch(/sem clube|próximo do fim/);
+ const unknown={...player,contractEndsOn:"2026-02-30",clubId:"missing"};
+ expect(wageReference(unknown,roster,context).reasons).toEqual([]);
+ const free={...player,clubId:""};
+ expect(wageReference(free,roster,context).amount).toBe(8500);
+ expect(wageReference(free,roster,context).reasons.join(" ")).toMatch(/sem clube/);
+});
+
+it("conclui negociação em duas etapas por salário menor e revalida no financeiro", async () => {
+ const {updateCareerNegotiation,settleCareerTransfer}=await import("./settlement");
+ const {proposeTransfer,transferAskingPrice}=await import("../transfers");
+ const {wageReference}=await import("./market-rules");
+ const {database,save,human,seller,target}=marketFixture();
+ human.division="Série A"; seller.division="Série B";
+ const roster=database.players.filter(p=>p.clubId===human.id);
+ const reference=wageReference(target,roster,{database,buyerClubId:human.id,date:save.inGameDate}).amount!;
+ expect(reference).toBeLessThan(target.salaryMonthlyBrl);
+ const proposed=proposeTransfer(database,[],{id:"low-wage",playerId:target.id,buyerClubId:human.id,feeBrl:transferAskingPrice(target,database.players,save.inGameDate)*2,date:save.inGameDate,twoStage:true}).negotiation!;
+ expect(proposed.negotiationPhase).toBe("player");
+ let current=updateCareerNegotiation(save,database,proposed);
+ let deal=current.progress!.transferNegotiations!.find(d=>d.id===proposed.id)!;
+ current=updateCareerNegotiation(current,database,deal,{type:"player-offer",monthlyWageBrl:reference-1});
+ deal=current.progress!.transferNegotiations!.find(d=>d.id===proposed.id)!;
+ expect(deal.assessment?.accepted).toBe(false);
+ current=updateCareerNegotiation(current,database,deal,{type:"player-offer",monthlyWageBrl:reference});
+ deal=current.progress!.transferNegotiations!.find(d=>d.id===proposed.id)!;
+ expect(deal).toMatchObject({negotiationPhase:"ready",agreedMonthlyWageBrl:reference});
+ const complete=settleCareerTransfer(current,database,proposed.id);
+ expect(complete.progress!.managerMarket!.finance!.contracts[target.id]).toMatchObject({clubId:human.id,monthlyCents:reference*100});
+});

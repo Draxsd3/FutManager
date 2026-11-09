@@ -43,7 +43,7 @@ export function generateIncomingOffers({ squad, records, database, managerMarket
       if(!source) return false;
       const roster=database.players.filter(p=>p.clubId===candidate.id);
       const wage=Math.ceil(source.salaryMonthlyBrl*1.2);
-      if(roster.length>=30 || !assessMove(source,roster,"sale",wage).accepted) return false;
+      if(roster.length>=30 || !assessMove(source,roster,"sale",wage,{database,buyerClubId:candidate.id,date}).accepted) return false;
       return availableCents(managerMarket.finance,candidate.id)>=Math.round((fee*1e6+wage*12)*100);
     });
     if (!buyer) continue;

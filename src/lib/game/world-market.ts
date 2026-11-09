@@ -84,7 +84,7 @@ export function simulateWorldMarket(input: { database: EditorDatabase; humanClub
   for(const buyer of [...db.clubs].sort((a,b)=>hash(`${week}:${a.id}`)-hash(`${week}:${b.id}`))) {
     if(proposals>=MARKET_RULES.maxProposals || buyer.id===input.humanClubId || !managers.clubs[buyer.id] || negotiations.some(d=>d.buyerClubId===buyer.id && (d.status==="agreed" || d.status==="countered"))) continue;
     const plan=state.plans[buyer.id], roster=rosters.get(buyer.id) ?? [];
-    const options=marketOptions(plan,roster,candidates,rosters,managers.finance!);
+    const options=marketOptions(plan,roster,candidates,rosters,managers.finance!,db);
     if(options.length===1) continue;
     const context: MarketContext={decisionId:`${input.careerId ?? "world"}:market:${week}:${buyer.id}`,stateRevision:input.revision ?? 0,rulesVersion:"market-v1",simulatedOn:input.date,actorId:buyer.id,spendingLimitCents:plan.spendingLimitCents,needs:plan.needs,missingFacts:["personalidade","representação/empresário"],options};
     if(!state.pilotContext) state.pilotContext=context;
