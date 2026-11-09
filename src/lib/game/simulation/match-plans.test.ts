@@ -8,7 +8,7 @@ import { tacticalFixture } from "./tactical-fixture";
 import { restartAfter } from "./restarts";
 import { calculateMatchStatistics, createMinuteRandom, createMatchWeather, simulateAction, type MatchEvent } from "../live-match";
 import { parseMatchRules } from "../match-rules";
-import type { CareerSeason, SeasonFixture } from "../season";
+import { simulateFixture, type CareerSeason, type SeasonFixture } from "../season";
 import type { Coach } from "./coaches";
 const base=createDefaultDatabase(),clubs=base.clubs.slice(0,2),template=base.players[0];
 const roles=["G","G","L","L","Z","Z","M","M","M","A","A","A","M","L","Z","A","M","A"] as const;
@@ -116,3 +116,9 @@ it("an injured player leaves even with no healthy bench, without an illegal repl
 it("match statistics count both cautions while the cumulative series excludes the expulsion pair",()=>{const foul=scene("foul","away");expect(calculateMatchStatistics([{...foul,card:"yellow"},{...foul,minute:30,card:"red",secondYellow:true}]).away).toMatchObject({yellowCards:2,redCards:1});});
 
 it("rejects a reconciled goal if its supposed scorer had already left the field",()=>{const f=tacticalFixture(db,fixture("timeline"),new Map()),change=f.report!.substitutions![0],row=f.playerContributions!.find(p=>p.playerId===change.out)!;row.goals++;if(change.clubId===f.homeClubId)f.homeScore!++;else f.awayScore!++;f.report!.goals.push({clubId:change.clubId,playerId:change.out,minute:change.minute+15});expect(()=>assertMatchReport(f)).toThrow("Evento fora da participação");});
+it("assesses the strongest eligible eleven, not the arbitrary size or weakness of the bench",()=>{
+ const data={...db,players:db.players.map(p=>({...p,overall:p.clubId===clubs[0].id?Number(p.id.split(":")[1])<11?80:10:68}))};
+ expect(tacticalFixture(data,fixture("bench-depth"),new Map()).report!.plans![0]).toEqual(coachMatchPlan(undefined,80,68));
+});
+
+it("does not resimulate or apply discipline twice to a published result, including the legacy contract",()=>{const f=past("published","red");f.report!.disciplinePolicy="automatic-red-only-v1";const bans:ReturnType<typeof copyDiscipline>=new Map();expect(simulateFixture(db,f,bans)).toBe(f);expect(tacticalFixture(db,f,bans)).toBe(f);expect(bans.size).toBe(0);});

@@ -12,11 +12,13 @@ function roster(db:EditorDatabase,club:string) {
 /** Coarse CPU granularity is explicit: six 15-minute intervals, not fabricated live commentary.
  * Decisions, substitutions, dismissals and goals all use the active people at that point. */
 export function tacticalFixture(db:EditorDatabase,f:SeasonFixture,discipline:Discipline):SeasonFixture {
+ if(f.status==="played")return f;
  const clubs=[f.homeClubId,f.awayClubId],bans=discipline.get(f.competitionId);
  const sources=clubs.map(club=>roster(db,club).filter(p=>playerEligible(p,f.scheduledDate) && !bans?.has(p.id)));
  const athletes=sources.map(list=>list.map(p=>({id:p.id,role:p.primaryPosition,overall:p.overall,energy:p.energy,age:p.age} satisfies CpuAthlete)));
  const strength=(list:CpuAthlete[])=>list.length ? list.reduce((n,p)=>n+p.overall,0)/list.length:45;
- const states=athletes.map((list,i)=>startCpu(coachMatchPlan(clubCoach(db,clubs[i]),strength(list),strength(athletes[1-i])),list));
+ const strongest=athletes.map(list=>strength([...list].sort((a,b)=>b.overall-a.overall).slice(0,11)));
+ const states=athletes.map((list,i)=>startCpu(coachMatchPlan(clubCoach(db,clubs[i]),strongest[i],strongest[1-i]),list));
  const rows=new Map<string,SeasonPlayerContribution>(),scores=[0,0],random=seededRandom(`${f.season}|${f.id}|cpu-v2`);
  const report=aggregateReport({...f,homeScore:0,awayScore:0},[],"background",servedBans(db,f,discipline));
  report.seed=`${f.season}|${f.id}|cpu-v2`;report.disciplinePolicy="brazil-cards-v2";report.granularity="15-minute-v2";report.plans=states.map(s=>s.plan);

@@ -220,6 +220,7 @@ export function backgroundFixtureScore(fixture: SeasonFixture, minute: number, h
 }
 
 export function simulateFixture(database: EditorDatabase, fixture: SeasonFixture, discipline:Discipline=new Map()): SeasonFixture {
+  if(fixture.status==="played")return fixture;
   const result=tacticalFixture(database,fixture,discipline);
   applyDiscipline(discipline,result);return result;
 }

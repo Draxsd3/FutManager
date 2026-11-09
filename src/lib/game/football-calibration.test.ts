@@ -1,3 +1,4 @@
+import { restartAfter } from "./simulation/restarts";
 import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 import { buildStartingXI, squad } from "./mock-data";
@@ -9,7 +10,7 @@ const xi = buildStartingXI("4-3-3", squad).map((id) => squad.find((player) => pl
 const weather = { id: "dry", label: "Tempo firme", temperatureC: 24, rainIntensity: 0, windKmh: 3 };
 const balanced = { style: "Equilibrado", marking: "Normal", focus: "Pelo meio" };
 
-function simulateFixture(key: string, strengthHome = 76, strengthAway = 76, tactics: MatchTactics = balanced) {
+function simulateFixture(key: string, strengthHome = 76, strengthAway = 76, tactics: MatchTactics = balanced, modern=false) {
   const homePlayers = xi.map((player) => ({ ...player, overall: strengthHome, energy: 95, traits: "" }));
   const awayPlayers = xi.map((player) => ({ ...player, id: player.id + 1000, overall: strengthAway, energy: 95, traits: "" }));
   const events: MatchEvent[] = [];
@@ -20,6 +21,7 @@ function simulateFixture(key: string, strengthHome = 76, strengthAway = 76, tact
     const event = simulateAction({ minute, starters: homePlayers, opponentStarters: awayPlayers,
       formation: "4-3-3", opponentFormation: "4-3-3", positions: {}, opponent: "Rival", previous: events.at(-1)?.scene,
       score, rules, weather, tactics, motivationHome: 65, motivationAway: 65,
+      ...(modern?{lawVersion:2,restart:restartAfter(events,minute)}:{}),
       sentOffHomeIds: red.home, sentOffAwayIds: red.away, yellowCardIds: yellows,
       random: createMinuteRandom(key, minute) });
     events.push(event);
@@ -30,15 +32,15 @@ function simulateFixture(key: string, strengthHome = 76, strengthAway = 76, tact
   return { score, events, stats: calculateMatchStatistics(events) };
 }
 
-it("calibrates 1,000 seeded fixtures without score/statistic contradictions", () => {
+it.each([false,true])("calibrates 1,000 seeded fixtures without contradictions (restarts-v2=%s)", (modern) => {
   let goals = 0, shots = 0, offsides = 0, completed = 0, attempts = 0, homeWins = 0, awayWins = 0, scoreless = 0;
   let strongWins = 0, weakWins = 0, attackShots = 0, balancedShots = 0, heavyFouls = 0, normalFouls = 0;
   const perScenario = 250;
   for (let index = 0; index < perScenario; index++) {
-    const normal = simulateFixture(`calibration-${index}`);
-    const stronger = simulateFixture(`strength-${index}`, index % 2 ? 65 : 88, index % 2 ? 88 : 65);
-    const attacking = simulateFixture(`calibration-${index}`, 76, 76, { ...balanced, style: "Ofensivo" });
-    const pressing = simulateFixture(`calibration-${index}`, 76, 76, { ...balanced, marking: "Pesada" });
+    const normal = simulateFixture(`calibration-${index}`,76,76,balanced,modern);
+    const stronger = simulateFixture(`strength-${index}`, index % 2 ? 65 : 88, index % 2 ? 88 : 65,balanced,modern);
+    const attacking = simulateFixture(`calibration-${index}`, 76, 76, { ...balanced, style: "Ofensivo" },modern);
+    const pressing = simulateFixture(`calibration-${index}`, 76, 76, { ...balanced, marking: "Pesada" },modern);
     for (const result of [normal, stronger, attacking, pressing]) {
       const { score, events, stats } = result;
       expect(events.filter((event) => event.scene?.action === "goal" && event.scene.team === "home")).toHaveLength(score.home);
@@ -66,7 +68,7 @@ it("calibrates 1,000 seeded fixtures without score/statistic contradictions", ()
     normalFouls += normal.stats.home.fouls;
     heavyFouls += pressing.stats.home.fouls;
   }
-  const report = { matches: 1000, goalsPerMatch: goals / 1000, shotsPerMatch: shots / 1000,
+  const report = { restartsV2:modern, matches: 1000, goalsPerMatch: goals / 1000, shotsPerMatch: shots / 1000,
     offsidesPerMatch: offsides / 1000, passCompletion: completed / attempts, balancedHomeWins: homeWins,
     balancedAwayWins: awayWins, balancedScoreless: scoreless, strongWins, weakWins,
     balancedShots, attackShots, normalFouls, heavyFouls };

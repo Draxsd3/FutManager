@@ -49,14 +49,26 @@ Núcleo tático e disciplina automática v2 integrado ao ciclo real, sem redesig
 - `matches-v1` é o envelope de súmula; política disciplinar, preparação e granularidade distinguem versões da simulação. Placar, gols, assistências, cartões, identidades e minutos conciliam antes de publicar. Trocas são validadas contra participantes, limites e expulsões.
 - Fixture reportada inteira imutável, tanto na temporada ativa quanto em snapshots de emprego. Sem backfill, reset de carreira ou reinterpretação de súmulas antigas. Preservados catálogo completo, universos independentes, codec, quota original e CAS.
 - Migração aditiva `20261107072000_tactical_match_report.sql` aceita as duas políticas, valida formato dos metadados opcionais e mantém o índice de imutabilidade anterior. Nenhuma migração histórica reescrita; nenhum save privado lido. SQL não substitui todas as validações semânticas do domínio.
-- Probe SQL com transação/rollback e tabela temporária: `e7_v2_and_legacy_archives_immutable_passed`; duas súmulas sintéticas, antiga e moderna, cópia de arquivo aceita; alteração, remoção e política desconhecida recusadas.
+- Aplicação remota identificada como `20261109140214_tactical_match_report` (identificador do histórico do servidor; arquivo local segue a sequência das migrações anteriores). Probe SQL com transação/rollback e tabela temporária: `e7_v2_and_legacy_archives_immutable_passed`; duas súmulas sintéticas, antiga e moderna, cópia de arquivo aceita; alteração, remoção e política desconhecida recusadas.
 
 ## Comparação estatística e QA
 
 - `match-plans.test.ts`: cenários fixos com dois elencos sintéticos de 18 jogadores, GER 82 × 55, energia 80/idade 30, 240 seeds por mando. Compara favorito em casa e fora; exige vantagem amostral e derrotas possíveis, não garante vencedor. Métricas `E7_CPU_SCENARIOS` no log; não são observações de campeonato real.
 - Antes do ajuste de sensibilidade, esse cenário produziu 237 vitórias/1 derrota em casa e 233/0 fora, com 5,533 gols/jogo em casa: favorito excessivamente dominante. Dispersão ampliada de 22 para 30 e energia incorporada à força efetiva. Os resultados finais e a evidência de QA são registrados na entrega.
+
+### Resultados dos cenários fixos
+
+| Cenário | Jogos | Métricas medidas |
+| --- | ---: | --- |
+| CPU, favorito GER 82 × 55 em casa | 240 | 217 vitórias, 18 empates, 5 derrotas; 3,921 gols/jogo |
+| CPU, mesmo favorito fora | 240 | 213 vitórias, 22 empates, 5 derrotas |
+| Assistido, contrato legado | 1.000 | 1,879 gols; 14,839 chutes; 2,522 impedimentos/jogo; 73,99% passes completos |
+| Assistido, reinícios v2 | 1.000 | 2,091 gols; 15,597 chutes; 2,234 impedimentos/jogo; 74,28% passes completos |
+
+Os 1.000 jogos de cada versão assistida dividem-se em quatro cenários de 250: equilibrado, força desigual (88 × 65 com mando alternado), ofensivo e marcação pesada; clima firme de 24 °C, energia 95 e motivação 65 para ambos. Nos 250 de força desigual: favorito ganhou 206/perdeu 6 no legado e ganhou 209/perdeu 9 em v2. Ofensivo gerou mais chutes; marcação pesada, mais faltas. Não são as mesmas condições do experimento CPU nem um ajuste a estatística de campeonato real.
+
 - 60 seeds adicionais verificam repetibilidade, cartões, trocas e soma de minutos = 990 menos o tempo perdido por expulsão. Testes de contexto/lesão, sem reentrada, snapshot/retomada, estado inválido, suspensões acumuladas/segundo amarelo, resets, reinícios e compatibilidade legada.
-- Mantida a calibração existente de 1.000 jogos assistidos, além das regressões de força/tática/clima, carreira, finanças, mercado, empregos e armazenamento. Ela mede cenários distintos; não afirmar equivalência estatística das duas granularidades nem calibração por dados oficiais.
+- Mantida a calibração existente de 1.000 jogos assistidos e acrescentada a mesma matriz de 1.000 com reinícios v2, além das regressões de força/tática/clima, carreira, finanças, mercado, empregos e armazenamento. Ela mede cenários distintos; não afirmar equivalência estatística das duas granularidades nem calibração por dados oficiais.
 - Validação final, publicação e SHA exato de produção serão registrados na PR após execução e conferência. Não alegar suíte monolítica verde a partir de execuções parciais.
 
 ## Gemini e continuidade
