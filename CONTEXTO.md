@@ -730,3 +730,11 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Diagnóstico E8 revelou risco de gravar um agregado maior que o leitor aceita. Corrigido o encoder para validar o teto existente de 64 milhões de caracteres e bytes antes de substituir o checkpoint legível.
 - Sem aumento de quota/descompactação, sem reset, exclusão de resultados ou alteração de dados privados. Falha de publicação conserva o save anterior; não inventar que arquivamento plurianual foi resolvido.
 - Regressão focada: 19/19 casos de codec/persistência aprovados, incluindo encoder real acima do teto. Detalhes em `docs/motor/ARMAZENAMENTO-SEGURO.md`. Correção de proteção publicada separadamente do fluxo E8 ainda sem aceite; não apresentar como conclusão da etapa.
+
+### Persistência/desempenho — escopo autorizado nesta sessão
+
+- Regra explícita: implementar integralmente a etapa 1 combinada (persistência e desempenho), sem transformar seus itens restantes em novas etapas. As etapas 2 (continuidade do universo) e 3 (validação plurianual/produção da E8) continuam distintas; infraestrutura não encerra a E8.
+- Histórico financeiro e temporadas encerradas usam páginas imutáveis, verificadas por SHA-256 e limitadas a 256.000 bytes UTF-8. O checkpoint publica referências somente depois das páginas duráveis; não subir o limite de 64 milhões nem apagar registros para caber.
+- Dívida salarial encerrada é indexada pelo vínculo/pagador e episódio, não apenas pelo clube: preservar prioridade lexicográfica e atribuição individual através dos intervalos de alocação. Episódios pagos não podem se confundir com competências futuras.
+- Compactação ocorre no checkpoint canônico sob Web Locks, inclusive antes de migrar uma carreira legada ao carregá-la. O autosave remoto não deve compactar/mutar a projeção React por conta própria.
+- Evidências e arquitetura: `docs/persistencia-historico.md`; testes de páginas/IDB/PostgreSQL em `src/lib/game/storage`. Ensaios financeiros sintéticos não equivalem à aceitação de dez temporadas completas do jogo.

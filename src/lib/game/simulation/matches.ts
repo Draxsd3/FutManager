@@ -1,3 +1,4 @@
+import { digest } from "../storage/pages";
 import { assertSeasonArchives } from "./season-lifecycle";
 import type { CareerSave, EditorDatabase } from "../editor-data";
 import type { CareerSeason, SeasonFixture, SeasonPlayerContribution } from "../season";
@@ -175,6 +176,6 @@ export function assertMatchHistory(previous:CareerSave|undefined,next:CareerSave
   const fingerprint=(f:SeasonFixture)=>JSON.stringify(f,(_key,value)=>value && !Array.isArray(value) && typeof value==="object" ? Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b))) : value);
   const indexed=new Map<string,SeasonFixture[]>();for(const f of after)indexed.set(f.id,[...(indexed.get(f.id) ?? []),f]);
   for(const old of previous ? reportedFixtures(previous) : []) {
-    const matches=indexed.get(old.id);if(!matches?.length || matches.some(f=>fingerprint(f)!==fingerprint(old)))throw new Error("Resultado concluído não pode ser removido ou reescrito.");
+    const matches=indexed.get(old.id);const proof=Object.values(next.progress?.seasonHistory ?? {}).some(a=>a.cold?.fixtures[old.id]===digest(fingerprint(old)));if((!matches?.length && !proof) || matches?.some(f=>fingerprint(f)!==fingerprint(old)))throw new Error("Resultado concluído não pode ser removido ou reescrito.");
   }
 }

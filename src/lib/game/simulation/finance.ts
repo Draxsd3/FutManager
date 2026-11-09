@@ -23,6 +23,7 @@ export type Registration = { clubId: string; status: "registered" | "pending"; r
 export type RegistrationPolicy = { source: string; validFrom: string; validUntil: string; windows: { from: string; to: string }[] };
 export type LedgerEntry = { id: string; date: string; clubId: string; kind: "opening" | "legacy-adjustment" | "coach-fee" | "transfer" | "wage-accrual" | "wage-payment"; amountCents: number; cashDeltaCents: number; reference: string };
 export type FinanceState = {
+  archive?: import("../storage/finance-archive").FinanceArchive;
   version: 1; rulesVersion: "finance-v1"; adoptedOn: string; through: string;
   clubs: Record<string, { cashCents: number; projectedThousands: number }>;
   contracts: Record<string, Employment>; history: Employment[];
@@ -62,7 +63,7 @@ export function adoptFinance(market: ManagerMarket, db: EditorDatabase, date: st
       post(s,{id:`opening:${id}`,date,clubId:id,kind:"opening",amountCents:cents,cashDeltaCents:cents,reference:"Saldo salvo na adoção; sem reconstrução histórica."});
     } else if (value !== s.clubs[id].projectedThousands) {
       const delta = cents - s.clubs[id].cashCents;
-      post(s,{id:`legacy:${id}:${s.ledger.length}`,date,clubId:id,kind:"legacy-adjustment",amountCents:delta,cashDeltaCents:delta,reference:"Ponte explícita para receita/obra legada; não folha ou transferência."});
+      post(s,{id:`legacy:${id}:${(s.archive?.ledgerCount ?? 0)+s.ledger.length}`,date,clubId:id,kind:"legacy-adjustment",amountCents:delta,cashDeltaCents:delta,reference:"Ponte explícita para receita/obra legada; não folha ou transferência."});
     }
     s.clubs[id].projectedThousands = value;
   }

@@ -1,4 +1,5 @@
 "use client";
+import { CareerHistoryBrowser } from "./ui/career-history-browser";
 import { restartAfter } from "@/lib/game/simulation/restarts";
 import { assertCpuState, coachMatchPlan, reviewCpu, startCpu, type CpuAthlete } from "@/lib/game/simulation/match-plans";
 import { bannedForFixture, canMakeSubstitution, liveReport, substitutionAllowance } from "@/lib/game/simulation/matches";
@@ -302,6 +303,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [standingsOpen, setStandingsOpen] = useState(false);
 
   const progress: CareerProgress = {
+    seasonHistory: saves.find(save=>save.id===activeSaveId)?.progress?.seasonHistory,
     universeSnapshot: universeSnapshot.current, page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore,
     events, participation, matchBenchIds, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
@@ -1010,6 +1012,12 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
 
   async function loadCareer(save: CareerSave): Promise<boolean> {
     if (!isCurrentCareerSave(save)) return false;
+    // Compact readable legacy careers BEFORE finance/player migrations copy their
+    // active state. Pages are durable before this revision-neutral publication.
+    if(typeof indexedDB!=="undefined"){
+      try {await publishLocalCheckpoint(save,userId,save.progress?.engine?.revision ?? 0);}
+      catch(error){setSyncLabel(error instanceof Error?error.message:"Não foi possível preservar o arquivo histórico.");return false;}
+    }
     const catalog = synchronizedCatalog.current ?? currentCatalog();
     const database = catalog ? applyStructuralDatabaseUpdates(save.progress?.universeSnapshot ?? createCareerUniverseSnapshot(catalog), catalog).database : null;
     if (database) {
@@ -1669,6 +1677,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
             trainingSeason={competitionSeason?.season ?? 2026}
             onTrainPlayers={trainPlayers}
           />}
+          {(["finances","history"].includes(managementSection)) && saves.find(s=>s.id===activeSaveId) && <CareerHistoryBrowser key={activeSaveId} owner={userId} save={saves.find(s=>s.id===activeSaveId)!}/>}
         </CareerWorkspace>
         {renderStandings()}
         {profilePlayer !== null && (() => {
