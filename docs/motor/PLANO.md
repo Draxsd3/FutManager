@@ -64,7 +64,7 @@ Aceite: gols/eventos/estatísticas conciliam; cartões/suspensão respeitam comp
 
 ## E8 — temporadas e sustentabilidade do universo
 
-**Estado:** autorizada e em implementação. Primeiro recorte de auditoria/arquivo em [ETAPA-8.md](ETAPA-8.md); ainda sem fluxo anual liberado, teste de dez temporadas ou aceite de jogabilidade em produção.
+**Estado:** autorizada e em implementação. Fluxo anual com CAS/interface e correções esportivas em implementação em [ETAPA-8.md](ETAPA-8.md); sem aceite de dez temporadas sustentáveis ou liberação final de jogabilidade em produção.
 
 **Depende de:** E2–E7. **Fatia inicial:** uma passagem anual íntegra, depois ciclos longos sem intervenção.
 

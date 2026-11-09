@@ -1,0 +1,66 @@
+{
+  "status": "blocked-not-accepted",
+  "scope": "Frozen Brazilian test universe, reduced one-year diagnostic, not ten-year acceptance",
+  "productionDataAccessed": false,
+  "seedsCompleted": 0,
+  "yearsCompleted": 0,
+  "referenceHeapLimitMiB": 2048,
+  "previousRun": {
+    "result": "heap-out-of-memory",
+    "elapsedSeconds": 761,
+    "lastStartedMonth": 11,
+    "note": "Before final bulk forecasts; no annual pass."
+  },
+  "optimizedRun": {
+    "result": "stopped-after-observing-storage-budget-violation",
+    "note": "No successful annual metrics or rollover. Book sizes are JSON characters of managerMarket; current decoder limit is 64000000. This run preceded the new fail-closed encoder check.",
+    "lastStartedMonth": 5,
+    "processedMonths": [
+      {
+        "seed": "e8000000-0000-4000-8000-000000000011",
+        "year": 2026,
+        "month": 1,
+        "phase": "processed",
+        "heapBytes": 568408016,
+        "ledger": 17805,
+        "payables": 16901,
+        "financialCharacters": 19568307,
+        "populationCharacters": 7033406
+      },
+      {
+        "seed": "e8000000-0000-4000-8000-000000000011",
+        "year": 2026,
+        "month": 2,
+        "phase": "processed",
+        "heapBytes": 952670904,
+        "ledger": 68654,
+        "payables": 33792,
+        "financialCharacters": 42920234,
+        "populationCharacters": 8387512
+      },
+      {
+        "seed": "e8000000-0000-4000-8000-000000000011",
+        "year": 2026,
+        "month": 3,
+        "phase": "processed",
+        "heapBytes": 1084835488,
+        "ledger": 119429,
+        "payables": 50667,
+        "financialCharacters": 66245076,
+        "populationCharacters": 9828674
+      },
+      {
+        "seed": "e8000000-0000-4000-8000-000000000011",
+        "year": 2026,
+        "month": 4,
+        "phase": "processed",
+        "heapBytes": 1267539328,
+        "ledger": 170215,
+        "payables": 67537,
+        "financialCharacters": 89710074,
+        "populationCharacters": 11008810
+      }
+    ]
+  },
+  "acceptancePassed": false
+}

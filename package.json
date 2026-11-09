@@ -12,7 +12,8 @@
     "transfermarkt:sync": "python3 scripts/transfermarkt/sync.py sync",
     "transfermarkt:test": "python3 -m unittest discover -s scripts/transfermarkt -p \"test_*.py\"",
     "transfermarkt:competitions": "python3 scripts/transfermarkt/sync.py competitions",
-    "transfermarkt:competition-sync": "python3 scripts/transfermarkt/sync.py competition-sync"
+    "transfermarkt:competition-sync": "python3 scripts/transfermarkt/sync.py competition-sync",
+    "test:seasons": "vitest run --config vitest.seasons.config.mts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

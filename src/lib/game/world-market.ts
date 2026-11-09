@@ -3,7 +3,7 @@ import { populationDatabase, type PlayerPopulation } from "./simulation/players"
 import { buildClubPlan, marketOptions, rosterIndex, marketContextKey, type MarketStrategy, type MarketSelection, type MarketContext } from "./simulation/market-planning";
 import { MARKET_RULES } from "./simulation/market-rules";
 import type { CareerSeason } from "./season";
-import { adoptFinance, accrueFinance, financeDatabase, projectFinance, reserveDeal, settleTransfer, type FinanceState } from "./simulation/finance";
+import { availableCentsByClub, adoptFinance, accrueFinance, financeDatabase, projectFinance, reserveDeal, settleTransfer, type FinanceState } from "./simulation/finance";
 import { ENGINE_CONFIG } from "./simulation/foundation";
 import type { EditorDatabase } from "./editor-data";
 import { databaseWithLoans, type CareerLoans } from "./loans";
@@ -11,6 +11,8 @@ import { appointManager, type ManagerMarket } from "./manager-market";
 import { databaseWithCompletedTransfers, proposeTransfer, respondToTransferNegotiation, type TransferNegotiation } from "./transfers";
 
 export type WorldMarket = {
+  /** Career-only sporting movements; never mutate the frozen editor catalog. */
+  divisions?: Record<string, import("./mock-data").DivisionKey>;
   population?: PlayerPopulation;
   marketState?: MarketStrategy;
   lastWeek?: number;
@@ -18,7 +20,7 @@ export type WorldMarket = {
   events: { date: string; text: string }[];
 };
 export function worldDatabase(database: EditorDatabase, deals: TransferNegotiation[], loans: CareerLoans, world?: WorldMarket, finance?: FinanceState,coaches?:import("./simulation/coaches").CoachState): EditorDatabase {
-  const base=populationDatabase(database,world?.population);
+  const base=populationDatabase(world?.divisions ? {...database,clubs:database.clubs.map(c=>({...c,division:world.divisions?.[c.id] ?? c.division}))} : database,world?.population);
   const effective = financeDatabase(databaseWithLoans(databaseWithCompletedTransfers({ ...base, players: base.players.map(p => ({ ...p, loan: undefined })) }, deals), loans), finance);
   return bindMatchCoaches(world ? { ...effective, players: effective.players.map(p => world.listings[p.id] && p.loan?.status !== "active" ? { ...p, marketStatus: world.listings[p.id] } : p) } : effective,coaches?.coaches);
 }
@@ -70,9 +72,10 @@ export function simulateWorldMarket(input: { database: EditorDatabase; humanClub
   const db = worldDatabase(input.database, negotiations, loans, world, managers.finance);
   const rosters=rosterIndex(db);
   const protectedPlayers=new Set(negotiations.filter(d => ((d.status==="agreed" || d.status==="countered") && d.buyerClubId===input.humanClubId) || (d.status==="completed" && d.completedOn && Date.parse(`${input.date}T12:00:00Z`)-Date.parse(`${d.completedOn}T12:00:00Z`)<ENGINE_CONFIG.worldMarket.cooldownDays*86400000)).map(d=>d.playerId));
+  const forecast=availableCentsByClub(managers.finance!);
   for(const club of db.clubs) {
     const roster=rosters.get(club.id) ?? [];
-    state.plans[club.id]=buildClubPlan(club.id,roster,managers.finance!,input.date,input.season,state.plans[club.id]);
+    state.plans[club.id]=buildClubPlan(club.id,roster,managers.finance!,input.date,input.season,state.plans[club.id],forecast[club.id]);
     if(club.id===input.humanClubId || roster.length<=20) continue;
     const surplus=roster.filter(p=>p.marketStatus==="normal" && p.loan?.status!=="active" && !protectedPlayers.has(p.id) && roster.filter(other=>other.primaryPosition===p.primaryPosition).length>(p.primaryPosition==="G" ? 2 : 4)).sort((a,b)=>a.overall-b.overall || a.id.localeCompare(b.id))[0];
     if(surplus && !world.listings[surplus.id]) {

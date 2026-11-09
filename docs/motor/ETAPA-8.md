@@ -4,7 +4,7 @@
 
 Pedido: avançar para a última etapa do motor; **ao terminar, o jogo precisa estar jogável em produção**. Isso exige passagem anual integrada à interface, persistência segura, continuidade econômica/esportiva e evidência de múltiplas temporadas. Build verde, um arquivo novo ou uma simulação isolada não satisfazem esse aceite.
 
-A presente fatia é a infraestrutura de fechamento/arquivo. **Não habilita virada de ano na interface, não foi tratada como E8 entregue e não comprova dez temporadas.** A infraestrutura foi publicada pela PR #173, merge `61de117295fe39022719d2efa31b63f8ed6422f7`, com produção Vercel READY/PROMOTED. Isso não significa entrega do ciclo anual.
+O recorte publicado é a infraestrutura de fechamento/arquivo. O recorte atual na branch da sessão acrescenta a virada anual na interface e correções de competições; **ainda não é E8 entregue e não comprova dez temporadas sustentáveis.** A infraestrutura foi publicada pela PR #173, merge `61de117295fe39022719d2efa31b63f8ed6422f7`, com produção Vercel READY/PROMOTED. Isso não significa entrega do ciclo anual.
 
 ## Primeiro recorte implementado
 
@@ -50,3 +50,41 @@ A presente fatia é a infraestrutura de fechamento/arquivo. **Não habilita vira
 - Produção da PR #173 reconfirmada: deployment `dpl_5tXYpUhZ2KXXotjEMiQKg8pKCicg`, SHA `61de117295fe39022719d2efa31b63f8ed6422f7`, READY/PROMOTED, sem erro de alias.
 - Gemini permanece OFF, sem credencial utilizável verificada. Não alterar autenticação, desabilitar RLS ou inventar credenciais para alegar prontidão.
 - A ativação SQL não resolve os bloqueios acima. E8 continua incompleta; liberação funcional anual depende de implementação e aceite, não de uma flag de infraestrutura.
+
+## Recorte atual — fluxo anual e competições (ainda sem aceite E8)
+
+Pedido reforçado pelo usuário: **FINALIZAR a etapa 8 completamente, sem deixar remendos ou pendências disfarçadas**. Não apagar saves, arquivos, testes ou evidências de falha para aparentar conclusão.
+
+### Implementado na branch da sessão
+
+- Copa genérica agora tem ligações explícitas entre confrontos (`cupHomeSource`/`cupAwaySource`). O vencedor real ocupa o próximo confronto, mesmo após eliminar o humano; não cancela o campeonato nem simula resultados privados para projetar vencedores. Recuperação de feeders legados pelos IDs estáveis evita ressuscitar o humano em rodadas posteriores. Resultados publicados não são reescritos.
+- `settleSeasonThrough`: conclui partidas CPU datadas pelo mesmo executor de resultado/súmula/disciplina, interrompendo antes de partida humana disponível. O driver headless, somente no teste, assume deliberadamente todos os clubes.
+- `completeDomesticCalendar`: mantém datas/resultados existentes e procura datas adicionais para os compromissos sem data, reservando os possíveis classificados da chave. Cada complemento é marcado **projection**, não tabela oficial da CBF. Não cancela jogos impossíveis para passar na auditoria. A Agenda diferencia projeção de jogo ainda sem data.
+- Novas carreiras da interface adotam `domestic-world`. Carreira legada pode arquivar seu calendário parcial sem inventar resultados de competições ausentes; o calendário seguinte adota o mundo doméstico completo. O construtor puro mantém o padrão anterior para seus consumidores legados.
+- `transitionCareerSeason`: valida revisão/data/partida em andamento, conclui CPU restante ou devolve a próxima partida humana, audita/arquiva, processa o calendário civil até janeiro e cria a próxima temporada. A interface publica o snapshot inteiro sob CAS antes de exibir o novo ano. Falha de gravação conserva o checkpoint anterior.
+- Overlay `worldMarket.divisions` preserva o catálogo congelado e o editor. Trocas futuras entre divisões usam uma **política projetada do jogo**, conservando o tamanho de cada divisão; D usa os acessos efetivamente apurados quando disponíveis. Grupos futuros da D com 96 clubes vêm das divisões da carreira, não da ressurreição da lista de 2026. Não é implementação de todas as vagas estaduais/regionais, nem certificação de regulamento futuro.
+- `seasonHistory` agora faz parte do estado reconstruído/autosave do GameBoard, inclusive reload e ações financeiras. Fluxo de desemprego encaminha o cruzamento anual ao mesmo comando, em vez de deixar a temporada ativa num ano anterior.
+- Resultados CPU restantes passam também pela rotina idempotente de receitas/mercado dos técnicos quando o humano está empregado. Mantém a política econômica existente, sem crédito de fechamento ou saldo inventado.
+- Projeção financeira em lote, equivalente à consulta individual, evita varrer todo o livro para cada plano CPU. Liquidação continua revalidando caixa/reservas individualmente, sem cache sobre agregados mutáveis e sem flexibilizar compromissos.
+
+### Evidência e limites da execução
+
+- Calendário do universo brasileiro real: **2.463 partidas concluídas, zero pendências de auditoria, zero clubes nacionais ausentes**, pelo executor real. É teste esportivo de uma temporada, **não** prova econômica de dez anos.
+- Integração anual GameBoard: passagem pelo hub, arquivo após reload/autosave e falha de quota sem publicação parcial aprovados (2 casos). Autosave/retomada de partida existente aprovado isoladamente (1 caso, 30 restantes desse arquivo não reexecutados nesta rodada).
+- Regressão intermediária fora `game-board.test.tsx`: **640/640, 121 arquivos**, 197,13 s. Após alterações finais, suítes específicas de domínio, finanças, técnicos, forecast, Agenda e integração anual foram reexecutadas. Registrar a rodada integral final separadamente quando concluída; não somar execuções sobrepostas como testes novos.
+- A primeira execução conjunta de integração pesada e diagnóstico plurianual pressionou a RAM de 4 GB; processos foram interrompidos, sem qualquer execução sobre dados de usuários. A integração isolada passou. O diagnóstico passou a ter comando/configuração próprios; não confundir interrupção por recursos com resultado aprovado.
+- `npm run test:seasons`: auditoria separada, duas seeds fixas, dez anos por padrão, métricas anuais de resultados/caixa/folha/obrigações/vínculos/população/idade/lesões/slots de elenco e tamanho do save, usando os serviços reais. Exige calendário íntegro, elencos nacionais jogáveis, ausência de salários vencidos sem cobertura, reload e quota inalterada. `E8_YEARS=1` é somente diagnóstico reduzido, nunca aceite de dez anos. `E8_REPORT` pode apontar para relatório JSONL fora do Git.
+- **Aceite ainda bloqueado:** auditoria plurianual completa/sustentável e orçamento de armazenamento não aprovados; política completa de inscrições estaduais/regionais e reposição econômica/contratual ainda não entregues. Não publicar como E8 finalizada apenas pelos testes acima. Não aumentar quota, cancelar final, apagar histórico, renovar sem cobertura ou gerar dinheiro/jogadores para mascarar falhas.
+
+### Falha concreta do diagnóstico longo
+
+Uma execução isolada reduzida (`E8_YEARS=1`, seed terminada em `0011`, heap de 2.048 MB) abortou por **JavaScript heap out of memory**, após 761 s, antes de processar dezembro de 2026. Não produziu um ano aprovado, tampouco dez anos. Esta execução começou antes das otimizações finais da projeção em lote; é diagnóstico da falha observada, não resultado do código final otimizado. A configuração mantém os limites de save/descompactação originais. A rechecagem da versão otimizada deve ser registrada pelo resultado real, sem converter uma tentativa em aprovação.
+
+Na rechecagem com forecast em lote, o livro `managerMarket` chegou a **66.245.076 caracteres em março** e **89.710.074 em abril**, acima do limite de leitura de 64.000.000. O diagnóstico foi interrompido antes de iniciar nova pressão de memória; não aprovou o ano. Evidência sintética resumida em `relatorios/e8-diagnostico.json`.
+
+Foi encontrado também um risco de persistência: o encoder antigo podia escrever um agregado que o decoder recusaria por tamanho. O encoder agora valida o mesmo limite **antes** de substituir o save legível, inclusive o tamanho UTF-8 do payload. É falha fechada, não aumento de quota nem solução fictícia do armazenamento longo. Arquivamento frio/paginado do livro e dos resultados ainda precisa de implementação e validação para concluir a etapa.
+
+### QA final do recorte (não aceite E8)
+- Regressão integral padrão fora do arquivo pesado `game-board.test.tsx`: **645/645, 123 arquivos, 154,97 s**. Inclui as duas integrações anuais novas; não inclui a auditoria longa, cuja configuração é separada e não foi aprovada.
+- Build Next.js de produção, TypeScript, lint dos arquivos alterados e diff-check aprovados. Retomada de partida do arquivo pesado passou isoladamente; 30 casos restantes desse arquivo não foram reexecutados nesta rodada.
+- Proteção do encoder separada na PR #177, merge `9fa3c4df8d64fcda65b9da19670a0a72e525a69f`. O fluxo anual/CPU deste recorte permanece separado da produção enquanto não houver aceite de sustentabilidade/armazenamento.

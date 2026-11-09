@@ -2,7 +2,7 @@ import type { CareerSave, EditorDatabase } from "../editor-data";
 import type { ManagerMarket } from "../manager-market";
 import type { CareerSeason } from "../season";
 import { dateAfterMonths } from "../loans";
-import { accrueFinance, availableCents, projectFinance, type FinanceState } from "./finance";
+import { availableCentsByClub, accrueFinance, availableCents, projectFinance, type FinanceState } from "./finance";
 import { civilDate, engineState } from "./foundation";
 
 export const COACH_RULES = Object.freeze({ version: "coaches-v1", minimumGames: 5, reviewWindow: 8, dismissalRatio: .55, contractMonths: 12, severanceMonths: 2, vacancyDays: 7 });
@@ -101,6 +101,7 @@ export function processCoaches(market: ManagerMarket, database: EditorDatabase, 
   const next=structuredClone(market);
   next.finance=accrueFinance(next.finance!,date);
   const staff=next.staff!;
+  const forecast=availableCentsByClub(next.finance!);
   for(const fixture of [...(season?.fixtures ?? [])].filter(f=>f.status==="played").sort((a,b)=>a.calendarRound-b.calendarRound || a.id.localeCompare(b.id))) {
     if(!Number.isInteger(fixture.homeScore) || !Number.isInteger(fixture.awayScore)) continue;
     for(const clubId of [fixture.homeClubId,fixture.awayClubId]) {
@@ -125,13 +126,14 @@ export function processCoaches(market: ManagerMarket, database: EditorDatabase, 
     if(games.length>=COACH_RULES.minimumGames && ratio<COACH_RULES.dismissalRatio) {
       const days=Math.max(0,(Date.parse(`${c.contract.endsOn}T12:00:00Z`)-Date.parse(`${date}T12:00:00Z`))/86400000);
       const cost=Math.round(c.contract.monthlyCents*Math.min(COACH_RULES.severanceMonths,days/30));
-      if(availableCents(next.finance!,c.clubId)>=cost) release(next,c,date,"dismissed",cost);
+      if((forecast[c.clubId] ?? 0)>=cost) { const clubId=c.clubId; release(next,c,date,"dismissed",cost); forecast[clubId]=availableCents(next.finance!,clubId); }
       else b.reason="Rendimento abaixo da meta, mas caixa livre insuficiente para rescisão.";
     }
   }
   // Vacancies remain open for at least seven simulated days; valid human offers protect their deadline.
   for(const club of [...database.clubs].filter(c=>c.country?.toLocaleLowerCase("pt-BR")==="brasil" && c.division!=="Sem divisão nacional").sort((a,b)=>a.id.localeCompare(b.id))) {
     const b=staff.boards[club.id];
+    if((forecast[club.id] ?? 0)<=0) continue;
     if(!b?.vacantSince || plusDays(b.vacantSince,COACH_RULES.vacancyDays)>date || next.clubs[club.id]?.coach!==null || next.applications?.some(a=>a.clubId===club.id && a.status==="offered" && a.expiresOn>=date)) continue;
     const free=Object.values(staff.coaches).filter(c=>c.id!==staff.humanId && !c.clubId && c.availableOn<=date).sort((a,b)=>Math.abs(a.reputation-club.level)-Math.abs(b.reputation-club.level) || a.id.localeCompare(b.id));
     let candidate=free[0];

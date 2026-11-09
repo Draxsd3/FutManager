@@ -128,6 +128,17 @@ export function unreservedCents(s: FinanceState, clubId: string, excludingReserv
   for (const [id,r] of Object.entries(s.reservations)) if (id!==excludingReservation && r.clubId===clubId) committed+=r.cents;
   return (s.clubs[clubId]?.cashCents ?? 0)-committed;
 }
+/** One explicit read-only forecast for a CPU planning snapshot. No cache on mutable
+ * financial objects: the settlement executor always rechecks the individual budget. */
+export function availableCentsByClub(s:FinanceState):Record<string,number> {
+  const result=Object.fromEntries(Object.entries(s.clubs).map(([id,c])=>[id,c.cashCents]));
+  const deduct=(id:string,amount:number)=>{if(id in result) result[id]-=amount;};
+  for(const p of Object.values(s.payables))deduct(p.clubId,p.amountCents-p.paidCents);
+  const horizon=dateAfterMonths(s.through,FINANCE_RULES.salaryHorizonMonths);
+  for(const c of Object.values(s.contracts))slices(c,s.loans[c.playerId],s.through,horizon,(id,amount)=>deduct(id,amount));
+  for(const r of Object.values(s.reservations))deduct(r.clubId,r.cents);
+  return Object.fromEntries(Object.entries(result).map(([id,cents])=>[id,Math.max(0,cents)]));
+}
 export const availableCents = (s: FinanceState, clubId: string, excludingReservation?: string) => Math.max(0,unreservedCents(s,clubId,excludingReservation));
 /** No overdraft fiction: competence is accrued independently; insufficient cash becomes a payable. */
 export function accrueFinance(state: FinanceState, date: string): FinanceState {
