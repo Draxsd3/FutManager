@@ -1,8 +1,15 @@
 /** Lossless string-token dictionary before deflate. Long financial/person IDs repeat
  * across distant JSON sections beyond zlib's 32 KiB window. No domain data is dropped. */
+export const CHECKPOINT_CHARACTER_LIMIT=64_000_000;
+/** Encoder and decoder share the same budget. Reject before replacing a readable save. */
+export function assertCheckpointSize(size:number):void {
+  if(!Number.isSafeInteger(size) || size<2 || size>CHECKPOINT_CHARACTER_LIMIT)throw new Error("Checkpoint excede o limite seguro de armazenamento.");
+}
 const tokenPattern=/"(?:[^"\\]|\\.)*"/g;
 export function packCheckpoint(value:unknown) {
-  const original=JSON.stringify(value),dictionary:string[]=[],indexes=new Map<string,number>();
+  const original=JSON.stringify(value);
+  assertCheckpointSize(original.length);
+  const dictionary:string[]=[],indexes=new Map<string,number>();
   const document=original.replace(tokenPattern,token=>{
     if(token.length<=20 && !token.startsWith('"#')) return token;
     let index=indexes.get(token);if(index===undefined){index=dictionary.length;indexes.set(token,index);dictionary.push(token);}
