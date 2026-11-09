@@ -27,6 +27,10 @@ configure({ asyncUtilTimeout: 15000 });
 const matchRulesMarkdown = readFileSync("public/game-assets/match-engine-rules.md", "utf8");
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 beforeEach(() => {
+  // Do not retain every full-universe autosave in mock call history across tests.
+  vi.clearAllMocks();
+  // Release the real persistence layer's in-memory frozen universes as well.
+  writeLocalSaves([],"alice");writeLocalSaves([],"bob");
   Object.defineProperty(navigator,"locks",{configurable:true,value:{request:async (_key: string, task: () => unknown) => task()}});
   localStorage.clear();
   sessionStorage.clear();

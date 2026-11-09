@@ -63,12 +63,13 @@ type FutManagerDatabase = {
     Tables: {
       editor_clubs: TableDefinition<ClubRow, Partial<ClubRow> & Pick<ClubRow, "name" | "short_name" | "division">>;
       editor_players: TableDefinition<PlayerRow, Partial<PlayerRow> & Pick<PlayerRow, "club_id" | "name" | "shirt_number" | "primary_position">>;
+      career_archive_pages: TableDefinition<{owner_id:string;save_id:string;id:string;kind:string;row_count:number;byte_count:number;payload:string}>;
       game_saves: TableDefinition<SaveRow, Partial<SaveRow> & Pick<SaveRow, "name" | "manager_name" | "in_game_date">>;
       career_players: TableDefinition<CareerPlayerRow, Partial<CareerPlayerRow> & Pick<CareerPlayerRow, "save_id" | "name" | "position_code" | "preferred_foot" | "overall" | "age" | "contract_ends_on">>;
       career_player_seasons: TableDefinition<CareerSeasonRow, Partial<CareerSeasonRow> & Pick<CareerSeasonRow, "career_player_id" | "season" | "club_name">>;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: { persist_paged_save: {Args:{p_save:Partial<SaveRow>;p_pages:{id:string;kind:string;count:number;bytes:number;text:string}[]};Returns:undefined} };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

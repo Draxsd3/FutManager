@@ -15,6 +15,7 @@
     "transfermarkt:competition-sync": "python3 scripts/transfermarkt/sync.py competition-sync"
   },
   "dependencies": {
+    "@noble/hashes": "^2.0.1",
     "@supabase/supabase-js": "^2.112.3",
     "fflate": "^0.8.3",
     "geist": "^1.8.2",
@@ -25,6 +26,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.3.14",
     "@tailwindcss/postcss": "^4",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",

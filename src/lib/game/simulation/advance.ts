@@ -28,7 +28,8 @@ export function advanceCareer(save: CareerSave, database: EditorDatabase, comman
   }
   if (engine.revision !== command.expectedRevision || command.fromDate !== save.inGameDate) throw new EngineConflict();
   const financed=migrateFinanceSave(save,database);
-  const p = structuredClone(migratePlayerSave(financed,worldDatabase(database,financed.progress?.transferNegotiations ?? [],financed.progress?.loanContracts ?? {},financed.progress?.worldMarket,financed.progress?.managerMarket?.finance)).progress!);
+  const migrated=migratePlayerSave(financed,worldDatabase(database,financed.progress?.transferNegotiations ?? [],financed.progress?.loanContracts ?? {},financed.progress?.worldMarket,financed.progress?.managerMarket?.finance)).progress!;
+  const p = {...structuredClone({...migrated,seasonHistory:undefined}),seasonHistory:migrated.seasonHistory};
   const unemployed = isUnemployed(p.managerMarket);
   const nextFixture = unemployed ? undefined : nextCareerFixture(p.competitionSeason);
   const date = civilDate(command.targetDate ?? (unemployed ? new Date(Date.parse(`${save.inGameDate}T12:00:00Z`)+7*86400000).toISOString().slice(0,10) : careerCalendarDate(save.inGameDate,p.competitionSeason,nextFixture)));

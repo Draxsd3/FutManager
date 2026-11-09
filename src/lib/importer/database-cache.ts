@@ -1,3 +1,4 @@
+import {digest} from "@/lib/game/storage/pages";
 import type { EditorDatabase, CareerSave } from "@/lib/game/editor-data";
 import { accountStorageKey } from "@/lib/game/save-utils";
 
@@ -45,6 +46,9 @@ export function cacheDatabase(database: EditorDatabase, userId: string, pendingS
 function readCache(userId: string) {
   return read<{database: EditorDatabase; pendingSync: boolean}>(accountStorageKey("imported-database", userId));
 }
+const universeIds=new WeakMap<EditorDatabase,string>();
+const installedUniverses=new Set<string>();
+type CachedCareer=CareerSave & {cachedUniverseId?:string};
 const pendingCareerSnapshots = new Map<string,{latest: CareerSave[] | null; job: Promise<void>}>();
 /** Cache is a projection, not a journal: coalesce queued renders to the latest full snapshot. */
 export function cacheCareerSaves(saves: CareerSave[], userId: string): Promise<void> {
@@ -52,7 +56,19 @@ export function cacheCareerSaves(saves: CareerSave[], userId: string): Promise<v
   if(previous) {previous.latest=saves;return previous.job;}
   const pending={latest:saves as CareerSave[] | null,job:Promise.resolve()};
   pending.job=Promise.resolve().then(async()=>{
-    while(pending.latest) { const latest=pending.latest; pending.latest=null; await store(key,latest); }
+    while(pending.latest) {
+      const latest=pending.latest;pending.latest=null;const heads:CachedCareer[]=[];
+      for(const save of latest){
+        const universe=save.progress?.universeSnapshot;
+        if(!universe){heads.push(save);continue;}
+        let id=universeIds.get(universe);
+        if(!id){id=digest(JSON.stringify(universe));universeIds.set(universe,id);}
+        const universeKey=accountStorageKey(`career-universe:${save.id}:${id}`,userId);
+        if(!installedUniverses.has(universeKey)){if(!await read(universeKey))await store(universeKey,universe);installedUniverses.add(universeKey);}
+        heads.push({...save,cachedUniverseId:id,progress:{...save.progress!,universeSnapshot:undefined}});
+      }
+      await store(key,heads);
+    }
   }).finally(()=>{if(pendingCareerSnapshots.get(key)===pending) pendingCareerSnapshots.delete(key);});
   pendingCareerSnapshots.set(key,pending);
   return pending.job;
@@ -60,7 +76,16 @@ export function cacheCareerSaves(saves: CareerSave[], userId: string): Promise<v
 export async function readCachedCareerSaves(userId: string): Promise<CareerSave[] | null> {
   const key=accountStorageKey("imported-saves",userId);
   await pendingCareerSnapshots.get(key)?.job.catch(()=>undefined);
-  return read<CareerSave[]>(key);
+  const saves=await read<CachedCareer[]>(key);
+  if(!saves)return null;
+  return Promise.all(saves.map(async({cachedUniverseId,...save})=>{
+    if(!cachedUniverseId)return save;
+    const universe=await read<EditorDatabase>(accountStorageKey(`career-universe:${save.id}:${cachedUniverseId}`,userId));
+    if(!universe)throw new Error("Universo congelado ausente; checkpoint preservado.");
+    universeIds.set(universe,cachedUniverseId);
+    installedUniverses.add(accountStorageKey(`career-universe:${save.id}:${cachedUniverseId}`,userId));
+    return {...save,progress:{...save.progress!,universeSnapshot:universe}};
+  }));
 }
 export async function readCachedDatabase(userId: string): Promise<EditorDatabase | null> {
   return (await readCache(userId))?.database ?? null;

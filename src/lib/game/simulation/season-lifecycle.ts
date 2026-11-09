@@ -1,3 +1,5 @@
+import { digest } from "../storage/pages";
+import { assertSeasonConversion } from "../storage/season-pages";
 import type { CareerSave, EditorDatabase } from "../editor-data";
 import type { CareerSeason } from "../season";
 import { knockoutWinner } from "../tournament-progression";
@@ -13,6 +15,7 @@ export type SeasonSummary = {
   missingNationalClubIds: string[];
 };
 export type SeasonArchive = {
+  cold?: import("../storage/season-pages").ColdSeason;
   version: 1; rulesVersion: "season-archive-v1"; id: string; closedOn: string;
   season: CareerSeason; summary: SeasonSummary; honours: ChampionshipRecord[];
 };
@@ -68,7 +71,7 @@ export function assertSeasonArchives(previous:CareerSave|undefined,next:CareerSa
     civilDate(archive.closedOn);
     if(archive.season.fixtures.some(f=>!["played","cancelled"].includes(f.status)))throw new Error("Arquivo contém partidas pendentes.");
   }
-  for(const [year,archive] of Object.entries(previous?.progress?.seasonHistory ?? {}))if(archiveFingerprint(archives[year])!==archiveFingerprint(archive))throw new Error("Temporada arquivada não pode ser removida ou reescrita.");
+  for(const [year,archive] of Object.entries(previous?.progress?.seasonHistory ?? {}))if(!archives[year] || (archiveFingerprint(archives[year])!==archiveFingerprint(archive) && !(!archive.cold && archives[year].cold && assertSeasonConversion(archive,archives[year]))))throw new Error("Temporada arquivada não pode ser removida ou reescrita.");
 }
 
 /** Additive closure only. Does NOT roll over the year, pay a fictitious prize or reset data.
@@ -89,7 +92,7 @@ export function closeCareerSeason(save:CareerSave,database:EditorDatabase,comman
   if(audit.issues.length)throw new Error(`Temporada não encerrada: ${audit.issues[0].detail}`);
   const year=String(season.season),old=p.seasonHistory?.[year];
   if(old) {
-    if(archiveFingerprint(old.season)!==archiveFingerprint(season))throw new Error("Temporada diverge do arquivo existente.");
+    if(old.cold ? old.cold.fingerprint!==digest(archiveFingerprint({...old,cold:undefined,season})) : archiveFingerprint(old.season)!==archiveFingerprint(season))throw new Error("Temporada diverge do arquivo existente.");
     return save;
   }
   const honours=archiveChampionships(p.championHistory ?? [],season,database,save.managerName);

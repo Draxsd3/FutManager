@@ -1,3 +1,6 @@
+import { readCareerPage } from "./storage/cloud-pages";
+import { careerPageRefs } from "./storage/career-archive";
+import { assertArchiveRefs } from "./storage/career-archive";
 import { assertMatchHistory } from "./simulation/matches";
 import { assertCheckpointSize,binaryText,textBinary,packCheckpoint,unpackCheckpoint } from "./simulation/checkpoint-dictionary";
 import { strToU8, strFromU8, zlibSync, unzlibSync } from "fflate";
@@ -116,6 +119,7 @@ export function writeLocalSaves(saves: CareerSave[], userId: string) {
     if (index.some(save => (previous.find(old => old.id === save.id)?.progress?.engine?.revision ?? 0) > (save.progress?.engine?.revision ?? 0))) return false;
     for(const save of index) {
       assertMatchHistory(previous.find(v=>v.id===save.id),save);
+      assertArchiveRefs(previous.find(v=>v.id===save.id),save);
       const old=previous.find(v=>v.id===save.id)?.progress?.worldMarket?.population,current=save.progress?.worldMarket?.population;
       if(old && (!current || current.rulesVersion!==old.rulesVersion || current.version!==old.version || Object.keys(old.people).some(id=>!current.people[id]) || Object.keys(old.generated).some(id=>!current.generated[id]))) return false;
     }
@@ -332,7 +336,22 @@ async function performCloudSave(save: CareerSave, expectedUserId: string) {
   const lineage = cloudTokens.get(key);
   const supplied = save.syncToken ?? null;
   const parent = lineage?.ancestors.has(supplied) ? lineage.token : supplied;
-  const { error } = await client.from("game_saves").upsert({
+
+  // Fetch only remote MISSING hashes. Never download/re-upload the whole archive.
+  const refs=careerPageRefs(save);
+  const missing=[];
+  for(const batch of chunks(refs,200)){
+    const {data,error}=await client.from("career_archive_pages").select("id").eq("owner_id",userId).eq("save_id",save.id).in("id",batch.map(p=>p.id));
+    if(error)throw error;const existing=new Set(data?.map(p=>p.id));
+    for(const ref of batch)if(!existing.has(ref.id))missing.push(ref);
+  }
+  // Immutable page uploads can be retried; only the RPC publishes their pointer.
+  for(const batch of chunks(missing,4)){
+    const pages=await Promise.all(batch.map(ref=>readCareerPage(userId,save.id,ref)));
+    const {error}=await client.from("career_archive_pages").upsert(pages.map(p=>({owner_id:userId,save_id:save.id,id:p.id,kind:p.kind,row_count:p.count,byte_count:p.bytes,payload:p.text})),{onConflict:"owner_id,save_id,id",ignoreDuplicates:true});
+    if(error)throw error;
+  }
+  const row = {
     id: save.id,
     owner_id: userId,
     name: save.name,
@@ -351,7 +370,8 @@ async function performCloudSave(save: CareerSave, expectedUserId: string) {
       manualPositions: save.manualPositions ?? {},
     },
     updated_at: save.updatedAt,
-  });
+  };
+  const {error}=refs.length ? await client.rpc("persist_paged_save",{p_pages:[],p_save:row}) : await client.from("game_saves").upsert(row);
   if (error) {
     if (error.code === "40001") throw new EngineConflict();
     throw error;
