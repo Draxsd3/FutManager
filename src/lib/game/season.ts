@@ -55,6 +55,7 @@ export type SeasonFixture = {
 
 export type CareerSeason = {
   version: 1;
+  scope?: "career" | "domestic-world";
   tournaments?: TournamentRegistration[];
   promotedClubIds?: string[];
   serieDRetainedClubIds?: string[];
@@ -293,7 +294,7 @@ function buildCupGroups(database: EditorDatabase, managerClubId: string, season:
   return groups;
 }
 
-export function createCareerSeason(database: EditorDatabase, clubId: string, season: number): CareerSeason | null {
+export function createCareerSeason(database: EditorDatabase, clubId: string, season: number, scope: "career" | "domestic-world" = "career"): CareerSeason | null {
   const managedClub = database.clubs.find((club) => club.id === clubId);
   if (!managedClub || managedClub.division === "Sem divisão nacional") return null;
   const state = resolveClubState(managedClub);
@@ -351,9 +352,9 @@ export function createCareerSeason(database: EditorDatabase, clubId: string, sea
     }
   }
   const planned = applyBrazilianCalendar({ version: 1, tournaments, season, clubId, clubName: managedClub.name, division: managedClub.division, ...(state ? { state } : {}), fixtures });
-  const careerFixtures = planned.fixtures.filter(f => f.competitionId === leagueId || f.competitionId === stateId || f.type === "cup");
+  const careerFixtures = scope==="domestic-world" ? planned.fixtures : planned.fixtures.filter(f => f.competitionId === leagueId || f.competitionId === stateId || f.type === "cup");
   const competitionNames = new Set(careerFixtures.map(f => f.competitionName));
-  return { ...planned, tournaments: tournaments.filter(t => careerFixtures.some(f => f.competitionId === t.competitionId)), fixtures: careerFixtures, calendarIssues: planned.calendarIssues?.filter(name => competitionNames.has(name)) };
+  return { ...planned, scope, tournaments: tournaments.filter(t => careerFixtures.some(f => f.competitionId === t.competitionId)), fixtures: careerFixtures, calendarIssues: planned.calendarIssues?.filter(name => competitionNames.has(name)) };
 }
 
 function typePriority(type: SeasonCompetitionType) {

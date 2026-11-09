@@ -1,3 +1,4 @@
+import { assertSeasonArchives } from "./season-lifecycle";
 import type { CareerSave, EditorDatabase } from "../editor-data";
 import type { CareerSeason, SeasonFixture, SeasonPlayerContribution } from "../season";
 import type { Player } from "../mock-data";
@@ -164,10 +165,11 @@ export function canMakeSubstitution(events:MatchEvent[],side:MatchSide,outId:num
   return interval || windows.has(minute) || windows.size<3;
 }
 function reportedFixtures(save:CareerSave) {
-  const p=save.progress;return [p?.competitionSeason,...Object.values(p?.jobClubSnapshots ?? {}).map(s=>s.competitionSeason)].flatMap(s=>s?.fixtures ?? []).filter(f=>!!f.report);
+  const p=save.progress;return [p?.competitionSeason,...Object.values(p?.seasonHistory ?? {}).map(a=>a.season),...Object.values(p?.jobClubSnapshots ?? {}).map(s=>s.competitionSeason)].flatMap(s=>s?.fixtures ?? []).filter(f=>!!f.report);
 }
 /** Same durable-history guard for account-local storage and tests; job snapshots are archives. */
 export function assertMatchHistory(previous:CareerSave|undefined,next:CareerSave) {
+  assertSeasonArchives(previous,next);
   const after=reportedFixtures(next);
   for(const f of after)assertMatchReport(f);
   const fingerprint=(f:SeasonFixture)=>JSON.stringify(f,(_key,value)=>value && !Array.isArray(value) && typeof value==="object" ? Object.fromEntries(Object.entries(value).sort(([a],[b])=>a.localeCompare(b))) : value);

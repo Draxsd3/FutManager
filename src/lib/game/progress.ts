@@ -23,6 +23,8 @@ export type MatchPreparation = {
 };
 
 export type CareerProgress = {
+  /** Full immutable results; no replay/backfill of legacy matches. */
+  seasonHistory?: Record<string, import("./simulation/season-lifecycle").SeasonArchive>;
   engine?: import("./simulation/foundation").EngineState;
   /** Frozen club/player catalog, independent of future editor imports. */
   universeSnapshot?: import("./editor-data").EditorDatabase;

@@ -64,6 +64,8 @@ Aceite: gols/eventos/estatísticas conciliam; cartões/suspensão respeitam comp
 
 ## E8 — temporadas e sustentabilidade do universo
 
+**Estado:** autorizada e em implementação. Primeiro recorte de auditoria/arquivo em [ETAPA-8.md](ETAPA-8.md); ainda sem fluxo anual liberado, teste de dez temporadas ou aceite de jogabilidade em produção.
+
 **Depende de:** E2–E7. **Fatia inicial:** uma passagem anual íntegra, depois ciclos longos sem intervenção.
 
 Entregas: fechamento/prêmios/histórico; atualizar inscrições, promoções/rebaixamentos/vagas e calendários; envelhecimento, contratos, mercado, bases e economia contínuos; notícias e recordes referenciando eventos. Primeiro universo brasileiro existente; extensibilidade por dados não significa cadastrar outros países agora.
