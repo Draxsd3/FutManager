@@ -181,7 +181,7 @@ export function dealCost(deal: TransferNegotiation, monthly: number) {
 export function reserveDeal(state: FinanceState, deal: TransferNegotiation, db: EditorDatabase): FinanceState {
   const s=structuredClone(state);
   delete s.reservations[deal.id];
-  if (deal.status !== "agreed") return s;
+  if (deal.status !== "agreed" || deal.negotiationPhase === "player" || deal.negotiationPhase === "club") return s;
   if (!deal.id || !s.clubs[deal.buyerClubId]) throw new Error("Reserva de negociação inválida.");
   const p=db.players.find(p=>p.id===deal.playerId);
   if (!p || !Number.isFinite(p.salaryMonthlyBrl) || p.salaryMonthlyBrl < 0) throw new Error("Salário desconhecido ou inválido.");
@@ -201,6 +201,7 @@ export function settleTransfer(state: FinanceState, db: EditorDatabase, deal: Tr
   const old=state.settlements[deal.id];
   if(old) {if(old.fingerprint!==fingerprint) throw new Error("Identidade de liquidação reutilizada."); return {finance:state,deal:old.deal,loans:state.loans};}
   if (!deal.id || deal.status !== "agreed" || !["sale","loan"].includes(deal.kind) || !state.clubs[deal.buyerClubId] || deal.buyerClubId===deal.sourceClubId) throw new Error("Acordo de transferência inválido.");
+  if (deal.negotiationPhase && (deal.negotiationPhase !== "ready" || !deal.assessment?.accepted)) throw new Error("A proposta ainda não foi aceita pelo jogador.");
   // Exotic terms are not silently interpreted as an immediate cash deal.
   if ("instalments" in deal || "commissionBrl" in deal || deal.commission || (deal.paymentTerms && deal.paymentTerms.kind !== "cash")) throw new Error("Parcelas e comissões ainda não habilitadas.");
   const s=accrueFinance(state,date), p=db.players.find(p=>p.id===deal.playerId), current=s.contracts[deal.playerId];

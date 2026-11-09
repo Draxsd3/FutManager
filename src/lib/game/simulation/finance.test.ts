@@ -213,3 +213,24 @@ it("breaks down the exact availability calculation, including excluded reservati
  expect(financeAvailability(finance,buyer.id,"one")).toMatchObject({unreserved:-17970000,available:0});
  expect(marketCostQuote(undefined,buyer.id,"sale",1,1,100)?.breakdown).toBeNull();
 });
+
+it("persiste negociação em duas etapas, permite nova proposta salarial e impede conclusão antes do aceite",()=>{
+ const {save,db,buyer,player}=fixture();
+ // Career buyer must match the requesting club for persistence.
+ const buyerSave={...save,clubId:buyer.id,clubName:buyer.name,progress:{...save.progress!,club:buyer.name}};
+ const result=proposeTransfer(db,[],{id:"two-stage",playerId:player.id,buyerClubId:buyer.id,feeBrl:100000,date:buyerSave.inGameDate,twoStage:true});
+ expect(result.negotiation).toMatchObject({status:"agreed",negotiationPhase:"player"});
+ let current=updateCareerNegotiation(buyerSave,db,result.negotiation!);
+ expect(current.progress!.managerMarket!.finance!.reservations["two-stage"]).toBeUndefined();
+ expect(()=>settleCareerTransfer(current,db,"two-stage")).toThrow(/jogador/);
+ let deal=current.progress!.transferNegotiations!.find(d=>d.id==="two-stage")!;
+ current=updateCareerNegotiation(current,db,deal,{type:"player-offer",monthlyWageBrl:1});
+ deal=current.progress!.transferNegotiations!.find(d=>d.id==="two-stage")!;
+ expect(deal).toMatchObject({status:"agreed",negotiationPhase:"player",assessment:{accepted:false}});
+ current=updateCareerNegotiation(current,db,deal,{type:"player-offer",monthlyWageBrl:5000});
+ deal=current.progress!.transferNegotiations!.find(d=>d.id==="two-stage")!;
+ expect(deal).toMatchObject({negotiationPhase:"ready",agreedMonthlyWageBrl:5000,assessment:{accepted:true}});
+ expect(current.progress!.managerMarket!.finance!.reservations["two-stage"]).toBeDefined();
+ const completed=settleCareerTransfer(current,db,"two-stage");
+ expect(completed.progress!.transferNegotiations!.find(d=>d.id==="two-stage")?.status).toBe("completed");
+});

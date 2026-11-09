@@ -782,7 +782,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return commitFinancialChange((save,db)=>{
       const p=save.progress!;
       const effective=worldDatabase(db,p.transferNegotiations ?? [],p.loanContracts ?? {},p.worldMarket,p.managerMarket?.finance);
-      const result=proposeTransfer(effective,p.transferNegotiations ?? [],{id,playerId,buyerClubId:save.clubId,feeBrl,wageSharePercent,date:save.inGameDate,monthlyWageBrl});
+      const result=proposeTransfer(effective,p.transferNegotiations ?? [],{id,playerId,buyerClubId:save.clubId,feeBrl,wageSharePercent,date:save.inGameDate,monthlyWageBrl,twoStage:true});
       return {save:result.negotiation ? updateCareerNegotiation(save,db,result.negotiation) : save,message:result.message};
     });
   }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createDefaultDatabase } from "./editor-data";
-import { askingFeeBrl, databaseWithCompletedTransfers, proposeTransfer, respondToTransferNegotiation } from "./transfers";
+import { askingFeeBrl, transferAskingPrice, databaseWithCompletedTransfers, proposeTransfer, respondToTransferNegotiation } from "./transfers";
 
 describe("negociação de transferências", () => {
   it("recebe e aceita contraproposta por compra antes de concluir o acordo", () => {
@@ -71,4 +71,16 @@ it("calcula multa simulada por meses restantes, sem inventar vínculo encerrado"
   expect(result.negotiation).toMatchObject({ status: "agreed", askingFeeBrl: asking, releaseClauseBrl: 200_000, agreedFeeBrl: 200_000 });
   const noSalary = proposeTransfer(db, [], { id: "bad-wage", playerId: player.id, buyerClubId: buyer.id, feeBrl: 200_000, monthlyWageBrl: 1, date });
   expect(noSalary.negotiation?.status).toBe("rejected");
+});
+
+it("mantém contraproposta do clube separada da etapa do jogador e preserva negociações antigas", () => {
+ const db=createDefaultDatabase(), buyer=db.clubs[0], p=db.players.find(p=>p.clubId!==buyer.id && p.marketStatus==="sale")!;
+ const asking=transferAskingPrice(p,db.players,"2026-01-01");
+ const first=proposeTransfer(db,[],{id:"staged",playerId:p.id,buyerClubId:buyer.id,feeBrl:asking*0.8,date:"2026-01-01",twoStage:true}).negotiation!;
+ expect(first).toMatchObject({status:"countered",negotiationPhase:"club"}); expect(first.assessment).toBeUndefined();
+ const next=respondToTransferNegotiation(first,{type:"accept-counter"}).negotiation;
+ expect(next).toMatchObject({status:"agreed",negotiationPhase:"player"});
+ expect(respondToTransferNegotiation(next,{type:"complete"}).negotiation.status).toBe("agreed");
+ const old={...next,negotiationPhase:undefined};
+ expect(respondToTransferNegotiation(old,{type:"complete"}).negotiation.status).toBe("completed");
 });

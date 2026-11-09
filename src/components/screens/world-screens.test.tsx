@@ -132,8 +132,8 @@ it("mostra passe, pedido contextual, multa e custo real antes da proposta e da c
   const summary = screen.getByLabelText("Resumo financeiro da proposta");
   expect(within(summary).getByText("Saldo disponível para propostas").nextElementSibling?.textContent).toBe(formatBrl(availableCents(managerMarket.finance!, club.id)/100));
   expect(summary.textContent).toContain("12 meses");
-  fireEvent.change(screen.getByLabelText("Salário mensal proposto"), { target: { value: "100000" } });
-  expect(summary.textContent).toContain("R$ 1.200.000");
+  expect(screen.getByText(/Prévia salarial estimada/)).toBeTruthy();
+  expect(screen.queryByLabelText("Salário mensal proposto")).toBeNull();
 });
 
 it("explica o saldo insuficiente antes de aceitar uma contraproposta", async () => {
@@ -202,4 +202,18 @@ it("diferencia análise do atleta da contraproposta do clube e protege ação pe
   const accept=screen.getByRole("button", {name:"Aceitar contraproposta"}) as HTMLButtonElement;
   fireEvent.click(accept); expect(accept.disabled).toBe(true); fireEvent.click(accept); expect(action).toHaveBeenCalledTimes(1);
   done("Acordo salvo."); await screen.findByText("Acordo salvo.");
+});
+
+it("apresenta etapa salarial apenas após aceite do clube e mantém confirmação bloqueada", async () => {
+ const database=createDefaultDatabase(), club=database.clubs[0], player=database.players.find(p=>p.clubId!==club.id && p.marketStatus==="sale")!;
+ const deal={id:"two-stage",playerId:player.id,playerName:player.name,sourceClubId:player.clubId,sourceClub:"Clube",buyerClubId:club.id,kind:"sale" as const,askingFeeBrl:1000000,offerFeeBrl:1000000,agreedFeeBrl:1000000,wageSharePercent:0,status:"agreed" as const,negotiationPhase:"player" as const,attempts:0,message:"Clube aceitou."};
+ const action=vi.fn().mockResolvedValue("Jogador recusou.");
+ render(<WorldScreens section="search" database={database} club={club.name} coach="Teste" squad={[]} budget={1000} records={{}} negotiations={[deal]} historyView="players" onHistoryView={vi.fn()} onOpenPlayer={vi.fn()} onTransferOffer={vi.fn()} onTransferAction={action} onBack={vi.fn()} />);
+ fireEvent.click(screen.getByRole("button", {name:/Negociações/})); fireEvent.click(screen.getByRole("button", {name:"Ver proposta"}));
+ expect(screen.getByText(/Etapa 2 · Negociar com o jogador/)).toBeTruthy();
+ expect(screen.queryByRole("button", {name:"Confirmar contratação"})).toBeNull();
+ fireEvent.change(screen.getByLabelText("Salário para o jogador"), {target:{value:"12345"}});
+ fireEvent.click(screen.getByRole("button", {name:"Enviar proposta ao jogador"}));
+ expect(action).toHaveBeenCalledWith("two-stage",{type:"player-offer",monthlyWageBrl:12345});
+ expect(await screen.findByText("Jogador recusou.")).toBeTruthy();
 });
