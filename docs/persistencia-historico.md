@@ -27,3 +27,19 @@ Arquivos em `jobClubSnapshots` que ainda participam do calendário/retorno a um 
 - `career-history-browser.test.tsx`: erro/retry e paginação de 50 sem download de outras páginas.
 
 Esses números são um teste de persistência financeira, **não** uma temporada esportiva completa, nem dez temporadas/sementes da etapa 3. A E8 não está encerrada por este documento.
+
+## Validação desta entrega e publicação
+
+Após integrar a `main` até `2d8f12f2` (PRs 179/180), a regressão de regras/telas/armazenamento, separada da suíte longa do GameBoard, passou: **663 testes / 127 arquivos / 215,22 s**. Ensaio de escala repetido: **390.410 registros frios / 81.996.712 bytes**, financeiro ativo máximo **5.469.774 bytes**, **332 páginas**, índice local de **583.584 bytes UTF-16**. Sem aumento de limite.
+
+A execução inicial conjunta estourou o heap do worker de testes, que retinha chamadas de mocks e universos de testes anteriores. A limpeza entre casos foi corrigida (sem alterar limites do motor ou quota); a suíte completa do GameBoard rodou sem OOM: 29 casos passaram e dois identificaram perda do marcador de conversão monetária adicionado pela PR 180. Corrigido o autosave para preservar metadados aditivos e marcar carreiras novas corretamente; os dois casos reexecutados passaram (emprego/isolamento e proposta/recarga). A suíte SQL ampliada, incluindo limpeza por exclusão explícita e referência de conta/carreira alheia, passou com cinco casos.
+
+**Bloqueio externo de publicação:** o endpoint de migrações do Supabase retornou timeout e HTTP 544 (`Failed to initialise history table: Connection terminated due to connection timeout`). Tentativas foram seguidas por consulta de esquema: `career_archive_pages` e `persist_paged_save` continuaram ausentes. A alteração não deve ser promovida para produção sem a migração confirmada. Nenhum save privado foi lido, alterado ou usado nos ensaios; dados de teste são sintéticos.
+
+### Resultado final local
+
+- GameBoard inteiro reexecutado após as correções: **31/31, sem OOM, 385,44 s** (`/home/user/stage1-board-final.log`).
+- Armazenamento/leitor/UI focados: **18/18**; inclui cinco testes PostgreSQL e três de leitura/recuperação/timeout, além dos ensaios de sincronização por lotes. Testes do cache de universo: **4/4**.
+- `npx tsc --noEmit`, ESLint dos arquivos alterados e `git diff --check`: sucesso.
+- Build final: `NODE_OPTIONS=--max-old-space-size=3072 npm run build`, exit 0; compilação, TypeScript e 13 rotas geradas. O heap dessa ferramenta de build não altera nenhum limite/quota do jogo.
+- Não houve merge/deploy de produção: falta confirmação da migração remota, e publicar agora faria o autosave depender de objetos ainda ausentes. Isso é bloqueio de publicação, não uma nova etapa funcional criada para deslocar trabalho.

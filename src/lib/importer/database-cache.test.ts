@@ -27,3 +27,17 @@ it("keeps career snapshots beyond localStorage quota, isolated by player account
  await cacheCareerSaves([],"large-owner");
  expect(await readCachedCareerSaves("large-owner")).toEqual([]);
 });
+it("writes immutable frozen universes once per account/career/hash and keeps structural revisions separate",async()=>{
+ const {vi}=await import("vitest"),{cacheCareerSaves,readCachedCareerSaves}=await import("./database-cache");
+ const {marketFixture}=await import("@/lib/game/simulation/market-test-fixture"),{save,database}=marketFixture();
+ save.progress!.universeSnapshot=database;
+ const spy=vi.spyOn(IDBObjectStore.prototype,"put");
+ await cacheCareerSaves([save],"frozen-cache");
+ await cacheCareerSaves([{...save,round:2}],"frozen-cache");
+ expect(spy.mock.calls.filter(([,key])=>String(key).includes("career-universe:"))).toHaveLength(1);
+ expect((await readCachedCareerSaves("frozen-cache"))![0].progress!.universeSnapshot).toEqual(database);
+ const revised={...save,progress:{...save.progress!,universeSnapshot:{...database,clubs:database.clubs.map((c,i)=>i?c:{...c,state:"SC"})}}};
+ await cacheCareerSaves([revised],"frozen-cache");expect(spy.mock.calls.filter(([,key])=>String(key).includes("career-universe:"))).toHaveLength(2);
+ await cacheCareerSaves([save],"other-frozen-cache");expect((await readCachedCareerSaves("other-frozen-cache"))![0].progress!.universeSnapshot).toEqual(database);
+ spy.mockRestore();
+});

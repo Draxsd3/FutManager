@@ -26,7 +26,7 @@ export function CareerHistoryBrowser({owner,save}:{owner:string;save:CareerSave}
   <h2 className={surface.panelTitle}>ARQUIVO DA CARREIRA</h2>
   <div className="flex flex-wrap items-center gap-3 border-b py-2 text-sm">
    <label>Consultar <select aria-label="Tipo de histórico" className="ml-2 border px-2 py-1" value={kind} onChange={e=>{setKind(e.target.value as PageKind);change(0);}}>{Object.entries(labels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
-   <span>{count?`Página ${index+1} de ${count}`:"Nenhum registro"}</span>
+   <label>{count?"Página ":"Nenhum registro"}{!!count&&<><input aria-label="Página do arquivo" type="number" min={1} max={count} value={index+1} className="w-20 border px-2 py-1" onChange={e=>{const n=Number(e.target.value);if(Number.isInteger(n)&&n>=1&&n<=count)change(n-1);}}/> de {count}</>}</label>
   </div>
   {error?<div role="alert" className="p-3">{error} <button className="underline" onClick={()=>{setError("");setRetry(n=>n+1);}}>Tentar novamente</button></div>:selected===null?<p role="status">Consultando página…</p>:<div className="divide-y text-sm">{selected.slice(offset,offset+50).map((row,i)=>{
    let value=row;if(kind==="invoices"&&finance&&Array.isArray(row))value={id:row[0],...invoiceBalance(row as ArchivedInvoice,finance)};
@@ -35,9 +35,11 @@ export function CareerHistoryBrowser({owner,save}:{owner:string;save:CareerSave}
    const title=String(obj.reference ?? obj.kind ?? obj.playerId ?? obj.competitionName ?? id);
    return <details key={`${ref?.id ?? "active"}:${offset+i}`} className="py-2"><summary className="cursor-pointer">{date} · {title}{typeof obj.amountCents==="number"?` · ${(obj.amountCents/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}`:""}{typeof obj.paidCents==="number"?` · Pago: ${(obj.paidCents/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}`:""}</summary><pre className="overflow-auto whitespace-pre-wrap p-2 text-xs">{JSON.stringify(value,null,2)}</pre></details>;
   })}</div>}
-  <div className="flex gap-4 border-t py-2 text-sm">
+  <div className="flex flex-wrap gap-4 border-t py-2 text-sm">
+   <button disabled={index===0&&offset===0} onClick={()=>change(0)}>Primeira</button>
    <button disabled={index===0&&offset===0} onClick={()=>offset?setOffset(Math.max(0,offset-50)):change(index-1)}>← Anterior</button>
    <button disabled={!!error||selected===null||(offset+50>=selected.length&&index+1>=count)} onClick={()=>selected&&offset+50<selected.length?setOffset(offset+50):change(index+1)}>Próxima →</button>
+   <button disabled={!count||index===count-1} onClick={()=>change(count-1)}>Última</button>
   </div>
   <p className="text-xs text-[#68757b]">Registros integrais de todos os clubes. Competências preservam a atribuição por contrato; pagamentos agrupados seguem a ordem original. O arquivo não altera o caixa.</p>
  </section>;

@@ -18,13 +18,32 @@ create policy archive_owner_insert on public.career_archive_pages for insert to 
 -- No UPDATE or DELETE policy: immutable even when addressed by the owning client.
 -- Unreferenced uploads after a failed CAS are safe and reusable on retry.
 grant select,insert on public.career_archive_pages to authenticated;
+revoke update,delete,truncate on public.career_archive_pages from authenticated;
+-- Explicit career deletion is different from editing its immutable history.
+create function public.cleanup_career_archive_pages() returns trigger
+language plpgsql security definer set search_path=public as $$
+begin
+ delete from public.career_archive_pages where owner_id=old.owner_id and save_id=old.id;
+ return old;
+end $$;
+revoke all on function public.cleanup_career_archive_pages() from public;
+create trigger game_saves_cleanup_archive after delete on public.game_saves for each row execute function public.cleanup_career_archive_pages();
 
 create function public.guard_game_save_archive_refs() returns trigger
 language plpgsql set search_path=public as $$
-declare refs jsonb; r jsonb; oldrefs jsonb;
+declare refs jsonb; r jsonb; oldrefs jsonb; archive jsonb; counters record;
 begin
  refs:=coalesce(new.state #> '{progress,managerMarket,finance,archive,pages}','[]'::jsonb);
  if jsonb_typeof(refs)<>'array' then raise exception 'Invalid history manifest';end if;
+ archive:=new.state #> '{progress,managerMarket,finance,archive}';
+ if archive is not null then
+  if archive->>'version' is distinct from '1' then raise exception 'Invalid history version';end if;
+  for counters in select * from (values('ledger','ledgerCount'),('invoices','invoiceCount'),('contracts','contractCount')) x(kind,counter) loop
+   if coalesce(archive->>counters.counter,'') !~ '^[0-9]+$' or (archive->>counters.counter)::numeric is distinct from
+    (select coalesce(sum((value->>'count')::numeric),0) from jsonb_array_elements(refs) where value->>'kind'=counters.kind)
+   then raise exception 'History count mismatch' using errcode='40001';end if;
+  end loop;
+ end if;
  if tg_op='UPDATE' then
   oldrefs:=coalesce(old.state #> '{progress,managerMarket,finance,archive,pages}','[]'::jsonb);
   if exists(select 1 from jsonb_array_elements(oldrefs) with ordinality x(value,n) where refs->(x.n::integer-1) is distinct from x.value) then raise exception 'Immutable financial history removed' using errcode='40001';end if;

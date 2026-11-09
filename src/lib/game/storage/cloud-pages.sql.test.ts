@@ -20,7 +20,7 @@ beforeAll(async()=>{
 },30000);
 afterAll(async()=>{await db?.close();});
 const page=makePages("ledger",[{id:"opening:c",date:"2026-01-01",clubId:"c",kind:"opening",amountCents:42,cashDeltaCents:42,reference:"synthetic"}])[0];
-const row=(token:string,parent:string|null,refs=[refOf(page)])=>({id:career,owner_id:owner,name:"Synthetic archive integration",manager_name:"QA",round:1,budget_brl:1,in_game_date:"2026-01-01",updated_at:"2026-10-29T00:00:00Z",state:{sync:{token,parent},progress:{engine:{revision:1,rulesVersion:"foundation-finance-v2"},managerMarket:{finance:{version:1,through:"2026-01-01",archive:{version:1,pages:refs}}}}}});
+const row=(token:string,parent:string|null,refs=[refOf(page)])=>({id:career,owner_id:owner,name:"Synthetic archive integration",manager_name:"QA",round:1,budget_brl:1,in_game_date:"2026-01-01",updated_at:"2026-10-29T00:00:00Z",state:{sync:{token,parent},progress:{engine:{revision:1,rulesVersion:"foundation-finance-v2"},managerMarket:{finance:{version:1,through:"2026-01-01",archive:{version:1,pages:refs,ledgerCount:refs.reduce((n,p)=>n+p.count,0),invoiceCount:0,contractCount:0}}}}}});
 it("rejects missing pages before publication; upload hash/count validation runs inside PostgreSQL",async()=>{
  await expect(db.query("select persist_paged_save($1::jsonb)",[JSON.stringify(row("one",null))])).rejects.toThrow(/Missing/);
  expect((await db.query("select * from game_saves")).rows).toHaveLength(0);
@@ -78,4 +78,12 @@ it("an already cold year can leave the hot calendar at rollover without weakenin
  state.progress.competitionSeason={...archive.season,season:2027,fixtures:[]};
  state.sync={token:"s5",parent:"s4"};await db.query("select persist_paged_save($1::jsonb)",[JSON.stringify({...row("unused",null,[]),id,state})]);
  expect((await db.query("select state #>> '{sync,token}' as token from game_saves where id=$1",[id])).rows).toEqual([{token:"s5"}]);
+});
+it("cannot publish references to another career/account's blob, and explicit career deletion cleans its pages",async()=>{
+ await db.exec(`select set_config('request.jwt.claim.sub','${other}',false);`);
+ const foreign={...row("foreign",null),id:"e8100000-0000-4000-8000-000000000007",owner_id:other};
+ await expect(db.query("select persist_paged_save($1::jsonb)",[JSON.stringify(foreign)])).rejects.toThrow(/Missing or foreign/);
+ await db.exec(`select set_config('request.jwt.claim.sub','${owner}',false);`);
+ await db.query("delete from game_saves where id=$1",[career]);
+ expect((await db.query("select * from career_archive_pages where save_id=$1",[career])).rows).toHaveLength(0);
 });

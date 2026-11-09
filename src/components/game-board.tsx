@@ -309,7 +309,8 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [standingsOpen, setStandingsOpen] = useState(false);
 
   const progress: CareerProgress = {
-    seasonHistory: saves.find(save=>save.id===activeSaveId)?.progress?.seasonHistory,
+    // Preserve additive archive/migration metadata not owned by a React control.
+    ...saves.find(save=>save.id===activeSaveId)?.progress,
     universeSnapshot: universeSnapshot.current, page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore,
     events, participation, matchBenchIds, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
@@ -970,7 +971,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setLoanContracts(initialLoans);
     setLoansOpen(false);
     const initialStarters = buildStartingXI("4-3-3", baseSquad);
-    save.progress = { ...progressRef.current, engine: createEngineState(undefined,save.id,save.inGameDate), universeSnapshot: universeSnapshot.current, page: "hub", matchPreparation: undefined, activeSaveId: save.id, coach: coach.trim(),
+    save.progress = { ...progressRef.current, seasonHistory:undefined,marketValueFxVersion:EUR_BRL_VERSION, engine: createEngineState(undefined,save.id,save.inGameDate), universeSnapshot: universeSnapshot.current, page: "hub", matchPreparation: undefined, activeSaveId: save.id, coach: coach.trim(),
       round: 1, budget: 12624, stadiums: {}, kit: 1, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
       worldMarket:undefined, careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, trainingSessions: [], manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
