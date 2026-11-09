@@ -69,7 +69,10 @@ Os 1.000 jogos de cada versão assistida dividem-se em quatro cenários de 250: 
 
 - 60 seeds adicionais verificam repetibilidade, cartões, trocas e soma de minutos = 990 menos o tempo perdido por expulsão. Testes de contexto/lesão, sem reentrada, snapshot/retomada, estado inválido, suspensões acumuladas/segundo amarelo, resets, reinícios e compatibilidade legada.
 - Mantida a calibração existente de 1.000 jogos assistidos e acrescentada a mesma matriz de 1.000 com reinícios v2, além das regressões de força/tática/clima, carreira, finanças, mercado, empregos e armazenamento. Ela mede cenários distintos; não afirmar equivalência estatística das duas granularidades nem calibração por dados oficiais.
-- Validação final, publicação e SHA exato de produção serão registrados na PR após execução e conferência. Não alegar suíte monolítica verde a partir de execuções parciais.
+- QA final: **649 casos únicos em 119 arquivos aprovados em execuções combinadas**. Fora GameBoard: **618/618 em 118 arquivos**, uma execução de 239,04 s. Interface: **31/31** em grupos pequenos, sem reduzir catálogo, quota ou asserções. Não alegar uma execução monolítica dos 649.
+- Após os últimos ajustes de força/top11 e idempotência, nova regressão integral fora Board e mais **3/3** cenários críticos (resultado mandante/visitante e CPU contextual com reload) aprovados. Os outros 28 casos de UI passaram na rodada integrada anterior; não alegar reexecução integral da UI após esses ajustes.
+- TypeScript, ESLint, build Next.js e diff-check aprovados; preview Vercel do código `f009d30f` READY. Main #169 incorporada antes da rodada integrada, conservando o cálculo de tabelas sob demanda.
+- Publicação por [PR #171](https://github.com/Draxsd3/FutManager/pull/171); SHA exato/READY/PROMOTED e domínio de produção registrados na PR depois do merge/conferência.
 
 ## Gemini e continuidade
 

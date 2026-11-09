@@ -54,7 +54,7 @@ Aceite: potencial não garante crescimento; repetição de treino não dá evolu
 
 ## E7 — tática, partidas e disciplina
 
-**Estado:** núcleo tático e disciplina automática v2 implementados; fechamento em validação/publicação. Ver [ETAPA-7.md](ETAPA-7.md) para planos E5, CPU contextual, granularidade, fontes e limites explícitos (não inclui tribunal, prorrogação/abandono nem exceções estaduais sem fonte). Não afirmar conformidade universal ou Gemini tático ativo.
+**Estado:** núcleo tático e disciplina automática v2 concluídos e validados (649 casos em execuções combinadas; publicação pela PR #171). Ver [ETAPA-7.md](ETAPA-7.md) para planos E5, CPU contextual, granularidade, fontes e limites explícitos (não inclui tribunal, prorrogação/abandono nem exceções estaduais sem fonte). Não afirmar conformidade universal ou Gemini tático ativo.
 
 **Depende de:** E2/E3/E6; perfil de técnico de E5. **Fatia inicial:** invariantes comuns de resultado/estatísticas/elegibilidade para partidas assistidas e de fundo, preservando o motor ao vivo existente.
 
