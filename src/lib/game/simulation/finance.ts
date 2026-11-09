@@ -155,7 +155,7 @@ export function accrueFinance(state: FinanceState, date: string): FinanceState {
     const amount=Math.min(p.amountCents-p.paidCents,Math.max(0,s.clubs[p.clubId]?.cashCents ?? 0));
     if (!amount) continue;
     p.paidCents+=amount;
-    post(s,{id:`payment:${key}:${p.paidCents}`,date,clubId:p.clubId,kind:"wage-payment",amountCents:amount,cashDeltaCents:-amount,reference:key});
+    post(s,{id:`payment:${key}:${p.paidCents}`,date,clubId:p.clubId,kind:key.startsWith("coach-end:") ? "coach-fee" : "wage-payment",amountCents:amount,cashDeltaCents:-amount,reference:key});
   }
   // A returning player resumes the owner's registration; missing policy stays explicitly legacy.
   for (const [id,loan] of Object.entries(s.loans)) if (loan.endsOn && loan.endsOn <= date && loan.endsOn > state.through && s.contracts[id]?.status === "active") s.registrations[id]=registrationAt(s,s.contracts[id].clubId,date);
@@ -187,9 +187,9 @@ export function reserveDeal(state: FinanceState, deal: TransferNegotiation, db: 
   if (!p || !Number.isFinite(p.salaryMonthlyBrl) || p.salaryMonthlyBrl < 0) throw new Error("Salário desconhecido ou inválido.");
   const wage=deal.kind === "sale" ? deal.agreedMonthlyWageBrl ?? p.salaryMonthlyBrl : p.salaryMonthlyBrl;
   if(!Number.isFinite(wage) || wage < 0) throw new Error("Salário proposto inválido.");
-  const cost=dealCost(deal,brlToCents(wage));
-  if (cost > availableCents(s,deal.buyerClubId)) throw new Error("Saldo disponível insuficiente para taxa e compromissos salariais.");
-  s.reservations[deal.id]={clubId:deal.buyerClubId,cents:cost};
+  // Negotiations create no cash reservation: wages accrue after signing, and the
+  // agreed fee is checked against actual cash only when the deal is completed.
+  dealCost(deal,brlToCents(wage));
   return s;
 }
 /** One executor for human acquisition, human sale and CPU. Private copy until checkpoint commit. */
@@ -224,8 +224,9 @@ export function settleTransfer(state: FinanceState, db: EditorDatabase, deal: Tr
     const assessment=assessMove(p,roster,deal.kind,offered);
     if(!assessment.accepted) throw new Error(assessment.reason);
   }
-  const monthly=brlToCents(offered), cost=dealCost(deal,monthly);
-  if(cost > availableCents(s,deal.buyerClubId,deal.id)) throw new Error("Saldo disponível insuficiente para taxa e compromissos salariais.");
+  const monthly=brlToCents(offered);
+  dealCost(deal,monthly); // Validate the fee and salary share without reserving wages.
+  if(brlToCents(deal.agreedFeeBrl!) > Math.max(0,s.clubs[deal.buyerClubId].cashCents)) throw new Error("Caixa insuficiente para pagar a taxa de transferência à vista.");
   if (financeDatabase(db,s).players.filter(p=>p.clubId===deal.buyerClubId).length >= MAX_CLUB_SQUAD_SIZE) throw new Error("Elenco no limite técnico de contratos.");
   const fee=brlToCents(deal.agreedFeeBrl!);
   post(s,{id:`transfer:${deal.id}:buyer`,date,clubId:deal.buyerClubId,kind:"transfer",amountCents:fee,cashDeltaCents:-fee,reference:deal.id});

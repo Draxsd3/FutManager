@@ -33,11 +33,11 @@ describe("E3 financial aggregate",()=>{
   expect(first.careerRuleset).toBe(save.careerRuleset); expect(first.progress?.managerMarket?.finance?.payables).toEqual({});
   expect(first.progress?.managerMarket?.finance?.through).toBe(save.inGameDate);
  });
- it("pays fee symmetrically once, reserves wages without paying them and creates a new employment",()=>{
+ it("pays fee symmetrically once, does not reserve wages and creates a new employment",()=>{
   const {finance,deal,db,buyer,seller,player}=fixture(), before=structuredClone(finance);
   const reserved=reserveDeal(finance,deal,db);
   expect(reserved.clubs[buyer.id].cashCents).toBe(finance.clubs[buyer.id].cashCents);
-  expect(reserved.reservations.deal.cents).toBe(2200000);
+  expect(reserved.reservations.deal).toBeUndefined();
   const result=settleTransfer(reserved,db,deal,"2026-01-01"), s=result.finance;
   expect(s.clubs[buyer.id].cashCents).toBe(finance.clubs[buyer.id].cashCents-1000000);
   expect(s.clubs[seller.id].cashCents).toBe(finance.clubs[seller.id].cashCents+1000000);
@@ -186,10 +186,10 @@ it("previews the exact cash commitment and does not double count the current res
  const {finance,deal,db,buyer}=fixture();
  const quote=marketCostQuote(finance,buyer.id,"sale",10000,1000,100)!;
  expect(quote.total).toBe(22000);
- expect(quote.available).toBe(availableCents(finance,buyer.id)/100);
+ expect(quote.available).toBe(finance.clubs[buyer.id].cashCents/100);
  const reserved=reserveDeal(finance,deal,db);
  expect(marketCostQuote(reserved,buyer.id,"sale",10000,1000,100,"deal")?.available).toBe(quote.available);
- expect(marketCostQuote(reserved,buyer.id,"sale",10000,1000,100)?.available).toBe(quote.available!-22000);
+ expect(marketCostQuote(reserved,buyer.id,"sale",10000,1000,100)?.available).toBe(quote.available);
  const loan=marketCostQuote(finance,buyer.id,"loan",2000,1000,25)!;
  expect(loan.total).toBe(3500);
  expect(marketCostQuote(finance,buyer.id,"loan",2000,1000,101)).toBeNull();
@@ -207,8 +207,8 @@ it("breaks down the exact availability calculation, including excluded reservati
  expect(breakdown).toMatchObject({cash:100000000,wages:18000000,payables:50000,reservations:20000,unreserved:81930000,available:81930000});
  expect(unreservedCents(finance,buyer.id,"one")).toBe(breakdown.unreserved);
  const quote=marketCostQuote(finance,buyer.id,"sale",1000,1000,100,"one")!;
- expect(quote.breakdown).toEqual({wages:180000,payables:500,reservations:200,unreserved:819300});
- expect(quote.available).toBe(availableCents(finance,buyer.id,"one")/100);
+ expect(quote.breakdown).toEqual({wages:180000,payables:500,reservations:200,unreserved:819500});
+ expect(quote.available).toBe(finance.clubs[buyer.id].cashCents/100);
  finance.clubs[buyer.id].cashCents=100000;
  expect(financeAvailability(finance,buyer.id,"one")).toMatchObject({unreserved:-17970000,available:0});
  expect(marketCostQuote(undefined,buyer.id,"sale",1,1,100)?.breakdown).toBeNull();
@@ -230,7 +230,30 @@ it("persiste negociação em duas etapas, permite nova proposta salarial e imped
  current=updateCareerNegotiation(current,db,deal,{type:"player-offer",monthlyWageBrl:5000});
  deal=current.progress!.transferNegotiations!.find(d=>d.id==="two-stage")!;
  expect(deal).toMatchObject({negotiationPhase:"ready",agreedMonthlyWageBrl:5000,assessment:{accepted:true}});
- expect(current.progress!.managerMarket!.finance!.reservations["two-stage"]).toBeDefined();
+ expect(current.progress!.managerMarket!.finance!.reservations["two-stage"]).toBeUndefined();
  const completed=settleCareerTransfer(current,db,"two-stage");
  expect(completed.progress!.transferNegotiations!.find(d=>d.id==="two-stage")?.status).toBe("completed");
+});
+
+it("permite contratar com caixa para taxa, sem reservar folha, e registra salários não pagos no vencimento",()=>{
+ const {finance,deal,db,buyer}=fixture(); finance.clubs[buyer.id].cashCents=1_000_000;
+ const before=structuredClone(finance), prepared=reserveDeal(finance,deal,db);
+ expect(prepared.reservations[deal.id]).toBeUndefined();
+ const result=settleTransfer(prepared,db,deal,"2026-01-01");
+ expect(result.finance.clubs[buyer.id].cashCents).toBe(0);
+ expect(result.finance.contracts[deal.playerId].clubId).toBe(buyer.id);
+ const later=accrueFinance(result.finance,"2026-02-01");
+ expect(Object.values(later.payables).filter(p=>p.clubId===buyer.id).reduce((n,p)=>n+p.amountCents-p.paidCents,0)).toBeGreaterThan(0);
+ expect(finance).toEqual(before);
+ const poor=structuredClone(finance); poor.clubs[buyer.id].cashCents=999_999;
+ expect(()=>settleTransfer(poor,db,deal,"2026-01-01")).toThrow(/taxa de transferência à vista/);
+});
+
+it("libera apenas reservas de transferências salvas sem mexer em caixa, contas ou outros compromissos",()=>{
+ const {save,db,deal}=fixture(); const original=migrateFinanceSave(save,db), p=original.progress!, finance=p.managerMarket!.finance!;
+ p.transferNegotiations=[deal]; finance.reservations[deal.id]={clubId:deal.buyerClubId,cents:2200000}; finance.reservations.other={clubId:deal.buyerClubId,cents:123};
+ const before=structuredClone(finance), migrated=migrateFinanceSave(original,db), updated=migrated.progress!.managerMarket!.finance!;
+ expect(updated.reservations[deal.id]).toBeUndefined(); expect(updated.reservations.other.cents).toBe(123);
+ expect(updated.clubs).toEqual(before.clubs); expect(updated.payables).toEqual(before.payables); expect(updated.contracts).toEqual(before.contracts);
+ expect(finance).toEqual(before); expect(migrateFinanceSave(migrated,db)).toEqual(migrated);
 });
