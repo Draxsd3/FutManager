@@ -1,6 +1,6 @@
 # Plano executável por etapas
 
-Status: E1 documental concluída; E2 com fundação pós-partida implementada conforme [ETAPA-2.md](ETAPA-2.md); E3 com finanças/contratos/registro básico implementados conforme [ETAPA-3.md](ETAPA-3.md); E4 com planejamento/negociação e piloto seguro integrado conforme [ETAPA-4.md](ETAPA-4.md), sem chamadas reais habilitadas; E5 com técnicos/diretorias/emprego humano implementados conforme [ETAPA-5.md](ETAPA-5.md); E6–E8 **não iniciadas por este trabalho**. As capacidades pré-existentes são as do diagnóstico, não entregas deste plano. Dependências são portas de qualidade, não só ordem de arquivos. Não migrar todos os setores de uma vez.
+Status: E1 documental concluída; E2 com fundação pós-partida implementada conforme [ETAPA-2.md](ETAPA-2.md); E3 com finanças/contratos/registro básico implementados conforme [ETAPA-3.md](ETAPA-3.md); E4 com planejamento/negociação e piloto seguro integrado conforme [ETAPA-4.md](ETAPA-4.md), sem chamadas reais habilitadas; E5 com técnicos/diretorias/emprego humano implementados conforme [ETAPA-5.md](ETAPA-5.md); E6 com identidade/condição/treino/base conforme [ETAPA-6.md](ETAPA-6.md); E7 em execução, primeiro recorte conforme [ETAPA-7.md](ETAPA-7.md); E8 **não iniciada**. As capacidades pré-existentes são as do diagnóstico, não entregas deste plano. Dependências são portas de qualidade, não só ordem de arquivos. Não migrar todos os setores de uma vez.
 
 ## E1 — diagnóstico e especificação
 
@@ -53,6 +53,8 @@ Entregas: atributos/personagens simulados com origem clara, informação conheci
 Aceite: potencial não garante crescimento; repetição de treino não dá evolução infinita; CPU também cansa/recupera; lesionado/suspenso inelegível não atua; recaída/declínio registrados; jovens têm identidade única e promoção idempotente; mudança de ano incrementa idade a partir de data quando conhecida, ou política legada explícita; aposentadoria não apaga estatísticas. Demais dimensões entram incrementalmente sem fingir personalidade real fornecida pela fonte.
 
 ## E7 — tática, partidas e disciplina
+
+**Estado:** primeiro recorte implementado, com regressões aprovadas em execuções combinadas, tipos/lint/build aprovados e publicação por PR; ver [ETAPA-7.md](ETAPA-7.md). Planos E5, substituições CPU contextuais e disciplina completa continuam pendentes. Não declarar a etapa inteira concluída.
 
 **Depende de:** E2/E3/E6; perfil de técnico de E5. **Fatia inicial:** invariantes comuns de resultado/estatísticas/elegibilidade para partidas assistidas e de fundo, preservando o motor ao vivo existente.
 

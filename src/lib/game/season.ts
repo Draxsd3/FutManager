@@ -1,3 +1,4 @@
+import { aggregateReport, applyDiscipline, assertMatchReport, assertParticipantsEligible, backgroundCards, copyDiscipline, fixtureDatabase, servedBans, type Discipline, type MatchReport } from "./simulation/matches";
 import { playerEligible } from "./simulation/players";
 import { advanceTournaments } from "./tournament-progression";
 import { buildRegisteredTournament, type TournamentRegistration } from "./tournament-schedule";
@@ -48,6 +49,7 @@ export type SeasonFixture = {
   /** Winner decided by a shootout when a knockout tie is level. */
   winnerClubId?: string;
   playerContributions?: SeasonPlayerContribution[];
+  report?: MatchReport;
 };
 
 export type CareerSeason = {
@@ -193,7 +195,7 @@ export function buildRoundRobinGroups(input: {
   return groups;
 }
 
-function clubStrength(database: EditorDatabase, clubId: string,date?:string) {
+export function clubStrength(database: EditorDatabase, clubId: string,date?:string) {
   const players = database.players.filter((player) => player.clubId === clubId && playerEligible(player,date));
   return players.length ? players.reduce((sum, player) => sum + player.overall + (player.condition ? (player.energy-80)*.04+(player.condition.morale-50)*.03 : 0), 0) / players.length : 65;
 }
@@ -255,19 +257,24 @@ export function backgroundFixtureScore(fixture: SeasonFixture, minute: number, h
   );
 }
 
-function simulateFixture(database: EditorDatabase, fixture: SeasonFixture): SeasonFixture {
-  const [homeScore, awayScore] = backgroundFixtureScore(fixture, 90, clubStrength(database, fixture.homeClubId,fixture.scheduledDate), clubStrength(database, fixture.awayClubId,fixture.scheduledDate));
+export function simulateFixture(database: EditorDatabase, fixture: SeasonFixture, discipline:Discipline=new Map()): SeasonFixture {
+  const eligible=fixtureDatabase(database,fixture,discipline);
+  const [homeScore, awayScore] = backgroundFixtureScore(fixture, 90, clubStrength(eligible, fixture.homeClubId,fixture.scheduledDate), clubStrength(eligible, fixture.awayClubId,fixture.scheduledDate));
   const winnerClubId = fixture.type === "cup"
     ? homeScore > awayScore ? fixture.homeClubId : awayScore > homeScore ? fixture.awayClubId : seededRandom(`${fixture.id}|penalties`)() < 0.5 ? fixture.homeClubId : fixture.awayClubId
     : undefined;
-  return {
+  const result:SeasonFixture={
     ...fixture,
     status: "played",
     homeScore,
     awayScore,
     ...(winnerClubId ? { winnerClubId } : {}),
-    playerContributions: selectScorers(database, fixture, homeScore, awayScore),
+    playerContributions: selectScorers(eligible, fixture, homeScore, awayScore),
   };
+  result.report=aggregateReport(result,result.playerContributions!,"background",servedBans(database,fixture,discipline));
+  result.report.cards=backgroundCards(fixture,result.playerContributions!);
+  assertParticipantsEligible(result,database,discipline);assertMatchReport(result);applyDiscipline(discipline,result);
+  return result;
 }
 
 function cupRoundLabel(participantCount: number, round: number) {
@@ -430,21 +437,28 @@ export function nextCareerFixture(season: CareerSeason | null | undefined): Seas
 export function completeCareerFixture(
   season: CareerSeason,
   fixtureId: string,
-  score: { home: number; away: number; winnerClubId?: string; playerContributions?: SeasonPlayerContribution[] },
+  score: { home: number; away: number; winnerClubId?: string; playerContributions?: SeasonPlayerContribution[]; report?:MatchReport },
   database: EditorDatabase,
 ): CareerSeason {
   const fixture = season.fixtures.find((item) => item.id === fixtureId);
   if (!fixture || fixture.status !== "scheduled" || (season.calendarVersion && !fixture.scheduledDate)) return season;
+  if(!Number.isSafeInteger(score.home) || !Number.isSafeInteger(score.away) || score.home<0 || score.away<0 || score.home>100 || score.away>100) throw new Error("Placar inválido.");
+  const discipline=copyDiscipline(season);
   const winnerClubId = fixture.type === "cup"
     ? score.winnerClubId ?? (score.home > score.away ? fixture.homeClubId : score.away > score.home ? fixture.awayClubId : seededRandom(`${fixture.id}|penalties`)() < 0.5 ? fixture.homeClubId : fixture.awayClubId)
     : fixture.stage === "knockout" || fixture.stage === "access-playoff" ? score.winnerClubId : undefined;
-  const settled = season.fixtures.map((item) => {
-    if (item.id === fixtureId) return { ...item, status: "played" as const, homeScore: score.home, awayScore: score.away, ...(winnerClubId ? { winnerClubId } : {}), playerContributions: score.playerContributions ?? [] };
+  const updates=new Map([...season.fixtures].sort((a,b)=>(a.scheduledDate ?? "").localeCompare(b.scheduledDate ?? "") || a.calendarRound-b.calendarRound || a.id.localeCompare(b.id)).map((item) => {
+    if (item.id === fixtureId) {
+      const played:SeasonFixture={...item,status:"played",homeScore:score.home,awayScore:score.away,...(winnerClubId?{winnerClubId}:{}),playerContributions:score.playerContributions ?? [],...(score.report?{report:{...score.report,servedBans:servedBans(database,item,discipline)}}:{})};
+      if(played.report){assertParticipantsEligible(played,database,discipline);assertMatchReport(played);applyDiscipline(discipline,played);}
+      return played;
+    }
     const dueCupBackground = item.type === "cup" && item.status === "locked" && item.homeClubId !== season.clubId && item.awayClubId !== season.clubId && item.calendarRound <= fixture.calendarRound;
     const dueScheduled = item.status === "scheduled" && item.calendarRound <= fixture.calendarRound;
-    if ((dueCupBackground || dueScheduled) && (!season.calendarVersion || item.scheduledDate)) return simulateFixture(database, item);
+    if ((dueCupBackground || dueScheduled) && (!season.calendarVersion || item.scheduledDate)) return simulateFixture(database, item,discipline);
     return item;
-  });
+  }).map(item=>[item.id,item]));
+  const settled=season.fixtures.map(item=>updates.get(item.id)!);
   if (fixture.type === "cup") {
     const managerWon = winnerClubId === season.clubId;
     if (!managerWon) {
@@ -470,7 +484,7 @@ export function completeCareerFixture(
     const fixtures = advanced.fixtures.map(f => {
       if (f.status !== "scheduled" || f.calendarRound > cutoff || !f.scheduledDate || f.homeClubId === season.clubId || f.awayClubId === season.clubId) return f;
       changed = true;
-      return simulateFixture(database, f);
+      return simulateFixture(database, f,discipline);
     });
     if (!changed) break;
     advanced = advanceTournaments({ ...advanced, fixtures }, database);
@@ -555,6 +569,7 @@ export function playerContributionsFromMatch(input: {
   clubId: string;
   squad: { id: number; sourceId?: string; name: string }[];
   events: { scorerId?: number; assistId?: number; scene?: { team: "home" | "away" }; card?: string }[];
+  side?: "home" | "away";
   participation: Record<number, { entered: number; left?: number }>;
   ratings: Record<number, number>;
 }): SeasonPlayerContribution[] {
@@ -567,7 +582,7 @@ export function playerContributionsFromMatch(input: {
     const source = player.sourceId ? bySourceId.get(player.sourceId) : undefined;
     const key = source?.id ?? `${input.clubId}:${player.id}`;
     const current = result.get(key) ?? {
-      playerId: source?.id ?? String(player.id), playerName: player.name, clubId: input.clubId,
+      playerId: source?.id ?? `${input.clubId}:${player.id}`, playerName: player.name, clubId: input.clubId,
       goals: 0, assists: 0, rating: input.ratings[player.id] ?? null,
       minutes: Math.max(0, (input.participation[player.id]?.left ?? 90) - (input.participation[player.id]?.entered ?? 90)),
     };
@@ -575,7 +590,7 @@ export function playerContributionsFromMatch(input: {
     result.set(key, current);
   };
   for (const event of input.events) {
-    if (event.scene?.team !== "home") continue;
+    if (event.scene?.team !== (input.side ?? "home")) continue;
     if (event.scorerId !== undefined) add(event.scorerId, "goals");
     if (event.assistId !== undefined) add(event.assistId, "assists");
   }
@@ -585,7 +600,7 @@ export function playerContributionsFromMatch(input: {
     if (!player) continue;
     const source = player.sourceId ? bySourceId.get(player.sourceId) : undefined;
     const key = source?.id ?? `${input.clubId}:${id}`;
-    const current = result.get(key) ?? { playerId: source?.id ?? String(id), playerName: player.name, clubId: input.clubId, goals: 0, assists: 0, rating: input.ratings[id] ?? null, minutes: 0 };
+    const current = result.get(key) ?? { playerId: source?.id ?? `${input.clubId}:${id}`, playerName: player.name, clubId: input.clubId, goals: 0, assists: 0, rating: input.ratings[id] ?? null, minutes: 0 };
     current.minutes = Math.max(0, (stint.left ?? 90) - stint.entered);
     current.rating = input.ratings[id] ?? current.rating;
     result.set(key, current);
@@ -600,8 +615,8 @@ export function advanceSeasonBeforeDate(season: CareerSeason, date: string, data
     const due = next.fixtures.filter(f => f.status === "scheduled" && f.scheduledDate && f.scheduledDate < date)
       .sort((a, b) => a.calendarRound - b.calendarRound || a.id.localeCompare(b.id))[0];
     if (!due) break;
-    const score = simulateFixture(database, due);
-    next = completeCareerFixture(next, due.id, { home: score.homeScore!, away: score.awayScore!, winnerClubId: score.winnerClubId, playerContributions: score.playerContributions }, database);
+    const score = simulateFixture(database, due,copyDiscipline(next));
+    next = completeCareerFixture(next, due.id, { home: score.homeScore!, away: score.awayScore!, winnerClubId: score.winnerClubId, playerContributions: score.playerContributions,report:score.report }, database);
   }
   return next;
 }
