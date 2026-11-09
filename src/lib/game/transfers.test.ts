@@ -51,3 +51,24 @@ it("permite sondar não listado com preço maior, mas bloqueia novo negócio de 
   player.loan = { owner: { clubId: player.clubId, name: "Dono" }, borrower: { clubId: db.clubs[2].id, name: "Destino" }, startsOn: "2026-01-01", endsOn: "2026-07-01", source: "game", status: "active", wageSharePercent: 50 };
   expect(proposeTransfer(db, [], { id: "invalid-loan", playerId: player.id, buyerClubId: buyer.id, feeBrl: asking }).negotiation).toBeUndefined();
 });
+
+it("calcula multa simulada por meses restantes, sem inventar vínculo encerrado", async () => {
+  const { simulatedReleaseClauseBrl, transferAskingPrice } = await import("./transfers");
+  const db = createDefaultDatabase(), buyer = db.clubs[0];
+  const source = db.players.find(p => p.clubId !== buyer.id && p.marketStatus === "sale")!;
+  const player = { ...source, marketValueBrl: 1_000_000, contractEndsOn: "2026-12-31" };
+  expect(simulatedReleaseClauseBrl(player, "2026-06-30")).toBe(2_000_000);
+  expect(simulatedReleaseClauseBrl(player, "2026-07-01")).toBe(1_000_000);
+  expect(simulatedReleaseClauseBrl(player, "2026-11-01")).toBe(200_000);
+  expect(simulatedReleaseClauseBrl(player, "2026-12-31")).toBe(200_000);
+  expect(simulatedReleaseClauseBrl(player, "2027-01-01")).toBeNull();
+  expect(simulatedReleaseClauseBrl({ ...player, contractEndsOn: "invalid" }, "2026-01-01")).toBeNull();
+  expect(simulatedReleaseClauseBrl({ ...player, clubId: "" }, "2026-01-01")).toBe(0);
+  db.players = db.players.map(p => p.id === player.id ? player : p);
+  const date = "2026-11-01";
+  const asking = transferAskingPrice(player, db.players, date);
+  const result = proposeTransfer(db, [], { id: "buyout", playerId: player.id, buyerClubId: buyer.id, feeBrl: 200_000, monthlyWageBrl: player.salaryMonthlyBrl * 2, date });
+  expect(result.negotiation).toMatchObject({ status: "agreed", askingFeeBrl: asking, releaseClauseBrl: 200_000, agreedFeeBrl: 200_000 });
+  const noSalary = proposeTransfer(db, [], { id: "bad-wage", playerId: player.id, buyerClubId: buyer.id, feeBrl: 200_000, monthlyWageBrl: 1, date });
+  expect(noSalary.negotiation?.status).toBe("rejected");
+});

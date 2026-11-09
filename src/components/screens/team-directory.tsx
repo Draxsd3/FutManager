@@ -1,4 +1,7 @@
 "use client";
+import { MarketCost } from "./market-cost";
+import { marketCostQuote } from "@/lib/game/market-quote";
+import type { FinanceState } from "@/lib/game/simulation/finance";
 import { ManagementHeader } from "@/components/ui/management-header";
 import surface from "@/components/ui/management-surface.module.css";
 
@@ -8,7 +11,7 @@ import type { EditorClub, EditorDatabase, EditorPlayer } from "@/lib/game/editor
 import type { Player, PositionCode } from "@/lib/game/mock-data";
 import { positionLabel } from "@/lib/game/mock-data";
 import type { PlayerCareerRecord } from "@/lib/game/career";
-import { playerAskingFeeBrl, formatBrl, type TransferNegotiation } from "@/lib/game/transfers";
+import { transferAskingPrice, simulatedReleaseClauseBrl, formatBrl, type TransferNegotiation } from "@/lib/game/transfers";
 import { Crest } from "@/components/ui/club-sidebar";
 
 const panel = "min-w-0 border-t border-[#dce3da] bg-transparent";
@@ -27,9 +30,11 @@ type TeamPlayer = {
 };
 
 export function TeamDirectory({
-  embedded = false, database, club, coach, squad, budget, records, negotiations, onOpenPlayer, onTransferOffer, onBack,
+  embedded = false, database, club, coach, squad, budget, records, negotiations, gameDate, finance, onOpenPlayer, onTransferOffer, onBack,
 }: {
   embedded?: boolean;
+  gameDate?: string;
+  finance?: FinanceState;
   database: EditorDatabase;
   club: string;
   coach: string;
@@ -114,7 +119,9 @@ export function TeamDirectory({
   const careerGoals = careerSeasons.reduce((sum, season) => sum + season.goals, 0);
   const careerAssists = careerSeasons.reduce((sum, season) => sum + season.assists, 0);
   const currentSeller = selected ? clubsById.get(selected.profile.clubId) : undefined;
-  const asking = selected ? playerAskingFeeBrl(selected.profile) : 0;
+  const asking = selected ? transferAskingPrice(selected.profile, database.players, gameDate) : 0;
+  const clause = selected ? simulatedReleaseClauseBrl(selected.profile, gameDate) : null;
+  const buyerId = database.clubs.find(item => item.name === club)?.id ?? "";
 
   function chooseClub(item: EditorClub) {
     setActiveClubId(item.id);
@@ -126,7 +133,7 @@ export function TeamDirectory({
   function startOffer() {
     if (!selected) return;
     const kind = selected.profile.marketStatus === "loan" ? "loan" : "sale";
-    setOfferFee((asking / 1_000_000).toFixed(2));
+    setOfferFee(String(asking / 1_000_000));
     setWageShare("50");
     setOfferOpen(true);
     setMessage("");
@@ -240,7 +247,7 @@ export function TeamDirectory({
                   <div className="mt-3 flex justify-center gap-2"><span className="rounded-full bg-white px-3 py-1 text-[10px] font-bold text-[#52675a]">{selected.profile.age} anos</span><span className="rounded-full bg-white px-3 py-1 text-[10px] font-bold text-[#52675a]">Camisa {selected.profile.shirtNumber}</span><span className="rounded-full bg-[#e3f0e5] px-3 py-1 text-[10px] font-extrabold text-[#286d45]">GER {selected.profile.overall}</span></div>
                 </div>
                 <div className="space-y-3 p-4">
-                  <div className="grid grid-cols-2 gap-2"><Detail label="Salário mensal" value={`${formatCompactBrl(selected.profile.salaryMonthlyBrl)}/mês`} /><Detail label="Valor de mercado" value={formatCompactBrl(selected.profile.marketValueBrl)} /><Detail label="Pé preferido" value={selected.profile.preferredFoot === "E" ? "Esquerdo" : selected.profile.preferredFoot === "D" ? "Direito" : "Ambos"} /><Detail label="Contrato até" value={selected.profile.contractEndsOn} /></div>
+                  <div className="grid grid-cols-2 gap-2"><Detail label="Salário mensal" value={`${formatCompactBrl(selected.profile.salaryMonthlyBrl)}/mês`} /><Detail label="Valor de mercado" value={formatCompactBrl(selected.profile.marketValueBrl)} /><Detail label="Multa simulada" value={clause === null ? "Indisponível" : formatBrl(clause)} /><Detail label="Pé preferido" value={selected.profile.preferredFoot === "E" ? "Esquerdo" : selected.profile.preferredFoot === "D" ? "Direito" : "Ambos"} /><Detail label="Contrato até" value={selected.profile.contractEndsOn} /></div>
                   <div className="rounded-xl border border-[#e7eee8] p-3"><p className="text-[9px] font-bold uppercase tracking-[.12em] text-[#718477]">Pontos fortes cadastrados</p><p className="mt-1 text-xs font-bold text-[#354b3b]">{selected.profile.qualityPrimary} <span className="font-normal text-[#a4b0a5]">/</span> {selected.profile.qualitySecondary}</p></div>
                   {selected.careerPlayer && <div className="grid grid-cols-3 rounded-xl bg-[#f3f7f3] p-3 text-center"><CareerStat label="Jogos" value={careerGames} /><CareerStat label="Gols" value={careerGoals} /><CareerStat label="Assistências" value={careerAssists} /></div>}
                   {!selected.careerPlayer && activeClub.name !== club && <p className="rounded-xl bg-[#f6f8f6] p-3 text-[10px] leading-relaxed text-[#718477]">Estatísticas de carreira ainda não registradas para este atleta nesta carreira.</p>}
@@ -251,6 +258,8 @@ export function TeamDirectory({
                       {!offerOpen ? <button className={`${primaryButton} w-full`} onClick={startOffer}>Fazer proposta</button> : <div className="space-y-3 rounded-xl border border-[#dce9de] bg-[#f8fbf8] p-3">
                         <label className="block text-[10px] font-bold text-[#53685a]">{selected.profile.marketStatus === "loan" ? "Taxa de empréstimo (R$ milhões)" : "Oferta de compra (R$ milhões)"}<input aria-label="Valor da proposta" className={`${control} mt-1 w-full`} type="number" min="0.01" step="0.01" value={offerFee} onChange={(event) => setOfferFee(event.target.value)} /></label>
                         {selected.profile.marketStatus === "loan" && <label className="block text-[10px] font-bold text-[#53685a]">Parte do salário paga pelo seu clube (%)<input aria-label="Parte do salário" className={`${control} mt-1 w-full`} type="number" min="0" max="100" step="5" value={wageShare} onChange={(event) => setWageShare(event.target.value)} /></label>}
+                        <MarketCost quote={marketCostQuote(finance, buyerId, selected.profile.marketStatus === "loan" ? "loan" : "sale", Number(offerFee) * 1e6, selected.profile.salaryMonthlyBrl, selected.profile.marketStatus === "loan" ? Number(wageShare) : 100)} kind={selected.profile.marketStatus === "loan" ? "loan" : "sale"} />
+                        <p className="text-[10px] leading-relaxed text-[#718477]">Multa simulada: 2× o valor de mercado, com redução de 50% nos últimos 6 meses e 90% nos últimos 2 meses; não é cláusula oficial.</p>
                         <p className="text-[10px] leading-relaxed text-[#718477]">Uma proposta não conclui a contratação. O clube vendedor pode aceitar, recusar ou fazer uma contraproposta.</p>
                         <div className="grid grid-cols-2 gap-2"><button className={primaryButton} onClick={submitOffer}>Enviar proposta</button><button className={secondaryButton} onClick={async () => setOfferOpen(false)}>Cancelar</button></div>
                       </div>}

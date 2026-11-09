@@ -102,3 +102,56 @@ it("encontra livres sem nome e envia proposta sem taxa, sem contratar automatica
   expect(action).not.toHaveBeenCalled();
   confirm.mockRestore();
 });
+
+it("mostra passe, pedido contextual, multa e custo real antes da proposta e da contraproposta", async () => {
+  const { within } = await import("@testing-library/react");
+  const { createCareerSeason } = await import("@/lib/game/season");
+  const { initializeCareerMarket } = await import("@/lib/game/manager-jobs");
+  const { adoptFinance, availableCents } = await import("@/lib/game/simulation/finance");
+  const { transferAskingPrice, simulatedReleaseClauseBrl, formatBrl } = await import("@/lib/game/transfers");
+  const database = createDefaultDatabase(), club = database.clubs[0];
+  const player = database.players.find(p => p.clubId !== club.id && p.marketStatus === "sale")!;
+  player.contractEndsOn = "2026-06-30";
+  const date = "2026-01-01";
+  const market = initializeCareerMarket(database, createCareerSeason(database, club.id, 2026)!, "Teste", 10000);
+  const managerMarket = adoptFinance(market, database, date, {}, { clubId: club.id, budget: 10000 });
+  const props = { section: "search" as const, database, club: club.name, coach: "Teste", squad: [], budget: 10000, records: {}, negotiations: [], historyView: "players" as const, managerMarket, gameDate: date, onHistoryView: vi.fn(), onOpenPlayer: vi.fn(), onTransferOffer: vi.fn(), onTransferAction: vi.fn(), onBack: vi.fn() };
+  render(<WorldScreens {...props} />);
+  fireEvent.change(screen.getByLabelText("Buscar jogadores"), { target: { value: player.name } });
+  const seller = database.clubs.find(c => c.id === player.clubId)!;
+  const button = screen.getByRole("button", { name: `Fazer proposta por ${player.name} do ${seller.name}` });
+  const card = button.closest("article")!;
+  expect(within(card).getByText(`PASSE (MERCADO) ${formatBrl(player.marketValueBrl)}`)).toBeTruthy();
+  expect(within(card).getByText(`MULTA SIMULADA ${formatBrl(simulatedReleaseClauseBrl(player,date)!)}`)).toBeTruthy();
+  expect(within(card).getByText(formatBrl(transferAskingPrice(player, database.players, date)))).toBeTruthy();
+  fireEvent.click(button);
+  const summary = screen.getByLabelText("Resumo financeiro da proposta");
+  expect(within(summary).getByText(formatBrl(availableCents(managerMarket.finance!, club.id)/100))).toBeTruthy();
+  expect(summary.textContent).toContain("12 meses");
+  fireEvent.change(screen.getByLabelText("Salário mensal proposto"), { target: { value: "100000" } });
+  expect(summary.textContent).toContain("R$ 1.200.000");
+});
+
+it("explica o saldo insuficiente antes de aceitar uma contraproposta", async () => {
+  const { createCareerSeason } = await import("@/lib/game/season");
+  const { initializeCareerMarket } = await import("@/lib/game/manager-jobs");
+  const { adoptFinance } = await import("@/lib/game/simulation/finance");
+  const db = createDefaultDatabase(), buyer = db.clubs[0], p = db.players.find(p => p.clubId !== buyer.id && p.marketStatus === "sale")!;
+  const market = initializeCareerMarket(db, createCareerSeason(db, buyer.id, 2026)!, "Teste", 12775);
+  const managerMarket = adoptFinance(market, db, "2026-01-01", {}, { clubId: buyer.id, budget: 12775 });
+  managerMarket.finance!.clubs[buyer.id].cashCents = 1_277_500_000;
+  managerMarket.finance!.reservations["other"] = { clubId: buyer.id, cents: 1_000_000_000 };
+  const deal = { id: "counter", playerId: p.id, playerName: p.name, sourceClubId: p.clubId, sourceClub: "Clube", buyerClubId: buyer.id, kind: "sale" as const, askingFeeBrl: 5963025, offerFeeBrl: 4900000, counterFeeBrl: 5963025, status: "countered" as const, attempts: 1, wageSharePercent: 0, message: "Contraproposta" };
+  render(<WorldScreens section="search" database={db} club={buyer.name} coach="Teste" squad={[]} budget={12775} records={{}} negotiations={[deal]} historyView="players" managerMarket={managerMarket} gameDate="2026-01-01" onHistoryView={vi.fn()} onOpenPlayer={vi.fn()} onTransferOffer={vi.fn()} onTransferAction={vi.fn()} onBack={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", {name: /Negociações/}));
+  const quote = screen.getByLabelText("Resumo financeiro da proposta");
+  expect(quote.textContent).toContain("R$ 5.963.025");
+  expect(quote.textContent).toContain("R$ 12.775.000");
+  expect(quote.textContent).toContain("Faltam");
+  expect(quote.textContent).toContain("12 meses");
+  fireEvent.click(screen.getByRole("button", {name:"Fazer contraproposta"}));
+  const quotes = screen.getAllByLabelText("Resumo financeiro da proposta");
+  expect(quotes).toHaveLength(2);
+  fireEvent.change(screen.getByLabelText(`Nova proposta para ${p.name}`), {target:{value:"2"}});
+  expect(quotes[1].textContent).toContain("R$ 2.000.000");
+});
