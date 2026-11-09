@@ -17,7 +17,7 @@ it("creates deterministic, reconciled background reports for both teams without 
  const f=fixture(),before=structuredClone(f),result=simulateFixture(data.database,f);
  expect(result).toEqual(simulateFixture(data.database,f));expect(f).toEqual(before);expect(result.report?.origin).toBe("background");
  expect(()=>assertMatchReport(result)).not.toThrow();expect(new Set(result.playerContributions!.map(p=>p.clubId)).size).toBe(2);
- for(const club of [f.homeClubId,f.awayClubId]) expect(result.playerContributions!.filter(p=>p.clubId===club).reduce((n,p)=>n+p.minutes,0)).toBe(990);
+ for(const club of [f.homeClubId,f.awayClubId]) {const lost=result.report!.cards.filter(c=>c.clubId===club && c.card==="red").reduce((n,c)=>n+90-c.minute!,0);expect(result.playerContributions!.filter(p=>p.clubId===club).reduce((n,p)=>n+p.minutes,0)).toBe(990-lost);}
 });
 it("rejects score/statistic/event contradictions, duplicate people and invalid minutes",()=>{
  const good=played();expect(()=>assertMatchReport(good)).not.toThrow();

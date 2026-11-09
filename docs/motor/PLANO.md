@@ -54,7 +54,7 @@ Aceite: potencial não garante crescimento; repetição de treino não dá evolu
 
 ## E7 — tática, partidas e disciplina
 
-**Estado:** primeiro recorte implementado, com regressões aprovadas em execuções combinadas, tipos/lint/build aprovados e publicação por PR; ver [ETAPA-7.md](ETAPA-7.md). Planos E5, substituições CPU contextuais e disciplina completa continuam pendentes. Não declarar a etapa inteira concluída.
+**Estado:** núcleo tático e disciplina automática v2 implementados; fechamento em validação/publicação. Ver [ETAPA-7.md](ETAPA-7.md) para planos E5, CPU contextual, granularidade, fontes e limites explícitos (não inclui tribunal, prorrogação/abandono nem exceções estaduais sem fonte). Não afirmar conformidade universal ou Gemini tático ativo.
 
 **Depende de:** E2/E3/E6; perfil de técnico de E5. **Fatia inicial:** invariantes comuns de resultado/estatísticas/elegibilidade para partidas assistidas e de fundo, preservando o motor ao vivo existente.
 

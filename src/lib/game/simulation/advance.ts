@@ -42,7 +42,7 @@ export function advanceCareer(save: CareerSave, database: EditorDatabase, comman
 
   }
   if (unemployed && p.competitionSeason && managers) {
-    p.competitionSeason=advanceSeasonBeforeDate(p.competitionSeason,date,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance));
+    p.competitionSeason=advanceSeasonBeforeDate(p.competitionSeason,date,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance,managers.staff));
     managers=updateCareerMarket(managers,p.competitionSeason,{clubId:"__unemployed__",budget:0,payroll:0},date);
     managers=adoptFinance(managers,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance),save.inGameDate,loans);
   }

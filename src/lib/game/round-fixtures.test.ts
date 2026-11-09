@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { createDefaultDatabase } from "./editor-data";
 import { backgroundClubStrengths, roundFixtures } from "./round-fixtures";
-import { backgroundFixtureScore, completeCareerFixture, type CareerSeason, type SeasonFixture } from "./season";
+import { simulateFixture, completeCareerFixture, type CareerSeason, type SeasonFixture } from "./season";
 
 const database = createDefaultDatabase();
 const teams = database.clubs.slice(0, 8);
@@ -34,7 +34,7 @@ it("advances simultaneous scores deterministically, without early results for ot
   const complete = completeCareerFixture(season, human.id, { home: 1, away: 2 }, database);
   expect(complete.fixtures.find(f => f.id === other.id)).toMatchObject({ status: "played", homeScore: previous[0], awayScore: previous[1] });
   expect(complete.fixtures.find(f => f.id === late.id)?.status).toBe("scheduled");
-  expect(backgroundFixtureScore(other, 90, strengths.get(other.homeClubId) ?? 65, strengths.get(other.awayClubId) ?? 65)).toEqual(previous);
+  const settled=simulateFixture(database,other);expect([settled.homeScore,settled.awayScore]).toEqual(previous);
   expect(roundFixtures({ ...input, season: complete, page: "result", minute: 90 })[1]).toMatchObject({ homeScore: previous[0], awayScore: previous[1], live: false });
 });
 

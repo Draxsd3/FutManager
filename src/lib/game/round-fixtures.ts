@@ -1,8 +1,9 @@
 import { playerEligible } from "./simulation/players";
-import { matchDiscipline } from "./simulation/matches";
+import { tacticalFixture } from "./simulation/tactical-fixture";
+import { copyDiscipline } from "./simulation/matches";
 import type { EditorDatabase } from "./editor-data";
 import type { RoundFixture } from "./mock-data";
-import { backgroundFixtureScore, type CareerSeason, type SeasonFixture } from "./season";
+import { type CareerSeason, type SeasonFixture } from "./season";
 
 /** Cache ratings once per catalog change, using the same average as the season engine. */
 export function backgroundClubStrengths(database: EditorDatabase,date?:string,bans?:Map<string,number>): Map<string, number> {
@@ -15,13 +16,13 @@ export function backgroundClubStrengths(database: EditorDatabase,date?:string,ba
   return new Map([...totals].map(([id, value]) => [id, value.sum / value.count]));
 }
 
-const liveStrengthCache=new WeakMap<EditorDatabase,WeakMap<CareerSeason,Map<string,Map<string,number>>>>();
-function liveStrengths(db:EditorDatabase,season:CareerSeason,f:SeasonFixture) {
-  let seasons=liveStrengthCache.get(db);if(!seasons){seasons=new WeakMap();liveStrengthCache.set(db,seasons);}
-  let dates=seasons.get(season);if(!dates){dates=new Map();seasons.set(season,dates);}
-  const key=`${f.competitionId}:${f.scheduledDate ?? ""}`;
-  let strengths=dates.get(key);if(!strengths){strengths=backgroundClubStrengths(db,f.scheduledDate,matchDiscipline(season).get(f.competitionId));dates.set(key,strengths);}
-  return strengths;
+const forecasts=new WeakMap<EditorDatabase,WeakMap<CareerSeason,Map<string,SeasonFixture>>>();
+function forecast(db:EditorDatabase,season:CareerSeason,f:SeasonFixture,minute:number):[number,number] {
+ let seasons=forecasts.get(db);if(!seasons){seasons=new WeakMap();forecasts.set(db,seasons);}
+ let fixtures=seasons.get(season);if(!fixtures){fixtures=new Map();seasons.set(season,fixtures);}
+ let result=fixtures.get(f.id);if(!result){result=tacticalFixture(db,f,copyDiscipline(season));fixtures.set(f.id,result);}
+ const goals=result.report!.goals.filter(g=>(g.minute ?? 90)<=minute);
+ return [goals.filter(g=>g.clubId===f.homeClubId).length,goals.filter(g=>g.clubId===f.awayClubId).length];
 }
 
 /** Fixtures with a different/unknown day stay scheduled. Finished scores always come from the season. */
@@ -41,9 +42,8 @@ export function roundFixtures({ season, active, database, page, minute, userIsHo
       const backgroundLive = !current && inMatch && fixture.status === "scheduled" && !!sameDay && !!database;
       const managedLive = current && inMatch;
       const hasManagedScore = current && (inMatch || page === "result");
-      const eligible=backgroundLive ? liveStrengths(database!,season,fixture) : new Map<string,number>();
       const [liveHome, liveAway] = backgroundLive
-        ? backgroundFixtureScore(fixture, minute, eligible.get(fixture.homeClubId) ?? 65, eligible.get(fixture.awayClubId) ?? 65)
+        ? forecast(database!,season,fixture,minute)
         : [fixture.homeScore ?? 0, fixture.awayScore ?? 0];
       return {
         stadium: database?.clubs.find((club) => club.id === fixture.homeClubId)?.stadiumName ?? "",

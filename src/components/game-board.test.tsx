@@ -111,11 +111,14 @@ it("autosaves a match without a floating exit button and resumes paused after re
   expect(saved.progress?.matchRunning).toBe(false);
   expect(saved.progress?.matchPreparation?.weather).toBeTruthy();
   const savedWeather = saved.progress?.matchPreparation?.weather;
+  expect(saved.progress?.matchPreparation?.contractVersion).toBe(2);
+  expect(saved.progress?.matchPreparation?.cpu?.active).toHaveLength(11);
   render(game());
   expect(await screen.findByText("PARTIDA PAUSADA")).toBeTruthy();
   expect(screen.getByText(new RegExp(`${savedWeather?.label} · ${savedWeather?.temperatureC} °C · vento ${savedWeather?.windKmh} km/h`))).toBeTruthy();
   expect(screen.queryByRole("button", { name: /CONTINUAR JOGANDO/ })).toBeNull();
   expect(readLocalSaves("alice")[0].progress?.minute).toBe(saved.progress?.minute);
+  expect(readLocalSaves("alice")[0].progress?.matchPreparation?.cpu).toEqual(saved.progress?.matchPreparation?.cpu);
 });
 
 
@@ -135,6 +138,7 @@ it("pauses at minute 45 and automatically opens tactics before the second half",
   await waitFor(() => {
     const progress = readLocalSaves("alice")[0].progress;
     expect(progress?.minute).toBe(45);
+    expect(progress?.matchPreparation?.cpu?.reviewed).toContain(45);
     expect(progress?.halftimeWaiting).toBe(true);
     expect(progress?.detailOpen).toBe(true);
     expect(progress?.matchRunning).toBe(false);
@@ -846,3 +850,36 @@ it("loads a real unemployed checkpoint, advances without a fixture and preserves
   expect(screen.getByRole("heading",{name:"Central de empregos"})).toBeTruthy();
   expect(readLocalSaves("unemployed")[0].progress!.engine!.revision).toBe(1);
 },30000);
+
+it("executes CPU fatigue substitutions at a live milestone and resumes the identical participants after reload", async () => {
+  const {IDBFactory}=await import("fake-indexeddb");vi.stubGlobal("indexedDB",new IDBFactory());
+  let view=render(game());
+  fireEvent.click(await screen.findByRole("button",{name:/INICIAR NOVA CARREIRA/}));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"),{target:{value:"CPU contextual"}});
+  fireEvent.click(screen.getByRole("button",{name:/Iniciar jogo/}));
+  fireEvent.click(await screen.findByRole("button",{name:/Escalar Time/i}));
+  fireEvent.click(await screen.findByRole("button",{name:/Ir para a partida/}));
+  await waitFor(()=>expect(readLocalSaves("alice")[0].progress?.minute).toBeGreaterThan(0));
+  view.unmount();
+  const save=readLocalSaves("alice")[0],p=save.progress!,fixture=p.competitionSeason!.fixtures.find(f=>f.id===p.activeFixtureId)!;
+  const rival=fixture.homeClubId===save.clubId?fixture.awayClubId:fixture.homeClubId;
+  const ids=new Set(p.universeSnapshot!.players.filter(player=>player.clubId===rival).map(player=>player.id));
+  for(const person of Object.values(p.worldMarket!.population!.people))if(ids.has(person.id))person.energy=30;
+  p.minute=59;p.matchRunning=false;p.halftimeWaiting=false;p.detailOpen=false;
+  expect(writeLocalSaves([save],"alice")).toBe(true);
+  const {cacheCareerSaves}=await import("@/lib/importer/database-cache");await cacheCareerSaves([save],"alice");
+  sessionStorage.clear();view=render(game());
+  fireEvent.click(await screen.findByRole("button",{name:/CONTINUAR JOGANDO/}));
+  fireEvent.click(await screen.findByRole("button",{name:"CONTINUAR"}));
+  fireEvent.click(await screen.findByRole("button",{name:/Continuar/}));
+  await waitFor(()=>expect(readLocalSaves("alice")[0].progress?.matchPreparation?.cpu?.changes.some(c=>c.minute===60)).toBe(true),{timeout:10000});
+  view.unmount();
+  const snapshot=readLocalSaves("alice")[0].progress!,cpu=structuredClone(snapshot.matchPreparation!.cpu!);
+  expect(cpu.reviewed).toContain(60);expect(cpu.changes.length).toBeLessThanOrEqual(5);
+  for(const c of cpu.changes.filter(c=>c.minute===60))expect(snapshot.events.some(e=>e.team==="away" && e.substitution?.outId===Number(c.out) && e.substitution.inId===Number(c.in))).toBe(true);
+  sessionStorage.clear();render(game());
+  fireEvent.click(await screen.findByRole("button",{name:/CONTINUAR JOGANDO/}));
+  fireEvent.click(await screen.findByRole("button",{name:"CONTINUAR"}));
+  await screen.findByText("PARTIDA PAUSADA");
+  expect(readLocalSaves("alice")[0].progress?.matchPreparation?.cpu).toEqual(cpu);
+},120_000);
