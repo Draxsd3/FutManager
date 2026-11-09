@@ -1,3 +1,4 @@
+import { assessMove } from "./market-rules";
 import { playerEligible } from "./players";
 import { isUnemployed } from "./coaches";
 import { reconcileContractSquad } from "./contract-squad";
@@ -90,7 +91,15 @@ export function updateCareerNegotiation(save: CareerSave, database: EditorDataba
   const existing=p.transferNegotiations?.find(d=>d.id===deal.id);
   if(existing && JSON.stringify(existing)!==JSON.stringify(deal)) throw new Error("A versão da proposta mudou. Reabra a negociação.");
   if(deal.expiresOn && deal.expiresOn<save.inGameDate && action?.type!=="reject") throw new Error("A proposta expirou.");
-  const response=action ? respondToTransferNegotiation(deal,action).negotiation : deal;
+  let response: TransferNegotiation;
+  if (action?.type === "player-offer") {
+    if (deal.negotiationPhase !== "player" || deal.status !== "agreed") throw new Error("Negocie primeiro com o clube.");
+    const player = db.players.find(p => p.id === deal.playerId);
+    if (!player || player.clubId !== deal.sourceClubId || player.loan?.status === "active") throw new Error("O vínculo do atleta mudou; reavalie a negociação.");
+    if (!Number.isFinite(action.monthlyWageBrl) || action.monthlyWageBrl <= 0) throw new Error("Informe um salário válido.");
+    const assessment = assessMove(player, db.players.filter(p => p.clubId === deal.buyerClubId), deal.kind, action.monthlyWageBrl);
+    response = {...deal, assessment, agreedMonthlyWageBrl: assessment.accepted ? action.monthlyWageBrl : undefined, negotiationPhase: assessment.accepted ? "ready" : "player", message: assessment.accepted ? `Jogador aceitou: ${assessment.reason} Revise e confirme a contratação.` : `Jogador recusou: ${assessment.reason} Ajuste o salário e tente novamente.`};
+  } else response=action ? respondToTransferNegotiation(deal,action).negotiation : deal;
   if(response===deal && action) return current;
   const next={...response,revision:(existing?.revision ?? 0)+1,createdOn:deal.createdOn ?? save.inGameDate,origin:deal.origin ?? "human" as const,expiresOn:deal.expiresOn ?? new Date(Date.parse(`${save.inGameDate}T12:00:00Z`)+14*86400000).toISOString().slice(0,10)};
   const reserved=reserveDeal(finance,next,db);

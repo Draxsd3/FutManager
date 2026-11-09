@@ -16,6 +16,8 @@ export type TransferNegotiation = {
   buyerClubId: string;
   kind: TransferKind;
   freeAgent?: boolean;
+  /** Present only for new two-stage human purchases; absent in legacy and CPU deals. */
+  negotiationPhase?: "club" | "player" | "ready";
   completedOn?: string;
   revision?: number;
   createdOn?: string;
@@ -49,13 +51,15 @@ export type TransferOfferInput = {
   wageSharePercent?: number;
   date?: string;
   monthlyWageBrl?: number;
+  twoStage?: boolean;
 };
 
 export type TransferNegotiationAction =
   | { type: "accept-counter" }
   | { type: "counter"; feeBrl: number; wageSharePercent?: number }
   | { type: "reject" }
-  | { type: "complete" };
+  | { type: "complete" }
+  | { type: "player-offer"; monthlyWageBrl: number };
 
 export function askingFeeBrl(kind: TransferKind, marketValueBrl: number) {
   return kind === "sale" ? Math.max(100_000, Math.round(marketValueBrl)) : Math.max(25_000, Math.round(marketValueBrl * 0.05));
@@ -116,18 +120,23 @@ export function proposeTransfer(database: EditorDatabase, existing: TransferNego
     attempts: 0,
     message: "",
   };
+  const staged = input.twoStage === true && !free && kind === "sale";
   let negotiation = free ? { ...base, status: "agreed" as const, agreedFeeBrl: 0, agreedWageSharePercent: 100, message: "Atleta livre aceitou as condições salariais cadastradas. Confirme o compromisso de 12 meses de salário antes de contratar." } : evaluateOffer(base);
-  if(input.date) {
+  if (staged) {
+    negotiation = {...negotiation, negotiationPhase: negotiation.status === "agreed" ? "player" : "club", agreedMonthlyWageBrl: undefined, ...(negotiation.status === "agreed" ? {message: "Condições do clube acertadas. Negocie o salário com o jogador."} : {})};
+  }
+  if(input.date && !staged) {
     const assessment=assessMove(player,database.players.filter(p=>p.clubId===buyer.id),kind,input.monthlyWageBrl ?? player.salaryMonthlyBrl);
     negotiation={...negotiation,createdOn:input.date,expiresOn:new Date(Date.parse(`${input.date}T12:00:00Z`)+14*86400000).toISOString().slice(0,10),revision:1,origin:"human",assessment,...(!assessment.accepted ? {status:"rejected",message:assessment.reason} : {})};
   }
+  if (input.date && staged) negotiation = {...negotiation, createdOn: input.date, expiresOn: new Date(Date.parse(`${input.date}T12:00:00Z`)+14*86400000).toISOString().slice(0,10), revision: 1, origin: "human"};
   return { negotiation, message: negotiation.message };
 }
 
 export function respondToTransferNegotiation(negotiation: TransferNegotiation, action: TransferNegotiationAction): { negotiation: TransferNegotiation; message: string } {
   if (action.type === "accept-counter") {
     if (negotiation.status !== "countered" || negotiation.counterFeeBrl === undefined) return { negotiation, message: "Não há contraproposta ativa para aceitar." };
-    const next = { ...negotiation, status: "agreed" as const, agreedFeeBrl: negotiation.counterFeeBrl, agreedWageSharePercent: negotiation.counterWageSharePercent ?? (negotiation.kind === "sale" ? 100 : 0), message: "Contraproposta aceita. Revise o custo total e confirme a contratação." };
+    const next = { ...negotiation, status: "agreed" as const, agreedFeeBrl: negotiation.counterFeeBrl, agreedWageSharePercent: negotiation.counterWageSharePercent ?? (negotiation.kind === "sale" ? 100 : 0), ...(negotiation.negotiationPhase === "club" ? {negotiationPhase: "player" as const} : {}), message: negotiation.negotiationPhase === "club" ? "Contraproposta do clube aceita. Negocie com o jogador." : "Contraproposta aceita. Revise o custo total e confirme a contratação." };
     return { negotiation: next, message: next.message };
   }
   if (action.type === "reject") {
@@ -135,7 +144,9 @@ export function respondToTransferNegotiation(negotiation: TransferNegotiation, a
     const next = { ...negotiation, status: "rejected" as const, message: "Negociação encerrada sem acordo." };
     return { negotiation: next, message: next.message };
   }
+  if (action.type === "player-offer") return { negotiation, message: "A proposta ao jogador precisa ser avaliada na carreira." };
   if (action.type === "complete") {
+    if (negotiation.negotiationPhase && negotiation.negotiationPhase !== "ready") return { negotiation, message: "Negocie com o jogador antes de confirmar." };
     if (negotiation.status !== "agreed" || negotiation.agreedFeeBrl === undefined) return { negotiation, message: "A negociação ainda não foi aceita pelas duas partes." };
     const next = { ...negotiation, status: "completed" as const, message: "Contratação concluída e registrada no elenco." };
     return { negotiation: next, message: next.message };
@@ -152,7 +163,8 @@ export function respondToTransferNegotiation(negotiation: TransferNegotiation, a
     counterWageSharePercent: undefined,
     attempts: negotiation.attempts + 1,
   });
-  return { negotiation: next, message: next.message };
+  const stagedNext = negotiation.negotiationPhase === "club" && next.status === "agreed" ? {...next, negotiationPhase: "player" as const, message: "Condições do clube acertadas. Negocie com o jogador."} : next;
+  return { negotiation: stagedNext, message: stagedNext.message };
 }
 
 function validateOffer(feeBrl: number, wageSharePercent: number, askingFee: number, kind: TransferKind): string | null {
