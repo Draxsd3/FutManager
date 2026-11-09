@@ -50,8 +50,11 @@
 .primary:hover:not(:disabled) { background: #195a34; }
 .primary:disabled { border-color: #d5ddd6; background: #e8eeea; color: #708075; cursor: not-allowed; }
 .secondary { border: 1px solid #bfd1c3; background: #fff; color: #355943; }
-.offerForm { display: grid; grid-template-columns: minmax(140px,1fr) minmax(150px,1fr) auto; gap: 10px; align-items: end; margin-top: 10px; padding: 12px; border-radius: 8px; background: #eef6ef; }
-.offerForm p { color: #657b6a; font-size: 11px; }
+.offerForm { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; margin-top: 10px; padding: 12px; border-radius: 8px; background: #eef6ef; }
+.offerForm > p, .offerForm > section, .offerForm > .offerActions { grid-column: 1 / -1; }
+.offerForm > p { color: #536b59; font-size: 13px; line-height: 1.5; }
+.offerForm label { font-size: 12px; }
+.offerForm input { font-size: 14px; }
 .offerActions { display: flex; gap: 6px; flex-wrap: wrap; }
 .empty { display: grid; justify-items: center; gap: 6px; padding: 25px 14px; color: #708176; text-align: center; font-size: 11px; }
 .empty strong { color: #344f3c; font-size: 13px; }
@@ -83,3 +86,5 @@
 .scouting button:hover { color: #174d32; }
 .scouting button:focus-visible { outline: 2px solid #26774d; outline-offset: 3px; }
 .scouting .clearSearch { margin-left: auto; font-size: 10px; font-weight: 500; }
+
+.noticeWarning { border-left-color: #b87927; background: #fff4e3; color: #80521c; }

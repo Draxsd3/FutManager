@@ -117,16 +117,22 @@ function slices(c: Employment, loan: LoanContract | undefined, from: string, to:
     at=until;
   }
 }
-export function unreservedCents(s: FinanceState, clubId: string, excludingReservation?: string) {
-  let committed = Object.values(s.payables).filter(p=>p.clubId===clubId).reduce((n,p)=>n+p.amountCents-p.paidCents,0);
+export function financeAvailability(s: FinanceState, clubId: string, excludingReservation?: string) {
+  const payables = Object.values(s.payables).filter(p=>p.clubId===clubId).reduce((n,p)=>n+p.amountCents-p.paidCents,0);
   const horizon = dateAfterMonths(s.through,FINANCE_RULES.salaryHorizonMonths);
+  let wages = 0, reservations = 0;
   for (const c of Object.values(s.contracts)) {
     const loan=s.loans[c.playerId];
     if (c.clubId!==clubId && loan?.owner.clubId!==clubId && loan?.borrower.clubId!==clubId) continue;
-    slices(c,loan,s.through,horizon,(id,amount)=>{if(id===clubId) committed+=amount;});
+    slices(c,loan,s.through,horizon,(id,amount)=>{if(id===clubId) wages+=amount;});
   }
-  for (const [id,r] of Object.entries(s.reservations)) if (id!==excludingReservation && r.clubId===clubId) committed+=r.cents;
-  return (s.clubs[clubId]?.cashCents ?? 0)-committed;
+  for (const [id,r] of Object.entries(s.reservations)) if (id!==excludingReservation && r.clubId===clubId) reservations+=r.cents;
+  const cash = s.clubs[clubId]?.cashCents ?? 0;
+  const unreserved = cash - payables - wages - reservations;
+  return {cash, payables, wages, reservations, unreserved, available: Math.max(0, unreserved)};
+}
+export function unreservedCents(s: FinanceState, clubId: string, excludingReservation?: string) {
+  return financeAvailability(s, clubId, excludingReservation).unreserved;
 }
 export const availableCents = (s: FinanceState, clubId: string, excludingReservation?: string) => Math.max(0,unreservedCents(s,clubId,excludingReservation));
 /** No overdraft fiction: competence is accrued independently; insufficient cash becomes a payable. */
