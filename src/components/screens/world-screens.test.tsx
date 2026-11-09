@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { WorldScreens } from "./world-screens";
 import { createDefaultDatabase, buildSquadFromDatabase } from "@/lib/game/editor-data";
 afterEach(cleanup);
@@ -43,14 +43,18 @@ it("separa a busca das negociações e mantém as ações de contraproposta e co
   const { rerender } = render(<WorldScreens {...props} negotiations={[deal]} />);
   expect(screen.getByRole("button", { name: /Negociações.*1 em andamento/ })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: /Negociações/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Ver proposta" }));
+  expect(screen.getByRole("dialog", {name: `Perfil de ${player.name}`})).toBeTruthy();
   expect(screen.getByText("Contraproposta recebida")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Aceitar contraproposta" }));
   expect(action).toHaveBeenCalledWith("deal-1", { type: "accept-counter" });
+  await waitFor(() => expect((screen.getByRole("button", { name: "Aceitar contraproposta" }) as HTMLButtonElement).disabled).toBe(false));
   rerender(<WorldScreens {...props} negotiations={[{ ...deal, status: "agreed", agreedFeeBrl: 1000000 }]} />);
   const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
   fireEvent.click(screen.getByRole("button", { name: "Confirmar contratação" }));
   expect(action).toHaveBeenCalledWith("deal-1", { type: "complete" });
   confirm.mockRestore();
+  fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
   fireEvent.click(screen.getByRole("button", { name: /Buscar jogadores/ }));
   expect(screen.getByLabelText("Buscar jogadores")).toBeTruthy();
 });
@@ -144,6 +148,7 @@ it("explica o saldo insuficiente antes de aceitar uma contraproposta", async () 
   const deal = { id: "counter", playerId: p.id, playerName: p.name, sourceClubId: p.clubId, sourceClub: "Clube", buyerClubId: buyer.id, kind: "sale" as const, askingFeeBrl: 5963025, offerFeeBrl: 4900000, counterFeeBrl: 5963025, status: "countered" as const, attempts: 1, wageSharePercent: 0, message: "Contraproposta" };
   render(<WorldScreens section="search" database={db} club={buyer.name} coach="Teste" squad={[]} budget={12775} records={{}} negotiations={[deal]} historyView="players" managerMarket={managerMarket} gameDate="2026-01-01" onHistoryView={vi.fn()} onOpenPlayer={vi.fn()} onTransferOffer={vi.fn()} onTransferAction={vi.fn()} onBack={vi.fn()} />);
   fireEvent.click(screen.getByRole("button", {name: /Negociações/}));
+  fireEvent.click(screen.getByRole("button", {name:"Ver proposta"}));
   const quote = screen.getByLabelText("Resumo financeiro da proposta");
   expect(quote.textContent).toContain("R$ 5.963.025");
   expect(quote.textContent).toContain("R$ 12.775.000");
@@ -154,4 +159,47 @@ it("explica o saldo insuficiente antes de aceitar uma contraproposta", async () 
   expect(quotes).toHaveLength(2);
   fireEvent.change(screen.getByLabelText(`Nova proposta para ${p.name}`), {target:{value:"2"}});
   expect(quotes[1].textContent).toContain("R$ 2.000.000");
+});
+
+it("abre ficha com camisa, partidas e transferências registradas, sem inventar histórico real", async () => {
+  const { within } = await import("@testing-library/react");
+  const { createCareerSeason } = await import("@/lib/game/season");
+  const database = createDefaultDatabase(), club = database.clubs[0];
+  const player = database.players.find(p => p.clubId !== club.id && p.marketStatus === "sale")!;
+  const season = createCareerSeason(database, club.id, 2026)!;
+  const fixture = season.fixtures[0];
+  fixture.status = "played"; fixture.homeScore = 2; fixture.awayScore = 1;
+  fixture.playerContributions = [{playerId: player.id, playerName: player.name, clubId: player.clubId, minutes: 90, goals: 1, assists: 1, rating: 7.5}];
+  const transfer = {id:"historic",playerId:player.id,playerName:player.name,sourceClubId:club.id,sourceClub:club.name,buyerClubId:player.clubId,kind:"sale" as const,askingFeeBrl:1,offerFeeBrl:1,wageSharePercent:0,status:"completed" as const,attempts:0,message:"Concluída",completedOn:"2026-02-01"};
+  render(<WorldScreens section="search" database={database} club={club.name} coach="Teste" squad={[]} budget={1000} records={{}} negotiations={[]} allTransfers={[transfer]} competitionSeason={season} historyView="players" onHistoryView={vi.fn()} onOpenPlayer={vi.fn()} onTransferOffer={vi.fn()} onTransferAction={vi.fn()} onBack={vi.fn()} />);
+  fireEvent.change(screen.getByLabelText("Buscar jogadores"), {target:{value:player.name}});
+  const seller=database.clubs.find(c=>c.id===player.clubId)!;
+  const offerButton=screen.getByRole("button", {name:`Fazer proposta por ${player.name} do ${seller.name}`});
+  const profileButton=within(offerButton.closest("article")!).getByRole("button", {name:player.name});
+  profileButton.focus(); fireEvent.click(profileButton);
+  const modal=screen.getByRole("dialog", {name:`Perfil de ${player.name}`});
+  expect(within(modal).getByRole("img", {name:`Camisa de ${player.name}`})).toBeTruthy();
+  fireEvent.click(within(modal).getByRole("button", {name:"Temporada"}));
+  expect(within(modal).getByText(/1 jogos · 1 gols · 1 assistências · 90 minutos/)).toBeTruthy();
+  fireEvent.click(within(modal).getByRole("button", {name:"Histórico"}));
+  expect(within(modal).getByText(/não contém histórico completo/)).toBeTruthy();
+  expect(within(modal).getByText(/2026-02-01/)).toBeTruthy();
+  fireEvent.click(within(modal).getByRole("button", {name:"Mercado"}));
+  expect(within(modal).getByLabelText("Valor da proposta")).toBeTruthy();
+  fireEvent.keyDown(modal, {key:"Escape"});
+  expect(screen.queryByRole("dialog")).toBeNull(); expect(document.activeElement).toBe(profileButton);
+});
+
+it("diferencia análise do atleta da contraproposta do clube e protege ação pendente", async () => {
+  const database = createDefaultDatabase(), club = database.clubs[0], player = database.players.find(p => p.clubId !== club.id && p.marketStatus === "sale")!;
+  const deal = {id:"counter",playerId:player.id,playerName:player.name,sourceClubId:player.clubId,sourceClub:"Clube",buyerClubId:club.id,kind:"sale" as const,askingFeeBrl:1000000,offerFeeBrl:800000,counterFeeBrl:1000000,wageSharePercent:0,status:"countered" as const,attempts:0,message:"Contraproposta",assessment:{accepted:true,role:"titular" as const,reason:"Salário e papel compatíveis.",representation:"unknown" as const}};
+  let done!: (value: string) => void;
+  const action = vi.fn(() => new Promise<string>(resolve => {done = resolve;}));
+  render(<WorldScreens section="search" database={database} club={club.name} coach="Teste" squad={[]} budget={1000} records={{}} negotiations={[deal]} historyView="players" onHistoryView={vi.fn()} onOpenPlayer={vi.fn()} onTransferOffer={vi.fn()} onTransferAction={action} onBack={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", {name:/Negociações/})); fireEvent.click(screen.getByRole("button", {name:"Ver proposta"}));
+  expect(screen.getByText(/Condições avaliadas como aceitas/)).toBeTruthy();
+  expect(screen.getByText(/Não aceitou os termos; enviou contraproposta/)).toBeTruthy();
+  const accept=screen.getByRole("button", {name:"Aceitar contraproposta"}) as HTMLButtonElement;
+  fireEvent.click(accept); expect(accept.disabled).toBe(true); fireEvent.click(accept); expect(action).toHaveBeenCalledTimes(1);
+  done("Acordo salvo."); await screen.findByText("Acordo salvo.");
 });
