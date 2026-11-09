@@ -9,3 +9,10 @@ it("encodes arbitrary binary in safe UTF-16 units with validated padding/length"
   for(const size of [0,1,2,3,4,7,15,31,257,2048]){const bytes=Uint8Array.from({length:size},(_,i)=>(i*31+size)%256),encoded=binaryText(bytes);expect(textBinary(encoded,size)).toEqual(bytes);expect(encoded.length).toBe(Math.ceil(size*8/15));expect([...encoded].every(c=>c.charCodeAt(0)>=256 && c.charCodeAt(0)<=33023)).toBe(true);}
   expect(()=>textBinary("bad",1)).toThrow();expect(()=>textBinary("",-1)).toThrow();
 });
+
+it("rejects an unreadable aggregate at the encoder's shared size boundary",async()=>{
+ const {assertCheckpointSize,CHECKPOINT_CHARACTER_LIMIT}=await import("./checkpoint-dictionary");
+ expect(()=>assertCheckpointSize(CHECKPOINT_CHARACTER_LIMIT)).not.toThrow();
+ expect(()=>packCheckpoint("x".repeat(CHECKPOINT_CHARACTER_LIMIT))).toThrow("limite seguro");
+ for(const size of [CHECKPOINT_CHARACTER_LIMIT+1,0,-1,NaN,Infinity,2.5])expect(()=>assertCheckpointSize(size)).toThrow("limite seguro");
+});

@@ -1,5 +1,5 @@
 import { assertMatchHistory } from "./simulation/matches";
-import { binaryText,textBinary,packCheckpoint,unpackCheckpoint } from "./simulation/checkpoint-dictionary";
+import { assertCheckpointSize,binaryText,textBinary,packCheckpoint,unpackCheckpoint } from "./simulation/checkpoint-dictionary";
 import { strToU8, strFromU8, zlibSync, unzlibSync } from "fflate";
 import { EngineConflict } from "./simulation/foundation";
 import { currentCareerSaves, isCurrentCareerSave } from "./career-rules";
@@ -66,7 +66,9 @@ function encodeSaveIndex(index: CareerSave[]) {
     if (!compressAggregate(key,value)) return value;
     let packed=packedFinance.get(value);
     if (!packed) {
-      const bytes=strToU8(packCheckpoint(value)), zipped=zlibSync(bytes,{level:6});
+      const bytes=strToU8(packCheckpoint(value));
+      assertCheckpointSize(bytes.length);
+      const zipped=zlibSync(bytes,{level:6});
       packed=JSON.stringify({codec:aggregateCodecs[key].replace("-deflate-v1","-dictionary-deflate-v1"),size:bytes.length,encoding:"utf15",bytes:zipped.length,data:binaryText(zipped)});
       packedFinance.set(value,packed);
     }

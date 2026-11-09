@@ -725,3 +725,8 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Probe versionado em `supabase/tests/season_archive_guard.sql`: `season_archive_guard_passed`, três linhas temporárias, rollback. Cobertura moderna/legada, snapshots, arquivo imutável e escritas inválidas. Não equivale a teste de dez anos ou virada pela interface.
 - Auth/banco saudáveis; REST apresentou uma falha transitória de saúde e retornou saudável na rechecagem sem intervenção. Não atribuir causa ou alegar correção inexistente.
 - Distinguir infraestrutura habilitada de desenvolvimento pendente: ciclo anual/CAS/UI, competições CPU, continuidade econômica/plantéis e armazenamento longo continuam bloqueando aceite completo E8. Gemini OFF; não afirmar jogo completo a partir de deploy verde.
+
+### 89. Encoder deve respeitar o orçamento do decoder
+- Diagnóstico E8 revelou risco de gravar um agregado maior que o leitor aceita. Corrigido o encoder para validar o teto existente de 64 milhões de caracteres e bytes antes de substituir o checkpoint legível.
+- Sem aumento de quota/descompactação, sem reset, exclusão de resultados ou alteração de dados privados. Falha de publicação conserva o save anterior; não inventar que arquivamento plurianual foi resolvido.
+- Regressão focada: 19/19 casos de codec/persistência aprovados, incluindo encoder real acima do teto. Detalhes em `docs/motor/ARMAZENAMENTO-SEGURO.md`. Correção de proteção publicada separadamente do fluxo E8 ainda sem aceite; não apresentar como conclusão da etapa.
