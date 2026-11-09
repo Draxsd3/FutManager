@@ -29,7 +29,7 @@ export function HubScreen({ kit = 1, club, clubColors, coach, budget, opponent, 
   const selectedSeason = selectedRecord?.seasons.find((item) => item.season === season && item.club === club);
 
   return <div className={styles.workspace}>
-    <ClubSidebar confidence={confidence} club={club} coach={coach} budget={budget} opponent={opponent} competition={competition} roundLabel={roundLabel ?? `${round}ª rodada`} isHome={isHome} hasNextMatch={hasNextMatch} squadSize={squad.length} ctaLabel="Escalar Time" onCta={onEscalar} onQuickAction={onQuickAction} />
+    <ClubSidebar confidence={confidence} club={club} coach={coach} budget={budget} opponent={opponent} competition={competition} roundLabel={roundLabel ?? `${round}ª rodada`} isHome={isHome} hasNextMatch={hasNextMatch} squadSize={squad.length} ctaLabel={hasNextMatch ? "Escalar Time" : "Avançar temporada"} onCta={onEscalar} onQuickAction={onQuickAction} />
     <section className={styles.roster} aria-label="Elenco do clube">
       <div className={styles.toolbar}><div className={styles.rosterTitle}><b>Plantel</b><span>{squad.length} atletas · temporada {season}</span></div>{onLoans && <button type="button" className={styles.weekBadge} onClick={onLoans}>Empréstimos</button>}<span className={styles.weekBadge}>SEMANA {trainingWeek}</span></div>
       {pendingOffers.length > 0 && <p role="status" className="px-4 py-2 text-xs font-bold text-[#22653d]">Propostas recebidas para {pendingOffers.length} atleta(s). Abra a ficha do jogador e selecione Mercado → Propostas.</p>}

@@ -196,3 +196,42 @@ export function careerCalendarDate(current: string, season?: CareerSeason, next?
   return [current, next?.scheduledDate, ...(season?.fixtures ?? []).filter(f => f.status === "played").map(f => f.scheduledDate)]
     .filter((value): value is string => Boolean(value)).sort().at(-1) ?? current;
 }
+
+/** Additive completion for a full simulated world. Preserve every published date/result.
+ * Formats which cannot fit the reference windows receive an explicitly projected date,
+ * never an alleged official CBF date. Qualification ancestry reserves all possible clubs.
+ * The annual audit still rejects an impossible calendar rather than cancelling games. */
+export function completeDomesticCalendar(season:CareerSeason):CareerSeason {
+  const fixtures=season.fixtures.map(f=>({...f}));
+  const byId=new Map(fixtures.map(f=>[f.id,f]));
+  const memo=new Map<string,Set<string>>();
+  const possible=(f:SeasonFixture,visiting=new Set<string>()):Set<string>=>{
+    const cached=memo.get(f.id);if(cached) return cached;
+    if(visiting.has(f.id)) throw new Error("Referência circular na chave da copa.");
+    const stack=new Set([...visiting,f.id]);
+    const ids=new Set<string>();
+    for(const [id,source] of [[f.homeClubId,f.cupHomeSource],[f.awayClubId,f.cupAwaySource]]) {
+      const parent=source && byId.get(source);
+      if(parent) for(const club of possible(parent,stack)) ids.add(club);
+      else if(id && !id.startsWith("pending:")) ids.add(id);
+    }
+    if(!ids.size) for(const game of fixtures.filter(g=>g.competitionId===f.competitionId && g.stage==="groups"))for(const id of [game.homeClubId,game.awayClubId])ids.add(id);
+    memo.set(f.id,ids);return ids;
+  };
+  const occupied=new Map<string,number[]>();
+  for(const f of fixtures) if(f.scheduledDate && f.status!=="cancelled")for(const id of possible(f))occupied.set(id,[...(occupied.get(id) ?? []),dayNumber(f.scheduledDate)]);
+  const pending=fixtures.filter(f=>!f.scheduledDate && !["played","cancelled"].includes(f.status)).sort((a,b)=>a.competitionId.localeCompare(b.competitionId) || a.competitionRound-b.competitionRound || a.id.localeCompare(b.id));
+  for(const f of pending) {
+    const previous=fixtures.filter(g=>g.competitionId===f.competitionId && g.competitionRound<f.competitionRound);
+    if(previous.some(g=>!g.scheduledDate && g.status!=="cancelled"))continue;
+    const earliest=Math.max(dayNumber(`${season.season}-01-07`),...previous.flatMap(g=>g.scheduledDate?[dayNumber(g.scheduledDate)+MIN_CALENDAR_REST_DAYS]:[]));
+    const ids=possible(f);
+    for(let date=earliest;date<=dayNumber(`${season.season}-12-31`);date++) {
+      if(![...ids].every(id=>(occupied.get(id) ?? []).every(day=>Math.abs(day-date)>=MIN_CALENDAR_REST_DAYS)))continue;
+      f.scheduledDate=isoDay(date);f.dateSource="projection";f.calendarRound=date-dayNumber(`${season.season}-01-01`)+1;
+      for(const id of ids)occupied.set(id,[...(occupied.get(id) ?? []),date]);
+      break;
+    }
+  }
+  return {...season,fixtures};
+}

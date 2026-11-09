@@ -15,11 +15,18 @@ export function buildRegisteredTournament(database: EditorDatabase, season: numb
   if (!format) return null;
   const eligible = database.clubs.filter(club => isD ? club.division === "Série D" : club.state === state);
   const incomplete: string[] = [];
-  const members = format.groups.map(names => names.flatMap(name => {
+  let members = format.groups.map(names => names.flatMap(name => {
     const club = resolveRegisteredClub(eligible, name);
     if (!club) incomplete.push(name);
     return club ? [club] : [];
   }));
+  // Future domestic registration is a game projection based on the actual career divisions,
+  // not a reuse of the 2026 list (which would resurrect promoted/relegated clubs).
+  if(isD && season>2026 && eligible.length===96) {
+    const ordered=[...eligible].sort((a,b)=>(a.state ?? "").localeCompare(b.state ?? "") || a.id.localeCompare(b.id));
+    members=Array.from({length:16},(_,i)=>ordered.slice(i*6,i*6+6));
+    incomplete.length=0;
+  }
   // Miniature/custom databases keep their established simulation. Never call that an official registration.
   if (members.flat().length < Math.min(8, eligible.length) || members.some(group => !group.length)) return null;
   const registration: TournamentRegistration = { competitionId, format, incomplete, groups: members.map((clubs, index) => ({ name: isD ? `Grupo A${index + 1}` : `${format.pairing === "paulista" ? "Pote" : "Grupo"} ${String.fromCharCode(65 + index)}`, clubIds: clubs.map(club => club.id) })) };

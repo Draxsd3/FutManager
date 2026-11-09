@@ -8,6 +8,7 @@ import { coachCheckpoint, isUnemployed, migrateCoachSave } from "@/lib/game/simu
 import { UnemploymentScreen } from "./screens/unemployment-screen";
 import { reconcileContractSquad } from "@/lib/game/simulation/contract-squad";
 import { applyCareerPlayerAction, extendCareerLoan, migrateFinanceSave, settleCareerTransfer, updateCareerNegotiation } from "@/lib/game/simulation/settlement";
+import { transitionCareerSeason } from "@/lib/game/simulation/season-transition";
 import { advanceCareerWithMarketPolicy } from "@/lib/game/simulation/market-policy";
 import { browserMarketProvider } from "@/lib/game/simulation/market-client";
 import { setMarketMode } from "@/lib/game/simulation/market-settings";
@@ -264,6 +265,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [trainingSessions, setTrainingSessions] = useState<TrainingSessionRecord[]>([]);
   const [manualPositions, setManualPositions] = useState<Record<number, ManualPosition>>({});
   const [championHistory, setChampionHistory] = useState<ChampionshipRecord[]>([]);
+  const [seasonHistory, setSeasonHistory] = useState<CareerProgress["seasonHistory"]>();
   const [competitionSeason, setCompetitionSeason] = useState<CareerSeason | undefined>();
   const [managerMarket, setManagerMarket] = useState<ManagerMarket | undefined>();
   const [jobClubSnapshots, setJobClubSnapshots] = useState<Record<string, JobClubSnapshot>>({});
@@ -305,7 +307,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     universeSnapshot: universeSnapshot.current, page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore,
     events, participation, matchBenchIds, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
-    stadiums, managerMarket, engine, worldMarket, jobClubSnapshots, managerAppointments, youthTeams, competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
+    seasonHistory, stadiums, managerMarket, engine, worldMarket, jobClubSnapshots, managerAppointments, youthTeams, competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
 
   };
   const progressRef = useRef(progress);
@@ -325,7 +327,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     pendingCloudSave.current = next;
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore, events,
-    participation, matchBenchIds, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, managerMarket, engine, jobClubSnapshots, managerAppointments, youthTeams, stadiums, userId]);
+    participation, matchBenchIds, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, seasonHistory, managerMarket, engine, jobClubSnapshots, managerAppointments, youthTeams, stadiums, userId]);
 
 
   useEffect(() => {
@@ -352,7 +354,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return () => window.clearInterval(timer);
   }, [userId]);
 
-  const divisionClubNames = useMemo(() => database?.clubs.filter((item) => item.country.toLocaleLowerCase("pt-BR") === "brasil" && item.division === division).map((item) => item.name) ?? [], [database, division]);
+  const divisionClubNames = useMemo(() => careerDatabase?.clubs.filter((item) => item.country.toLocaleLowerCase("pt-BR") === "brasil" && item.division === division).map((item) => item.name) ?? [], [careerDatabase, division]);
   const managementDatabase = useMemo(() => careerDatabase ? { ...careerDatabase, clubs: careerDatabase.clubs.map(item => ({ ...item, coachName: managerMarket?.clubs[item.id] ? managerMarket.clubs[item.id].coach ?? "" : item.coachName })) } : null, [careerDatabase, managerMarket]);
   const managedClubRecord = database?.clubs.find((item) => item.name === club);
   useEffect(() => {
@@ -818,7 +820,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   function renderStandings() {
     if (!standingsOpen || !database || !standingsData) return null;
     const { centerTable, centerTopScorers, centerTopRatings, careerCompetitionData } = standingsData;
-    return <CompetitionCenter database={database} fixtures={fixtures} club={club} competition={division} activeCompetitionId={centerCompetitionId} roundLabel={competitionRoundLabel} careerCompetitionData={careerCompetitionData} table={centerTable} topScorers={centerTopScorers} topRatings={centerTopRatings} round={competitionRound} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onClose={() => setStandingsOpen(false)} />;
+    return <CompetitionCenter database={careerDatabase ?? database} fixtures={fixtures} club={club} competition={division} activeCompetitionId={centerCompetitionId} roundLabel={competitionRoundLabel} careerCompetitionData={careerCompetitionData} table={centerTable} topScorers={centerTopScorers} topRatings={centerTopRatings} round={competitionRound} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-11"} onClose={() => setStandingsOpen(false)} />;
   }
 
   async function synchronizeTransfermarkt(progress: (message: string) => void, signal: AbortSignal, resume = false) {
@@ -934,7 +936,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     if (!selectedClub || !database) return;
     universeSnapshot.current = createCareerUniverseSnapshot(database);
     synchronizedCatalog.current = database;
-    const newSeason = createCareerSeason(database, selectedClub.id, BRAZILIAN_REFERENCE_SEASON) ?? undefined;
+    const newSeason = createCareerSeason(database, selectedClub.id, BRAZILIAN_REFERENCE_SEASON, "domestic-world") ?? undefined;
     const firstFixture = nextCareerFixture(newSeason);
     if (!newSeason || !firstFixture) {
       setSyncLabel("Cadastre ao menos dois clubes na divisão, Copa ou estadual para iniciar uma temporada jogável.");
@@ -966,12 +968,12 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
       round: 1, budget: 12624, stadiums: {}, kit: 1, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
       worldMarket:undefined, careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, trainingSessions: [], manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
-      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, confidenceHistory: [], confidenceStartBudget: 12624, managerMarket: initializeCareerMarket(database, newSeason, coach.trim(), 12624), jobClubSnapshots: {}, managerAppointments: [{ clubId: selectedClub.id, club: selectedClub.name, startedOn: save.inGameDate }], youthTeams: {}, activeFixtureId: firstFixture?.id, transferNegotiations: [], loanContracts: initialLoans, championHistory: [] };
+      detailOpen: false, halftimeWaiting: false, matchRunning: false, matchSpeed: 1, defaultMatchSpeed: 1, competitionSeason: newSeason, confidenceHistory: [], confidenceStartBudget: 12624, managerMarket: initializeCareerMarket(database, newSeason, coach.trim(), 12624), jobClubSnapshots: {}, managerAppointments: [{ clubId: selectedClub.id, club: selectedClub.name, startedOn: save.inGameDate }], youthTeams: {}, activeFixtureId: firstFixture?.id, transferNegotiations: [], loanContracts: initialLoans, championHistory: [], seasonHistory: undefined };
     setActiveSaveId(save.id);
     setCompetitionSeason(newSeason);
     save.progress = migratePlayerSave(migrateCoachSave(migrateFinanceSave(save,database),database),worldDatabase(database,save.progress?.transferNegotiations ?? [],save.progress?.loanContracts ?? {},save.progress?.worldMarket,save.progress?.managerMarket?.finance)).progress!;
     setManagerMarket(save.progress.managerMarket); setJobClubSnapshots({}); setManagerAppointments(save.progress.managerAppointments ?? []);
-    setChampionHistory([]);
+    setChampionHistory([]); setSeasonHistory(undefined);
     setYouthTeams({});
     setConfidenceHistory([]);
     setConfidenceStartBudget(12624);
@@ -1064,7 +1066,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setManualPositions(save.manualPositions ?? {});
     setTransferNegotiations(save.progress?.transferNegotiations ?? []);
     setWorldMarket(save.progress?.worldMarket);
-    setEngine(save.progress?.engine); setAdvanceError("");
+    setEngine(save.progress?.engine); setSeasonHistory(save.progress?.seasonHistory); setAdvanceError("");
     setLoanContracts(save.progress?.loanContracts ?? Object.fromEntries((save.progress?.careerSquad ?? []).filter(player => player.sourceId && player.loan).map(player => [player.sourceId!, player.loan!])));
     setLoansOpen(false);
     setHomeScore(0);
@@ -1288,7 +1290,10 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     advancing.current=true;
     try {
       const snapshot={...current,progress:progressRef.current};
-      const next=await advanceCareerWithMarketPolicy(snapshot,careerDatabase,{operationId:`unemployed:${current.inGameDate}:${engine?.revision ?? 0}`,expectedRevision:engine?.revision ?? 0,fromDate:current.inGameDate},browserMarketProvider);
+      const nextWeek=new Date(Date.parse(`${current.inGameDate}T12:00:00Z`)+7*86400000).toISOString().slice(0,10);
+      const next=competitionSeason && Number(nextWeek.slice(0,4))>competitionSeason.season
+        ? transitionCareerSeason(snapshot,database ?? careerDatabase,{operationId:`season:${competitionSeason.season}:${engine?.revision ?? 0}`,expectedRevision:engine?.revision ?? 0,fromDate:current.inGameDate})
+        : await advanceCareerWithMarketPolicy(snapshot,careerDatabase,{operationId:`unemployed:${current.inGameDate}:${engine?.revision ?? 0}`,expectedRevision:engine?.revision ?? 0,fromDate:current.inGameDate},browserMarketProvider);
       await publishLocalCheckpoint(next,userId,engine?.revision ?? 0);
       savesRef.current=[next,...savesRef.current.filter(s=>s.id!==next.id)];
       progressRef.current=next.progress!;
@@ -1315,10 +1320,28 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     } finally { jobActionInProgress.current = false; }
   }
 
+  async function advanceAnnualSeason() {
+    if(advancing.current || jobActionInProgress.current || !database) return;
+    const current=savesRef.current.find(save=>save.id===activeSaveId);
+    if(!current) return;
+    advancing.current=true; setAdvanceError("");
+    try {
+      const snapshot={...current,budget,playerCareers,manualPositions,progress:progressRef.current};
+      const next=transitionCareerSeason(snapshot,database,{operationId:`season:${competitionSeason?.season}:${engine?.revision ?? 0}`,expectedRevision:engine?.revision ?? 0,fromDate:current.inGameDate});
+      await publishLocalCheckpoint(next,userId,engine?.revision ?? 0);
+      savesRef.current=[next,...savesRef.current.filter(s=>s.id!==next.id)];
+      progressRef.current=next.progress!;
+      setCareerLoaded(false);
+      await loadCareer(next);
+      void persistSave({...next,updatedAt:new Date().toISOString()});
+    } catch(error) { setAdvanceError(error instanceof Error?error.message:"Não foi possível avançar a temporada. O save anterior foi preservado."); }
+    finally { advancing.current=false; }
+  }
+
   function openLineup() {
     if(isUnemployed(managerMarket)) { setPage("hub"); return; }
     if (!scheduledFixture) {
-      setSyncLabel("Temporada encerrada — não há partidas pendentes nesta carreira.");
+      void advanceAnnualSeason();
       return;
     }
     if (starters.length!==11 || starters.some(id=>!squad.some(p=>p.id===id && playerEligible(p,scheduledFixture.scheduledDate) && !bannedForFixture(competitionSeason,scheduledFixture,p.sourceId)))) { setMatchRulesError("Escalação incompleta ou com atleta inelegível (inscrição, lesão, suspensão ou aposentadoria)."); return; }
@@ -1615,6 +1638,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     return (
       <>
         <CareerWorkspace {...workspace} />
+        {advanceError && <p role="alert" className="p-3 text-sm text-red-300">{advanceError}</p>}
         {renderStandings()}
         {loansOpen && careerDatabase && <LoanManager players={careerDatabase.players.filter(player => player.loan && [player.loan.owner.clubId, player.loan.borrower.clubId].includes(database?.clubs.find(item => item.name === club)?.id))} clubId={database?.clubs.find(item => item.name === club)?.id ?? ""} date={saves.find(save => save.id === activeSaveId)?.inGameDate ?? "2026-01-22"} onClose={() => setLoansOpen(false)} onPropose={(id, months, fee, share) => commitFinancialChange((save,db)=>extendCareerLoan(save,db,id,months,fee,share))}/>}
         {profilePlayer !== null && (() => {
@@ -1851,7 +1875,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
           progressRef.current = p;
           savesRef.current = [next,...savesRef.current.filter(save => save.id !== next.id)];
           setStandingsOpen(false); setBudget(next.budget); budgetRef.current = next.budget; setRound(next.round); setActiveFixtureId(p.activeFixtureId);
-          setEngine(p.engine); setWorldMarket(p.worldMarket); setTransferNegotiations(p.transferNegotiations ?? []); setManagerMarket(p.managerMarket); setManagerAppointments(p.managerAppointments ?? []); setYouthTeams(p.youthTeams ?? {});
+          setEngine(p.engine); setCompetitionSeason(p.competitionSeason); setSeasonHistory(p.seasonHistory); setWorldMarket(p.worldMarket); setTransferNegotiations(p.transferNegotiations ?? []); setManagerMarket(p.managerMarket); setManagerAppointments(p.managerAppointments ?? []); setYouthTeams(p.youthTeams ?? {});
           setLoanContracts(p.loanContracts ?? {}); setCareerSquad(p.careerSquad); setStarters(p.starters); setMatchBenchIds(p.matchBenchIds); setManualPositions(p.manualPositions); setPlayerCareers(p.playerCareers);
           setProfilePlayer(null); setSelectedPlayer(null); setPage("hub");
           void persistSave({ ...next,updatedAt:new Date().toISOString() });

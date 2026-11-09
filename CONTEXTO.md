@@ -726,7 +726,23 @@ Ao clicar em Agenda, abrir primeiro um submenu com Jogos do seu time, Jogos amis
 - Auth/banco saudáveis; REST apresentou uma falha transitória de saúde e retornou saudável na rechecagem sem intervenção. Não atribuir causa ou alegar correção inexistente.
 - Distinguir infraestrutura habilitada de desenvolvimento pendente: ciclo anual/CAS/UI, competições CPU, continuidade econômica/plantéis e armazenamento longo continuam bloqueando aceite completo E8. Gemini OFF; não afirmar jogo completo a partir de deploy verde.
 
+### 88. Cobrança de conclusão integral da E8
+- Pedido explícito: “FINALIZE a etapa 8 completamente, não deixe rastros”. Concluir o aceite real, não apenas infra/deploy; não interpretar como autorização para apagar saves, histórico, testes, evidências ou burlar guardas.
+- Branch ativa desta execução: `arena/6337410c-futmanager`. Não reutilizar branches de sessões anteriores. Mudanças de domínio/integração e estado real em `docs/motor/ETAPA-8.md`.
+- Recorte implementado: propagação real da copa e compatibilidade legada sem ressuscitar eliminado; conclusão CPU sem jogar pelo humano empregado; calendário doméstico completo com complementos explicitamente projetados; comando anual idempotente/revisionado e UI com CAS; arquivo preservado no autosave/reload; overlay de divisões preservando catálogo; grupos futuros da D a partir da carreira; desemprego passa pelo mesmo encerramento anual.
+- Evidência: universo brasileiro concluiu 2.463 partidas sem pendências ou clubes nacionais ausentes. Integração anual e falha de quota aprovadas em 2 testes; retomada de partida existente aprovada isoladamente. Regressão intermediária 640/640 fora GameBoard; suítes finais específicas adicionais aprovadas. Não chamar isso de prova financeira de dez anos.
+- Auditoria longa separada em `npm run test:seasons` (duas seeds, dez anos por padrão); diagnóstico de um ano não vale como aceite. Execuções pesadas não devem competir por RAM com GameBoard/build neste sandbox de 4 GB; primeira concorrência precisou ser interrompida, integração isolada passou.
+- E8 continua sem aceite integral enquanto sustentabilidade econômica/contratos/elencos, inscrições completas e armazenamento longo não forem comprovados. Não promover código como entrega final nem alegar produção verificada sem evidência do SHA efetivamente publicado. Gemini continua OFF, sem reset ou alteração de dados privados.
+
+- Diagnóstico isolado reduzido anterior às otimizações finais: abortou com heap OOM (2.048 MB) em 761 s, antes de dezembro de 2026. Não completou sequer o primeiro ano. Rechecagem otimizada não deve ser presumida aprovada; registrar saída real. Sem modificar quota ou apagar partidas para contornar o erro.
+
+- Rechecagem otimizada revelou livro `managerMarket` com 66.245.076 caracteres em março e 89.710.074 em abril, acima do limite de leitura de 64 milhões. Interrompida; zero anos aprovados. Evidência sintética versionada: `docs/motor/relatorios/e8-diagnostico.json`. Não atribuir essa interrupção otimizada a OOM.
+- Corrigido risco adicional: encoder valida o orçamento de caracteres/bytes antes de substituir um save legível, alinhado ao decoder. Não é aumento de quota e não resolve o aceite de armazenamento longo; evita persistir um checkpoint que não poderia ser relido.
+
 ### 89. Encoder deve respeitar o orçamento do decoder
 - Diagnóstico E8 revelou risco de gravar um agregado maior que o leitor aceita. Corrigido o encoder para validar o teto existente de 64 milhões de caracteres e bytes antes de substituir o checkpoint legível.
 - Sem aumento de quota/descompactação, sem reset, exclusão de resultados ou alteração de dados privados. Falha de publicação conserva o save anterior; não inventar que arquivamento plurianual foi resolvido.
 - Regressão focada: 19/19 casos de codec/persistência aprovados, incluindo encoder real acima do teto. Detalhes em `docs/motor/ARMAZENAMENTO-SEGURO.md`. Correção de proteção publicada separadamente do fluxo E8 ainda sem aceite; não apresentar como conclusão da etapa.
+
+- QA final deste recorte: 645/645 em 123 arquivos fora `game-board.test.tsx` (inclui 2 integrações anuais novas), 154,97 s; build de produção, tipos, lint dos alterados e diff-check aprovados. Um caso de retomada do arquivo pesado passou isoladamente; demais 30 não reexecutados. A auditoria longa não passou e não entra na contagem como aceite.
+- PR #177 mesclou somente a proteção do encoder, SHA `9fa3c4df8d64fcda65b9da19670a0a72e525a69f`; publicação do fluxo anual deve continuar separada enquanto não houver aceite real. Não anunciar E8 completa.

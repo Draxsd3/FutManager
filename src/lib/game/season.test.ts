@@ -51,7 +51,7 @@ describe("calendário persistente de competições", () => {
     expect(played.fixtures.some((fixture) => fixture.type === "cup" && fixture.status === "scheduled")).toBe(true);
   });
 
-  it("avança a chave da Copa só após vitória e cancela o caminho do clube após derrota", () => {
+  it("propaga o vencedor real da Copa, inclusive quando o humano é eliminado", () => {
     const database = createDefaultDatabase();
     const club = database.clubs.find((item) => item.name === "Flamengo")!;
     const season = createCareerSeason(database, club.id, 2026)!;
@@ -65,7 +65,10 @@ describe("calendário persistente de competições", () => {
     const loss = firstTie.homeClubId === club.id
       ? completeCareerFixture(season, firstTie.id, { home: 0, away: 2 }, database)
       : completeCareerFixture(season, firstTie.id, { home: 2, away: 0 }, database);
-    expect(loss.fixtures.find((fixture) => fixture.id === projectedNext.id)?.status).toBe("cancelled");
+    const successor=loss.fixtures.find((fixture) => fixture.id === projectedNext.id)!;
+    expect(successor.status).toBe("scheduled");
+    expect([successor.homeClubId,successor.awayClubId]).not.toContain(club.id);
+    expect([successor.homeClubId,successor.awayClubId]).toContain(firstTie.homeClubId===club.id?firstTie.awayClubId:firstTie.homeClubId);
   });
 
   it("converts scorer and assister event IDs into stable database player records", () => {

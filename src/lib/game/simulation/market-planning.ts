@@ -29,7 +29,7 @@ export function rosterIndex(db: EditorDatabase) {
   for (const p of db.players) { const group=result.get(p.clubId) ?? []; group.push(p); result.set(p.clubId,group); }
   return result;
 }
-export function buildClubPlan(clubId: string, roster: EditorPlayer[], finance: FinanceState, date: string, season?: CareerSeason, previous?: ClubMarketPlan): ClubMarketPlan {
+export function buildClubPlan(clubId: string, roster: EditorPlayer[], finance: FinanceState, date: string, season?: CareerSeason, previous?: ClubMarketPlan, forecastAvailableCents?:number): ClubMarketPlan {
   const until=Date.parse(`${date}T12:00:00Z`)+21*86400000;
   const fixtures=season?.fixtures.filter(f => f.status === "scheduled" && (f.homeClubId===clubId || f.awayClubId===clubId) && f.scheduledDate && f.scheduledDate>=date && Date.parse(`${f.scheduledDate}T12:00:00Z`)<=until).length ?? 0;
   const leaders: ClubMarketPlan["leaders"] = {};
@@ -56,7 +56,7 @@ export function buildClubPlan(clubId: string, roster: EditorPlayer[], finance: F
     if(best && best.overall>=(old.requiredOverall ?? 100)) replacements.push({...old,alternativeId:best.id,reason:"Reforço ou evolução de alternativa preenche a necessidade."});
     else { replacements.push(old); const need=needs.find(n=>n.position===old.position); if(need) need.priority=Math.max(2,need.priority); }
   }
-  const available=availableCents(finance,clubId);
+  const available=forecastAvailableCents ?? availableCents(finance,clubId);
   return {clubId,date,availableCents:available,spendingLimitCents:Math.floor(available*.25),fixturesNext21Days:fixtures,needs,leaders,starters,replacements:replacements.slice(-20)};
 }
 export function marketOptions(plan: ClubMarketPlan, roster: EditorPlayer[], candidates: EditorPlayer[], rosters: Map<string,EditorPlayer[]>, finance: FinanceState): MarketOption[] {

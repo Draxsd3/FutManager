@@ -41,10 +41,12 @@ export function advanceCareer(save: CareerSave, database: EditorDatabase, comman
     managers = adoptFinance(managers,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance),save.inGameDate,loans,unemployed ? undefined : {clubId:save.clubId,budget:save.budget});
 
   }
-  if (unemployed && p.competitionSeason && managers) {
-    p.competitionSeason=advanceSeasonBeforeDate(p.competitionSeason,date,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance,managers.staff));
-    managers=updateCareerMarket(managers,p.competitionSeason,{clubId:"__unemployed__",budget:0,payroll:0},date);
-    managers=adoptFinance(managers,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance),save.inGameDate,loans);
+  if (p.competitionSeason && managers) {
+    if(unemployed) p.competitionSeason=advanceSeasonBeforeDate(p.competitionSeason,date,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance,managers.staff));
+    // CPU results settled after the human's last game still pass through the same
+    // idempotent receipts/board service. An employed human must not freeze their economy.
+    managers=updateCareerMarket(managers,p.competitionSeason,unemployed ? {clubId:"__unemployed__",budget:0,payroll:0} : {clubId:save.clubId,budget:save.budget,payroll:managers.clubs[save.clubId]?.payroll ?? 0},date);
+    managers=adoptFinance(managers,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers.finance),save.inGameDate,loans,unemployed ? undefined : {clubId:save.clubId,budget:save.budget});
   }
   if(p.worldMarket?.population) {
     const population=advancePopulation(p.worldMarket.population,worldDatabase(database,p.transferNegotiations ?? [],loans,p.worldMarket,managers?.finance),p.competitionSeason,date,save.id,unemployed?undefined:{clubId:save.clubId,squad:p.careerSquad ?? [],fixtureId:command.fixtureId,minutes:Object.fromEntries(Object.entries(p.participation ?? {}).map(([id,v])=>[id,Math.max(0,(v.left ?? 90)-v.entered)]))});
