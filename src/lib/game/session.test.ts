@@ -16,6 +16,7 @@ describe("canResumeSavedCareer", () => {
     expect(resumableCareerPage("lineup")).toBe("lineup");
     expect(resumableCareerPage("matchOverview")).toBe("matchOverview");
     expect(resumableCareerPage("agenda")).toBe("agenda");
+    expect(resumableCareerPage("messages")).toBe("messages");
     expect(resumableCareerPage("new")).toBe("hub");
     expect(resumableCareerPage("unknown")).toBe("hub");
   });

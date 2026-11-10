@@ -920,3 +920,20 @@ it("executes CPU fatigue substitutions at a live milestone and resumes the ident
   await screen.findByText("PARTIDA PAUSADA");
   expect(readLocalSaves("alice")[0].progress?.matchPreparation?.cpu).toEqual(cpu);
 },120_000);
+
+it("opens messages from career navigation and restores read receipts after reload", async () => {
+  const view=render(game());
+  fireEvent.click(await screen.findByRole("button",{name:/INICIAR NOVA CARREIRA/}));
+  fireEvent.change(screen.getByPlaceholderText("Seu nome"),{target:{value:"Gestor da caixa"}});
+  fireEvent.click(screen.getByRole("button",{name:/Iniciar jogo/}));
+  fireEvent.click(await screen.findByRole("button",{name:"Mensagens"}));
+  const dialog=await screen.findByRole("dialog",{name:"Mensagens"});
+  const message=within(dialog).getByRole("button",{name:/Objetivo para o trabalho/});
+  fireEvent.click(message);
+  await waitFor(()=>expect(readLocalSaves("alice")[0].progress?.messageReadIds).toHaveLength(1));
+  const receipts=readLocalSaves("alice")[0].progress!.messageReadIds;
+  view.unmount();render(game());
+  const restored=await screen.findByRole("dialog",{name:"Mensagens"});
+  expect(within(restored).getByRole("button",{name:/Objetivo para o trabalho/}).getAttribute("aria-label")).not.toContain("Não lida");
+  expect(readLocalSaves("alice")[0].progress?.messageReadIds).toEqual(receipts);
+});

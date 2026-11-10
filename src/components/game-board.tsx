@@ -1,4 +1,5 @@
 "use client";
+import { MessagesScreen } from "./screens/messages-screen";
 import { CareerHistoryBrowser } from "./ui/career-history-browser";
 import { convertCareerMarketValues, convertDatabaseMarketValues, EUR_BRL_VERSION } from "@/lib/game/market-currency";
 import { restartAfter } from "@/lib/game/simulation/restarts";
@@ -106,7 +107,7 @@ import {
   writeLocalSaves,
 } from "@/lib/game/persistence";
 
-type Page = "menu" | "new" | "saves" | "editor" | "hub" | "lineup" | "matchOverview" | "result" | "agenda" | "stadium" | "juniors" | "teams" | "search" | "coaches" | "history" | "finances" | "trophies" | "training" | "settings";
+type Page = "menu" | "new" | "saves" | "editor" | "hub" | "lineup" | "matchOverview" | "result" | "agenda" | "stadium" | "juniors" | "teams" | "search" | "coaches" | "history" | "finances" | "trophies" | "training" | "settings" | "messages";
 
 const sectionByPage: Partial<Record<Page, ClubSection>> = {
   agenda: "agenda",
@@ -268,6 +269,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const [selectedPlayer, setSelectedPlayer] = useState<number | null>(null);
   const [profilePlayer, setProfilePlayer] = useState<number | null>(null);
   const [playerCareers, setPlayerCareers] = useState<Record<number, PlayerCareerRecord>>({});
+  const [messageReadIds, setMessageReadIds] = useState<string[]>([]);
   const [trainingSessions, setTrainingSessions] = useState<TrainingSessionRecord[]>([]);
   const [manualPositions, setManualPositions] = useState<Record<number, ManualPosition>>({});
   const [championHistory, setChampionHistory] = useState<ChampionshipRecord[]>([]);
@@ -311,7 +313,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
   const progress: CareerProgress = {
     // Preserve additive archive/migration metadata not owned by a React control.
     ...saves.find(save=>save.id===activeSaveId)?.progress,
-    universeSnapshot: universeSnapshot.current, page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, kit, formation, style, marking, focus,
+    messageReadIds, universeSnapshot: universeSnapshot.current, page, matchPreparation: matchPreparation ?? undefined, activeSaveId, coach, club, division, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad: squad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore,
     events, participation, matchBenchIds, substitutionsLeft, detailOpen, matchRunning: false, matchSpeed, defaultMatchSpeed, halftimeWaiting,
     stadiums, managerMarket, engine, worldMarket, jobClubSnapshots, managerAppointments, youthTeams, competitionSeason, confidenceHistory: mergeConfidenceHistory(confidenceHistory, competitionSeason), confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory,
@@ -334,7 +336,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     pendingCloudSave.current = next;
   }, [hydrationDone, careerLoaded, activeSaveId, page, round, budget, kit, formation, style, marking, focus,
     starters, careerSquad, playerCareers, trainingSessions, manualPositions, minute, homeScore, awayScore, events,
-    participation, matchBenchIds, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, managerMarket, engine, jobClubSnapshots, managerAppointments, youthTeams, stadiums, userId]);
+    participation, matchBenchIds, substitutionsLeft, detailOpen, matchSpeed, defaultMatchSpeed, halftimeWaiting, matchPreparation, competitionSeason, confidenceHistory, confidenceStartBudget, activeFixtureId, transferNegotiations, loanContracts, championHistory, managerMarket, engine, jobClubSnapshots, managerAppointments, youthTeams, stadiums, messageReadIds, userId]);
 
 
   useEffect(() => {
@@ -733,12 +735,13 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     { icon: "magnifier", label: "Mercado", image: "/icons/navigation/mercado.webp", active: page === "search", onClick: () => navigate("search") },
     { icon: "user_suit", label: "Técnicos", image: "/icons/navigation/tecnicos.webp", active: page === "coaches", onClick: () => navigate("coaches") },
     { icon: "clock_history_frame", label: "História", image: "/icons/navigation/historia.webp", active: page === "history", onClick: () => navigate("history"), children: historyOptions.map((option) => ({ label: option.label, description: option.description, onClick: () => { setHistoryView(option.id); navigate("history"); } })) },
+    { icon: "book", label: "Mensagens", active: page === "messages", onClick: () => navigate("messages") },
     { icon: "door_out", label: "Configurações", active: page === "settings", onClick: () => navigate("settings") },
   ];
 
   function navigate(next: Page) {
     setStandingsOpen(false);
-    setPage(isUnemployed(managerMarket) && !["coaches","settings","hub"].includes(next) ? "hub" : next);
+    setPage(isUnemployed(managerMarket) && !["coaches","settings","messages","hub"].includes(next) ? "hub" : next);
   }
 
   function leaveActiveCareer(nextPage: Extract<Page, "menu" | "new" | "saves" | "editor">) {
@@ -968,10 +971,11 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     stadiumsRef.current = {};
     setStadiums({});
     const initialLoans = Object.fromEntries((database?.players ?? []).filter(player => player.loan).map(player => [player.id, player.loan!]));
+    setMessageReadIds([]);
     setLoanContracts(initialLoans);
     setLoansOpen(false);
     const initialStarters = buildStartingXI("4-3-3", baseSquad);
-    save.progress = { ...progressRef.current, seasonHistory:undefined,marketValueFxVersion:EUR_BRL_VERSION, engine: createEngineState(undefined,save.id,save.inGameDate), universeSnapshot: universeSnapshot.current, page: "hub", matchPreparation: undefined, activeSaveId: save.id, coach: coach.trim(),
+    save.progress = { ...progressRef.current, messageReadIds:[],seasonHistory:undefined,marketValueFxVersion:EUR_BRL_VERSION, engine: createEngineState(undefined,save.id,save.inGameDate), universeSnapshot: universeSnapshot.current, page: "hub", matchPreparation: undefined, activeSaveId: save.id, coach: coach.trim(),
       round: 1, budget: 12624, stadiums: {}, kit: 1, formation: "4-3-3", style: "Equilibrado", marking: "Leve", focus: "Pelo meio",
       worldMarket:undefined, careerSquad: baseSquad, starters: initialStarters, playerCareers: {}, trainingSessions: [], manualPositions: {},
       minute: 0, homeScore: 0, awayScore: 0, events: [], substitutionsLeft: 5,
@@ -1074,6 +1078,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     setStadiums(stadiumsRef.current);
     setPlayerCareers(save.playerCareers ?? {});
     setKit(save.progress?.kit === 2 || save.progress?.kit === 3 ? save.progress.kit : 1);
+    setMessageReadIds(save.progress?.messageReadIds ?? []);
     setTrainingSessions(save.progress?.trainingSessions ?? []);
     setYouthTeams(save.progress?.youthTeams ?? {});
     setManualPositions(save.manualPositions ?? {});
@@ -1624,7 +1629,7 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
     ),
   };
 
-  if (isUnemployed(managerMarket) && !["coaches","settings"].includes(page)) return <CareerWorkspace {...workspace}/>;
+  if (isUnemployed(managerMarket) && !["coaches","settings","messages"].includes(page)) return <CareerWorkspace {...workspace}/>;
 
   if (page === "hub")
     return (
@@ -1640,6 +1645,11 @@ export function GameBoard({ userId, email, onSignOut, initialPage = "menu" }: { 
         })()}
       </>
     );
+
+  if(page === "messages") {
+    const active=saves.find(save=>save.id===activeSaveId);
+    return <CareerWorkspace {...workspace} title="Mensagens">{active&&<MessagesScreen key={active.id} save={{...active,progress}} database={careerDatabase ?? database} readIds={messageReadIds} onRead={ids=>setMessageReadIds(previous=>[...new Set([...previous,...ids])])}/>}</CareerWorkspace>;
+  }
 
   if (page === "settings") return <CareerWorkspace {...workspace} title="Configurações"><SettingsScreen club={club} coach={coach} speed={defaultMatchSpeed} onSpeedChange={setDefaultMatchSpeed} onBackToClub={() => navigate("hub")} onMenu={() => leaveActiveCareer("menu")} /></CareerWorkspace>;
 

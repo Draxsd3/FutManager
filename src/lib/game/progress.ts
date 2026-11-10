@@ -23,6 +23,8 @@ export type MatchPreparation = {
 };
 
 export type CareerProgress = {
+  /** Read receipts scoped to this independent career, persisted with its autosave. */
+  messageReadIds?: string[];
   /** Full immutable results; no replay/backfill of legacy matches. */
   seasonHistory?: Record<string, import("./simulation/season-lifecycle").SeasonArchive>;
   engine?: import("./simulation/foundation").EngineState;
